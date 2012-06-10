@@ -1,0 +1,59 @@
+		//System.out.println(A);
+		//sprawdzy rank macierzy A
+		//JAMA + moje
+		BindMatrix mA = new BindMatrix(A.m);
+		
+		//System.out.println("Rank + " + mA.rank());
+		
+		// Tworzymy wektor prawych stron b
+		MatrixDouble b= null;
+		BindMatrix mb = null;
+		BindMatrix dmx = null;
+		
+		//A*x=b
+		
+		
+		//MatrixDouble x = MatrixDouble.createFromArray(mx.getArray());
+		//System.out.println(x.toString());//Jama nie ma swojego printowania
+		//glowna pentelka
+		//teraz trzeba przepisac z kazdej pozycji wartosci do punktow
+		
+		// x(i+1) = x(i) + dx
+		// x= [q lambda]'
+		
+		/**
+		 * FIXME trzeba pomyslec o jakims wiazaniu np punktow z macierza ,z wartosciami tak
+		 * aby zmiana w macierzy uaktualniala wartosci w punktach i odwrtonie , BIND - wiazanie
+		 *  
+		 */
+		
+		BindMatrix bmX = new BindMatrix(Point.dbPoint.size()*2 + Constraint.allConstraintSize(),1);
+		bmX.bind(Point.dbPoint);
+		
+		System.out.println(bmX);
+		//2 3 iteracje i jest git
+		for(int i=0;i<3;i++){
+			//tworzymy macierz vector b
+			b=MatrixDouble.mergeByColumn(line1.getForce(),Constraint.getFullConstraintValues(Point.dbPoint, Parameter.dbParameter));
+			b.dot(-1);
+			//System.out.println(b);
+			mb= new BindMatrix(b.m);
+			 
+			// rozwiazjemy zadanie A*dx=b
+			dmx = new BindMatrix(mA.solve(mb).getArray());
+			
+			bmX.plusEquals(dmx);
+			bmX.copyToPoints();//uaktualniamy punkty
+			
+			System.out.println(Constraint.getFullConstraintValues(Point.dbPoint, Parameter.dbParameter).transposeC());
+		
+			Matrix nrm = new Matrix(Constraint.getFullConstraintValues(Point.dbPoint, Parameter.dbParameter).getArray());
+			System.out.println(" \n"+ nrm.norm1() + "\t" + nrm.norm2() + "\t" + nrm.normF());
+		}
+		System.out.println(Point.dbPoint);
+		//System.out.println(Constraint.dbConstraint);
+		System.out.println(cn2.getValue(Point.dbPoint, Parameter.dbParameter));
+
+
+		
+**********************************************************************

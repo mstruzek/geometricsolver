@@ -1,0 +1,9 @@
+function W = wiezy(w)
+%% Zwracan wiezy wartosc wiezow od w =[q,a]
+%  q- wspolrzedne uogulnione , a- mnozniki lagrange'a
+
+q1 = w(1:2);
+q2 = 
+W = zeros(15,1);
+
+W(1:2) = 

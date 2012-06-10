@@ -1,0 +1,19 @@
+function w = Newton(w0)
+%% funkcja do rozwiazywnaia zadania sketch 
+% w0 - poczatkowe
+ 
+w=w0;
+
+%% A*w=B
+% macierz stala - ale tylko dla tego przypadku
+A = [ dsily(w) -dwiezy(w)',
+      dwiezy(w) zeros(7,7)];
+  
+for i=1:10
+   
+    %mnozniki lagrange
+    a = w0(9,15);
+    
+    
+    
+end
