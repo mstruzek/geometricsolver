@@ -1,0 +1,215 @@
+package pl.struzek.graphic;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.HeadlessException;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JToolBar;
+
+import Controller;
+import GeometricConstraintType;
+import Parameter;
+import Model.MyTableModel;
+
+/**
+ * Drag+Ctrl = ZOOM 
+ * Drag+ Shift = Translate
+ * @author root
+ *
+ */
+public class View extends JFrame {
+
+	private static final long serialVersionUID = 1L;
+	
+	Container cp = new Container();
+	
+	final JTextField param = new JTextField(5);
+
+	MyTables myTables = null;
+	
+	final Controller controller;
+	
+	public View(String arg0,final Controller controll) throws HeadlessException {
+		super(arg0);
+		cp.setLayout(null);
+		this.controller = controll;
+
+		final MySketch ms = new MySketch(this.controller);
+		
+		param.setText("10.0");
+		
+		// Tabelki
+		
+		myTables = new MyTables(controller.getConstraintTableModel(),controller.getPrimitivesTableModel(),controller.getParametersTableModel());
+		myTables.setFocusable(false);
+		// end Tabelki
+		
+		//ms.setPreferredSize(new Dimension(300,300));
+		//ms.setLocation(10, 10);
+		ms.setBounds(new Rectangle(10,10,350,350));
+		
+		//ms.add(new MyPoint(50,250));
+		//ms.add(new MyLine(10,10,200,20));
+		//ms.add(new MyLine(15,115,220,120));
+		//ms.add(new MyCircle(0,0,60,60));
+		
+		addKeyListener(ms.getMyKeyListener());
+		
+		cp.add(ms);
+		//pojemnik na K,L,M,N
+		JLabel jl = ms.jl;
+		
+		// wyswietla aktualna pozycje kursora
+		JLabel currentPosition = ms.currentPosition;
+		JPanel jp = new JPanel();
+		jp.setLayout(new BorderLayout());
+		
+		jp.setBounds(10, 420,	400	, 48);
+		jp.setBorder(BorderFactory.createLineBorder(Color.black));
+		jp.add(jl,BorderLayout.NORTH);
+		jp.add(currentPosition,BorderLayout.SOUTH);
+		
+		JPanel right=new JPanel();
+		right.setBounds(420, 18,	360	, 250);
+		right.setBorder(BorderFactory.createTitledBorder("Add Constraint"));
+		final JTextArea opisWiezu = new JTextArea(7,30);
+		opisWiezu.setBorder(BorderFactory.createTitledBorder("HELP"));
+		opisWiezu.setLineWrap(true);
+		opisWiezu.setWrapStyleWord(true);
+		opisWiezu.setEditable(false);
+		opisWiezu.setFocusable(false);
+		opisWiezu.setBackground(new Color(100,255,100,50));
+		
+
+
+		final JComboBox combo = new JComboBox(GeometricConstraintType.values());
+		combo.setFocusable(false);
+		combo.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JComboBox cb = (JComboBox) e.getSource();
+				GeometricConstraintType what = (GeometricConstraintType) cb.getSelectedItem();
+				
+				opisWiezu.setText(what.getHelp());
+				opisWiezu.getParent().repaint();
+				//trzeba pobrac jeszce pobrac dane zmiennej
+				
+			}
+			
+		});
+		JButton addCon = new JButton("Add Constraint");
+		addCon.addActionListener(new ActionListener(){
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				GeometricConstraintType what = (GeometricConstraintType) combo.getSelectedItem();
+				//System.out.println(what);
+				controller.addConstraint(what, ms.mpc.getPointK(), ms.mpc.getPointL(),ms.mpc.getPointM(),ms.mpc.getPointN(), new Parameter(Double.parseDouble(param.getText())) );
+				
+			}
+			
+		});
+		right.add(combo);
+		right.add(opisWiezu);
+		right.add(param);
+		right.add(addCon);
+		
+		JPanel forTables = new JPanel();
+
+		//forTables.setBackground(Color.GREEN);
+		
+		forTables.add(new JScrollPane(myTables));
+		
+		forTables.setBounds(420,18,350,250);
+		
+		//forTables.setOpaque(true);
+		JToolBar jtb = new JToolBar();
+		JButton norm = new JButton("Normal");
+		JButton dline = new JButton("Draw Line");
+		JButton dcircle = new JButton("Draw Circle");
+		JButton dpoint = new JButton("Draw Point");
+		
+		norm.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ms.setStateSketch(MySketchState.Normal);	
+
+			}	
+		});
+		dline.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ms.setStateSketch(MySketchState.DrawLine);		
+
+			}	
+		});
+		
+		dcircle.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ms.setStateSketch(MySketchState.DrawCircle);	
+
+			}	
+		});
+		dpoint.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ms.setStateSketch(MySketchState.DrawPoint);	
+
+			}	
+		});
+		//FIXME - wazne dla setFocusable
+		norm.setFocusable(false);
+		dline.setFocusable(false);
+		dcircle.setFocusable(false);
+		dpoint.setFocusable(false);
+		jtb.add(norm);
+		jtb.add(dline);
+		jtb.add(dcircle);
+		jtb.add(dpoint);
+		
+		//right.add(jtb);
+		//cp.add(jtb);
+		cp.add(jp);
+		//cp.add(right);
+		cp.add(forTables);
+		setPreferredSize(new Dimension(1250,550));
+		
+		Container big = getContentPane();
+		big.setLayout(new BorderLayout());
+		big.add(jtb,BorderLayout.NORTH);
+		big.add(cp,BorderLayout.CENTER);
+		
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		addWindowListener(new WindowAdapter(){
+	        public void windowClosing(WindowEvent e) {
+	            System.exit(0);
+	          }
+		});
+		pack();
+		setVisible(true);
+		
+		setFocusable(true);
+
+	}
+
+}
