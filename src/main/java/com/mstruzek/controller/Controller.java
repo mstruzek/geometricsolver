@@ -50,15 +50,15 @@ public class Controller implements ControllerInterface{
 	 * @return
 	 */
 	public MyTableModel getConstraintTableModel(){
-		return sketchModel.getConstraintTableModel();
+		return sketchModel.getConstraintTM();
 		
 	}
 	public MyTableModel getParametersTableModel(){
-		return sketchModel.getParametersTableModel();
+		return sketchModel.getParametersTM();
 		
 	}
 	public MyTableModel getPrimitivesTableModel(){
-		return sketchModel.getPrimitivesTableModel();
+		return sketchModel.getPrimitivesTM();
 		
 	}
 	public ArrayList<GeometricPrymitive> getPrimitivesContainer(){
@@ -75,7 +75,12 @@ public class Controller implements ControllerInterface{
 		sketchModel.relaxForces();
 		
 	}
-	
+
+	@Override
+	public void fluctuatePoints(double coefficient) {
+		sketchModel.fluctuatePoints(coefficient);
+	}
+
 	public static void main(String[] args) {
 	
 		Controller controller =  new Controller();
@@ -83,6 +88,4 @@ public class Controller implements ControllerInterface{
 		new TView("M-Sketcher",controller);
 	}
 
-
-	
 }

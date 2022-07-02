@@ -57,7 +57,7 @@ public class _TempSolver {
 		System.out.println(Point.dbPoint);
 		
 		// Tworzymy Macierz "A" - dla tego zadania stala w czasie
-		int sizeA = Point.dbPoint.size()*2 + Constraint.allLagrangeSize();
+		int sizeA = Point.dbPoint.size()*2 + Constraint.allLagrangeCoffSize();
 		MatrixDouble A= MatrixDouble.fill(sizeA,sizeA,0.0);
 		MatrixDouble Fq = GeometricPrymitive.getAllForceJacobian();
 		MatrixDouble Wq = Constraint.getFullJacobian(Point.dbPoint, Parameter.dbParameter);
@@ -97,7 +97,7 @@ public class _TempSolver {
 		 *  
 		 */
 		
-		BindMatrix bmX = new BindMatrix(Point.dbPoint.size()*2 + Constraint.allLagrangeSize(),1);
+		BindMatrix bmX = new BindMatrix(Point.dbPoint.size()*2 + Constraint.allLagrangeCoffSize(),1);
 		bmX.bind(Point.dbPoint);
 		
 		System.out.println(bmX);

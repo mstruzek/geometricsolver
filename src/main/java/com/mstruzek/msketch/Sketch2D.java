@@ -127,12 +127,12 @@ public class Sketch2D extends JPanel {
 		//System.out.println(Point.dbPoint);
 		
 		System.out.println("Wymiar zadania:"  + Point.dbPoint.size()*2 );
-		System.out.println("Mnozniki Lagrange'a :" + Constraint.allLagrangeSize());
-		System.out.println("Stopnie swobody : " + (Point.dbPoint.size()*2 -  Constraint.allLagrangeSize()));
+		System.out.println("Mnozniki Lagrange'a :" + Constraint.allLagrangeCoffSize());
+		System.out.println("Stopnie swobody : " + (Point.dbPoint.size()*2 -  Constraint.allLagrangeCoffSize()));
 		
 		
 		// Tworzymy Macierz "A" - dla tego zadania stala w czasie
-		int sizeA = Point.dbPoint.size()*2 + Constraint.allLagrangeSize();
+		int sizeA = Point.dbPoint.size()*2 + Constraint.allLagrangeCoffSize();
 		MatrixDouble A= MatrixDouble.fill(sizeA,sizeA,0.0);
 		MatrixDouble Fq = GeometricPrymitive.getAllForceJacobian();
 		MatrixDouble Wq =null;//Constraint.getFullJacobian(Point.dbPoint, Parameter.dbParameter);
@@ -147,7 +147,7 @@ public class Sketch2D extends JPanel {
 		BindMatrix mb = null;
 		BindMatrix dmx = null;
 		
-		BindMatrix bmX = new BindMatrix(Point.dbPoint.size()*2 + Constraint.allLagrangeSize(),1);
+		BindMatrix bmX = new BindMatrix(Point.dbPoint.size()*2 + Constraint.allLagrangeCoffSize(),1);
 		bmX.bind(Point.dbPoint);
 	
 		//System.out.println(bmX);

@@ -71,7 +71,7 @@ public class MyPointContainer {
 	}
 	@Override
 	public String toString() {
-		String out=new String();
+		String out= "";
 		if(PointK>=0){
 			out += "K = " + PointK +" , ";
 		}

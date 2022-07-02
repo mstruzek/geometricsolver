@@ -1,5 +1,6 @@
 package com.mstruzek.msketch;
 
+import java.util.Map;
 import java.util.TreeMap;
 
 import Jama.Matrix;
@@ -74,7 +75,7 @@ public class ConstraintLinesPerpendicular extends Constraint {
 				
 				//a tu wstawiamy macierz dla tego wiezu
 				if(k_id==dbPoints.get(i).id){
-					Vector v1 = ((Vector)dbPoints.get(m_id)).sub((Vector)dbPoints.get(n_id));
+					Vector v1 = ((Vector)dbPoints.get(m_id).Vector()).sub((Vector)dbPoints.get(n_id));
 					out.m[0][j*2]= v1.x ;out.m[0][j*2+1] = v1.y;
 				}	
 				if(l_id==dbPoints.get(i).id){

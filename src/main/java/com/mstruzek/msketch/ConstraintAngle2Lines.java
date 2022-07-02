@@ -45,6 +45,7 @@ public class ConstraintAngle2Lines extends Constraint {
 
 		dbConstraint.put(constraintId,this);
 	}
+
 	public String toString(){
 		MatrixDouble out = getValue(Point.dbPoint, Parameter.dbParameter);
 		double norm = Matrix.constructWithCopy(out.getArray()).norm1();

@@ -19,10 +19,18 @@ import com.mstruzek.msketch.Model.MyTableModel;
 
 public class MyTables extends JPanel implements MouseInputListener {
 
+
+
+
     /**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+
+	private static final int D_WIDTH = 920;
+	private static final int D_HEIGHT = 770;
+	private static final int D_HEIGHT_JTAB = 250;
+
 
 	/** constraint */
 	MyTableModel mtm = null; 
@@ -41,7 +49,8 @@ public class MyTables extends JPanel implements MouseInputListener {
     
     public MyTables(MyTableModel constraint,MyTableModel primitives,MyTableModel parameters) {
         super();
-        setPreferredSize(new Dimension(420, 470));
+
+		setPreferredSize(new Dimension(D_WIDTH, D_HEIGHT));
         //(new BorderLayout());
         this.mtm = constraint;
         this.ptm = primitives;
@@ -51,9 +60,9 @@ public class MyTables extends JPanel implements MouseInputListener {
         table2 = new JTable(ptm);
         table3 = new JTable(vtm);
         
-		table.setPreferredScrollableViewportSize(new Dimension(400, 150));
-		table2.setPreferredScrollableViewportSize(new Dimension(400, 150));
-		table3.setPreferredScrollableViewportSize(new Dimension(400, 120));
+		table.setPreferredScrollableViewportSize(new Dimension(D_WIDTH, D_HEIGHT_JTAB));
+		table2.setPreferredScrollableViewportSize(new Dimension(D_WIDTH, D_HEIGHT_JTAB));
+		table3.setPreferredScrollableViewportSize(new Dimension(D_WIDTH, D_HEIGHT_JTAB));
 		
         //table.setFocusable(false);
         //table2.setFocusable(false);
@@ -73,7 +82,7 @@ public class MyTables extends JPanel implements MouseInputListener {
             column = table.getColumnModel().getColumn(i);
             switch(i){
             case 0:
-            	column.setPreferredWidth(8);
+            	//column.setPreferredWidth(30);
             	break;
             case 1:
             	column.setPreferredWidth(120);
