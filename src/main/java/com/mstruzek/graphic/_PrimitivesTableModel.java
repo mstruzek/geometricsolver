@@ -3,7 +3,7 @@ package com.mstruzek.graphic;
 import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
 
-import com.mstruzek.msketch.GeometricPrymitive;
+import com.mstruzek.msketch.GeometricPrimitive;
 
 public class _PrimitivesTableModel extends AbstractTableModel implements TableModelRemovable{
 
@@ -13,7 +13,7 @@ public class _PrimitivesTableModel extends AbstractTableModel implements TableMo
 	private static final long serialVersionUID = 1L;
 
 	/** zmienna w ktorej przechowujemy wszystkie wiezy nalozene przez uzytkownika */
-	ArrayList<GeometricPrymitive> primitivesContainer = new ArrayList<GeometricPrymitive>();
+	ArrayList<GeometricPrimitive> primitivesContainer = new ArrayList<GeometricPrimitive>();
 	
 	private String[] columnNames = {"id","Type","p1","p2","p3"};
 	
@@ -23,7 +23,7 @@ public class _PrimitivesTableModel extends AbstractTableModel implements TableMo
 		
 	}
 	
-	public void add(GeometricPrymitive c){
+	public void add(GeometricPrimitive c){
 		primitivesContainer.add(c);
 		fireTableRowsInserted(primitivesContainer.size(),primitivesContainer.size());
 	}
@@ -35,7 +35,7 @@ public class _PrimitivesTableModel extends AbstractTableModel implements TableMo
 		if(i<0) return;
 		int id=primitivesContainer.get(i).getPrimitiveId();
 		primitivesContainer.remove(i);
-		GeometricPrymitive.dbPrimitives.remove(id);
+		GeometricPrimitive.dbPrimitives.remove(id);
 		fireTableRowsDeleted(i, i);
 	}
 	

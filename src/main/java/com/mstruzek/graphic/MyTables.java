@@ -14,8 +14,11 @@ import javax.swing.JTable;
 import javax.swing.event.MouseInputListener;
 import javax.swing.table.TableColumn;
 
+import com.mstruzek.controller.ConstraintsTableModel;
 import com.mstruzek.controller.Controller;
-import com.mstruzek.msketch.Model.MyTableModel;
+import com.mstruzek.controller.ParametersTableModel;
+import com.mstruzek.controller.PrimitivesTableModel;
+import com.mstruzek.msketch.MyTableModel;
 
 public class MyTables extends JPanel implements MouseInputListener {
 
@@ -47,14 +50,14 @@ public class MyTables extends JPanel implements MouseInputListener {
     MPopup popupPrimitives ;
    // MPopup popupParameters = new MPopup(vtm,table3);
     
-    public MyTables(MyTableModel constraint,MyTableModel primitives,MyTableModel parameters) {
+    public MyTables() {
         super();
 
 		setPreferredSize(new Dimension(D_WIDTH, D_HEIGHT));
         //(new BorderLayout());
-        this.mtm = constraint;
-        this.ptm = primitives;
-        this.vtm = parameters;
+        this.mtm = new ConstraintsTableModel();
+        this.ptm = new PrimitivesTableModel();
+        this.vtm = new ParametersTableModel();
         
         table = new JTable(mtm);
         table2 = new JTable(ptm);
@@ -215,7 +218,7 @@ public class MyTables extends JPanel implements MouseInputListener {
 		
 		Controller controller =  new Controller();
 		
-		MyTables mt = new MyTables(controller.getConstraintTableModel(),controller.getPrimitivesTableModel(),controller.getParametersTableModel());
+		MyTables mt = new MyTables();
 		
 		frm.getContentPane().add(new JScrollPane(mt));
 		

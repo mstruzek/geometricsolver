@@ -21,19 +21,19 @@ public class ConstraintDistancePointLine extends Constraint {
 
     /**
      * Konstruktor pomiedzy 3 punktami i paramtetrem
-     * rownanie tego wiezu to  = 0
-     * @param K punkt prostej
-     * @param L punkt prostej
-     * @param M punkt prostej
+     * rownanie tego wiezu to [(R(L-K))'*(M-K)]^2 - d*d*(L-K)'*(L-K) = 0  gdzie R = Rot(PI/2) = [ 0 -1 ; 1 0]
+     *
+     * @param constId
+     * @param K       punkt prowadzacy prostej
+     * @param L       punkt prowadzacy prostej
+     * @param M       punkt odlegly od prowadzacej
      */
-    public ConstraintDistancePointLine(Point K, Point L , Point M, Parameter param){
-        super(GeometricConstraintType.DistancePointLine);
-
+    public ConstraintDistancePointLine(int constId,Point K,Point L ,Point M,Parameter param){
+        super(constId, GeometricConstraintType.DistancePointLine);
         k_id = K.id;
         l_id = L.id;
         m_id = M.id;
         param_id =param.getId();
-        dbConstraint.put(constraintId,this);
     }
 
 

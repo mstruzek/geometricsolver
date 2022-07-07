@@ -21,7 +21,7 @@ public class Sketch2D extends JPanel {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	static TreeMap<Integer,GeometricPrymitive> dbPrimitives = null;
+	static TreeMap<Integer,GeometricPrimitive> dbPrimitives = null;
 	//AffineTransform transform;
 	public Sketch2D(int width,int height){
 		super();
@@ -55,16 +55,16 @@ public class Sketch2D extends JPanel {
 			//ConstraintFixPoint cn10 = new ConstraintFixPoint(line2.p2,new Vector(.8,7.0));
 			//ConstraintFixPoint cn12 = new ConstraintFixPoint(line1.p1,new Vector(1.0,1.0));//gdy wiez zostanie powielony to macierz A bedzie miala mniejszy rank
 		
-		ConstraintConect2Points cn3 = new ConstraintConect2Points(line1.p1,line2.p1);
-		ConstraintConect2Points cn5 = new ConstraintConect2Points(line2.p2,line3.p1);
-		ConstraintConect2Points cn6 = new ConstraintConect2Points(line3.p2,line4.p1);
-		ConstraintConect2Points cn7 = new ConstraintConect2Points(line4.p2,line1.p2);
+		ConstraintConnect2Points cn3 = new ConstraintConnect2Points(Constraint.nextId(),line1.p1,line2.p1);
+		ConstraintConnect2Points cn5 = new ConstraintConnect2Points(Constraint.nextId(),line2.p2,line3.p1);
+		ConstraintConnect2Points cn6 = new ConstraintConnect2Points(Constraint.nextId(),line3.p2,line4.p1);
+		ConstraintConnect2Points cn7 = new ConstraintConnect2Points(Constraint.nextId(),line4.p2,line1.p2);
 	
 		//trojakt
 		
-		ConstraintConect2Points tcn1 = new ConstraintConect2Points(line5.p2,line6.p1);
-		ConstraintConect2Points tcn2 = new ConstraintConect2Points(line6.p2,line7.p1);
-		ConstraintConect2Points tcn3 = new ConstraintConect2Points(line7.p2,line5.p1);
+		ConstraintConnect2Points tcn1 = new ConstraintConnect2Points(Constraint.nextId(),line5.p2,line6.p1);
+		ConstraintConnect2Points tcn2 = new ConstraintConnect2Points(Constraint.nextId(),line6.p2,line7.p1);
+		ConstraintConnect2Points tcn3 = new ConstraintConnect2Points(Constraint.nextId(),line7.p2,line5.p1);
 		ConstraintFixPoint tn1 = new ConstraintFixPoint(c2.p1,new Vector(30.8,7.07));
 		/*// STARE ROZWIAZANIE NA PROSOPADTLOSC
 			ConstraintsLinesPerpendicular cn2 = new ConstraintsLinesPerpendicular(line1.p2,line1.p1,FixLine.Y.b,FixLine.Y.a);
@@ -77,39 +77,39 @@ public class Sketch2D extends JPanel {
 	*
 	*/
 		//ConstraintsLinesPerpendicular cn23 = new ConstraintsLinesPerpendicular(line2.p2,line2.p1,line1.p2,line1.p1);
-		ConstraintLinesPerpendicular cn2 = new ConstraintLinesPerpendicular(line1.p2,line1.p1,FixLine.Y.b,FixLine.Y.a);
-		ConstraintLinesPerpendicular cn2x = new ConstraintLinesPerpendicular(line2.p2,line2.p1,FixLine.X.b,FixLine.X.a);
-		ConstraintLinesParallelism cnr1 = new ConstraintLinesParallelism(line4.p2,line4.p1,line2.p2,line2.p1);
-		ConstraintLinesParallelism cnr2 = new ConstraintLinesParallelism(line3.p2,line3.p1,line1.p2,line1.p1);
+		ConstraintLinesPerpendicular cn2 = new ConstraintLinesPerpendicular(Constraint.nextId(),line1.p2,line1.p1,FixLine.Y.b,FixLine.Y.a);
+		ConstraintLinesPerpendicular cn2x = new ConstraintLinesPerpendicular(Constraint.nextId(),line2.p2,line2.p1,FixLine.X.b,FixLine.X.a);
+		ConstraintLinesParallelism cnr1 = new ConstraintLinesParallelism(Constraint.nextId(),line4.p2,line4.p1,line2.p2,line2.p1);
+		ConstraintLinesParallelism cnr2 = new ConstraintLinesParallelism(Constraint.nextId(),line3.p2,line3.p1,line1.p2,line1.p1);
 		
-		ConstraintTangency tang1 = new ConstraintTangency(line2.p2,line2.p1,cl.p1,cl.p2);
-		ConstraintTangency tang2 = new ConstraintTangency(line4.p1,line4.p2,cl.p1,cl.p2);
-		ConstraintTangency tang3 = new ConstraintTangency(line1.p1,line1.p2,cl.p1,cl.p2);
+		ConstraintTangency tang1 = new ConstraintTangency(Constraint.nextId(),line2.p2,line2.p1,cl.p1,cl.p2);
+		ConstraintTangency tang2 = new ConstraintTangency(Constraint.nextId(),line4.p1,line4.p2,cl.p1,cl.p2);
+		ConstraintTangency tang3 = new ConstraintTangency(Constraint.nextId(),line1.p1,line1.p2,cl.p1,cl.p2);
 		//ConstraintTangency tang4 = new ConstraintTangency(line3.p1,line3.p2,cl.p1,cl.p2);
 
-		ConstraintLinesSameLength sml = new  ConstraintLinesSameLength(line1.p1,line1.p2,line2.p1,line2.p2);
+		ConstraintLinesSameLength sml = new  ConstraintLinesSameLength(Constraint.nextId(),line1.p1,line1.p2,line2.p1,line2.p2);
 		
 		
 		//ConstraintDistance2Points con3 = new ConstraintDistance2Points(line1.p1,line1.p2 ,new Parameter(45));
-		ConstraintDistance2Points con3 = new ConstraintDistance2Points(cl.p1,cl.p2 ,new Parameter(15));
-		ConstraintDistance2Points con4 = new ConstraintDistance2Points(line5.p1,line5.p2 ,new Parameter(75));
+		ConstraintDistance2Points con3 = new ConstraintDistance2Points(Constraint.nextId(),cl.p1,cl.p2 ,new Parameter(15));
+		ConstraintDistance2Points con4 = new ConstraintDistance2Points(Constraint.nextId(),line5.p1,line5.p2 ,new Parameter(75));
 		
 		
 		//trojkat + okreag
-		ConstraintTangency t1 = new ConstraintTangency(line5.p1,line5.p2,c2.p1,c2.p2);
-		ConstraintTangency t2 = new ConstraintTangency(line6.p1,line6.p2,c2.p1,c2.p2);
-		ConstraintTangency t3 = new ConstraintTangency(line7.p1,line7.p2,c2.p1,c2.p2);
+		ConstraintTangency t1 = new ConstraintTangency(Constraint.nextId(),line5.p1,line5.p2,c2.p1,c2.p2);
+		ConstraintTangency t2 = new ConstraintTangency(Constraint.nextId(),line6.p1,line6.p2,c2.p1,c2.p2);
+		ConstraintTangency t3 = new ConstraintTangency(Constraint.nextId(),line7.p1,line7.p2,c2.p1,c2.p2);
 
 		//ConstraintLinesParallelism tpar2 = new ConstraintLinesParallelism(line7.p2,line7.p1,line2.p2,line2.p1);
-		ConstraintLinesParallelism tpar3 = new ConstraintLinesParallelism(line5.p2,line5.p1,line1.p2,line1.p1);
+		ConstraintLinesParallelism tpar3 = new ConstraintLinesParallelism(Constraint.nextId(),line5.p2,line5.p1,line1.p2,line1.p1);
 		
 		//Linia na lini - coincidence - dwa wiezy potrzebne
 		//ConstraintLinesParallelism tpar4 = new ConstraintLinesParallelism(line2.p1,line2.p2,line7.p2,line2.p1); // punkt na lini
-		ConstraintLinesParallelism tpar5 = new ConstraintLinesParallelism(line7.p1,line7.p2,line2.p1,line2.p2);
+		ConstraintLinesParallelism tpar5 = new ConstraintLinesParallelism(Constraint.nextId(),line7.p1,line7.p2,line2.p1,line2.p2);
 		
 		
 		//wiez dla trojkata na kat
-		ConstraintAngle2Lines angelC = new ConstraintAngle2Lines(line5.p1,line5.p2,line6.p2,line6.p1,new Parameter(Math.PI/6));//30stopni
+		ConstraintAngle2Lines angelC = new ConstraintAngle2Lines(Constraint.nextId(),line5.p1,line5.p2,line6.p2,line6.p1,new Parameter(Math.PI/6));//30stopni
 		
 		//FIXME - powyzej trzeba jakos sprawdzac czy przypadkiem nie zadeklarowalismy zbyt duzo KATOW pomiedzy liniami, ale jak ?? 
 		
@@ -134,7 +134,7 @@ public class Sketch2D extends JPanel {
 		// Tworzymy Macierz "A" - dla tego zadania stala w czasie
 		int sizeA = Point.dbPoint.size()*2 + Constraint.allLagrangeCoffSize();
 		MatrixDouble A= MatrixDouble.fill(sizeA,sizeA,0.0);
-		MatrixDouble Fq = GeometricPrymitive.getAllForceJacobian();
+		MatrixDouble Fq = GeometricPrimitive.getAllForceJacobian();
 		MatrixDouble Wq =null;//Constraint.getFullJacobian(Point.dbPoint, Parameter.dbParameter);
 		//A.addSubMatrix(0, 0, Fq);
 		//A.addSubMatrix(Fq.getHeight(), 0, Wq);
@@ -157,7 +157,7 @@ public class Sketch2D extends JPanel {
 			//zerujemy macierz A
 			A= MatrixDouble.fill(sizeA,sizeA,0.0);
 			//tworzymy macierz vector b
-			b=MatrixDouble.mergeByColumn(GeometricPrymitive.getAllForce(),Constraint.getFullConstraintValues(Point.dbPoint, Parameter.dbParameter));
+			b=MatrixDouble.mergeByColumn(GeometricPrimitive.getAllForce(),Constraint.getFullConstraintValues(Point.dbPoint, Parameter.dbParameter));
 			b.dot(-1);
 			//System.out.println(b);
 			mb= new BindMatrix(b.m);
@@ -190,7 +190,7 @@ public class Sketch2D extends JPanel {
 		//System.out.println(cn2.getValue(Point.dbPoint, Parameter.dbParameter));
 		//System.out.println(GeometricPrymitive.dbPrimitives);
 		//System.out.println(Constraint.dbConstraint);
-		dbPrimitives =GeometricPrymitive.dbPrimitives;
+		dbPrimitives =GeometricPrimitive.dbPrimitives;
 		//Teraz wyswietlmy wiezy
 		System.out.println(Constraint.dbConstraint);
 		
@@ -216,8 +216,8 @@ public class Sketch2D extends JPanel {
 		Line l =null;
 		Circle c =null;
 		for(Integer i :dbPrimitives.keySet()){
-			GeometricPrymitive gm = dbPrimitives.get(i);
-			if(gm.type==GeometricPrymitiveType.Line){		
+			GeometricPrimitive gm = dbPrimitives.get(i);
+			if(gm.type==GeometricPrimitiveType.Line){
 				l= (Line)gm;
 				//p1 - p2
 				g2.setStroke(new BasicStroke(2));
@@ -235,7 +235,7 @@ public class Sketch2D extends JPanel {
 				g2.draw(new Line2D.Double(l.p2.getX()*k, l.p2.getY()*k, l.b.getX()*k,l.b.getY()*k));
 				*/
 				
-			}else if(gm.type==GeometricPrymitiveType.Circle){
+			}else if(gm.type==GeometricPrimitiveType.Circle){
 				c= (Circle)gm;
 				//p1 - p2
 				g2.setStroke(new BasicStroke(1));
@@ -258,7 +258,7 @@ public class Sketch2D extends JPanel {
 				g2.draw(new Line2D.Double(Math.floor(c.p1.getX()*k), Math.floor(c.p1.getY()*k), Math.floor(c.a.getX()*k),Math.floor(c.a.getY()*k)));
 				g2.draw(new Line2D.Double(Math.floor(c.p2.getX()*k), Math.floor(c.p2.getY()*k), Math.floor(c.b.getX()*k),Math.floor(c.b.getY()*k)));
 				*/	
-			}else if(gm.type==GeometricPrymitiveType.Arc){
+			}else if(gm.type==GeometricPrimitiveType.Arc){
 				
 			}
 			

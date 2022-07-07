@@ -30,21 +30,20 @@ public class ConstraintTangency extends Constraint {
 	
 	/**
 	 * Konstruktor pomiedzy 4 punktami lub
-	 * rownanie tego wiezu to [(L-K)x(M-K)]^2 - (L-K)'*(L-K)*(N-M)'*(N-M) = 0 
-	 * @param K punkt prostej
-	 * @param L punkt prostej
-	 * @param M srodek okregu = p1
-	 * @param N promien okregu = p2
+	 * rownanie tego wiezu to [(L-K)x(M-K)]^2 - (L-K)'*(L-K)*(N-M)'*(N-M) = 0
+	 *
+	 * @param constId
+	 * @param K       punkt prostej
+	 * @param L       punkt prostej
+	 * @param M       srodek okregu = p1
+	 * @param N       promien okregu = p2
 	 */
-	public ConstraintTangency(Point K, Point L ,Point M,Point N){
-		super(GeometricConstraintType.Tangency);
-		
+	public ConstraintTangency(int constId,Point K,Point L ,Point M,Point N){
+		super(constId, GeometricConstraintType.Tangency);
 		k_id = K.id;
 		l_id = L.id;
 		m_id = M.id;
 		n_id = N.id;
-
-		dbConstraint.put(constraintId,this);
 	}
 	public String toString(){
 		MatrixDouble out = getValue(Point.dbPoint, Parameter.dbParameter);
@@ -209,7 +208,7 @@ public class ConstraintTangency extends Constraint {
 		//Vector pn3 = new Vector(1.0,1.0);
 		//Vector pn4 = new Vector(1.0,2.0);
 		//System.out.println(ConstraintTangency.R);
-		ConstraintTangency cn = new ConstraintTangency (pn1,pn2,pn3,pn4);
+		ConstraintTangency cn = new ConstraintTangency (Constraint.nextId(),pn1,pn2,pn3,pn4);
 		System.out.println(Constraint.dbConstraint );
 		System.out.println(cn.getJacobian(Point.dbPoint, Parameter.dbParameter));
 		System.out.println(cn.getValue(Point.dbPoint, Parameter.dbParameter));

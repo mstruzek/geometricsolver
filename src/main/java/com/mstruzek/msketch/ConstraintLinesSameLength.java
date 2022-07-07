@@ -24,26 +24,25 @@ public class ConstraintLinesSameLength extends Constraint {
 	int n_id;
 	
 	/**
-	 * Konstruktor pomiedzy 4 punktami lub
-	 * 2 punktami i FixLine(czyli 2 wektory)
-	 * rownanie tego wiezu to sqrt[(K-L)'*(K-L)] - sqrt[(M-N)'*(M-N)] = 0 
-	 * iloczyn skalarny 
-	 * @param K
-	 * @param L
-	 * @param M
-	 * @param N
-	 */
-	public ConstraintLinesSameLength(Point K, Point L ,Point M,Point N){
-		super(GeometricConstraintType.LinesSameLength);
-		
+     * Konstruktor pomiedzy 4 punktami lub
+     * 2 punktami i FixLine(czyli 2 wektory)
+     * rownanie tego wiezu to sqrt[(K-L)'*(K-L)] - sqrt[(M-N)'*(M-N)] = 0
+     * iloczyn skalarny
+     *
+     * @param constId
+     * @param K
+     * @param L
+     * @param M
+     * @param N
+     */
+	public ConstraintLinesSameLength(int constId,Point K,Point L ,Point M,Point N){
+		super(constId, GeometricConstraintType.LinesSameLength);
 		k_id = K.id;
 		l_id = L.id;
 		m_id = M.id;
 		n_id = N.id;
-
-		
-		dbConstraint.put(constraintId,this);
 	}
+
 	public String toString(){
 		MatrixDouble out = getValue(Point.dbPoint, Parameter.dbParameter);
 		double norm = Matrix.constructWithCopy(out.getArray()).norm1();

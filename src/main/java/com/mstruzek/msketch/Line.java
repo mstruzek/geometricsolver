@@ -1,8 +1,9 @@
 package com.mstruzek.msketch;
 
-import java.util.TreeMap;
-
 import com.mstruzek.msketch.matrix.MatrixDouble;
+
+
+/// FIX Point recalculated form P1 and P2, from Persistence and Serialization!
 
 //FIXME - trzeba zaburzac punkty jezeli sa singularity 
 /**
@@ -11,16 +12,8 @@ import com.mstruzek.msketch.matrix.MatrixDouble;
  * pomiedzy pynktami [p1,p2] - sprezyny mocne springStiffnessHigh 
  *
  */
-public class Line extends GeometricPrymitive{
-	
-	/** Licznik lini */
-	static int counter =0;
-	/** numer kolejno utworzonej lini */
-	int id = counter++;
-	/** tablica wszystkich linii*/
-	static TreeMap<Integer,Line> dbLine = new TreeMap<Integer,Line>();
+public class Line extends GeometricPrimitive{
 
-	
 	/** fix control points -punkty kontrolne zafixowane */
 	Point a = null; 
 	Point b = null;
@@ -32,36 +25,40 @@ public class Line extends GeometricPrymitive{
 	/** Odleglosci pomiedzy wektorami poczatkowe */
 	double d_a_p1,d_p1_p2,d_p2_b;
 	
-	/** wsp�czynnik do skalowania wzglednego dla wektorow*/
+	/** wspolczynnik do skalowania wzglednego dla wektorow*/
 	double alfa = 0.5;
 
 	/** Numery wiezow  powiazane z a,b*/
 	int[] constraintsId = new int[2];
 	                              
 	public Line(Vector p10,Vector p20){
-		
-		//ustawienie pozycji dla punktow kontrolnych
-		//Kolejnosc inicjalizacji ma znaczenie
-		a=new Point(p10.sub(p20).dot(alfa).add(p10));
-		p1=new Point(p10);//przepisujemy wartosci
-		p2=new Point(p20);
-		b=new Point(p20.sub(p10).dot(alfa).add(p20));
-		
+		this(GeometricPrimitive.nextId(), p10, p20);
+	}
+
+	public Line(int id,Vector v10,Vector v20){
+		super(id,GeometricPrimitiveType.Line);
+
+		if(v10 instanceof Point && v20 instanceof Point){
+			Point p1=(Point) v10;
+			Point p2=(Point) v20;
+			a=new Point(p1.getId()-1,v10.sub(v20).dot(alfa).add(v10));
+			b=new Point(p2.getId()+1,v20.sub(v10).dot(alfa).add(v20));
+		}else{
+			//ustawienie pozycji dla punktow kontrolnych
+			//Kolejnosc inicjalizacji ma znaczenie
+			a=new Point(v10.sub(v20).dot(alfa).add(v10));
+			p1=new Point(v10);//przepisujemy wartosci
+			p2=new Point(v20);
+			b=new Point(v20.sub(v10).dot(alfa).add(v20));
+		}
 		//FIXME  -Trzeba pomyslec o naciagu wstepnym sprezyn
-		
-		
 		calculateDistance();
-		dbLine.put(id,this);
-		dbPrimitives.put(primitiveId,this);
-		
 		//ustawiamy wiezy dla punktow a i b , przechowujemy lokalnie numery wiezow
 		this.associateConstraintsId = setAssociateConstraints();
-		// ustaw typ geometryczny
-		type = GeometricPrymitiveType.Line;
 	}
 
 	public String toString(){
-		String out = type + "" + this.id + "*" + this.primitiveId + ": {";
+		String out = type + "" + "*" + this.primitiveId + ": {";
 		out+="a=" + a + ",";
 		out+="p1=" + p1 + ",";
 		out+="p2=" + p2 + ",";
@@ -119,8 +116,8 @@ public class Line extends GeometricPrymitive{
 
 	@Override
 	public int[] setAssociateConstraints() {
-		ConstraintFixPoint fixPointa = new ConstraintFixPoint(a);
-		ConstraintFixPoint fixPointb = new ConstraintFixPoint(b);
+		ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(),a);
+		ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(),b);
 		constraintsId[0] = fixPointa.constraintId;
 		constraintsId[1] = fixPointb.constraintId;
 		return constraintsId;
@@ -173,28 +170,12 @@ public class Line extends GeometricPrymitive{
 
 	@Override
 	public int[] getAllPointsId() {
-
 		int[] out = new int[4];
-		
 		out[0] = a.getId();
 		out[1] = b.getId();
 		out[2] = p1.getId();
 		out[3] = p2.getId();
 		return out;
-	}
-
-	public static void main(String[] args) {
-		Line ln = new Line(new Vector(0.0,0.0),new Vector(4.0,3.0));
-		//Line ln2 = new Line(new Vector(1.0,1.0),new Vector(4.0,3.0));
-		System.out.println(ln);
-		//System.out.println(ln2);
-		//System.out.println(ln.getForceJacobian());
-		ln.p1.setLocation(-1, -1);
-		System.out.println(ln);
-		System.out.println(Constraint.dbConstraint);
-		ln.recalculateControlPoints();
-		System.out.println(ln);
-		System.out.println(Constraint.dbConstraint);
 	}
 
 	@Override

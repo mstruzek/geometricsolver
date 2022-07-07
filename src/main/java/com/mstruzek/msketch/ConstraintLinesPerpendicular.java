@@ -1,6 +1,5 @@
 package com.mstruzek.msketch;
 
-import java.util.Map;
 import java.util.TreeMap;
 
 import Jama.Matrix;
@@ -30,18 +29,19 @@ public class ConstraintLinesPerpendicular extends Constraint {
 	Vector n=null;
 	
 	/**
-	 * Konstruktor pomiedzy 4 punktami lub
-	 * 2 punktami i FixLine(czyli 2 wektory)
-	 * rownanie tego wiezu to (K-L)'*(M-N) = 0 
-	 * iloczyn skalarny 
-	 * @param K
-	 * @param L
-	 * @param M
-	 * @param N
-	 */
-	public ConstraintLinesPerpendicular(Point K, Point L ,Vector M,Vector N){
-		super(GeometricConstraintType.LinesPerpendicular);
-		
+     * Konstruktor pomiedzy 4 punktami lub
+     * 2 punktami i FixLine(czyli 2 wektory)
+     * rownanie tego wiezu to (K-L)'*(M-N) = 0
+     * iloczyn skalarny
+     *
+     * @param constId
+     * @param K
+     * @param L
+     * @param M
+     * @param N
+     */
+	public ConstraintLinesPerpendicular(int constId,Point K,Point L ,Vector M,Vector N){
+		super(constId, GeometricConstraintType.LinesPerpendicular);
 		k_id = K.id;
 		l_id = L.id;
 		if((M instanceof Point) && ( N instanceof Point)){
@@ -51,8 +51,6 @@ public class ConstraintLinesPerpendicular extends Constraint {
 			m=M;
 			n= N;			
 		}
-		
-		dbConstraint.put(constraintId,this);
 	}
 	public String toString(){
 		MatrixDouble out = getValue(Point.dbPoint, Parameter.dbParameter);
@@ -230,7 +228,7 @@ public class ConstraintLinesPerpendicular extends Constraint {
 		Point pn4 = new Point(1.0,10.0);
 		//Vector pn3 = new Vector(1.0,1.0);
 		//Vector pn4 = new Vector(1.0,2.0);
-		ConstraintLinesPerpendicular cn = new ConstraintLinesPerpendicular(pn2,pn1,pn4,pn3);
+		ConstraintLinesPerpendicular cn = new ConstraintLinesPerpendicular(Constraint.nextId(),pn2,pn1,pn4,pn3);
 		System.out.println(Constraint.dbConstraint );
 		System.out.println(cn.getNorm(Point.dbPoint, Parameter.dbParameter));
 		System.out.println(cn.getValue(Point.dbPoint, Parameter.dbParameter));

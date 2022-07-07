@@ -20,7 +20,7 @@ import javax.swing.event.MouseInputListener;
 import com.mstruzek.controller.ActiveKey;
 import com.mstruzek.msketch.Config;
 import com.mstruzek.controller.Controller;
-import com.mstruzek.msketch.GeometricPrymitive;
+import com.mstruzek.msketch.GeometricPrimitive;
 import com.mstruzek.msketch.Vector;
 
 
@@ -52,7 +52,7 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
 
     public MyPointContainer mpc = new MyPointContainer(-1, -1, -1, -1);
 
-    ActiveKey ACK = ActiveKey.None;
+    ActiveKey ack= ActiveKey.None;
 
     public JLabel jl = new JLabel("K,L,M,N");
 
@@ -140,7 +140,7 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
      * Pobierz dane z modelu
      */
     public void refreshContainers() {
-        ArrayList<GeometricPrymitive> primitives = controller.getPrimitivesContainer();
+        ArrayList<GeometricPrimitive> primitives = controller.getPrimitivesContainer();
 
         MyPoint p1, p2, p3;
         MyLine ml;
@@ -156,7 +156,7 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
         pointStore.clear();
 
         for (int i = 0; i < primitives.size(); i++) {
-            GeometricPrymitive gm = primitives.get(i);
+            GeometricPrimitive gm = primitives.get(i);
 
             switch (gm.getType()) {
                 case Line:
@@ -222,8 +222,8 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
             if (withControlLines) {
                 g2d.setColor(Color.LIGHT_GRAY);
 
-                int pA = GeometricPrymitive.dbPrimitives.get(ml.getPrimitiveId()).getA();
-                int pB = GeometricPrymitive.dbPrimitives.get(ml.getPrimitiveId()).getB();
+                int pA = GeometricPrimitive.dbPrimitives.get(ml.getPrimitiveId()).getA();
+                int pB = GeometricPrimitive.dbPrimitives.get(ml.getPrimitiveId()).getB();
                 //A - p1
                 tp3.setLocation(com.mstruzek.msketch.Point.getDbPoint().get(pA).getX(), com.mstruzek.msketch.Point.getDbPoint().get(pA).getY());
                 tx.transform(tp3, tp2);
@@ -252,8 +252,8 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
             if (withControlLines) {
                 g2d.setColor(Color.LIGHT_GRAY);
 
-                int pA = GeometricPrymitive.dbPrimitives.get(cl.getPrimitiveId()).getA();
-                int pB = GeometricPrymitive.dbPrimitives.get(cl.getPrimitiveId()).getB();
+                int pA = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getA();
+                int pB = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getB();
                 //A - p1
                 tp3.setLocation(com.mstruzek.msketch.Point.getDbPoint().get(pA).getX(), com.mstruzek.msketch.Point.getDbPoint().get(pA).getY());
                 tx.transform(tp3, tp2);
@@ -308,10 +308,10 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
             if (withControlLines) {
                 g2d.setColor(Color.LIGHT_GRAY);
 
-                int pA = GeometricPrymitive.dbPrimitives.get(cl.getPrimitiveId()).getA();
-                int pB = GeometricPrymitive.dbPrimitives.get(cl.getPrimitiveId()).getB();
-                int pC = GeometricPrymitive.dbPrimitives.get(cl.getPrimitiveId()).getC();
-                int pD = GeometricPrymitive.dbPrimitives.get(cl.getPrimitiveId()).getD();
+                int pA = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getA();
+                int pB = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getB();
+                int pC = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getC();
+                int pD = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getD();
                 //A - p1
                 tx.transform(cl.p1.getLocation(), tp1);
                 tp3.setLocation(com.mstruzek.msketch.Point.getDbPoint().get(pA).getX(), com.mstruzek.msketch.Point.getDbPoint().get(pA).getY());
@@ -345,8 +345,8 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
                 g2d.setColor(Color.LIGHT_GRAY);
                 MyFreePoint mfp = freePointStore.get(i);
 
-                int pA = GeometricPrymitive.dbPrimitives.get(mfp.getPrimitiveId()).getA();
-                int pB = GeometricPrymitive.dbPrimitives.get(mfp.getPrimitiveId()).getB();
+                int pA = GeometricPrimitive.dbPrimitives.get(mfp.getPrimitiveId()).getA();
+                int pB = GeometricPrimitive.dbPrimitives.get(mfp.getPrimitiveId()).getB();
                 //A - p1
 
                 tx.transform(mfp.p1.getLocation(), tp1);
@@ -391,7 +391,7 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
     }
 
 
-    public Point getInversTransformeEvent(MouseEvent e) {
+    public Point getInverseTransformEvent(MouseEvent e) {
         Point tp1 = new Point();
         try {
             tx.inverseTransform(e.getPoint().getLocation(), tp1);
@@ -404,34 +404,18 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
 
     // Z kontrolem bedzie obsluga AffineTransform
     @Override
-    public void mouseClicked(MouseEvent e) {
+    public void mouseClicked(MouseEvent e){
         //pierw sprawdzamy czy klikniecie w jeden z naszych punktow
-        Point tp1 = getInversTransformeEvent(e);
+        Point tp1=getInverseTransformEvent(e);
 
         //System.out.println(tp1);
-        for (int i = 0; i < pointStore.size(); i++) {
-            if (pointStore.get(i).contains(tp1.x, tp1.y, r / tx.getScaleX())) {
-
-                System.out.println("e = " + pointStore.get(i).id);
-                if(ACK == ActiveKey.K) {
-                    ACK = ActiveKey.None;
-                    mpc.setPointK(pointStore.get(i).id);
-                }
-                else if(ACK == ActiveKey.L) {
-                    ACK = ActiveKey.None;
-                    mpc.setPointL(pointStore.get(i).id);
-                }
-                else if(ACK == ActiveKey.M) {
-                    ACK = ActiveKey.None;
-                    mpc.setPointM(pointStore.get(i).id);
-                }
-                else if(ACK == ActiveKey.N) {
-                    ACK = ActiveKey.None;
-                    mpc.setPointN(pointStore.get(i).id);
-                }
-
+        for(int i=0;i<pointStore.size();i++){
+            if(pointStore.get(i).contains(tp1.x,tp1.y,r/tx.getScaleX())){
+                if(ack==ActiveKey.K)     { ack=ActiveKey.None; mpc.setPointK(pointStore.get(i).id); }
+                else if(ack==ActiveKey.L){ ack=ActiveKey.None; mpc.setPointL(pointStore.get(i).id); }
+                else if(ack==ActiveKey.M){ ack=ActiveKey.None; mpc.setPointM(pointStore.get(i).id); }
+                else if(ack==ActiveKey.N){ ack=ActiveKey.None; mpc.setPointN(pointStore.get(i).id); }
                 this.jl.setText(mpc.toString());
-
                 break;
             }
         }
@@ -465,7 +449,7 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
             return;
         }
         //pierw sprawdzamy czy klikniecie w jeden z naszych punktow
-        Point tp1 = getInversTransformeEvent(e);
+        Point tp1 = getInverseTransformEvent(e);
 
         //System.out.println(tp1);
         for (int i = 0; i < pointStore.size(); i++) {
@@ -480,7 +464,7 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
     @Override
     public void mouseReleased(MouseEvent e) {
         //pierw sprawdzamy czy klikniecie w jeden z naszych punktow
-        Point tp1 = getInversTransformeEvent(e);
+        Point tp1 = getInverseTransformEvent(e);
 
         switch (stateSketch) {
 
@@ -599,7 +583,7 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
             return;
         }
         //pierw sprawdzamy czy klikniecie w jeden z naszych punktow
-        Point tp1 = getInversTransformeEvent(e);
+        Point tp1 = getInverseTransformEvent(e);
 
         for (int i = 0; i < pointStore.size(); i++) {
             if (pointStore.get(i).isDragged()) {

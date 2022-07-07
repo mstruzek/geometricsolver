@@ -9,24 +9,36 @@ import com.mstruzek.msketch.matrix.MatrixDouble;
  * narysowane na ekranie : linia, luk, okrag,"wolny" punkt 
  *
  */
-public abstract class GeometricPrymitive {
+public abstract class GeometricPrimitive{
+
 	/** licznik elementow podstawowych */
 	static int primitiveCounter= 0;
+
 	/** id danego elemntu podstawowego */
-	int primitiveId =primitiveCounter++;
-	/** tablica wszystkich elemntow*/
-	public static TreeMap<Integer,GeometricPrymitive> dbPrimitives = new TreeMap<Integer,GeometricPrymitive>();
+	protected int primitiveId;
 	/** Typ elementu */
-	GeometricPrymitiveType type =null;
+	protected GeometricPrimitiveType type =null;
+
+	/** tablica wszystkich elemntow*/
+	public static TreeMap<Integer,GeometricPrimitive> dbPrimitives = new TreeMap<Integer,GeometricPrimitive>();
+
+
 	/** tablica przechowujaca powiazane wiezy dla punktow kontrolnych np : a,b,c*/
 	int[] associateConstraintsId = null;
-	
+
+	public GeometricPrimitive(int primitiveId, GeometricPrimitiveType geometricPrimitiveType){
+		this.primitiveId = primitiveId;
+		this.type = geometricPrimitiveType;
+		dbPrimitives.put(primitiveId,this);
+	}
+
 	/** Przelicza na nowo pozycje punktow kontrolnych */
 	public abstract void recalculateControlPoints();
 	
 	/** Funkcja zwraca jakobian si� - czyli macierz szytnowsci Fq */
 	public abstract MatrixDouble getForceJacobian();
-	/** Funkcja zwraca wartosc sil w sprezynach dla poszczegolnych punkt�w w danym {@link GeometricPrymitive} */
+
+	/** Funkcja zwraca wartosc sil w sprezynach dla poszczegolnych punkt�w w danym {@link GeometricPrimitive} */
 	public abstract MatrixDouble getForce();
 	
 	/** Pobierz wszystkie punkty powiazane z dana figura */
@@ -34,7 +46,8 @@ public abstract class GeometricPrymitive {
 	
 	/** Funkcja  ustawia wiezy poczatkowe -czyli rejestruje w bazie wiezow, np : wiez FixPoint na Point[a,b,c] */
 	public abstract int[] setAssociateConstraints();
-	
+
+
 	/** Funkcja zwraca ilosc punktow w danym elemencie geometrycznym */
 	public abstract int getNumOfPoints();
 	
@@ -46,7 +59,7 @@ public abstract class GeometricPrymitive {
 	public abstract int getB();
 	public abstract int getC();
 	public abstract int getD();
-	
+
 	
 	/**
 	 * Zwraca id figury
@@ -60,7 +73,7 @@ public abstract class GeometricPrymitive {
 	 * Zwraca rodzaj figury
 	 * @return
 	 */
-	public GeometricPrymitiveType getType() {
+	public GeometricPrimitiveType getType() {
 		return type;
 	}
 
@@ -104,5 +117,12 @@ public abstract class GeometricPrymitive {
 	public static void remove(int id){
 		dbPrimitives.remove(id);
 	}
-	
+
+	public int[] associateConstraintsId(){
+		return associateConstraintsId;
+	}
+
+	public static int nextId() {
+		return primitiveCounter++;
+	}
 }

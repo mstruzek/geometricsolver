@@ -5,48 +5,50 @@ import com.mstruzek.msketch.Vector;
 
 /**
  * Interfejs do oddzialywania na Controler(Model)
- * 
+ *
  * @author root
  */
-public interface ControllerInterface {
+public interface ControllerInterface{
 
-	/**
-	 *  Dodaj linie
-	 */
-	void addLine(Vector v1,Vector v2);
-	
-	/**
-	 * Dodaj kolo
-	 */
-	void addCircle(Vector v1,Vector v2);
-	
-	/**
-	 * Dodaj Luk
-	 */
-	void addArc(Vector v1,Vector v2);
-	
-	/**
-	 * Dodaj punkt
-	 */
-	void addPoint(Vector v1);
-	
-	/**
-	 * Rozwiaz system
-	 */
-	void solveSystem();
-	
-	/**
-	 * Przelicz punkty kontrolne -wyzeruj sily
-	 */
-	void relaxForces();
+    /**
+     * Dodaj linie
+     */
+    void addLine(Vector v1,Vector v2);
 
-	/**
-	 * Wprowadza zaklocenia na punktach
-	 */
-	void fluctuatePoints(double coefficient);
+    /**
+     * Dodaj kolo
+     */
+    void addCircle(Vector v1,Vector v2);
 
-	/**
-	 * Dodaj wiez do modelu
-	 */
-	void addConstraint(GeometricConstraintType constraintType, int K, int L,int M, int N, double d);
+    /**
+     * Dodaj Luk
+     */
+    void addArc(Vector v1,Vector v2);
+
+    /**
+     * Dodaj punkt
+     */
+    void addPoint(Vector v1);
+
+    /**
+     * Rozwiaz system
+     */
+    void solveSystem();
+
+    /**
+     * Przelicz punkty kontrolne -wyzeruj sily
+     */
+    void relaxForces();
+
+    /**
+     * Wprowadza zaklocenia na punktach
+     */
+    void fluctuatePoints(double coefficient);
+
+    /**
+     * Dodaj wiez do modelu
+     */
+    void addConstraint(GeometricConstraintType constraintType,int K,int L,int M,int N,double d);
+
+
 }

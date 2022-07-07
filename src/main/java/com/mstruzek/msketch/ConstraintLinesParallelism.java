@@ -34,18 +34,20 @@ public class ConstraintLinesParallelism extends Constraint{
 	static MatrixDouble mR = MatrixDouble.getRotation2x2(90); //mR=-R
 	
 	/**
-	 * Konstruktor pomiedzy 4 punktami lub
-	 * 2 punktami i FixLine(czyli 2 wektory)
-	 * rownanie tego wiezu to (L-K)x(N-M) = 0 
-	 * iloczyn wektorowy
-	 * FIXME - zastanowic sie czy nie zrobic abs((L-K)x(N-M)) =0 moze bedzie szybciej zbiegal
-	 * @param K
-	 * @param L
-	 * @param M
-	 * @param N
-	 */
-	public ConstraintLinesParallelism(Point K, Point L ,Vector M,Vector N){
-		super(GeometricConstraintType.LinesParallelism);
+     * Konstruktor pomiedzy 4 punktami lub
+     * 2 punktami i FixLine(czyli 2 wektory)
+     * rownanie tego wiezu to (L-K)x(N-M) = 0
+     * iloczyn wektorowy
+     * FIXME - zastanowic sie czy nie zrobic abs((L-K)x(N-M)) =0 moze bedzie szybciej zbiegal
+     *
+     * @param constId
+     * @param K
+     * @param L
+     * @param M
+     * @param N
+     */
+	public ConstraintLinesParallelism(int constId,Point K,Point L ,Vector M,Vector N){
+		super(constId, GeometricConstraintType.LinesParallelism);
 		
 		k_id = K.id;
 		l_id = L.id;
@@ -56,8 +58,6 @@ public class ConstraintLinesParallelism extends Constraint{
 			m=M;
 			n= N;			
 		}
-		
-		dbConstraint.put(constraintId,this);
 	}
 	public String toString(){
 		MatrixDouble out = getValue(Point.dbPoint, Parameter.dbParameter);
@@ -231,7 +231,7 @@ public class ConstraintLinesParallelism extends Constraint{
 		Point pn3 = new Point(1.,1.0);
 		Point pn4 = new Point(10.0,1.1);
 
-		ConstraintLinesParallelism cn = new ConstraintLinesParallelism(pn1,pn2,pn3,pn4);
+		ConstraintLinesParallelism cn = new ConstraintLinesParallelism(Constraint.nextId(),pn1,pn2,pn3,pn4);
 		System.out.println(Constraint.dbConstraint );
 		System.out.println(cn.getJacobian(Point.dbPoint, Parameter.dbParameter));
 		System.out.println(cn.getValue(Point.dbPoint, Parameter.dbParameter));

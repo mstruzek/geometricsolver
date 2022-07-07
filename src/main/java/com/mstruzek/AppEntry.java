@@ -1,6 +1,9 @@
 package com.mstruzek;
 
 import com.mstruzek.controller.Controller;
+import com.mstruzek.msketch.Point;
+
+import java.util.TreeMap;
 
 public class AppEntry {
 

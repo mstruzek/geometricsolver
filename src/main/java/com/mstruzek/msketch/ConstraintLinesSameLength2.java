@@ -33,17 +33,14 @@ public class ConstraintLinesSameLength2 extends Constraint {
 	 * @param M
 	 * @param N
 	 */
-	public ConstraintLinesSameLength2(Point K, Point L ,Point M,Point N){
-		super(GeometricConstraintType.LinesSameLength);
-		
+	public ConstraintLinesSameLength2(int constId, Point K, Point L ,Point M,Point N){
+		super(constId, GeometricConstraintType.LinesSameLength);
 		k_id = K.id;
 		l_id = L.id;
 		m_id = M.id;
 		n_id = N.id;
-
-		
-		dbConstraint.put(constraintId,this);
 	}
+
 	public String toString(){
 		MatrixDouble out = getValue(Point.dbPoint, Parameter.dbParameter);
 		double norm = Matrix.constructWithCopy(out.getArray()).norm1();

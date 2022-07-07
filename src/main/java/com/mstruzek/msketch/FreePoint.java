@@ -1,21 +1,13 @@
 package com.mstruzek.msketch;
 
-import java.util.TreeMap;
-
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 /**
  * Klasa FreePoint - czyli wolny Punkt 
  * 
  */
-public class FreePoint extends GeometricPrymitive {
-	/** Licznik freepointow */
-	static int counter =0;
-	/** numer kolejno utworzonego free pointa */
-	int id = counter++;
-	/** tablica wszystkich linii*/
-	static TreeMap<Integer,FreePoint> dbFreePoint = new TreeMap<Integer,FreePoint>();
-	
+public class FreePoint extends GeometricPrimitive{
+
 	/** fix control points -punkty kontrolne zafixowane */
 	Point a = null; 
 	Point b = null;
@@ -33,31 +25,35 @@ public class FreePoint extends GeometricPrymitive {
 	int[] constraintsId = new int[2];	
 	
 	public FreePoint(Vector p) {
-		super();
-		// Punkty kontrolne wyznaczamy na podstawie distance,agnle : distance- to odleglosc wektora a i b od p1 
-		//Kolejnosc inicjalizacji ma znaczenie
-		a = new Point(p.sub(new Vector(distance*Math.cos(angle),distance*Math.sin(angle))));
-		p1 = new Point(p);
-		b = new Point(p.add(new Vector(distance*Math.cos(angle),distance*Math.sin(angle))));
+		this(GeometricPrimitive.nextId(), p);
+	}
+
+	public FreePoint(int id, Vector v00) {
+		super(id, GeometricPrimitiveType.FreePoint);
+		if(v00 instanceof Point) {
+			p1 = (Point) v00;
+			a = new Point(p1.getId()-1, v00.sub(new Vector(distance*Math.cos(angle),distance*Math.sin(angle))));
+			b = new Point(p1.getId()+1, v00.add(new Vector(distance*Math.cos(angle),distance*Math.sin(angle))));
+		} else {
+			// Punkty kontrolne wyznaczamy na podstawie distance,agnle : distance- to odleglosc wektora a i b od p1
+			// Kolejnosc inicjalizacji ma znaczenie
+			a = new Point(v00.sub(new Vector(distance*Math.cos(angle),distance*Math.sin(angle))));
+			p1 =new Point(v00);
+			b = new Point(v00.add(new Vector(distance*Math.cos(angle),distance*Math.sin(angle))));
+		}
 		// przelicz odleglosci
 		calculateDistance();
-		//dodaj do globalnej bazy
-		dbFreePoint.put(id,this);
-		dbPrimitives.put(primitiveId,this);
 		this.associateConstraintsId = setAssociateConstraints();
-		// ustaw typ geometryczny
-		type = GeometricPrymitiveType.FreePoint;
 	}
 	
 	/** Funkcja oblicza dlugosci poczatkowe pomiedzy wektorami */
 	private void calculateDistance() {
-
 		d_a_p1 = Math.abs(p1.sub(a).length())*0.1;
 		d_p1_b = Math.abs(b.sub(p1).length())*0.1;
-
 	}
+
 	public String toString(){
-		String out = type + ""  + this.id + "*" + this.primitiveId + ": {";
+		String out = type + "*" + this.primitiveId + ": {";
 		out+="a=" + a + ",";
 		out+="p1=" + p1 + ",";
 		out+="b=" + b + "}\n";
@@ -102,8 +98,8 @@ public class FreePoint extends GeometricPrymitive {
 
 	@Override
 	public int[] setAssociateConstraints() {
-		ConstraintFixPoint fixPointa = new ConstraintFixPoint(a);
-		ConstraintFixPoint fixPointb = new ConstraintFixPoint(b);
+		ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(),a);
+		ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(),b);
 		constraintsId[0] = fixPointa.constraintId;
 		constraintsId[1] = fixPointb.constraintId;
 		return constraintsId;
@@ -156,15 +152,6 @@ public class FreePoint extends GeometricPrymitive {
 		out[1] = b.getId();
 		out[2] = p1.getId();
 		return out;
-	}
-
-	public static void main(String[] args) {
-		
-		FreePoint fp = new FreePoint(new Vector(1.0,1.0));
-		FreePoint fp1 = new FreePoint(new Vector(1.0,1.0));
-		System.out.println(fp);
-		System.out.println(fp1);
-		System.out.println(FreePoint.dbFreePoint);
 	}
 
 	@Override

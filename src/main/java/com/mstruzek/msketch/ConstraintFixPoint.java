@@ -20,14 +20,15 @@ public class ConstraintFixPoint extends Constraint{
 
 	/**
 	 * Konstruktor wiezu
-	 * @param K - Point zafiksowany bedzie w aktualnym miejscu
+	 *
+	 * @param constId
+	 * @param K       - Point zafiksowany bedzie w aktualnym miejscu
 	 */
-	public ConstraintFixPoint(Point K) {
-		super(GeometricConstraintType.FixPoint);
+	public ConstraintFixPoint(int constId,Point K) {
+		super(constId, GeometricConstraintType.FixPoint);
 		//pobierz id
 		k_id = K.id;
 		k0_vec=new Vector((Vector)K);
-		dbConstraint.put(constraintId,this);
 	}
 	
 	/**
@@ -36,7 +37,7 @@ public class ConstraintFixPoint extends Constraint{
 	 * @param L - Vector w ktorym bedzie zafiksowany K
 	 */
 	public ConstraintFixPoint(Point K,Vector L) {
-		super(GeometricConstraintType.FixPoint);
+		super(nextId(), GeometricConstraintType.FixPoint);
 		//pobierz id
 		k_id = ((Point)K).id;
 		k0_vec=L;
@@ -123,10 +124,10 @@ public class ConstraintFixPoint extends Constraint{
 		Point pn3 =new Point(new Vector(3.0,4.0));
 		Point pn2 = new Point(new Vector(4.0,5.0));
 		
-		ConstraintConect2Points conectPoint = new ConstraintConect2Points(pn,pn2);
+		ConstraintConnect2Points conectPoint = new ConstraintConnect2Points(Constraint.nextId(),pn,pn2);
 		
 		
-		ConstraintFixPoint fixPoint2 = new ConstraintFixPoint(pn3);
+		ConstraintFixPoint fixPoint2 = new ConstraintFixPoint(Constraint.nextId(),pn3);
 		System.out.println(Constraint.dbConstraint );
 		//jakobian z wiezow
 		//double[][] tab = fixPoint2.getJacobian2D(Point.dbPoint, Parameter.dbParameter);

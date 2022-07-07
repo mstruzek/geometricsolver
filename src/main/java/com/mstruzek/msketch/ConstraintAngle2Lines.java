@@ -34,16 +34,13 @@ public class ConstraintAngle2Lines extends Constraint {
 	 * @param M punkt prostej
 	 * @param N punkt prostej
 	 */
-	public ConstraintAngle2Lines(Point K, Point L ,Point M,Point N,Parameter param){
-		super(GeometricConstraintType.Angle2Lines);
-		
+	public ConstraintAngle2Lines(Integer constId, Point K, Point L ,Point M,Point N,Parameter param){
+		super(constId,GeometricConstraintType.Angle2Lines);
 		k_id = K.id;
 		l_id = L.id;
 		m_id = M.id;
 		n_id = N.id;
 		param_id =param.getId();
-
-		dbConstraint.put(constraintId,this);
 	}
 
 	public String toString(){

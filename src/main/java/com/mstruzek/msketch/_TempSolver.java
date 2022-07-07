@@ -42,24 +42,24 @@ public class _TempSolver {
 		Line line3 = new Line(new Vector(6.0,6.0),new Vector(10.0,5.0));
 		Line line4 = new Line(new Vector(9.0,4.0),new Vector(9.0,0.0));
 		ConstraintFixPoint cn1 = new ConstraintFixPoint(line1.p1,new Vector(1.0,1.0));
-		ConstraintLinesPerpendicular cn2 = new ConstraintLinesPerpendicular(line1.p2,line1.p1,FixLine.Y.b,FixLine.Y.a);
-		ConstraintConect2Points cn3 = new ConstraintConect2Points(line1.p1,line2.p1);
-		ConstraintLinesPerpendicular cn4 = new ConstraintLinesPerpendicular(line2.p2,line2.p1,FixLine.X.b,FixLine.X.a);
-		ConstraintConect2Points cn5 = new ConstraintConect2Points(line2.p2,line3.p1);
-		ConstraintConect2Points cn6 = new ConstraintConect2Points(line3.p2,line4.p1);
-		ConstraintConect2Points cn7 = new ConstraintConect2Points(line4.p2,line1.p2);
+		ConstraintLinesPerpendicular cn2 = new ConstraintLinesPerpendicular(Constraint.nextId(),line1.p2,line1.p1,FixLine.Y.b,FixLine.Y.a);
+		ConstraintConnect2Points cn3 = new ConstraintConnect2Points(Constraint.nextId(),line1.p1,line2.p1);
+		ConstraintLinesPerpendicular cn4 = new ConstraintLinesPerpendicular(Constraint.nextId(),line2.p2,line2.p1,FixLine.X.b,FixLine.X.a);
+		ConstraintConnect2Points cn5 = new ConstraintConnect2Points(Constraint.nextId(),line2.p2,line3.p1);
+		ConstraintConnect2Points cn6 = new ConstraintConnect2Points(Constraint.nextId(),line3.p2,line4.p1);
+		ConstraintConnect2Points cn7 = new ConstraintConnect2Points(Constraint.nextId(),line4.p2,line1.p2);
 		//FIXME -trzeba pomyslec nad przechowywanie wiezow
 		
 		//teraz wyswietlamy
 		
-		System.out.println(GeometricPrymitive.dbPrimitives);
+		System.out.println(GeometricPrimitive.dbPrimitives);
 		System.out.println(Constraint.dbConstraint);
 		System.out.println(Point.dbPoint);
 		
 		// Tworzymy Macierz "A" - dla tego zadania stala w czasie
 		int sizeA = Point.dbPoint.size()*2 + Constraint.allLagrangeCoffSize();
 		MatrixDouble A= MatrixDouble.fill(sizeA,sizeA,0.0);
-		MatrixDouble Fq = GeometricPrymitive.getAllForceJacobian();
+		MatrixDouble Fq = GeometricPrimitive.getAllForceJacobian();
 		MatrixDouble Wq = Constraint.getFullJacobian(Point.dbPoint, Parameter.dbParameter);
 		//System.out.println(Wq);
 		A.addSubMatrix(0, 0, Fq);
@@ -107,7 +107,7 @@ public class _TempSolver {
 		//2 3 iteracje i jest git
 		for(int i=0;i<5;i++){
 			//tworzymy macierz vector b
-			b=MatrixDouble.mergeByColumn(GeometricPrymitive.getAllForce(),Constraint.getFullConstraintValues(Point.dbPoint, Parameter.dbParameter));
+			b=MatrixDouble.mergeByColumn(GeometricPrimitive.getAllForce(),Constraint.getFullConstraintValues(Point.dbPoint, Parameter.dbParameter));
 			b.dot(-1);
 			//System.out.println(b);
 			mb= new BindMatrix(b.m);
@@ -130,7 +130,7 @@ public class _TempSolver {
 		System.out.println(Point.dbPoint);
 		//System.out.println(Constraint.dbConstraint);
 		//System.out.println(cn2.getValue(Point.dbPoint, Parameter.dbParameter));
-		System.out.println(GeometricPrymitive.dbPrimitives);
+		System.out.println(GeometricPrimitive.dbPrimitives);
 		System.out.println(Constraint.dbConstraint);
 	}
 

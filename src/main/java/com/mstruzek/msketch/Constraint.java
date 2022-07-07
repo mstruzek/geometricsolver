@@ -10,25 +10,34 @@ import com.mstruzek.msketch.matrix.MatrixDouble;
  */
 public abstract class Constraint implements ConstraintInterface {
 
-    GeometricConstraintType constraintType = null;
 
     /**
      * Licznik wiezow
      */
     static int counter = 0;
+
     /**
      * numer kolejno utworzonej lini
      */
-    int constraintId = counter++;
+    protected int constraintId;
+
+    protected GeometricConstraintType constraintType = null;
+
     /**
      * tablica wszystkich linii
      */
     public static TreeMap<Integer, Constraint> dbConstraint = new TreeMap<Integer, Constraint>();
 
 
-    public Constraint(GeometricConstraintType constraintType) {
+    public Constraint(Integer constraintId, GeometricConstraintType constraintType) {
         super();
+        this.constraintId = constraintId;
         this.constraintType = constraintType;
+        dbConstraint.put(constraintId,this);
+    }
+
+    public static Integer nextId(){
+        return counter++;
     }
 
     /**
@@ -217,5 +226,7 @@ public abstract class Constraint implements ConstraintInterface {
     public GeometricConstraintType getConstraintType() {
         return constraintType;
     }
+
+
 
 }

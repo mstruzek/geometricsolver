@@ -1,7 +1,5 @@
 package com.mstruzek.msketch;
 
-import java.util.TreeMap;
-
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 /**
@@ -10,18 +8,10 @@ import com.mstruzek.msketch.matrix.MatrixDouble;
  *  W naszym wypatku to konstrukcja zlozona z linii (czyli 2 punkty na luku)
  *  + FreePoint -srodek okregu + wiez rownej dlugosci pomiedzy punktami a srodkiem
  *  
- *
  */
 //FIXME - UWAGA przy wstawianiu LUKU nalezy pamietac aby promien znajdowal sie na symetralnej pomiedzy punktami p2,p3
-public class Arc extends GeometricPrymitive{
-	
-	/** Licznik lukow */
-	static int counter =0;
-	/** numer kolejno utworzonego luku */
-	int id = counter++;
-	/** tablica wszystkich lukow*/
-	static TreeMap<Integer,Arc> dbArc = new TreeMap<Integer,Arc> ();
-	
+public class Arc extends GeometricPrimitive{
+
 	/** fix control points -punkty kontrolne zafixowane */
 	Point a = null; 
 	Point b = null;
@@ -39,10 +29,10 @@ public class Arc extends GeometricPrymitive{
 	
 	/** Odleglosci pomiedzy wektorami poczatkowe */
 	double d_a_p1,d_b_p1,d_p1_p2,d_p1_p3,d_p3_d,d_p2_c;
-	/** wsp�czynnik do skalowania wzglednego dla wektorow*/
+	/** wspolczynnik do skalowania wzglednego dla wektorow*/
 	double alfa = 1.5;
 	
-	/** Numery wiezow  powiazane z a,b*/
+	/** Numery wiezow  powiazane z a,b */
 	int[] constraintsId = new int[5];
 	
 	
@@ -50,9 +40,13 @@ public class Arc extends GeometricPrymitive{
 	 * Luk 
 	 * @param p10 srodek okregu
 	 * @param p20 pierwszy koniec luku
-	 * @param p30 drugi koniec luku
 	 */
-	public Arc(Vector p10,Vector p20,Vector p30){
+	public Arc(Vector p10,Vector p20){
+		this(GeometricPrimitive.nextId(), p10, p20);
+	}
+
+	public Arc(int id, Vector p10,Vector p20){
+		super(id, GeometricPrimitiveType.Arc);
 		
 		// FreePoint(a,p1,b)
 		Vector va,vb,vc,vd,v1,v2,v3;
@@ -74,17 +68,13 @@ public class Arc extends GeometricPrymitive{
 		p2 = new Point(v2);
 		p3 = new Point(v3);
 
-		
 		calculateDistance();
-		dbArc.put(id,this);
-		dbPrimitives.put(primitiveId,this);
 		this.associateConstraintsId = setAssociateConstraints();
 		// ustaw typ geometryczny
-		type = GeometricPrymitiveType.Arc;
 	}
 
 	public String toString(){
-		String out = type + "" + this.id + "*" + this.primitiveId + ": {";
+		String out = type + "*" + this.primitiveId + ": {";
 		out+="a =" + a  + ",";
 		out+="p1=" + p1 + ",";
 		out+="b =" + b  + ",";
@@ -104,19 +94,16 @@ public class Arc extends GeometricPrymitive{
 		d_p1_p3	=Math.abs(p3.sub(p1).length());
 		d_p3_d	=Math.abs(d.sub(p3).length());
 		d_p2_c	=Math.abs(c.sub(p2).length());
-
 	}
 
 	@Override
 	public void recalculateControlPoints() {
-
 		Vector va = (Vector) p1.sub(p2.sub(p1).dot(alfa));
 		Vector vb = (Vector) p1.sub(p3.sub(p1).unit().dot(p2.sub(p1).length()).dot(alfa));
 		Vector vc = (Vector) p2.add(p2.sub(p1).dot(alfa));
 		Vector vd = (Vector) p3.add(p3.sub(p1).unit().dot(p2.sub(p1).length()).dot(alfa));
 		Vector v3 = (Vector) p1.add(p3.sub(p1).unit().dot(p2.sub(p1).length()));
-		
-		
+
 		a.setLocation(va.x,va.y);
 		b.setLocation(vb.x,vb.y);
 		c.setLocation(vc.x,vc.y);
@@ -130,7 +117,6 @@ public class Arc extends GeometricPrymitive{
 		((ConstraintFixPoint)Constraint.dbConstraint.get(constraintsId[1])).setFixVector(vb);
 		((ConstraintFixPoint)Constraint.dbConstraint.get(constraintsId[2])).setFixVector(vc);
 		((ConstraintFixPoint)Constraint.dbConstraint.get(constraintsId[3])).setFixVector(vd);
-		
 	}
 
 
@@ -138,7 +124,6 @@ public class Arc extends GeometricPrymitive{
 	public MatrixDouble getForceJacobian() {
 		MatrixDouble mt = MatrixDouble.fill(14, 14, 0.0);
 
-		
 		// K -mala sztywnosci
 		MatrixDouble Kb = MatrixDouble.diagonal(Config.springStiffnessHigh,Config.springStiffnessHigh);
 		MatrixDouble Ks = MatrixDouble.diagonal(Config.springStiffnessLow,Config.springStiffnessLow);
@@ -168,11 +153,11 @@ public class Arc extends GeometricPrymitive{
 
 	@Override
 	public int[] setAssociateConstraints() {
-		ConstraintFixPoint fixPointa = new ConstraintFixPoint(a);
-		ConstraintFixPoint fixPointb = new ConstraintFixPoint(b);
-		ConstraintFixPoint fixPointc = new ConstraintFixPoint(c);
-		ConstraintFixPoint fixPointd = new ConstraintFixPoint(d);
-		ConstraintLinesSameLength sameLength = new ConstraintLinesSameLength(p1,p2,p1,p3);
+		ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(),a);
+		ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(),b);
+		ConstraintFixPoint fixPointc = new ConstraintFixPoint(Constraint.nextId(),c);
+		ConstraintFixPoint fixPointd = new ConstraintFixPoint(Constraint.nextId(),d);
+		ConstraintLinesSameLength sameLength = new ConstraintLinesSameLength(Constraint.nextId(),p1,p2,p1,p3);
 		//ConstraintLinesSameLength sameLength2= new ConstraintLinesSameLength(p2,c,p3,d);
 		//ConstraintLinesParallelism par1 = new ConstraintLinesParallelism(a,p1,p2,c);
 		//ConstraintLinesParallelism par2 = new ConstraintLinesParallelism(b,p1,p3,d);
@@ -253,7 +238,6 @@ public class Arc extends GeometricPrymitive{
 	@Override
 	public int[] getAllPointsId() {
 		int[] out = new int[7];
-		
 		out[0] = a.getId();
 		out[1] = b.getId();
 		out[2] = c.getId();
@@ -261,14 +245,6 @@ public class Arc extends GeometricPrymitive{
 		out[4] = p1.getId();
 		out[5] = p2.getId();		
 		out[6] = p3.getId();
-
 		return out;
-	}
-	public static void main(String[] args) {
-		
-		Arc ln = new Arc(new Vector(0.0,0.0),new Vector(4.0,0.0),null);
-		System.out.println(ln);
-		ln.recalculateControlPoints();
-		System.out.println(ln);
 	}
 }
