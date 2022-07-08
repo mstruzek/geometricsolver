@@ -7,7 +7,6 @@ import java.util.TreeMap;
 
 public class ConstraintDistancePointLine extends Constraint {
 
-
     /** Punkty kontrolne */
     /** Point K-id */
     int k_id;
@@ -17,7 +16,6 @@ public class ConstraintDistancePointLine extends Constraint {
     int m_id;
     /** Numer parametru przechowujacy kat w radianach */
     int param_id;
-
 
     /**
      * Konstruktor pomiedzy 3 punktami i paramtetrem

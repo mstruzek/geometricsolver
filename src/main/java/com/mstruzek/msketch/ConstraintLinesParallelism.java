@@ -150,44 +150,47 @@ public class ConstraintLinesParallelism extends Constraint{
 
 		if((m==null) && ( n ==null)){
 			//same punkty
-			for(Integer i:dbPoints.keySet()){ //wiersz
-				for(Integer j:dbPoints.keySet()){ //kolumna
+			int i = 0;
+			for(Integer vI:dbPoints.keySet()){ //wiersz
+				int j = 0;
+				for(Integer vJ:dbPoints.keySet()){ //kolumna
 					//wstawiamy I,-I w odpowiednie miejsca
 					//k,m
-					if(k_id==dbPoints.get(i).id && m_id==dbPoints.get(j).id ){
+					if(k_id==dbPoints.get(vI).id && m_id==dbPoints.get(vJ).id ){
 						out.addSubMatrix(2*i, 2*j, R);
 						
 					}
 					//k,n
-					if(k_id==dbPoints.get(i).id && n_id==dbPoints.get(j).id ){
+					if(k_id==dbPoints.get(vI).id && n_id==dbPoints.get(vJ).id ){
 						out.addSubMatrix(2*i, 2*j, mR);
 					}
 					//l,m
-					if(l_id==dbPoints.get(i).id && m_id==dbPoints.get(j).id ){
+					if(l_id==dbPoints.get(vI).id && m_id==dbPoints.get(vJ).id ){
 						out.addSubMatrix(2*i, 2*j, mR);
 					}
 					//l,n
-					if(l_id==dbPoints.get(i).id && n_id==dbPoints.get(j).id ){
+					if(l_id==dbPoints.get(vI).id && n_id==dbPoints.get(vJ).id ){
 						out.addSubMatrix(2*i, 2*j, R);
 					}
 					//m,k
-					if(m_id==dbPoints.get(i).id && k_id==dbPoints.get(j).id ){
+					if(m_id==dbPoints.get(vI).id && k_id==dbPoints.get(vJ).id ){
 						out.addSubMatrix(2*i, 2*j, mR);
 					}
 					//m,l
-					if(m_id==dbPoints.get(i).id && l_id==dbPoints.get(j).id ){
+					if(m_id==dbPoints.get(vI).id && l_id==dbPoints.get(vJ).id ){
 						out.addSubMatrix(2*i, 2*j, R);
 					}
 					//n,k
-					if(n_id==dbPoints.get(i).id && k_id==dbPoints.get(j).id ){
+					if(n_id==dbPoints.get(vI).id && k_id==dbPoints.get(vJ).id ){
 						out.addSubMatrix(2*i, 2*j, R);
 					}
 					//n,l
-					if(n_id==dbPoints.get(i).id && l_id==dbPoints.get(j).id ){
+					if(n_id==dbPoints.get(vI).id && l_id==dbPoints.get(vJ).id ){
 						out.addSubMatrix(2*i, 2*j, mR);
 					}
+					j++;
 				}
-				
+				i++;
 			}
 			
 		}else{
@@ -226,10 +229,10 @@ public class ConstraintLinesParallelism extends Constraint{
 	 */
 	public static void main(String[] args) {
 
-		Point pn1 = new Point(0.0,0.0);
-		Point pn2 = new Point(10.0,0.0);
-		Point pn3 = new Point(1.,1.0);
-		Point pn4 = new Point(10.0,1.1);
+		Point pn1 = new Point(Point.nextId(),0.0,0.0);
+		Point pn2 = new Point(Point.nextId(),10.0,0.0);
+		Point pn3 = new Point(Point.nextId(),1.,1.0);
+		Point pn4 = new Point(Point.nextId(),10.0,1.1);
 
 		ConstraintLinesParallelism cn = new ConstraintLinesParallelism(Constraint.nextId(),pn1,pn2,pn3,pn4);
 		System.out.println(Constraint.dbConstraint );

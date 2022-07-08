@@ -1,17 +1,19 @@
 package com.mstruzek;
 
 import com.mstruzek.controller.Controller;
-import com.mstruzek.msketch.Point;
-
-import java.util.TreeMap;
+import com.mstruzek.graphic.TView;
 
 public class AppEntry {
 
     public static void main(String[] args) {
 
+
         /*
         * Glowny kontroller widoku swingowego.
         */
-        Controller.main(args);
+        Controller controller = new Controller();
+
+        new TView("M-Sketcher", controller);
+
     }
 }

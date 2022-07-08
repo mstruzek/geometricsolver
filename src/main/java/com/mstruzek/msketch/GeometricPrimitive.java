@@ -1,5 +1,6 @@
 package com.mstruzek.msketch;
 
+import java.util.Set;
 import java.util.TreeMap;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
@@ -12,7 +13,7 @@ import com.mstruzek.msketch.matrix.MatrixDouble;
 public abstract class GeometricPrimitive{
 
 	/** licznik elementow podstawowych */
-	static int primitiveCounter= 0;
+	public static int primitiveCounter= 0;
 
 	/** id danego elemntu podstawowego */
 	protected int primitiveId;
@@ -24,19 +25,19 @@ public abstract class GeometricPrimitive{
 
 
 	/** tablica przechowujaca powiazane wiezy dla punktow kontrolnych np : a,b,c*/
-	int[] associateConstraintsId = null;
+	int[] constraints = null;
 
 	public GeometricPrimitive(int primitiveId, GeometricPrimitiveType geometricPrimitiveType){
 		this.primitiveId = primitiveId;
 		this.type = geometricPrimitiveType;
-		dbPrimitives.put(primitiveId,this);
+		if(primitiveId >=0) dbPrimitives.put(primitiveId,this);
 	}
 
 	/** Przelicza na nowo pozycje punktow kontrolnych */
 	public abstract void recalculateControlPoints();
 	
 	/** Funkcja zwraca jakobian si� - czyli macierz szytnowsci Fq */
-	public abstract MatrixDouble getForceJacobian();
+	public abstract MatrixDouble getJacobian();
 
 	/** Funkcja zwraca wartosc sil w sprezynach dla poszczegolnych punkt�w w danym {@link GeometricPrimitive} */
 	public abstract MatrixDouble getForce();
@@ -45,7 +46,7 @@ public abstract class GeometricPrimitive{
 	public abstract int[] getAllPointsId();
 	
 	/** Funkcja  ustawia wiezy poczatkowe -czyli rejestruje w bazie wiezow, np : wiez FixPoint na Point[a,b,c] */
-	public abstract int[] setAssociateConstraints();
+	public abstract void setAssociateConstraints(Set<Integer> skipIds);
 
 
 	/** Funkcja zwraca ilosc punktow w danym elemencie geometrycznym */
@@ -59,7 +60,6 @@ public abstract class GeometricPrimitive{
 	public abstract int getB();
 	public abstract int getC();
 	public abstract int getD();
-
 	
 	/**
 	 * Zwraca id figury
@@ -78,7 +78,7 @@ public abstract class GeometricPrimitive{
 	}
 
 	/** Funkcja zwraca pelny jakobian sil dla wszystkich elementow geometrycznych */
-	public static MatrixDouble getAllForceJacobian(){
+	public static MatrixDouble getAllJacobianForces(){
 		
 		int size = Point.dbPoint.size()*2;
 		
@@ -86,7 +86,7 @@ public abstract class GeometricPrimitive{
 		
 		int currentRowCol=0;
 		for(Integer i:dbPrimitives.keySet()){
-			out.addSubMatrix(currentRowCol, currentRowCol, dbPrimitives.get(i).getForceJacobian());
+			out.addSubMatrix(currentRowCol, currentRowCol, dbPrimitives.get(i).getJacobian());
 			currentRowCol+=dbPrimitives.get(i).getNumOfPoints()*2;
 		}
 		return out;
@@ -119,10 +119,11 @@ public abstract class GeometricPrimitive{
 	}
 
 	public int[] associateConstraintsId(){
-		return associateConstraintsId;
+		return constraints;
 	}
 
 	public static int nextId() {
 		return primitiveCounter++;
 	}
+
 }

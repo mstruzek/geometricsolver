@@ -2,6 +2,9 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * Luk geometryczny 
  *  - sklada sie z srodka okregu i dwoch punktow krancowych luku
@@ -45,25 +48,21 @@ public class ArcOld extends GeometricPrimitive{
 	 * @param p20 pierwszy koniec luku
 	 * @param p30 drugi koniec luku
 	 */
-	public ArcOld(Vector p10,Vector p20,Vector p30){
+	public ArcOld(Vector p10, Vector p20, Vector p30) {
 		super(nextId(), GeometricPrimitiveType.Arc);
 		// FreePoint(a,p1,b)
-		a=new Point(p10.dot(2).sub(p20));
-		p1=new Point(p10);
-		b=new Point(p20);
-		
+		a = new Point(Point.nextId(), p10.dot(2).sub(p20).x, p10.dot(2).sub(p20).y);
+		p1 = new Point(Point.nextId(), p10.x, p10.y);
+		b = new Point(Point.nextId(), p20.x, p20.y);
+
 		//  Line(c,p2,p3,d)
-		Vector a= p20.sub(p10);
-		c=new Point(p10.add(a.Rot(-90).dot(3)));
-		p2=new Point(p10.add(a.Rot(-90)));
-		p3=new Point(p10.add(a.Rot(90)));
-		d=new Point(p10.add(a.Rot(90).dot(3)));
-		
+		Vector a = p20.sub(p10);
+		c = new Point(Point.nextId(), p10.add(a.Rot(-90).dot(3)).x, p10.add(a.Rot(-90).dot(3)).y);
+		p2 = new Point(Point.nextId(), p10.add(a.Rot(-90)).x, p10.add(a.Rot(-90)).y);
+		p3 = new Point(Point.nextId(), p10.add(a.Rot(90)).x, p10.add(a.Rot(90)).y);
+		d = new Point(Point.nextId(), p10.add(a.Rot(90).dot(3)).x, p10.add(a.Rot(90).dot(3)).y);
 		calculateDistance();
-		dbPrimitives.put(primitiveId,this);
-		this.associateConstraintsId = setAssociateConstraints();
-		// ustaw typ geometryczny
-		type = GeometricPrimitiveType.Arc;
+		setAssociateConstraints(null);
 	}
 
 	public String toString(){
@@ -118,7 +117,7 @@ public class ArcOld extends GeometricPrimitive{
 
 
 	@Override
-	public MatrixDouble getForceJacobian() {
+	public MatrixDouble getJacobian() {
 		MatrixDouble mt = MatrixDouble.fill(14, 14, 0.0);
 		/** Free Point
 		 * k= I*k
@@ -136,13 +135,13 @@ public class ArcOld extends GeometricPrimitive{
 		 */
 		
 		// K -mala sztywnosci
-		MatrixDouble Ksp = MatrixDouble.diagonal(Config.springStiffnessHigh*dS,Config.springStiffnessHigh*dS);
+		MatrixDouble Ksp = MatrixDouble.diagonal(Consts.springStiffnessHigh*dS, Consts.springStiffnessHigh*dS);
 		MatrixDouble mKsp = Ksp.dotC(-1);
 		
-		MatrixDouble Ks = MatrixDouble.diagonal(Config.springStiffnessLow,Config.springStiffnessLow);
+		MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
 		MatrixDouble mKs = Ks.dotC(-1);
 		
-		MatrixDouble Kb = MatrixDouble.diagonal(Config.springStiffnessHigh,Config.springStiffnessHigh);
+		MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
 		// -Ks-Kb
 		MatrixDouble Ksb = Ks.dotC(-1).addSubMatrix(0, 0, Kb.dotC(-1));
 
@@ -161,18 +160,19 @@ public class ArcOld extends GeometricPrimitive{
 	}
 
 	@Override
-	public int[] setAssociateConstraints() {
-		ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(),a);
-		ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(),b);
-		ConstraintFixPoint fixPointc = new ConstraintFixPoint(Constraint.nextId(),c);
-		ConstraintFixPoint fixPointd = new ConstraintFixPoint(Constraint.nextId(),d);
-		ConstraintLinesSameLength sameLength = new ConstraintLinesSameLength(Constraint.nextId(),p1,p2,p1,p3);
-		constraintsId[0] = fixPointa.constraintId;
-		constraintsId[1] = fixPointb.constraintId;
-		constraintsId[2] = fixPointc.constraintId;
-		constraintsId[3] = fixPointd.constraintId;
-		constraintsId[4] = sameLength.constraintId;
-		return constraintsId;
+	public void setAssociateConstraints(Set<Integer> skipIds) {
+		if(skipIds==null) skipIds = Collections.emptySet();
+		ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(skipIds),a);
+		ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(skipIds),b);
+		ConstraintFixPoint fixPointc = new ConstraintFixPoint(Constraint.nextId(skipIds),c);
+		ConstraintFixPoint fixPointd = new ConstraintFixPoint(Constraint.nextId(skipIds),d);
+		ConstraintLinesSameLength sameLength = new ConstraintLinesSameLength(Constraint.nextId(skipIds),p1,p2,p1,p3);
+		constraints = new int[5];
+		constraints[0] = fixPointa.constraintId;
+		constraints[1] = fixPointb.constraintId;
+		constraints[2] = fixPointc.constraintId;
+		constraints[3] = fixPointd.constraintId;
+		constraints[4] = sameLength.constraintId;
 	}
 
 	@Override
@@ -180,9 +180,9 @@ public class ArcOld extends GeometricPrimitive{
 		MatrixDouble force = MatrixDouble.fill(14,1,0.0);
 
 		//F12 - sily w sprezynach
-		Vector f12 = p1.sub(a).unit().dot(Config.springStiffnessHigh*dS).dot(p1.sub(a).length()-d_a_p1);	
+		Vector f12 = p1.sub(a).unit().dot(Consts.springStiffnessHigh*dS).dot(p1.sub(a).length()-d_a_p1);
 		//F23
-		Vector f23 = b.sub(p1).unit().dot(Config.springStiffnessHigh*dS).dot(b.sub(p1).length()-d_p1_b);
+		Vector f23 = b.sub(p1).unit().dot(Consts.springStiffnessHigh*dS).dot(b.sub(p1).length()-d_p1_b);
 		
 		//FREEPOINT
 		//F1 - silu na poszczegolne punkty
@@ -194,11 +194,11 @@ public class ArcOld extends GeometricPrimitive{
 		
 		
 		//LINE
-		Vector fcp2 = p2.sub(c).unit().dot(Config.springStiffnessLow).dot(p2.sub(c).length()-d_c_p2);	
+		Vector fcp2 = p2.sub(c).unit().dot(Consts.springStiffnessLow).dot(p2.sub(c).length()-d_c_p2);
 		//F23
-		Vector fp2p3 = p3.sub(p2).unit().dot(Config.springStiffnessHigh).dot(p3.sub(p2).length()-d_p2_p3);
+		Vector fp2p3 = p3.sub(p2).unit().dot(Consts.springStiffnessHigh).dot(p3.sub(p2).length()-d_p2_p3);
 		
-		Vector fp3d = d.sub(p3).unit().dot(Config.springStiffnessLow).dot(d.sub(p3).length()-d_p3_d);		
+		Vector fp3d = d.sub(p3).unit().dot(Consts.springStiffnessLow).dot(d.sub(p3).length()-d_p3_d);
 
 		force.addSubMatrix(6, 0, new MatrixDouble(fcp2,true));
 		force.addSubMatrix(7, 0, new MatrixDouble(fp2p3.sub(fcp2),true));
@@ -259,4 +259,5 @@ public class ArcOld extends GeometricPrimitive{
 		out[6] = d.getId();
 		return out;
 	}
+
 }

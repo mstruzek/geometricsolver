@@ -18,7 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.event.MouseInputListener;
 
 import com.mstruzek.controller.ActiveKey;
-import com.mstruzek.msketch.Config;
+import com.mstruzek.msketch.Consts;
 import com.mstruzek.controller.Controller;
 import com.mstruzek.msketch.GeometricPrimitive;
 import com.mstruzek.msketch.Vector;
@@ -283,8 +283,8 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
             //ark.setArcByTangent(tp2,tp1, tp3, r);
             Point v2 = new Point(tp2.x - tp1.x, tp2.y - tp1.y);
             Point v3 = new Point(tp3.x - tp1.x, tp3.y - tp1.y);
-            double angSt = Config.atan2(v2.y, v2.x);
-            double angExt = Config.atan2(v3.y, v3.x);
+            double angSt = Consts.atan2(v2.y, v2.x);
+            double angExt = Consts.atan2(v3.y, v3.x);
             double angDet = angExt - angSt;
             /*
              * Zabiegy potrzebne w celu zapewnienia

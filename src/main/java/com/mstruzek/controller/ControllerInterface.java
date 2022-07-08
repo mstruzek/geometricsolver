@@ -8,22 +8,22 @@ import com.mstruzek.msketch.Vector;
  *
  * @author root
  */
-public interface ControllerInterface{
+public interface ControllerInterface {
 
     /**
      * Dodaj linie
      */
-    void addLine(Vector v1,Vector v2);
+    void addLine(Vector v1, Vector v2);
 
     /**
      * Dodaj kolo
      */
-    void addCircle(Vector v1,Vector v2);
+    void addCircle(Vector v1, Vector v2);
 
     /**
      * Dodaj Luk
      */
-    void addArc(Vector v1,Vector v2);
+    void addArc(Vector v1, Vector v2);
 
     /**
      * Dodaj punkt
@@ -48,7 +48,7 @@ public interface ControllerInterface{
     /**
      * Dodaj wiez do modelu
      */
-    void addConstraint(GeometricConstraintType constraintType,int K,int L,int M,int N,double d);
+    void addConstraint(GeometricConstraintType constraintType, int K, int L, int M, int N, double d);
 
 
 }

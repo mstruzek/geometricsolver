@@ -1,52 +1,49 @@
 package com.mstruzek.controller;
 
-import java.io.File;
-import java.util.ArrayList;
-
 import com.mstruzek.graphic.TView;
 import com.mstruzek.msketch.*;
-import com.mstruzek.msketch.MyTableModel;
 
-public class Controller implements ControllerInterface{
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.TreeMap;
 
-    private static MyTableModel primitivesTableModel=null;
-    private static MyTableModel constraintTableModel=null;
-    private static MyTableModel parametersTableModel=null;
+public class Controller implements ControllerInterface {
 
     /**
      * model szkicownika
      */
 
-    public Controller(){
+    public Controller() {
     }
 
     @Override
-    public void addLine(Vector v1,Vector v2){
-        Model.addLine(v1,v2);
+    public void addLine(Vector v1, Vector v2) {
+        Model.addLine(v1, v2);
     }
 
     @Override
-    public void addCircle(Vector v1,Vector v2){
-        Model.addCircle(v1,v2);
+    public void addCircle(Vector v1, Vector v2) {
+        Model.addCircle(v1, v2);
     }
 
     @Override
-    public void addArc(Vector v1,Vector v2){
-        Model.addArc(v1,v2);
+    public void addArc(Vector v1, Vector v2) {
+        Model.addArc(v1, v2, null);
     }
 
     @Override
-    public void addPoint(Vector v1){
+    public void addPoint(Vector v1) {
         Model.addPoint(v1);
     }
 
     @Override
-    public void addConstraint(GeometricConstraintType constraintType,int K,int L,int M,int N,double d){
-        Model.addConstraint(constraintType,K,L,M,N,d);
+    public void addConstraint(GeometricConstraintType constraintType, int K, int L, int M, int N, double d) {
+        Model.addConstraint(constraintType, K, L, M, N, d);
 
     }
 
-    public void persistModel(File filePath){
+    public void writeModelInto(File selectedFile) {
         /*
          * Persist state :
          *
@@ -59,88 +56,99 @@ public class Controller implements ControllerInterface{
          *  into GCM file (Geometric Constraint Model - file suffixed with *.gcm extension)
          */
 
-        try(GCModelWriter modelWriter=new GCModelWriter(filePath)){
+        try (GCModelWriter modelWriter = new GCModelWriter(selectedFile)) {
+
             modelWriter.writeHeader();
             modelWriter.writePoints();
             modelWriter.writeGeometricPrimitives();
-            modelWriter.writeConstraints();
             modelWriter.writeParameters();
+            modelWriter.writeConstraints();
             modelWriter.writeClose();
-        }catch(Exception e){
-            throw new RuntimeException(e);
+
+        } catch (Exception e) {
+            Reporter.notify("[error] write model into file : " + selectedFile, e);
+            throw new Error(e);
         }
     }
 
-    /**
-     * Zwraca widok na model wiezow dodanych przez uzytkownika
-     */
-    public MyTableModel getConstraintTableModel(){
-        if(constraintTableModel==null){
-            constraintTableModel= createConstraintTableModel();
+    public void readModelFrom(File selectedFile) {
+
+        clearDatabasesModel();
+
+        try (GCModelReader modelReader = new GCModelReader(selectedFile)) {
+
+            modelReader.readModel();
+
+            updateModelConsistency();
+
+        } catch (Exception e) {
+            Reporter.notify("[error] read model from file : " + selectedFile, e);
+            throw new Error(e);
         }
-        return constraintTableModel;
     }
 
-    public MyTableModel getParametersTableModel(){
-        if(parametersTableModel==null){
-            parametersTableModel= createParametersTableModel();
+    private void clearDatabasesModel() {
+        Constraint.dbConstraint.clear();
+        Constraint.constraintCounter = 0;
+
+        Parameter.dbParameter.clear();
+        Parameter.parameterCounter = 0;
+
+        GeometricPrimitive.dbPrimitives.clear();
+        GeometricPrimitive.primitiveCounter = 0;
+
+        Point.dbPoint.clear();
+        Point.pointCounter = 0;
+
+        Model.removeAll();
+    }
+
+    private void updateModelConsistency() {
+        // Update State and related variables !
+        Point.pointCounter = firstAvailableKey(Point.dbPoint);
+
+        GeometricPrimitive.primitiveCounter = firstAvailableKey(GeometricPrimitive.dbPrimitives);
+
+        Parameter.parameterCounter = firstAvailableKey(Parameter.dbParameter);
+
+        Set<Integer> skipConstrainIds = Constraint.dbConstraint.keySet();
+        for(GeometricPrimitive geometricPrimitive : GeometricPrimitive.dbPrimitives.values()) {
+            geometricPrimitive.setAssociateConstraints(skipConstrainIds);
         }
-        return parametersTableModel;
+
+        Constraint.constraintCounter = firstAvailableKey(Constraint.dbConstraint);
     }
 
-    public MyTableModel getPrimitivesTableModel(){
-        if(primitivesTableModel==null){
-            primitivesTableModel= createPrimitivesTableModel();
-        }
-        return primitivesTableModel;
+    private <ModelEntity> int firstAvailableKey(TreeMap<Integer,ModelEntity> treeMap) {
+        return treeMap.size() == 0 ? 0 : treeMap.lastKey() + 1;
     }
 
-    /**
-     * Zwraca widok na model elementow geometrycznych
-     */
-    private MyTableModel createPrimitivesTableModel() {
-        return new PrimitivesTableModel();
-    }
 
-    /**
-     * Zwraca widok na parametry
-     */
-    public MyTableModel createParametersTableModel() {
-        return new ParametersTableModel();
-    }
-
-    public MyTableModel createConstraintTableModel() {
-        return new ConstraintsTableModel();
-    }
-
-    public ArrayList<GeometricPrimitive> getPrimitivesContainer(){
+    public ArrayList<GeometricPrimitive> getPrimitivesContainer() {
         return Model.primitivesContainer();
     }
 
     @Override
-    public void solveSystem(){
+    public void solveSystem() {
         Model.solveSystem();
     }
 
     @Override
-    public void relaxForces(){
+    public void relaxForces() {
         Model.relaxForces();
     }
 
     @Override
-    public void fluctuatePoints(double coefficient){
+    public void fluctuatePoints(double coefficient) {
         Model.fluctuatePoints(coefficient);
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
 
-        Controller controller=new Controller();
+        Controller controller = new Controller();
         //TView view  =
-        new TView("M-Sketcher",controller);
+        new TView("M-Sketcher", controller);
     }
 
-    public void unPersistModel(File selectedFile){
-
-    }
 
 }

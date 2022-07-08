@@ -84,7 +84,7 @@ public class ConstraintDistance2Points extends Constraint{
         Double vLK=((Vector) dbPoints.get(l_id)).sub((Vector) dbPoints.get(k_id)).length();
 
         MatrixDouble mt=new MatrixDouble(1,1);
-        mt.m[0][0]=vLK-dbParameter.get(param_id).getValue();
+        mt.m[0][0]=vLK-dbParameter.get(param_id).getRadians();
         return mt;
     }
 
@@ -132,8 +132,8 @@ public class ConstraintDistance2Points extends Constraint{
      */
     public static void main(String[] args){
 
-        Point p1=new Point(0.0,0.1);
-        Point p2=new Point(1.0,0.2);
+        Point p1=new Point(Point.nextId(),0.0,0.1);
+        Point p2=new Point(Point.nextId(),1.0,0.2);
         Parameter par=new Parameter(1.0);
         ConstraintDistance2Points con=new ConstraintDistance2Points(Constraint.nextId(),p1,p2,new Parameter(0.8));
         ConstraintDistance2Points con2=new ConstraintDistance2Points(Constraint.nextId(),p1,p2,par);
@@ -147,7 +147,7 @@ public class ConstraintDistance2Points extends Constraint{
 
         Double vLK=((Vector) dbPoints.get(l_id)).sub((Vector) dbPoints.get(k_id)).length();
 
-        return (vLK-dbParameter.get(param_id).getValue());
+        return (vLK-dbParameter.get(param_id).getRadians());
     }
 
 }

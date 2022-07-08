@@ -59,7 +59,7 @@ public class _TempSolver {
 		// Tworzymy Macierz "A" - dla tego zadania stala w czasie
 		int sizeA = Point.dbPoint.size()*2 + Constraint.allLagrangeCoffSize();
 		MatrixDouble A= MatrixDouble.fill(sizeA,sizeA,0.0);
-		MatrixDouble Fq = GeometricPrimitive.getAllForceJacobian();
+		MatrixDouble Fq = GeometricPrimitive.getAllJacobianForces();
 		MatrixDouble Wq = Constraint.getFullJacobian(Point.dbPoint, Parameter.dbParameter);
 		//System.out.println(Wq);
 		A.addSubMatrix(0, 0, Fq);

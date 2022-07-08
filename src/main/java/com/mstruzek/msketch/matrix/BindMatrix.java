@@ -121,9 +121,9 @@ public class BindMatrix extends Matrix {
 
 	public static void main(String[] args) {
 
-		Point p1 = new Point(0.0,0.1);
-		Point p2 = new Point(1.0,0.2);
-		Point p3 = new Point(0.0,0.3);
+		Point p1 = new Point(Point.nextId(),0.0,0.1);
+		Point p2 = new Point(Point.nextId(),1.0,0.2);
+		Point p3 = new Point(Point.nextId(),0.0,0.3);
 		BindMatrix bm= new BindMatrix(Point.getDbPoint());
 		BindMatrix b2= new BindMatrix(6,1);
 		b2.set(0, 0, 10);

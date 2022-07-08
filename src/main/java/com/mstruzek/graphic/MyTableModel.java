@@ -1,6 +1,4 @@
-package com.mstruzek.msketch;
-
-import com.mstruzek.graphic.TableModelRemovable;
+package com.mstruzek.graphic;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -11,5 +9,4 @@ public abstract class MyTableModel extends AbstractTableModel implements TableMo
     public MyTableModel(){
         super();
     }
-
 }

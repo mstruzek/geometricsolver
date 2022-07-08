@@ -134,7 +134,7 @@ public class Sketch2D extends JPanel {
 		// Tworzymy Macierz "A" - dla tego zadania stala w czasie
 		int sizeA = Point.dbPoint.size()*2 + Constraint.allLagrangeCoffSize();
 		MatrixDouble A= MatrixDouble.fill(sizeA,sizeA,0.0);
-		MatrixDouble Fq = GeometricPrimitive.getAllForceJacobian();
+		MatrixDouble Fq = GeometricPrimitive.getAllJacobianForces();
 		MatrixDouble Wq =null;//Constraint.getFullJacobian(Point.dbPoint, Parameter.dbParameter);
 		//A.addSubMatrix(0, 0, Fq);
 		//A.addSubMatrix(Fq.getHeight(), 0, Wq);

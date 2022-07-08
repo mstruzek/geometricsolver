@@ -6,7 +6,7 @@ package com.mstruzek.msketch;
  * @author root
  *
  */
-public class Config {
+public class Consts {
 	
 	/** tymczasowa szytnowsc sprezyny */
 	static double springStiffness = 2;

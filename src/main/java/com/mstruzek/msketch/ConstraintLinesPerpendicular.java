@@ -143,45 +143,49 @@ public class ConstraintLinesPerpendicular extends Constraint {
 		//macierz NxN
 		MatrixDouble out = MatrixDouble.fill(dbPoints.size()*2,dbPoints.size()*2,0.0);
 
+
 		if((m==null) && ( n ==null)){
 			//same punkty
-			for(Integer i:dbPoints.keySet()){ //wiersz
-				for(Integer j:dbPoints.keySet()){ //kolumna
+			int i = 0;
+			for(Integer vI:dbPoints.keySet()){ //wiersz
+				int j=0;
+				for(Integer vJ:dbPoints.keySet()){ //kolumna
 					//wstawiamy I,-I w odpowiednie miejsca
 					//k,m
-					if(k_id==dbPoints.get(i).id && m_id==dbPoints.get(j).id ){
+					if(k_id==dbPoints.get(vI).id && m_id==dbPoints.get(vJ).id ){
 						out.m[2*i][2*j] = 1.0; out.m[2*i+1][2*j+1] = 1.0;
 					}
 					//k,n
-					if(k_id==dbPoints.get(i).id && n_id==dbPoints.get(j).id ){
+					if(k_id==dbPoints.get(vI).id && n_id==dbPoints.get(vJ).id ){
 						out.m[2*i][2*j] = -1.0; out.m[2*i+1][2*j+1] = -1.0;
 					}
 					//l,m
-					if(l_id==dbPoints.get(i).id && m_id==dbPoints.get(j).id ){
+					if(l_id==dbPoints.get(vI).id && m_id==dbPoints.get(vJ).id ){
 						out.m[2*i][2*j] = -1.0; out.m[2*i+1][2*j+1] = -1.0;
 					}
 					//l,n
-					if(l_id==dbPoints.get(i).id && n_id==dbPoints.get(j).id ){
+					if(l_id==dbPoints.get(vI).id && n_id==dbPoints.get(vJ).id ){
 						out.m[2*i][2*j] = 1.0; out.m[2*i+1][2*j+1] = 1.0;
 					}
 					//m,k
-					if(m_id==dbPoints.get(i).id && k_id==dbPoints.get(j).id ){
+					if(m_id==dbPoints.get(vI).id && k_id==dbPoints.get(vJ).id ){
 						out.m[2*i][2*j] = 1.0; out.m[2*i+1][2*j+1] = 1.0;
 					}
 					//m,l
-					if(m_id==dbPoints.get(i).id && l_id==dbPoints.get(j).id ){
+					if(m_id==dbPoints.get(vI).id && l_id==dbPoints.get(vJ).id ){
 						out.m[2*i][2*j] = -1.0; out.m[2*i+1][2*j+1] = -1.0;
 					}
 					//n,k
-					if(n_id==dbPoints.get(i).id && k_id==dbPoints.get(j).id ){
+					if(n_id==dbPoints.get(vI).id && k_id==dbPoints.get(vJ).id ){
 						out.m[2*i][2*j] = -1.0; out.m[2*i+1][2*j+1] = -1.0;
 					}
 					//n,l
-					if(n_id==dbPoints.get(i).id && l_id==dbPoints.get(j).id ){
+					if(n_id==dbPoints.get(vI).id && l_id==dbPoints.get(vJ).id ){
 						out.m[2*i][2*j] = 1.0; out.m[2*i+1][2*j+1] = 1.0;
 					}
+					j++;
 				}
-				
+				i++;
 			}
 			
 		}else{
@@ -222,10 +226,10 @@ public class ConstraintLinesPerpendicular extends Constraint {
 	 */
 	public static void main(String[] args) {
 
-		Point pn1 = new Point(0.0,0.0);
-		Point pn2 = new Point(10.0,0.0);
-		Point pn3 = new Point(0.0,0.0);
-		Point pn4 = new Point(1.0,10.0);
+		Point pn1 = new Point(Point.nextId(),0.0,0.0);
+		Point pn2 = new Point(Point.nextId(),10.0,0.0);
+		Point pn3 = new Point(Point.nextId(),0.0,0.0);
+		Point pn4 = new Point(Point.nextId(),1.0,10.0);
 		//Vector pn3 = new Vector(1.0,1.0);
 		//Vector pn4 = new Vector(1.0,2.0);
 		ConstraintLinesPerpendicular cn = new ConstraintLinesPerpendicular(Constraint.nextId(),pn2,pn1,pn4,pn3);

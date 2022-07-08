@@ -13,7 +13,8 @@ public class Parameter {
 	double value;
 	
 	/** Licznik parametrow*/
-	static int counter=0;
+	public static int parameterCounter =0;
+
 	int id;
 	/** tablica wszystkich parametrow*/
 	public static TreeMap<Integer,Parameter> dbParameter  = new TreeMap<Integer,Parameter>();
@@ -23,7 +24,7 @@ public class Parameter {
 	 * @param par parametr
 	 */
 	public Parameter(int id, double par) {
-		if(id < counter) throw new RuntimeException("invalid object id");
+		if(id < parameterCounter) throw new RuntimeException("invalid object id");
 		this.id = id;
 		this.value = par;
 		dbParameter.put(id,this);
@@ -31,7 +32,7 @@ public class Parameter {
 
 	public Parameter(double par) {
 		this.value = par;
-		this.id = counter++;
+		this.id = parameterCounter++;
 		dbParameter.put(id,this);
 	}
 	/**
@@ -42,6 +43,11 @@ public class Parameter {
 		return value;
 		
 	}
+
+	public double getRadians() {
+		return (Math.PI / 180) * value;
+	}
+
 	/**
 	 * Ustaw/zmien parametr
 	 * @param param

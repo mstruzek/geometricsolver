@@ -57,7 +57,7 @@ public class ConstraintAngle2Lines extends Constraint {
 		
 		MatrixDouble mt = new MatrixDouble(1,1);
 		
-		mt.m[0][0] = vLK.dot(vNM)-vLK.length()*vNM.length()*Math.cos(dbParameter.get(param_id).getValue());
+		mt.m[0][0] = vLK.dot(vNM)-vLK.length()*vNM.length()*Math.cos(dbParameter.get(param_id).getRadians());
 	
 		return mt;
 	}
@@ -69,10 +69,9 @@ public class ConstraintAngle2Lines extends Constraint {
 		int j=0;
 		Vector vLK = ((Vector)dbPoints.get(l_id)).sub((Vector)dbPoints.get(k_id));
 		Vector vNM = ((Vector)dbPoints.get(n_id)).sub((Vector)dbPoints.get(m_id));
-		Vector uLKdNM = vLK.unit().dot(vNM.length()).dot(Math.cos(dbParameter.get(param_id).getValue()));
-		Vector uNMdLK = vNM.unit().dot(vLK.length()).dot(Math.cos(dbParameter.get(param_id).getValue()));
+		Vector uLKdNM = vLK.unit().dot(vNM.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
+		Vector uNMdLK = vNM.unit().dot(vLK.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
 
-		
 		for(Integer i:dbPoints.keySet()){
 			
 			//a tu wstawiamy macierz dla tego wiezu
@@ -104,84 +103,85 @@ public class ConstraintAngle2Lines extends Constraint {
 	}
 	@Override
 	public MatrixDouble getHessian(TreeMap<Integer, Point> dbPoints,TreeMap<Integer, Parameter> dbParameter) {
-
 		//macierz NxN
 		MatrixDouble out = MatrixDouble.fill(dbPoints.size()*2,dbPoints.size()*2,0.0);
 
 		Vector vLK = ((Vector)dbPoints.get(l_id)).sub((Vector)dbPoints.get(k_id)).unit();
 		Vector vNM = ((Vector)dbPoints.get(n_id)).sub((Vector)dbPoints.get(m_id)).unit();
 		
-		double g = vLK.dot(vNM)*Math.cos(dbParameter.get(param_id).getValue());
-
-		
+		double g = vLK.dot(vNM)*Math.cos(dbParameter.get(param_id).getRadians());
 		//same punkty
-		for(Integer i:dbPoints.keySet()){ //wiersz
-			for(Integer j:dbPoints.keySet()){ //kolumna
+		int i = 0;
+		for(Integer pI:dbPoints.keySet()){ //wiersz
+			int j = 0;
+			for(Integer pJ:dbPoints.keySet()){ //kolumna
 				//k,k
-				if(k_id==dbPoints.get(i).id && k_id==dbPoints.get(j).id ){
+				if(k_id==dbPoints.get(pI).id && k_id==dbPoints.get(pJ).id ){
 					// 0
 				}
 				//k,l
-				if(k_id==dbPoints.get(i).id && l_id==dbPoints.get(j).id ){
+				if(k_id==dbPoints.get(pI).id && l_id==dbPoints.get(pJ).id ){
 					//0
 				}
 				//k,m
-				if(k_id==dbPoints.get(i).id && m_id==dbPoints.get(j).id ){
+				if(k_id==dbPoints.get(pI).id && m_id==dbPoints.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, 1-g));
 				}
 				//k,n
-				if(k_id==dbPoints.get(i).id && n_id==dbPoints.get(j).id ){
+				if(k_id==dbPoints.get(pI).id && n_id==dbPoints.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, g-1));
 				}
 				//l,k
-				if(l_id==dbPoints.get(i).id && k_id==dbPoints.get(j).id ){
+				if(l_id==dbPoints.get(pI).id && k_id==dbPoints.get(pJ).id ){
 					//0
 				}
 				//l,l
-				if(l_id==dbPoints.get(i).id && l_id==dbPoints.get(j).id ){
+				if(l_id==dbPoints.get(pI).id && l_id==dbPoints.get(pJ).id ){
 					// 0
 				}
 				//l,m
-				if(l_id==dbPoints.get(i).id && m_id==dbPoints.get(j).id ){
+				if(l_id==dbPoints.get(pI).id && m_id==dbPoints.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, g-1));
 				}
 				//l,n
-				if(l_id==dbPoints.get(i).id && n_id==dbPoints.get(j).id ){
+				if(l_id==dbPoints.get(pI).id && n_id==dbPoints.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, 1-g));
 				}
 				//m,k
-				if(m_id==dbPoints.get(i).id && k_id==dbPoints.get(j).id ){
+				if(m_id==dbPoints.get(pI).id && k_id==dbPoints.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, 1-g));
 				}
 				//m,l
-				if(m_id==dbPoints.get(i).id && l_id==dbPoints.get(j).id ){
+				if(m_id==dbPoints.get(pI).id && l_id==dbPoints.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, g-1));
 				}
 				//m,m
-				if(m_id==dbPoints.get(i).id && m_id==dbPoints.get(j).id ){
+				if(m_id==dbPoints.get(pI).id && m_id==dbPoints.get(pJ).id ){
 					//0
 				}
 				//m,n
-				if(m_id==dbPoints.get(i).id && n_id==dbPoints.get(j).id ){
+				if(m_id==dbPoints.get(pI).id && n_id==dbPoints.get(pJ).id ){
 					// 0
 				}
 				//n,k
-				if(n_id==dbPoints.get(i).id && k_id==dbPoints.get(j).id ){
+				if(n_id==dbPoints.get(pI).id && k_id==dbPoints.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, g-1));
 				}
 				//n,l
-				if(n_id==dbPoints.get(i).id && l_id==dbPoints.get(j).id ){
+				if(n_id==dbPoints.get(pI).id && l_id==dbPoints.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, 1-g));
 				}
 				//n,m
-				if(n_id==dbPoints.get(i).id && m_id==dbPoints.get(j).id ){
+				if(n_id==dbPoints.get(pI).id && m_id==dbPoints.get(pJ).id ){
 					// 0
 				}
 				//n,n
-				if(n_id==dbPoints.get(i).id && n_id==dbPoints.get(j).id ){
+				if(n_id==dbPoints.get(pI).id && n_id==dbPoints.get(pJ).id ){
 					// 0
 				}
+				j++;
 			}
+			i++;
 		}
 
 		return out;

@@ -2,6 +2,9 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * Klasa FreePoint - czyli wolny Punkt 
  * 
@@ -20,10 +23,7 @@ public class FreePoint extends GeometricPrimitive{
 	double distance = 150.0;
 	/** Kat rotacji wzgledem osi X ,dla wyznaczenie polozenia poczatkowego dla a,b - w stopniach*/
 	double angle = Math.toRadians(40);
-	
-	/** Numery wiezow  powiazane z a,b*/
-	int[] constraintsId = new int[2];	
-	
+
 	public FreePoint(Vector p) {
 		this(GeometricPrimitive.nextId(), p);
 	}
@@ -37,13 +37,13 @@ public class FreePoint extends GeometricPrimitive{
 		} else {
 			// Punkty kontrolne wyznaczamy na podstawie distance,agnle : distance- to odleglosc wektora a i b od p1
 			// Kolejnosc inicjalizacji ma znaczenie
-			a = new Point(v00.sub(new Vector(distance*Math.cos(angle),distance*Math.sin(angle))));
-			p1 =new Point(v00);
-			b = new Point(v00.add(new Vector(distance*Math.cos(angle),distance*Math.sin(angle))));
+			a = new Point(Point.nextId(), v00.sub(new Vector(distance*Math.cos(angle),distance*Math.sin(angle))).x,v00.sub(new Vector(distance*Math.cos(angle),distance*Math.sin(angle))).y);
+			p1 =new Point(Point.nextId(), v00.x,v00.y);
+			b = new Point(Point.nextId(), v00.add(new Vector(distance*Math.cos(angle),distance*Math.sin(angle))).x,v00.add(new Vector(distance*Math.cos(angle),distance*Math.sin(angle))).y);
+			// przelicz odleglosci
+			setAssociateConstraints(null);
 		}
-		// przelicz odleglosci
 		calculateDistance();
-		this.associateConstraintsId = setAssociateConstraints();
 	}
 	
 	/** Funkcja oblicza dlugosci poczatkowe pomiedzy wektorami */
@@ -69,13 +69,13 @@ public class FreePoint extends GeometricPrimitive{
 		// przelicz odleglosci
 		calculateDistance();
 		
-		((ConstraintFixPoint)Constraint.dbConstraint.get(constraintsId[0])).setFixVector(va);
-		((ConstraintFixPoint)Constraint.dbConstraint.get(constraintsId[1])).setFixVector(vb);
+		((ConstraintFixPoint)Constraint.dbConstraint.get(constraints[0])).setFixVector(va);
+		((ConstraintFixPoint)Constraint.dbConstraint.get(constraints[1])).setFixVector(vb);
 	
 	}
 	
 	@Override
-	public MatrixDouble getForceJacobian() {
+	public MatrixDouble getJacobian() {
 		MatrixDouble mt = MatrixDouble.fill(6, 6, 0.0);
 		/**
 		 * k= I*k
@@ -85,7 +85,7 @@ public class FreePoint extends GeometricPrimitive{
 
 		 */
 		// K -mala sztywnosci
-		MatrixDouble Ks = MatrixDouble.diagonal(Config.springStiffnessLow,Config.springStiffnessLow);
+		MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
 		MatrixDouble mKs = Ks.dotC(-1);
 		
 
@@ -97,12 +97,13 @@ public class FreePoint extends GeometricPrimitive{
 	}
 
 	@Override
-	public int[] setAssociateConstraints() {
-		ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(),a);
-		ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(),b);
-		constraintsId[0] = fixPointa.constraintId;
-		constraintsId[1] = fixPointb.constraintId;
-		return constraintsId;
+	public void setAssociateConstraints(Set<Integer> skipIds) {
+		if(skipIds == null) skipIds = Collections.emptySet();
+		ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(skipIds),a);
+		ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(skipIds),b);
+		constraints = new int[2];
+		constraints[0] = fixPointa.constraintId;
+		constraints[1] = fixPointb.constraintId;
 	}
 
 	@Override
@@ -111,9 +112,9 @@ public class FreePoint extends GeometricPrimitive{
 		MatrixDouble force = MatrixDouble.fill(6,1,0.0);
 		
 		//F12 - sily w sprezynach
-		Vector f12 = p1.sub(a).unit().dot(Config.springStiffnessLow).dot(p1.sub(a).length()-d_a_p1);	
+		Vector f12 = p1.sub(a).unit().dot(Consts.springStiffnessLow).dot(p1.sub(a).length()-d_a_p1);
 		//F23
-		Vector f23 = b.sub(p1).unit().dot(Config.springStiffnessLow).dot(b.sub(p1).length()-d_p1_b);
+		Vector f23 = b.sub(p1).unit().dot(Consts.springStiffnessLow).dot(b.sub(p1).length()-d_p1_b);
 		
 		//F1 - silu na poszczegolne punkty
 		force.addSubMatrix(0, 0, new MatrixDouble(f12,true));

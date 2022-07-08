@@ -130,9 +130,7 @@ where x evaluates into ^q - delta-q - generalized coordinates.
  
 - [ Guides ] - show guidelines and  points  - gdzies zgubilsmy ta wersje z drukowaiem.
 
-- [ Save ]   - przycisk :save model -> Writer : FORMAT PLIKU [ WSZYSTKIE OBIEKTY , NUMERY PUNKTOW , WIEZY , PARAMATRY]
 
-- [ Load ]  -  przycisk :load model Reader :
  
 - [ GPU ]  - sprawdzic model , zaciagnac bindowanie memory 
 
@@ -143,3 +141,13 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 - [ JNI ] - otworzyc dzwignie do C++  -- jni.h  - handler do memory , read , write Byte , Integer , Long , Double, Float 
 
 - [ :Relaxed  ] - nazewnictwo :Put - odkladamy  - :Relaxed - random q shifts   
+
+
+
+
+- 
+- @@@ [!!!!! Error ] - Hessian Evaluation   -  iterable on keySet()  !!!! --   remove/add Primitives ( => Points ) - all constraints 3 wiezy !!!
+- @@@ ConstraintTangency, ConstraintLinesParallelism, ConstraintLinesPerpendicular , 
+
+- @@@ [ Save ]   - przycisk :save model -> Writer : FORMAT PLIKU [ WSZYSTKIE OBIEKTY , NUMERY PUNKTOW , WIEZY , PARAMATRY]
+- @@@ [ Load ]  -  przycisk :load model Reader 

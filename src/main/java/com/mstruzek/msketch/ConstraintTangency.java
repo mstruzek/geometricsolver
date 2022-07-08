@@ -120,75 +120,79 @@ public class ConstraintTangency extends Constraint {
 		double g = vLK.cross(vMK);
 		double zn = Math.signum(g); //znak
 		double k = vNM.unit().dot(vLK.unit());
-		
+
+		int i =0;
 		//same punkty
-		for(Integer i:dbPoints.keySet()){ //wiersz
-			for(Integer j:dbPoints.keySet()){ //kolumna
+		for(Integer vI:dbPoints.keySet()){ //wiersz
+			int j =0;
+			for(Integer vJ:dbPoints.keySet()){ //kolumna
 				//k,k
-				if(k_id==dbPoints.get(i).id && k_id==dbPoints.get(j).id ){
+				if(k_id==dbPoints.get(vI).id && k_id==dbPoints.get(vJ).id ){
 					// 0
 				}
 				//k,l
-				if(k_id==dbPoints.get(i).id && l_id==dbPoints.get(j).id ){
+				if(k_id==dbPoints.get(vI).id && l_id==dbPoints.get(vJ).id ){
 					out.setSubMatrix(2*i, 2*j,R.dotC(zn));
 				}
 				//k,m
-				if(k_id==dbPoints.get(i).id && m_id==dbPoints.get(j).id ){
+				if(k_id==dbPoints.get(vI).id && m_id==dbPoints.get(vJ).id ){
 					out.setSubMatrix(2*i, 2*j,mR.dotC(zn).addC(MatrixDouble.diagonal(2, -k)) );
 				}
 				//k,n
-				if(k_id==dbPoints.get(i).id && n_id==dbPoints.get(j).id ){
+				if(k_id==dbPoints.get(vI).id && n_id==dbPoints.get(vJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, k));
 				}
 				//l,k
-				if(l_id==dbPoints.get(i).id && k_id==dbPoints.get(j).id ){
+				if(l_id==dbPoints.get(vI).id && k_id==dbPoints.get(vJ).id ){
 					out.setSubMatrix(2*i, 2*j,mR.dotC(zn));
 				}
 				//l,l
-				if(l_id==dbPoints.get(i).id && l_id==dbPoints.get(j).id ){
+				if(l_id==dbPoints.get(vI).id && l_id==dbPoints.get(vJ).id ){
 					// 0
 				}
 				//l,m
-				if(l_id==dbPoints.get(i).id && m_id==dbPoints.get(j).id ){
+				if(l_id==dbPoints.get(vI).id && m_id==dbPoints.get(vJ).id ){
 					out.setSubMatrix(2*i, 2*j,R.dotC(zn).addC(MatrixDouble.diagonal(2, k)) );
 				}
 				//l,n
-				if(l_id==dbPoints.get(i).id && n_id==dbPoints.get(j).id ){
+				if(l_id==dbPoints.get(vI).id && n_id==dbPoints.get(vJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, -k));
 				}
 				//m,k
-				if(m_id==dbPoints.get(i).id && k_id==dbPoints.get(j).id ){
+				if(m_id==dbPoints.get(vI).id && k_id==dbPoints.get(vJ).id ){
 					out.setSubMatrix(2*i, 2*j,R.dotC(zn).addC(MatrixDouble.diagonal(2, -k)) );
 				}
 				//m,l
-				if(m_id==dbPoints.get(i).id && l_id==dbPoints.get(j).id ){
+				if(m_id==dbPoints.get(vI).id && l_id==dbPoints.get(vJ).id ){
 					out.setSubMatrix(2*i, 2*j,mR.dotC(zn).addC(MatrixDouble.diagonal(2, k)) );
 				}
 				//m,m
-				if(m_id==dbPoints.get(i).id && m_id==dbPoints.get(j).id ){
+				if(m_id==dbPoints.get(vI).id && m_id==dbPoints.get(vJ).id ){
 					//0
 				}
 				//m,n
-				if(m_id==dbPoints.get(i).id && n_id==dbPoints.get(j).id ){
+				if(m_id==dbPoints.get(vI).id && n_id==dbPoints.get(vJ).id ){
 					// 0
 				}
 				//n,k
-				if(n_id==dbPoints.get(i).id && k_id==dbPoints.get(j).id ){
+				if(n_id==dbPoints.get(vI).id && k_id==dbPoints.get(vJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, k));
 				}
 				//n,l
-				if(n_id==dbPoints.get(i).id && l_id==dbPoints.get(j).id ){
+				if(n_id==dbPoints.get(vI).id && l_id==dbPoints.get(vJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, -k));
 				}
 				//n,m
-				if(n_id==dbPoints.get(i).id && m_id==dbPoints.get(j).id ){
+				if(n_id==dbPoints.get(vI).id && m_id==dbPoints.get(vJ).id ){
 					// 0
 				}
 				//n,n
-				if(n_id==dbPoints.get(i).id && n_id==dbPoints.get(j).id ){
+				if(n_id==dbPoints.get(vI).id && n_id==dbPoints.get(vJ).id ){
 					// 0
 				}
+				j++;
 			}
+			i++;
 		}
 
 		return out;
@@ -201,10 +205,10 @@ public class ConstraintTangency extends Constraint {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		Point pn1 = new Point(0.0,0.0);
-		Point pn2 = new Point(10.0,0.01);
-		Point pn3 = new Point(0.01,10.0);
-		Point pn4 = new Point(10.0,10.0);
+		Point pn1 = new Point(Point.nextId(),0.0,0.0);
+		Point pn2 = new Point(Point.nextId(),10.0,0.01);
+		Point pn3 = new Point(Point.nextId(),0.01,10.0);
+		Point pn4 = new Point(Point.nextId(),10.0,10.0);
 		//Vector pn3 = new Vector(1.0,1.0);
 		//Vector pn4 = new Vector(1.0,2.0);
 		//System.out.println(ConstraintTangency.R);

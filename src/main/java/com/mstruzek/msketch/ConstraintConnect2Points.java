@@ -111,11 +111,11 @@ public class ConstraintConnect2Points extends Constraint {
 
 	public static void main(String[] args) {
 
-		Point pn =new Point(new Vector(3.0,4.0));
-		Point pn2 = new Point(new Vector(4.0,5.0));
+		Point pn =new Point(Point.nextId(), new Vector(3.0,4.0).x,new Vector(3.0,4.0).y);
+		Point pn2 = new Point(Point.nextId(), new Vector(4.0,5.0).x,new Vector(4.0,5.0).y);
 		ConstraintConnect2Points conectPoint = new ConstraintConnect2Points(Constraint.nextId(),pn,pn2);
 
-		Point pn3 =new Point(new Vector(3.0,4.0));
+		Point pn3 =new Point(Point.nextId(), new Vector(3.0,4.0).x,new Vector(3.0,4.0).y);
 		ConstraintFixPoint fixPoint2 = new ConstraintFixPoint(Constraint.nextId(),pn3);
 
 		Constraint cn = fixPoint2;

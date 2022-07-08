@@ -1,5 +1,6 @@
 package com.mstruzek.msketch;
 
+import java.util.Set;
 import java.util.TreeMap;
 
 import com.mstruzek.msketch.matrix.BindMatrix;
@@ -14,7 +15,7 @@ public abstract class Constraint implements ConstraintInterface {
     /**
      * Licznik wiezow
      */
-    static int counter = 0;
+    public static int constraintCounter = 0;
 
     /**
      * numer kolejno utworzonej lini
@@ -37,7 +38,15 @@ public abstract class Constraint implements ConstraintInterface {
     }
 
     public static Integer nextId(){
-        return counter++;
+        return constraintCounter++;
+    }
+
+    public static Integer nextId(Set<Integer> skipIdentifiers){
+        int nextId = constraintCounter++;
+        while (skipIdentifiers.contains(nextId)) {
+            nextId = constraintCounter++;
+        }
+        return nextId;
     }
 
     /**
