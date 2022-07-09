@@ -92,14 +92,14 @@ public abstract class Constraint implements ConstraintInterface {
      * Jedyny  wiez o size=2 czyli ConstraintConnect2Point ma staly
      * Jacobian zatem nie ma Hessianu
      */
-    public abstract MatrixDouble getHessian();
+    public abstract MatrixDouble getHessian(double alfa);
 
     /**
      * Funkcja zwraca true jesli Hessian jest staly
      *
      * @return
      */
-    public abstract boolean isHessianConstant();
+    public abstract boolean isHessianConst();
 
     /**
      * Podaje nam ile mnoznikow lagrange'a posiada dany wiez
@@ -131,15 +131,14 @@ public abstract class Constraint implements ConstraintInterface {
      * Funkcja zwraca Jakobian ze wszystkich wiezow
      *
      * @return macierz ,jakobian wiezow d(Wiezy)/dq
+     * @param mt
      */
-    public static MatrixDouble getFullJacobian() {
-        MatrixDouble jak = MatrixDouble.fill(allLagrangeCoffSize(), dbPoint.size() * 2, 0.0);
+    public static void getFullJacobian(MatrixDouble mt) {
         int rowPos = 0;
         for (Integer i : dbConstraint.keySet()) {
-            jak.addSubMatrix(rowPos, 0, dbConstraint.get(i).getJacobian());
+            mt.setSubMatrix(rowPos, 0, dbConstraint.get(i).getJacobian());
             rowPos += dbConstraint.get(i).size();
         }
-        return jak;
     }
 
     /**
@@ -147,15 +146,14 @@ public abstract class Constraint implements ConstraintInterface {
      * w wektorze kolumnowym
      *
      * @return
+     * @param mt
      */
-    public static MatrixDouble getFullConstraintValues() {
-        MatrixDouble wi = MatrixDouble.fill(allLagrangeCoffSize(), 1, 0.0);
+    public static void getFullConstraintValues(MatrixDouble mt) {
         int currentRow = 0;
         for (Integer i : dbConstraint.keySet()) {
-            wi.addSubMatrix(currentRow, 0, dbConstraint.get(i).getValue());
+            mt.setSubMatrix(currentRow, 0, dbConstraint.get(i).getValue());
             currentRow += dbConstraint.get(i).size();
         }
-        return wi;
     }
 
     /**
@@ -178,45 +176,34 @@ public abstract class Constraint implements ConstraintInterface {
      * Funkcja zwraca macierz d(Jak'*a)/dq -czyli tak jakby calkowity hessian juz
      * przemnozony
      *
-     * @param bMX - wektor x , z niego wyciagniemy mnozniki lagrange'a
+     * @param hs - Full  HESSIAN
+     * @param dmx  - wektor x , z niego wyciagniemy mnozniki lagrange'a
      * @return
      */
-    public static MatrixDouble getFullHessian(BindMatrix bMX) {
+    public static MatrixDouble getFullHessian(MatrixDouble hs, BindMatrix dmx) {
 
-        // Full  HESSIAN
-        MatrixDouble HSn = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-
-        int aCounter = 0; //licznik mnoznikow lagrange'a
-
-        double currentA = 0.0;//wartosc aktualnego mnoznika
+        int offset = 0; //licznik mnoznikow lagrange'a
+        double alfa = 0.0;//wartosc aktualnego mnoznika
 
         // Po wszystkich wiezach
         for (Integer i : dbConstraint.keySet()) {
             if (!(dbConstraint.get(i).isJacobianConstant())) {
                 //jest hessian
-                currentA = bMX.get(dbPoint.size() * 2 + aCounter, 0);
+                alfa = dmx.get(dbPoint.size() * 2 + offset, 0);
 
                 //
                 //  Hessian - dla tego wiezu liczony na cala macierz !
                 // -- ! add into mem in place AddVisitator
                 //
-                MatrixDouble Hs = dbConstraint.get(i).getHessian().dot(currentA);
-                HSn.add((Hs));
+                MatrixDouble Hs = dbConstraint.get(i).getHessian(alfa); /// FIXME -- alfa not implemented
+                if (Hs != null) {
+                    hs.add((Hs));
+                }
             }
             //zwiekszamy aktualny mnoznik Lagrage'a
-            aCounter += dbConstraint.get(i).size();
+            offset += dbConstraint.get(i).size();
         }
-
-        return HSn;
-    }
-
-    /**
-     * Usun wiez o danym id
-     *
-     * @param id - wiezu
-     */
-    public static void remove(int id) {
-        dbConstraint.remove(id);
+        return hs;
     }
 
     public int getConstraintId() {
@@ -226,7 +213,6 @@ public abstract class Constraint implements ConstraintInterface {
     public GeometricConstraintType getConstraintType() {
         return constraintType;
     }
-
 
     @Override
     public boolean isStorable(){

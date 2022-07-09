@@ -49,21 +49,21 @@ public class ConstraintConnect2Points extends Constraint {
         MatrixDouble out = MatrixDouble.fill(2, dbPoint.size() * 2, 0.0);
         //zerujemy cala macierz + wstawiamy na odpowiednie miejsce Jacobian wiezu
         int j = 0;
-        for(Integer i : dbPoint.keySet()) {
+        for (Integer i : dbPoint.keySet()) {
             out.m[0][j * 2] = 0.0;
             out.m[0][j * 2 + 1] = 0.0;
             out.m[1][j * 2] = 0.0;
             out.m[1][j * 2 + 1] = 0.0;
 
             //a tu wstawiamy macierz dla tego wiezu
-            if(k_id == dbPoint.get(i).id) {
+            if (k_id == dbPoint.get(i).id) {
                 //macierz jednostkowa = I
                 out.m[0][j * 2] = 1.0;
                 out.m[0][j * 2 + 1] = 0.0;
                 out.m[1][j * 2] = 0.0;
                 out.m[1][j * 2 + 1] = 1.0;
             }
-            if(l_id == dbPoint.get(i).id) {
+            if (l_id == dbPoint.get(i).id) {
                 // = -I
                 out.m[0][j * 2] = -1.0;
                 out.m[0][j * 2 + 1] = 0.0;
@@ -87,12 +87,12 @@ public class ConstraintConnect2Points extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian() {
+    public MatrixDouble getHessian(double alfa) {
         return null;
     }
 
     @Override
-    public boolean isHessianConstant() {
+    public boolean isHessianConst() {
         return false;
     }
 
@@ -120,22 +120,6 @@ public class ConstraintConnect2Points extends Constraint {
     public int getParametr() {
         return -1;
     }
-
-    public static void main(String[] args) {
-
-        Point pn = new Point(Point.nextId(), new Vector(3.0, 4.0).x, new Vector(3.0, 4.0).y);
-        Point pn2 = new Point(Point.nextId(), new Vector(4.0, 5.0).x, new Vector(4.0, 5.0).y);
-        ConstraintConnect2Points conectPoint = new ConstraintConnect2Points(Constraint.nextId(), pn, pn2);
-
-        Point pn3 = new Point(Point.nextId(), new Vector(3.0, 4.0).x, new Vector(3.0, 4.0).y);
-        ConstraintFixPoint fixPoint2 = new ConstraintFixPoint(Constraint.nextId(), pn3);
-
-        Constraint cn = fixPoint2;
-        System.out.println(conectPoint.getJacobian());
-        System.out.println(Constraint.dbConstraint);
-
-    }
-
 
     @Override
     public double getNorm() {

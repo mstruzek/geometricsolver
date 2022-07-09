@@ -5,22 +5,22 @@ import com.mstruzek.msketch.matrix.MatrixDouble;
 import java.util.Collections;
 import java.util.Set;
 
-public class Circle extends GeometricPrimitive{
+public class Circle extends GeometricPrimitive {
 
     /**
      * fix control points -punkty kontrolne zafixowane
      */
-    Point a=null;
-    Point b=null;
+    Point a = null;
+    Point b = null;
     /** dynamic points - punkty dynamiczne odpowiedzialne za przemiszczanie sie okregu*/
     /**
      * srodek okregu
      */
-    Point p1=null;
+    Point p1 = null;
     /**
      * promien okregu
      */
-    Point p2=null;
+    Point p2 = null;
 
     /**
      * Odleglosci pomiedzy wektorami poczatkowe
@@ -29,17 +29,17 @@ public class Circle extends GeometricPrimitive{
     /**
      * wsp�czynnik do skalowania wzglednego dla wektorow
      */
-    double alfa=2.0;
+    double alfa = 2.0;
 
     /**
      * Wspoczynnik o ile zwiekszona jest sztywnosc glownej lini
      */
-    double springAlfa=10.0;
+    double springAlfa = 10.0;
 
     /**
      * Numery wiezow  powiazane z a,b
      */
-    int[] constraintsId=new int[2];
+    int[] constraintsId = new int[2];
 
     /**
      * Konstruktor Okregu
@@ -47,56 +47,56 @@ public class Circle extends GeometricPrimitive{
      * @param p10 srodek okregu
      * @param p20 promien
      */
-    public Circle(Vector p10,Vector p20){
-        this(GeometricPrimitive.nextId(),p10,p20);
+    public Circle(Vector p10, Vector p20) {
+        this(GeometricPrimitive.nextId(), p10, p20);
     }
 
-    public Circle(int id,Vector v10,Vector v20){
-        super(id,GeometricPrimitiveType.Circle);
+    public Circle(int id, Vector v10, Vector v20) {
+        super(id, GeometricPrimitiveType.Circle);
 
-        if(v10 instanceof Point && v20 instanceof Point){
-            p1=(Point) v10;
-            p2=(Point) v20;
-            a=new Point(p1.getId()-1,v10.sub(v20).dot(alfa).add(v10));
-            b=new Point(p2.getId()+1,v20.sub(v10).dot(alfa).add(v20));
-        }else{
+        if (v10 instanceof Point && v20 instanceof Point) {
+            p1 = (Point) v10;
+            p2 = (Point) v20;
+            a = new Point(p1.getId() - 1, v10.sub(v20).dot(alfa).add(v10));
+            b = new Point(p2.getId() + 1, v20.sub(v10).dot(alfa).add(v20));
+        } else {
             //ustawienie pozycji dla punktow kontrolnych
             //Kolejnosc inicjalizacji ma znaczenie
-            a=new Point(Point.nextId(),v10.sub(v20).dot(alfa).add(v10).x,v10.sub(v20).dot(alfa).add(v10).y);
-            p1=new Point(Point.nextId(),v10.x,v10.y);//przepisujemy wartosci
-            p2=new Point(Point.nextId(),v20.x,v20.y);
-            b=new Point(Point.nextId(),v20.sub(v10).dot(alfa).add(v20).x,v20.sub(v10).dot(alfa).add(v20).y);
+            a = new Point(Point.nextId(), v10.sub(v20).dot(alfa).add(v10).x, v10.sub(v20).dot(alfa).add(v10).y);
+            p1 = new Point(Point.nextId(), v10.x, v10.y);//przepisujemy wartosci
+            p2 = new Point(Point.nextId(), v20.x, v20.y);
+            b = new Point(Point.nextId(), v20.sub(v10).dot(alfa).add(v20).x, v20.sub(v10).dot(alfa).add(v20).y);
             setAssociateConstraints(null);
         }
         calculateDistance();
     }
 
-    public String toString(){
-        return this.type+"*"+
-            this.primitiveId+": {"+
-            ",a="+a+
-            ",p1="+p1+
-            ",p2="+p2+
-            ",b="+b+
+    public String toString() {
+        return this.type + "*" +
+            this.primitiveId + ": {" +
+            ",a=" + a +
+            ",p1=" + p1 +
+            ",p2=" + p2 +
+            ",b=" + b +
             "}\n";
     }
 
     /**
      * Funkcja oblicza dlugosci poczatkowe pomiedzy wektorami
      */
-    private void calculateDistance(){
+    private void calculateDistance() {
 
-        d_a_p1=Math.abs(p1.sub(a).length());
-        d_p1_p2=Math.abs(p2.sub(p1).length());
-        d_p2_b=Math.abs(b.sub(p2).length());
+        d_a_p1 = Math.abs(p1.sub(a).length());
+        d_p1_p2 = Math.abs(p2.sub(p1).length());
+        d_p2_b = Math.abs(b.sub(p2).length());
     }
 
     @Override
-    public void recalculateControlPoints(){
-        Vector va=(Vector) (p1.sub(p2).dot(alfa).add(p1));
-        Vector vb=(Vector) (p2.sub(p1).dot(alfa).add(p2));
-        a.setLocation(va.x,va.y);
-        b.setLocation(vb.x,vb.y);
+    public void recalculateControlPoints() {
+        Vector va = (Vector) (p1.sub(p2).dot(alfa).add(p1));
+        Vector vb = (Vector) (p2.sub(p1).dot(alfa).add(p2));
+        a.setLocation(va.x, va.y);
+        b.setLocation(vb.x, vb.y);
 
         calculateDistance();
 
@@ -106,19 +106,22 @@ public class Circle extends GeometricPrimitive{
     }
 
     @Override
-    public void getJacobian(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol){
-
+    public void setForce(int r, MatrixDouble force) {
+        // 8 = 4*2 (4 punkty kontrolne)
+        Vector f12 = p1.sub(a).unit().dot(Consts.springStiffnessLow).dot(p1.sub(a).length() - d_a_p1);                      //F12 - sily w sprezynach
+        Vector f23 = p2.sub(p1).unit().dot(Consts.springStiffnessHigh * springAlfa).dot(p2.sub(p1).length() - d_p1_p2);     //F23
+        Vector f34 = b.sub(p2).unit().dot(Consts.springStiffnessLow).dot(b.sub(p2).length() - d_p2_b);                      //F34
+        
+        force.setSubVector(0, 0, f12);                          //F1 - silu na poszczegolne punkty
+        force.setSubVector(2, 0, f23.sub(f12));                 //F2
+        force.setSubVector(4, 0, f34.sub(f23));                 //F3
+        force.setSubVector(6, 0, f34.dot(-1.0));                //F4
     }
 
-    @Override
-    public MatrixDouble getForce(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol) {
-        return null;
-    }
 
     @Override
-    public MatrixDouble getJacobian(){
+    public void setJacobian(int r, int c, MatrixDouble mt) {
         // a ,p1 ,p2 ,b = 4*2 = 8x8
-        MatrixDouble mt=MatrixDouble.fill(8,8,0.0);
         /**
          * k= I*k
          * [ -ks    ks      0  	  0;
@@ -127,104 +130,87 @@ public class Circle extends GeometricPrimitive{
          *     0  	 0     ks    -ks];
          */
         // K -mala sztywnosci
-        MatrixDouble Ks=MatrixDouble.diagonal(Consts.springStiffnessLow,Consts.springStiffnessLow);
+        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
         // K - duza szytwnosci
-        MatrixDouble Kb=MatrixDouble.diagonal(Consts.springStiffnessHigh*springAlfa,Consts.springStiffnessHigh*springAlfa);
+        MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh * springAlfa, Consts.springStiffnessHigh * springAlfa);
         // -Ks-Kb
-        MatrixDouble Ksb=Ks.dotC(-1).addSubMatrix(0,0,Kb.dotC(-1));
-        mt.addSubMatrix(0,0,Ks.dotC(-1)).addSubMatrix(0,2,Ks);
-        mt.addSubMatrix(2,0,Ks).addSubMatrix(2,2,Ksb).addSubMatrix(2,4,Kb);
-        mt.addSubMatrix(4,2,Kb).addSubMatrix(4,4,Ksb).addSubMatrix(4,6,Ks);
-        mt.addSubMatrix(6,4,Ks).addSubMatrix(6,6,Ks.dotC(-1));
-        return mt;
+        MatrixDouble Ksb = Ks.dotC(-1).addSubMatrix(0, 0, Kb.dotC(-1));
+
+        mt.addSubMatrix(r + 0, c + 0, Ks.dotC(-1));
+        mt.addSubMatrix(r + 0, c + 2, Ks);
+        mt.addSubMatrix(r + 2, c + 0, Ks);
+        mt.addSubMatrix(r + 2, c + 2, Ksb);
+        mt.addSubMatrix(r + 2, c + 4, Kb);
+        mt.addSubMatrix(r + 4, c + 2, Kb);
+        mt.addSubMatrix(r + 4, c + 4, Ksb);
+        mt.addSubMatrix(r + 4, c + 6, Ks);
+        mt.addSubMatrix(r + 6, c + 4, Ks);
+        mt.addSubMatrix(r + 6, c + 6, Ks.dotC(-1));
     }
 
     @Override
-    public void setAssociateConstraints(Set<Integer> skipIds){
-        if(skipIds==null) skipIds=Collections.emptySet();
-        ConstraintFixPoint fixPointa=new ConstraintFixPoint(Constraint.nextId(skipIds),a,false);
-        ConstraintFixPoint fixPointb=new ConstraintFixPoint(Constraint.nextId(skipIds),b,false);
+    public void setAssociateConstraints(Set<Integer> skipIds) {
+        if (skipIds == null) skipIds = Collections.emptySet();
+        ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(skipIds), a, false);
+        ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(skipIds), b, false);
         //FIXME UWAGA - wiez ponizej nalezy nadac w specyficzny sposob
         // ConstraintLinesParallelism lineParallel = new ConstraintLinesParallelism(p1,b,p2,b);
         //ConstraintLinesParallelism lineParallel = new ConstraintLinesParallelism(p2,a,p1,a);
-        constraints=new int[2];
-        constraints[0]=fixPointa.constraintId;
-        constraints[1]=fixPointb.constraintId;
+        constraints = new int[2];
+        constraints[0] = fixPointa.constraintId;
+        constraints[1] = fixPointb.constraintId;
     }
 
-    @Override
-    public MatrixDouble getForce(){
-        // 8 = 4*2 (4 punkty kontrolne)
-        MatrixDouble force=MatrixDouble.fill(8,1,0.0);
-
-        //F12 - sily w sprezynach
-        Vector f12=p1.sub(a).unit().dot(Consts.springStiffnessLow).dot(p1.sub(a).length()-d_a_p1);
-        //F23
-        Vector f23=p2.sub(p1).unit().dot(Consts.springStiffnessHigh*springAlfa).dot(p2.sub(p1).length()-d_p1_p2);
-        //F34
-        Vector f34=b.sub(p2).unit().dot(Consts.springStiffnessLow).dot(b.sub(p2).length()-d_p2_b);
-
-        //F1 - silu na poszczegolne punkty
-        force.addSubMatrix(0,0,new MatrixDouble(f12,true));
-        //F2
-        force.addSubMatrix(2,0,new MatrixDouble(f23.sub(f12),true));
-        //F3
-        force.addSubMatrix(4,0,new MatrixDouble(f34.sub(f23),true));
-        //F4
-        force.addSubMatrix(6,0,new MatrixDouble(f34.dot(-1.0),true));
-
-        return force;
-    }
 
     @Override
-    public int getNumOfPoints(){
+    public int getNumOfPoints() {
         //a,b,p1,p2
         return 4;
     }
 
     @Override
-    public int getP1(){
+    public int getP1() {
         return p1.id;
     }
 
     @Override
-    public int getP2(){
+    public int getP2() {
         return p2.id;
     }
 
     @Override
-    public int getP3(){
+    public int getP3() {
         return -1;
     }
 
     @Override
-    public int getA(){
+    public int getA() {
         return a.id;
     }
 
     @Override
-    public int getB(){
+    public int getB() {
         return b.id;
     }
 
     @Override
-    public int getC(){
+    public int getC() {
         return -1;
     }
 
     @Override
-    public int getD(){
+    public int getD() {
         return -1;
     }
 
     @Override
-    public int[] getAllPointsId(){
-        int[] out=new int[4];
+    public int[] getAllPointsId() {
+        int[] out = new int[4];
 
-        out[0]=a.getId();
-        out[1]=b.getId();
-        out[2]=p1.getId();
-        out[3]=p2.getId();
+        out[0] = a.getId();
+        out[1] = b.getId();
+        out[2] = p1.getId();
+        out[3] = p2.getId();
         return out;
     }
 

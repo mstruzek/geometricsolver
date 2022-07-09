@@ -58,12 +58,15 @@ public class ConstraintDistance2Points extends Constraint{
         Vector vLK=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id)).unit();
         for(Integer i: dbPoint.keySet()){
 
+            Point pointI = dbPoint.get(i);
+
             //a tu wstawiamy macierz dla tego wiezu
-            if(k_id==dbPoint.get(i).id){
+
+            if(k_id== pointI.id){
                 out.m[0][j*2]=-vLK.x;
                 out.m[0][j*2+1]=-vLK.y;
             }
-            if(l_id==dbPoint.get(i).id){
+            if(l_id== pointI.id){
                 out.m[0][j*2]=vLK.x;
                 out.m[0][j*2+1]=vLK.y;
             }
@@ -90,16 +93,12 @@ public class ConstraintDistance2Points extends Constraint{
     }
 
     @Override
-    public MatrixDouble getHessian(){
-
-        //macierz NxN
-        MatrixDouble out=MatrixDouble.fill(dbPoint.size()*2,dbPoint.size()*2,0.0);
-
-        return out;
+    public MatrixDouble getHessian(double alfa){
+        return null;
     }
 
     @Override
-    public boolean isHessianConstant(){
+    public boolean isHessianConst(){
         return true;
     }
 

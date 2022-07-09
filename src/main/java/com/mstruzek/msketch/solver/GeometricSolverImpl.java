@@ -1,16 +1,16 @@
 package com.mstruzek.msketch.solver;
 
-import Jama.Matrix;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
 import com.mstruzek.msketch.Constraint;
 import com.mstruzek.msketch.GeometricPrimitive;
 import com.mstruzek.msketch.ParseToColt;
-import com.mstruzek.msketch.Point;
 import com.mstruzek.msketch.matrix.BindMatrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
+import static com.mstruzek.msketch.Constraint.allLagrangeCoffSize;
+import static com.mstruzek.msketch.Point.dbPoint;
 import static java.lang.System.out;
 
 public class GeometricSolverImpl implements GeometricSolver {
@@ -24,34 +24,41 @@ public class GeometricSolverImpl implements GeometricSolver {
 
         long start = System.currentTimeMillis();                  /// start timing
 
-        if (Point.dbPoint.size() == 0) {
+        if (dbPoint.size() == 0) {
             return;
         }
 
         /// Tworzymy Macierz "A" - dla tego zadania stala w czasie
-        int coffSize = Constraint.allLagrangeCoffSize();
-        int size = Point.dbPoint.size() * 2;
-        int fullDimension = Point.dbPoint.size() * 2 + coffSize;
 
         /// TODO  @IniticjalizajaMacierzy
 
-        MatrixDouble A = MatrixDouble.fill(fullDimension, fullDimension, 0.0);
-        MatrixDouble Fq = MatrixDouble.fill(size, size, 0.0);
+        final int size = dbPoint.size() * 2;
+        final int coffSize = allLagrangeCoffSize();
+        final int dimension = size + coffSize;
+
+        MatrixDouble A = MatrixDouble.fill(dimension, dimension, 0.0);
+        MatrixDouble Fq = MatrixDouble.fill(size, size, 0.0);               // CONST
         MatrixDouble Wq = MatrixDouble.fill(coffSize, size, 0.0);
+
+        /// HESSIAN
+        MatrixDouble Hs = MatrixDouble.fill(size, size, 0.0);
+
 
         // right-hand side vector ~ b
         MatrixDouble Fr = MatrixDouble.fill(size, 1, 0.0);
         MatrixDouble Fi = MatrixDouble.fill(coffSize, 1, 0.0);
 
 
-        Fq = GeometricPrimitive.getAllJacobianForces();
+        /// CONST
+        GeometricPrimitive.getAllJacobianForces(Fq);
+
 
         // Tworzymy wektor prawych stron b
         MatrixDouble b = null;
         BindMatrix dmx = null;
 
-        BindMatrix Bmt = new BindMatrix(Point.dbPoint.size() * 2 + coffSize, 1);
-        Bmt.bind(Point.dbPoint);
+        BindMatrix Bmt = new BindMatrix(dimension, 1);
+        Bmt.bind(dbPoint);
 
 
         double erri1, erri = 0, delta;
@@ -60,30 +67,34 @@ public class GeometricSolverImpl implements GeometricSolver {
 
         //// Matrix -- VIEW on MATRIX
 
+
+        //// ADD ----> SET ( reuse mts )
+
         for (int i = 0; i < 10; i++) {
 
             /// zerujemy macierz A
-
-            A = MatrixDouble.fill(fullDimension, fullDimension, 0.0);
+            A.reset(0.0);
 
             /// Tworzymy Macierz vector b
 
-            Fr = GeometricPrimitive.getAllForce();                 /// Sily  - F(q)
-
-            Fi = Constraint.getFullConstraintValues();         /// Wiezy  - Fi(q)
+            GeometricPrimitive.getAllForce(Fr);                 /// Sily  - F(q)
+            Constraint.getFullConstraintValues(Fi);             /// Wiezy  - Fi(q)
 
             b = MatrixDouble.mergeByColumn((Fr), (Fi));
             b.dot(-1);
 
             /// JACOBIAN
-            Wq = Constraint.getFullJacobian();                  /// Jq = d(Fi)/dq
+            Constraint.getFullJacobian(Wq);                     /// Jq = d(Fi)/dq
 
-            /// HESSIAN
-            MatrixDouble Hs = Constraint.getFullHessian(Bmt);
+            Hs.reset(0.0);
 
-            A.addSubMatrix(0, 0, Fq.addC((Hs))); // TODO NO-COPY???
-            A.addSubMatrix(size, 0, Wq);
-            A.addSubMatrix(0, size, Wq.transpose());
+            Constraint.getFullHessian(Hs, Bmt);
+
+            A.setSubMatrix(0, 0, Fq);                   /// procedure SET
+            A.addSubMatrix(0, 0, Hs);                   /// procedure ADD
+
+            A.setSubMatrix(size, 0, Wq);
+            A.setSubMatrix(0, size, Wq.transpose());
 
 
             /**
@@ -116,10 +127,9 @@ public class GeometricSolverImpl implements GeometricSolver {
 
 
             /// AFTER -- copyToPoints  x2
-            Fi = Constraint.getFullConstraintValues();
+            Constraint.getFullConstraintValues(Fi);
 
-            Matrix normMt = new Matrix(Fi.getArray());
-            double norm1 = normMt.norm1();
+            double norm1 = Fi.norm1();
             out.println(" \n " + (i + 1) + " || " + stepDelta + "  ||  " + norm1 + "\n");
 
             //stary warunek wyjscia

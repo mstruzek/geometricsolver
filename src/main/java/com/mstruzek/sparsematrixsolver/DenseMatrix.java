@@ -28,8 +28,8 @@ public class DenseMatrix implements MatrixData {
 	
 	public DenseMatrix(MatrixDouble md){
 		super();
-		this.width = md.getWidth();
-		this.height = md.getHeight();
+		this.width = md.width();
+		this.height = md.height();
 		d = new double[height][];
 		for(int i=0;i<height;i++){
 			d[i]= new double[width];

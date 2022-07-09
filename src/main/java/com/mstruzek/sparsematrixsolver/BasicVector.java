@@ -42,7 +42,7 @@ public class BasicVector {
 	public BasicVector(MatrixDouble md){
 	
 		
-		this.size = md.getHeight();
+		this.size = md.height();
 		d = new double[size];
 		for(int i=0;i<size;i++){
 			d[i]=md.m[i][0];

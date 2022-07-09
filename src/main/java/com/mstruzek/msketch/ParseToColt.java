@@ -22,10 +22,10 @@ public class ParseToColt {
 	 */
 	public static SparseDoubleMatrix2D toSparse(MatrixDouble md){
 		
-		SparseDoubleMatrix2D matrix2D = new SparseDoubleMatrix2D(md.getHeight(),md.getWidth());
+		SparseDoubleMatrix2D matrix2D = new SparseDoubleMatrix2D(md.height(),md.width());
 		
-		for(int i=0;i<md.getHeight();i++){
-			for(int j=0;j<md.getWidth();j++){
+		for(int i = 0; i<md.height(); i++){
+			for(int j = 0; j<md.width(); j++){
 				if(md.m[i][j]!=0.0){
 					matrix2D.setQuick(i, j, md.m[i][j]);
 				}
@@ -36,9 +36,9 @@ public class ParseToColt {
 	}
 
 	public static DoubleMatrix1D toDenseVector(MatrixDouble b) {
-		DoubleMatrix1D doubleMatrix1D = new DenseDoubleMatrix1D(b.getHeight());
+		DoubleMatrix1D doubleMatrix1D = new DenseDoubleMatrix1D(b.height());
 		
-		for(int i=0;i<b.getHeight();i++){
+		for(int i = 0; i<b.height(); i++){
 			doubleMatrix1D.setQuick(i, b.m[i][0]);
 		}
 		

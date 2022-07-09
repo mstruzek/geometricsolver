@@ -32,8 +32,8 @@ public class SparseMatrix implements MatrixData {
 	
 	public SparseMatrix(MatrixDouble md) {
 		super();
-		this.width = md.getWidth();
-		this.height = md.getHeight();
+		this.width = md.width();
+		this.height = md.height();
 		d =new TreeMap<Index, Double>();
 		
 		for(int i=0;i<height;i++){

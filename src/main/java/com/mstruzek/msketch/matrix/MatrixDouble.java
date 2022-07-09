@@ -44,7 +44,7 @@ public class MatrixDouble {
      * @param columnType true if coumn type [a b c]', false if row type [a b c]
      */
     public MatrixDouble(Vector vec, boolean columnType) {
-        if(columnType) {
+        if (columnType) {
             this.columns = 1;
             this.rows = 2;
             this.m = new double[rows][columns];
@@ -84,7 +84,7 @@ public class MatrixDouble {
      *
      * @return
      */
-    public int getWidth() {
+    public int width() {
         return columns;
     }
 
@@ -93,7 +93,7 @@ public class MatrixDouble {
      *
      * @return
      */
-    public int getHeight() {
+    public int height() {
         return rows;
     }
 
@@ -129,7 +129,7 @@ public class MatrixDouble {
     }
 
     private static void assertEqualDimensions(MatrixDouble left, MatrixDouble right) {
-        if(left.rows != right.rows || left.columns != right.columns) {
+        if (left.rows != right.rows || left.columns != right.columns) {
             throw new Error("Matrices must be of the same dimension");
         }
     }
@@ -157,8 +157,8 @@ public class MatrixDouble {
      * @return this
      */
     public MatrixDouble dot(double c) {
-        for(int i = 0; i < getHeight(); i++) {
-            for(int j = 0; j < getWidth(); j++) {
+        for(int i = 0; i < height(); i++) {
+            for(int j = 0; j < width(); j++) {
                 this.m[i][j] *= c;
             }
         }
@@ -174,8 +174,8 @@ public class MatrixDouble {
      */
     public MatrixDouble dotC(double c) {
         MatrixDouble mt = this.copy();
-        for(int i = 0; i < getHeight(); i++) {
-            for(int j = 0; j < getWidth(); j++) {
+        for(int i = 0; i < height(); i++) {
+            for(int j = 0; j < width(); j++) {
                 mt.m[i][j] *= c;
             }
         }
@@ -205,11 +205,11 @@ public class MatrixDouble {
      */
     public MatrixDouble setSubMatrix(int firstRow, int firstColumn, MatrixDouble mt) {
         //sprawdzamy czy macierz wstawiana nie jest za duza
-        if(this.getHeight() >= (firstRow + mt.getHeight())) {
-            if(this.getWidth() >= (firstColumn + mt.getWidth())) {
+        if(this.height() >= (firstRow + mt.height())) {
+            if(this.width() >= (firstColumn + mt.width())) {
                 //mozna wstawic
                 //System.arraycopy(this.m[i + i1], j1, array.m[i], 0, j2 - j1 + 1);
-                for(int k = 0; k < mt.getHeight(); k++) {
+                for(int k = 0; k < mt.height(); k++) {
                     System.arraycopy(mt.m[k], 0, this.m[k + firstRow], firstColumn, mt.m[k].length);
                 }
                 return this;
@@ -219,6 +219,11 @@ public class MatrixDouble {
         } else {
             return null;
         }
+    }
+
+    public void setSubVector(int r, int c, Vector vector) {
+        this.m[r + 0 ][c] = vector.getX();
+        this.m[r + 1 ][c] = vector.getY();
     }
 
 
@@ -238,12 +243,12 @@ public class MatrixDouble {
      * @return this matrix
      */
     public MatrixDouble addSubMatrix(int firstRow, int firstColumn, MatrixDouble mt) {
-        if(this.getHeight() < (firstRow + mt.getHeight()) || this.getWidth() < (firstColumn + mt.getWidth())) {
+        if(this.height() < (firstRow + mt.height()) || this.width() < (firstColumn + mt.width())) {
             throw new Error("matrix dimension out of bounds");
         }
 
-        for(int i = 0; i < mt.getHeight(); i++) {
-            for(int j = 0; j < mt.getWidth(); j++) {
+        for(int i = 0; i < mt.height(); i++) {
+            for(int j = 0; j < mt.width(); j++) {
                 m[i + firstRow][j + firstColumn] += mt.m[i][j];
             }
         }
@@ -383,6 +388,19 @@ public class MatrixDouble {
     }
 
     /**
+     * Reset matrix fill with constant value.
+     *
+     * @param value constant value that reset matrix to.
+     * @return this matrix
+     */
+    public MatrixDouble reset(double value) {
+        for (int i = 0; i < m.length; i++)
+            for (int j = 0; j < m[i].length; j++)
+                m[i][j] = value;
+        return this;
+    }
+
+    /**
      * Dodaje do siebie Macierze w ten sposub ze kazda kolejna macierz
      * jest pod druga w kolumnie , macierze powinny miec ta sama ilosc kolumn ale nie koniecznie
      * <p>
@@ -398,16 +416,16 @@ public class MatrixDouble {
         int maxRows = 0;
         int maxColumns = 0;
         for(int i = 0; i < MD.length; i++) {
-            maxRows += MD[i].getHeight();
-            if(MD[i].getWidth() > maxColumns) maxColumns = MD[i].getWidth();
+            maxRows += MD[i].height();
+            if(MD[i].width() > maxColumns) maxColumns = MD[i].width();
         }
         MatrixDouble MT = new MatrixDouble(maxRows, maxColumns);
         int currentRow = 0;
         for(int i = 0; i < MD.length; i++) {
-            for(int j = 0; j < MD[i].getHeight(); j++) { //j - numer wiersza w danej macierzy
+            for(int j = 0; j < MD[i].height(); j++) { //j - numer wiersza w danej macierzy
                 System.arraycopy(MD[i].m[j], 0, MT.m[currentRow + j], 0, MD[i].m[j].length);
             }
-            currentRow += MD[i].getHeight();
+            currentRow += MD[i].height();
         }
         return MT;
     }
@@ -426,19 +444,39 @@ public class MatrixDouble {
         int maxRows = 0;
         int maxColumns = 0;
         for(int i = 0; i < MD.length; i++) {
-            maxColumns += MD[i].getWidth();
-            if(MD[i].getHeight() > maxRows) maxRows = MD[i].getHeight();
+            maxColumns += MD[i].width();
+            if(MD[i].height() > maxRows) maxRows = MD[i].height();
         }
         MatrixDouble MT = new MatrixDouble(maxRows, maxColumns);
         int currentColumn = 0;
         for(int i = 0; i < MD.length; i++) {
-            for(int j = 0; j < MD[i].getHeight(); j++) { //j - numer wiersza w danej macierzy
+            for(int j = 0; j < MD[i].height(); j++) { //j - numer wiersza w danej macierzy
                 System.arraycopy(MD[i].m[j], 0, MT.m[j], currentColumn, MD[i].m[j].length);
             }
-            currentColumn += MD[i].getWidth();
+            currentColumn += MD[i].width();
         }
         return MT;
     }
+
+    /**
+     * Norm-1  - max sumy skladowych wiersza
+     * <p>
+     * REF_IMPL: gov.nist.math\jama\1.0.3\jama-1.0.3.jar!\Jama\Matrix.class
+     *
+     * @return
+     */
+    public double norm1() {
+        double f = 0;
+        for (int j = 0; j < columns; j++) {
+            double s = 0;
+            for (int i = 0; i < rows; i++) {
+                s += Math.abs(m[i][j]);
+            }
+            f = Math.max(f, s);
+        }
+        return f;
+    }
+
 
     /**
      * Generates a string that holds a nicely organized version of a matrix or array.
@@ -477,7 +515,7 @@ public class MatrixDouble {
      */
     public String toString() {
         StringBuffer str = new StringBuffer();
-        str.append("\nMatrixDouble.m " + this.getHeight() + "x" + this.getWidth() + "\n**************************************** \n");
+        str.append("\nMatrixDouble.m " + this.height() + "x" + this.width() + "\n**************************************** \n");
         str.append(toString("%7.3f"));
         return str.toString();
     }
@@ -500,5 +538,6 @@ public class MatrixDouble {
         MatrixDouble mg = MatrixDouble.createFromArray(tab);
         System.out.println(mg.transpose());
     }
+
 
 }

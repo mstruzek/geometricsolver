@@ -50,11 +50,11 @@ public class Line extends GeometricPrimitive {
     public Line(int id, Vector v10, Vector v20) {
         super(id, GeometricPrimitiveType.Line);
 
-        if(v10 instanceof Point && v20 instanceof Point) {
+        if (v10 instanceof Point && v20 instanceof Point) {
             p1 = (Point) v10;
             p2 = (Point) v20;
-            a = new Point(p1.getId()-1,v10.sub(v20).dot(alfa).add(v10));
-            b = new Point(p2.getId()+1,v20.sub(v10).dot(alfa).add(v20));
+            a = new Point(p1.getId() - 1, v10.sub(v20).dot(alfa).add(v10));
+            b = new Point(p2.getId() + 1, v20.sub(v10).dot(alfa).add(v20));
         } else {
             //ustawienie pozycji dla punktow kontrolnych
             //Kolejnosc inicjalizacji ma znaczenie
@@ -104,20 +104,22 @@ public class Line extends GeometricPrimitive {
     }
 
     @Override
-    public void getJacobian(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol){
+    public void setForce(int r, MatrixDouble mt) {
+        // 8 = 4*2 (4 punkty kontrolne)
+        Vector f12 = p1.sub(a).unit().dot(Consts.springStiffnessLow).dot(p1.sub(a).length() - d_a_p1);          //F12 - sily w sprezynach
+        Vector f23 = p2.sub(p1).unit().dot(Consts.springStiffnessHigh).dot(p2.sub(p1).length() - d_p1_p2);      //F23
+        Vector f34 = b.sub(p2).unit().dot(Consts.springStiffnessLow).dot(b.sub(p2).length() - d_p2_b);          //F34
 
+        mt.setSubVector(r + 0, 0, f12);                     //F1 - silu na poszczegolne punkty
+        mt.setSubVector(r + 2, 0, f23.sub(f12));            //F2
+        mt.setSubVector(r + 4, 0, f34.sub(f23));            //F3
+        mt.setSubVector(r + 6, 0, f34.dot(-1.0));           //F4
     }
 
-    @Override
-    public MatrixDouble getForce(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol) {
-        return null;
-    }
-
 
     @Override
-    public MatrixDouble getJacobian() {
-        // a ,p1 ,p2 ,b = 4*2 = 8x8
-        MatrixDouble mt = MatrixDouble.fill(8, 8, 0.0);
+    public void setJacobian(int r, int c, MatrixDouble mt) {
+
         /**
          * k= I*k
          * [ -ks    ks      0  	  0;
@@ -131,47 +133,30 @@ public class Line extends GeometricPrimitive {
         MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
         // -Ks-Kb
         MatrixDouble Ksb = Ks.dotC(-1).addSubMatrix(0, 0, Kb.dotC(-1));
+
         //wiersz pierwszy
-        mt.addSubMatrix(0, 0, Ks.dotC(-1)).addSubMatrix(0, 2, Ks);
-        mt.addSubMatrix(2, 0, Ks).addSubMatrix(2, 2, Ksb).addSubMatrix(2, 4, Kb);
-        mt.addSubMatrix(4, 2, Kb).addSubMatrix(4, 4, Ksb).addSubMatrix(4, 6, Ks);
-        mt.addSubMatrix(6, 4, Ks).addSubMatrix(6, 6, Ks.dotC(-1));
-        return mt;
+        mt.addSubMatrix(r + 0, c + 0, Ks.dotC(-1));
+        mt.addSubMatrix(r + 0, c + 2, Ks);
+        mt.addSubMatrix(r + 2, c + 0, Ks);
+        mt.addSubMatrix(r + 2, c + 2, Ksb);
+        mt.addSubMatrix(r + 2, c + 4, Kb);
+        mt.addSubMatrix(r + 4, c + 2, Kb);
+        mt.addSubMatrix(r + 4, c + 4, Ksb);
+        mt.addSubMatrix(r + 4, c + 6, Ks);
+        mt.addSubMatrix(r + 6, c + 4, Ks);
+        mt.addSubMatrix(r + 6, c + 6, Ks.dotC(-1));
     }
 
     @Override
     public void setAssociateConstraints(Set<Integer> skipIds) {
-        if(skipIds == null) skipIds = Collections.emptySet();
-        ConstraintFixPoint fixeda = new ConstraintFixPoint(Constraint.nextId(skipIds),a,false);
-        ConstraintFixPoint fixedb = new ConstraintFixPoint(Constraint.nextId(skipIds),b,false);
+        if (skipIds == null) skipIds = Collections.emptySet();
+        ConstraintFixPoint fixeda = new ConstraintFixPoint(Constraint.nextId(skipIds), a, false);
+        ConstraintFixPoint fixedb = new ConstraintFixPoint(Constraint.nextId(skipIds), b, false);
         constraints = new int[2];
         constraints[0] = fixeda.constraintId;
         constraints[1] = fixedb.constraintId;
     }
 
-    @Override
-    public MatrixDouble getForce() {
-        // 8 = 4*2 (4 punkty kontrolne)
-        MatrixDouble force = MatrixDouble.fill(8, 1, 0.0);
-
-        //F12 - sily w sprezynach
-        Vector f12 = p1.sub(a).unit().dot(Consts.springStiffnessLow).dot(p1.sub(a).length() - d_a_p1);
-        //F23
-        Vector f23 = p2.sub(p1).unit().dot(Consts.springStiffnessHigh).dot(p2.sub(p1).length() - d_p1_p2);
-        //F34
-        Vector f34 = b.sub(p2).unit().dot(Consts.springStiffnessLow).dot(b.sub(p2).length() - d_p2_b);
-
-        //F1 - silu na poszczegolne punkty
-        force.addSubMatrix(0, 0, new MatrixDouble(f12, true));
-        //F2
-        force.addSubMatrix(2, 0, new MatrixDouble(f23.sub(f12), true));
-        //F3
-        force.addSubMatrix(4, 0, new MatrixDouble(f34.sub(f23), true));
-        //F4
-        force.addSubMatrix(6, 0, new MatrixDouble(f34.dot(-1.0), true));
-
-        return force;
-    }
 
     @Override
     public int getNumOfPoints() {

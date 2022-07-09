@@ -97,12 +97,12 @@ public class ConstraintFixPoint extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian() {
+    public MatrixDouble getHessian(double alfa) {
         return null;
     }
 
     @Override
-    public boolean isHessianConstant() {
+    public boolean isHessianConst() {
         return false;
     }
 
