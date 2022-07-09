@@ -1,94 +1,121 @@
 package com.mstruzek.graphic;
 
 import com.mstruzek.controller.*;
+import com.mstruzek.msketch.Constraint;
 import com.mstruzek.msketch.GeometricPrimitive;
+import com.mstruzek.msketch.Parameter;
+import com.mstruzek.msketch.Point;
 
 import javax.swing.*;
-import javax.swing.event.MouseInputListener;
+import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 
-public class MyTables extends JPanel implements MouseInputListener {
+import static com.mstruzek.controller.EventType.CONSTRAINT_TABLE_INSERT;
+import static com.mstruzek.controller.EventType.PARAMETER_TABLE_INSERT;
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1L;
+public class MyTables extends JPanel{
 
-    private static final int D_WIDTH = 920;
-    private static final int D_HEIGHT = 770;
-    private static final int D_HEIGHT_JTAB = 250;
+    private static final long serialVersionUID=1L;
 
+    private static final int D_WIDTH=920;
+    private static final int D_HEIGHT=770;
+    private static final int D_HEIGHT_JTAB=250;
 
-    /**
-     * constraint
-     */
-    MyTableModel mtm = null;
-    /**
-     * primitives
-     */
-    MyTableModel ptm = null;
-    /**
-     * parameters
-     */
-    MyTableModel vtm = null;
+    /*** constraint */
+    final AbstractTableModel mtm=new ConstraintsTableModel();
+    /*** primitives */
+    final AbstractTableModel ptm=new PrimitivesTableModel();
+    /*** parameters */
+    final AbstractTableModel vtm=new ParametersTableModel();
 
-    JTable constTable = null;
-    JTable primiTable = null;
-    JTable variaTable = null;
+    final JTable constTable;
+    final JTable primiTable;
+    final JTable variaTable;
 
-    ContextMenuPopup popoupConstaint;
-    ContextMenuPopup popupPrimitives;
+    final ContextMenuPopup popoupConstaint;
+    final ContextMenuPopup popupPrimitives;
 
     // MPopup popupParameters = new MPopup(vtm,table3);
 
-    public MyTables() {
+    public MyTables(){
         super();
 
-        setPreferredSize(new Dimension(D_WIDTH, D_HEIGHT));
+        setPreferredSize(new Dimension(D_WIDTH,D_HEIGHT));
         //(new BorderLayout());
-        this.mtm = new ConstraintsTableModel();
-        this.ptm = new PrimitivesTableModel();
-        this.vtm = new ParametersTableModel();
 
-        ptm.addTableModelListener(new TableModelListener() {
+        ptm.addTableModelListener(new TableModelListener(){
             @Override
-            public void tableChanged(TableModelEvent e) {
-                EventBus.send(EventType.REFRESH_N_REPAINT, new Object[]{});
+            public void tableChanged(TableModelEvent e){
+                Events.send(EventType.REFRESH_N_REPAINT,new Object[]{});
             }
         });
 
-        constTable = new JTable(mtm);
-        primiTable = new JTable(ptm);
-        variaTable = new JTable(vtm);
+        constTable=new JTable(mtm);
+        primiTable=new JTable(ptm);
+        variaTable=new JTable(vtm);
 
 
-        constTable.setPreferredScrollableViewportSize(new Dimension(D_WIDTH, D_HEIGHT_JTAB));
-        primiTable.setPreferredScrollableViewportSize(new Dimension(D_WIDTH, D_HEIGHT_JTAB));
-        variaTable.setPreferredScrollableViewportSize(new Dimension(D_WIDTH, D_HEIGHT_JTAB));
+        constTable.setPreferredScrollableViewportSize(new Dimension(D_WIDTH,D_HEIGHT_JTAB));
+        primiTable.setPreferredScrollableViewportSize(new Dimension(D_WIDTH,D_HEIGHT_JTAB));
+        variaTable.setPreferredScrollableViewportSize(new Dimension(D_WIDTH,D_HEIGHT_JTAB));
 
-        //table.setFocusable(false);
-        //table2.setFocusable(false);
-        //table3.setFocusable(false);
+        popoupConstaint=new ContextMenuPopup(e->contextMenuDeleteConstraint());
+        popupPrimitives=new ContextMenuPopup(e->contextMenuDeletePrimitive());
 
-        constTable.addMouseListener(this);
-        constTable.addMouseMotionListener(this);
+        MouseInputAdapter mouseInputListener=new MouseInputAdapter(){
+            @Override
+            public void mouseReleased(MouseEvent e){
+                final JTable eventSourceTable=(JTable) e.getSource();
+                if(eventSourceTable.equals(constTable)){
+                    popoupConstaint.show(e.getComponent(),e.getX(),e.getY());
+                }else if(eventSourceTable.equals(primiTable)){
+                    popupPrimitives.show(e.getComponent(),e.getX(),e.getY());
+                }
+            }
 
-        primiTable.addMouseListener(this);
-        primiTable.addMouseMotionListener(this);
+        };
+        constTable.addMouseListener(mouseInputListener);
+        constTable.addMouseMotionListener(mouseInputListener);
 
-        variaTable.addMouseListener(this);
-        variaTable.addMouseMotionListener(this);
+        primiTable.addMouseListener(mouseInputListener);
+        primiTable.addMouseMotionListener(mouseInputListener);
 
-        TableColumn column = null;
-        for(int i = 0; i < 1; i++) { //8
-            column = constTable.getColumnModel().getColumn(i);
-            switch (i) {
+        setColumnPreferredWidth();
+
+        //Do the layout.
+        add(new JScrollPane(constTable));
+        add(new JScrollPane(primiTable));
+        add(new JScrollPane(variaTable));
+
+
+        Events.addListener(EventType.PRIMITIVE_TABLE_INSERT,(eventType,arguments)->{
+            int rowCount=ptm.getRowCount();
+            ptm.fireTableRowsInserted(rowCount,rowCount);
+        });
+
+        Events.addListener(CONSTRAINT_TABLE_INSERT,(eventType,arguments)->{
+            int rowCount=mtm.getRowCount();
+            mtm.fireTableRowsInserted(rowCount,rowCount);
+        });
+
+        Events.addListener(PARAMETER_TABLE_INSERT,(eventType,arguments)->{
+            int rowCount=vtm.getRowCount();
+            vtm.fireTableRowsInserted(rowCount,rowCount);
+        });
+    }
+
+    private void setColumnPreferredWidth(){
+        TableColumn column=null;
+        for(int i=0;i<8;i++){ //8
+            column=constTable.getColumnModel().getColumn(i);
+            switch(i){
                 case 0:
                     //column.setPreferredWidth(30);
                     break;
@@ -115,94 +142,86 @@ public class MyTables extends JPanel implements MouseInputListener {
                     break;
             }
         }
-        TableColumn column2 = null;
-        for(int i = 0; i < 2; i++) {
-            column2 = primiTable.getColumnModel().getColumn(i);
-            switch (i) {
+        for(int i=0;i<5;i++){
+            column=primiTable.getColumnModel().getColumn(i);
+            switch(i){
                 case 0:
-                    column2.setPreferredWidth(10);
+                    column.setPreferredWidth(10);
                     break;
                 case 1:
-                    column2.setPreferredWidth(200);
+                    column.setPreferredWidth(200);
                     break;
                 case 2:
-                    column2.setPreferredWidth(10);
+                    column.setPreferredWidth(10);
                     break;
                 case 3:
-                    column2.setPreferredWidth(10);
+                    column.setPreferredWidth(10);
                     break;
                 case 4:
-                    column2.setPreferredWidth(10);
+                    column.setPreferredWidth(10);
                     break;
             }
         }
-
-        //Do the layout.
-        add(new JScrollPane(constTable));
-        add(new JScrollPane(primiTable));
-        add(new JScrollPane(variaTable));
-
-        popoupConstaint = new ContextMenuPopup(mtm, constTable);
-        popupPrimitives = new ContextMenuPopup(ptm, primiTable);
-
-        EventBus.addListener(EventType.PRIMITIVE_TABLE_FIRE_INSERT, (eventType, arguments) -> {
-            Integer firstRow = (Integer)arguments[0];
-            Integer lastRow = (Integer)arguments[1];
-            ptm.fireTableRowsInserted(firstRow, lastRow);
-        });
-
-        EventBus.addListener(EventType.CONSTRAINT_TABLE_FIRE_INSERT, (eventType, arguments) -> {
-            Integer firstRow = (Integer)arguments[0];
-            Integer lastRow = (Integer)arguments[1];
-            mtm.fireTableRowsInserted(firstRow, lastRow);
-        });
-
-        EventBus.addListener(EventType.PARAMETER_TABLE_FIRE_INSERT, (eventType, arguments) -> {
-            Integer firstRow = (Integer)arguments[0];
-            Integer lastRow = (Integer)arguments[1];
-            vtm.fireTableRowsInserted(firstRow, lastRow);
-        });
-
-        EventBus.addListener(EventType.PARAMETER_TABLE_FIRE_DELETE, (eventType, arguments) -> {
-            Integer firstRow = (Integer)arguments[0];
-            Integer lastRow = (Integer)arguments[1];
-            vtm.fireTableRowsDeleted(firstRow, lastRow);
-        });
     }
 
-    @Override
-    public void mouseReleased(MouseEvent e) {
-        final JTable eventSourceTable = (JTable) e.getSource();
-        if(eventSourceTable.equals(constTable)) {
-            popoupConstaint.show(e.getComponent(), e.getX(), e.getY());
-        } else if(eventSourceTable.equals(primiTable)) {
-            popupPrimitives.show(e.getComponent(), e.getX(), e.getY());
+    private void contextMenuDeleteConstraint(){
+        final int i=constTable.getSelectionModel().getMinSelectionIndex();
+        if(i<0) return;
+        Constraint constraint=
+            Constraint.dbConstraint.values()
+                .stream()
+                .filter(Constraint::isStorage).skip(i)
+                .findFirst()
+                .orElseThrow(()->new IndexOutOfBoundsException("constraint: "+i));
+
+        int parId=constraint.getParametr();
+        if(parId>=0){
+            Parameter[] parameters=Parameter.dbParameter.values().toArray(new Parameter[]{});
+            for(int k=0;k<parameters.length;k++){
+                if(parameters[k].getId()==parId){
+                    Parameter.dbParameter.remove(parId);
+                    vtm.fireTableRowsDeleted(k,k);
+                }
+            }
         }
+        Constraint.dbConstraint.remove(constraint.getConstraintId());
+        mtm.fireTableRowsDeleted(i,i);
     }
 
-    @Override
-    public void mouseClicked(MouseEvent arg0) {
+    private void contextMenuDeletePrimitive(){
+        final int i=primiTable.getSelectionModel().getMinSelectionIndex();
+        if(i<0){
+            return;
+        }
+
+        final GeometricPrimitive primitive=
+            GeometricPrimitive.dbPrimitives.values()
+                .stream()
+                .skip(i)
+                .findFirst()
+                .orElseThrow(()->new IndexOutOfBoundsException("primitive : "+i));
+
+        final int id=primitive.getPrimitiveId();
+
+        //usun wiezy powiazane
+        int[] constraints=primitive.associateConstraintsId();
+
+        for(int j: constraints){
+            Constraint constraint=Constraint.dbConstraint.get(j);
+            int parameterId=constraint.getParametr();
+            if(parameterId!=-1){
+                Parameter.dbParameter.remove(parameterId);
+            }
+            Constraint.dbConstraint.remove(j);
+        }
+        //usun punkty
+        for(int pi: primitive.getAllPointsId()){
+            Point.dbPoint.remove(pi);
+        }
+        GeometricPrimitive.dbPrimitives.remove(id);
+        ptm.fireTableRowsDeleted(i,i);
     }
 
-    @Override
-    public void mouseEntered(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseExited(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mousePressed(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent arg0) {
-    }
 
     /**
      * Klasa wenwetrzna odpowiedzialna za
@@ -212,25 +231,22 @@ public class MyTables extends JPanel implements MouseInputListener {
      *
      * @author root
      */
-    class ContextMenuPopup extends JPopupMenu implements ActionListener {
+    class ContextMenuPopup extends JPopupMenu implements ActionListener{
 
-        final TableModelRemovable model;
-        final JTable table;
+        private final ActionListener delegate;
 
-        ContextMenuPopup(TableModelRemovable model, JTable table) {
+        ContextMenuPopup(ActionListener delegate){
             super();
-            this.model = model;
-            this.table = table;
-
-            JMenuItem bt = new JMenuItem("DELETE");
+            this.delegate=delegate;
+            JMenuItem bt=new JMenuItem("DELETE");
             bt.addActionListener(this);
             this.add(bt);
         }
 
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-            model.remove(table.getSelectionModel().getMinSelectionIndex());
+        public void actionPerformed(ActionEvent e){
+            delegate.actionPerformed(e);
         }
     }
 }

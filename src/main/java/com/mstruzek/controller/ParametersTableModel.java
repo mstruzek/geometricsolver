@@ -1,22 +1,12 @@
 package com.mstruzek.controller;
 
-import com.mstruzek.msketch.Model;
-import com.mstruzek.graphic.MyTableModel;
 import com.mstruzek.msketch.Parameter;
 
-public class ParametersTableModel extends MyTableModel {
+import javax.swing.table.AbstractTableModel;
+
+public class ParametersTableModel extends AbstractTableModel{
 
     private static final String[] PARAMETERS_COLUMN_NAMES = {"id", "value"};
-
-
-    @Override
-    public void remove(int i) {
-        if(i < 0) return;
-        int id = Model.parameterContainer.get(i).getId();
-        Model.parameterContainer.remove(i);
-        Parameter.dbParameter.remove(id);
-        fireTableRowsDeleted(i, i);
-    }
 
     @Override
     public int getColumnCount() {
@@ -25,19 +15,17 @@ public class ParametersTableModel extends MyTableModel {
 
     @Override
     public int getRowCount() {
-        return Model.parameterContainer.size();
+        return Parameter.dbParameter.size();
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-
+        Parameter parameter=Parameter.dbParameter.values().toArray(new Parameter[]{})[rowIndex];
         switch (columnIndex) {
             case 0:
-                //return "id";
-                return Model.parameterContainer.get(rowIndex).getId();
+                return parameter.getId();
             case 1:
-                //return "type";
-                return Model.parameterContainer.get(rowIndex).getValue();
+                return parameter.getValue();
         }
         return null;
 
@@ -59,7 +47,7 @@ public class ParametersTableModel extends MyTableModel {
     public void setValueAt(Object value, int row, int col) {
         double d = Double.parseDouble(value.toString());
         if(col > 0) {
-            Model.parameterContainer.get(row).setValue(d);
+            Parameter.dbParameter.values().toArray(new Parameter[]{})[row].setValue(d);
         }
         fireTableCellUpdated(row, col);
     }

@@ -69,20 +69,21 @@ public class MyPointContainer {
 		clearM();
 		clearN();
 	}
+
 	@Override
 	public String toString() {
 		String out= "";
 		if(PointK>=0){
-			out += "K = " + PointK +" , ";
+			out += " K - " + PointK +"  ";
 		}
 		if(PointL>=0){
-			out += "L = " + PointL +" , ";
+			out += " L - " + PointL +"  ";
 		}
 		if(PointM>=0){
-			out += "M = " + PointM +" , ";
+			out += " M - " + PointM +"  ";
 		}
 		if(PointN>=0){
-			out += "N = " + PointN +" , ";
+			out += " N - " + PointN +"  ";
 		}
 		return out;
 	}

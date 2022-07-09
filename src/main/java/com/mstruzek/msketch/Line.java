@@ -132,8 +132,8 @@ public class Line extends GeometricPrimitive {
     @Override
     public void setAssociateConstraints(Set<Integer> skipIds) {
         if(skipIds == null) skipIds = Collections.emptySet();
-        ConstraintFixPoint fixeda = new ConstraintFixPoint(Constraint.nextId(skipIds), a);
-        ConstraintFixPoint fixedb = new ConstraintFixPoint(Constraint.nextId(skipIds), b);
+        ConstraintFixPoint fixeda = new ConstraintFixPoint(Constraint.nextId(skipIds),a,false);
+        ConstraintFixPoint fixedb = new ConstraintFixPoint(Constraint.nextId(skipIds),b,false);
         constraints = new int[2];
         constraints[0] = fixeda.constraintId;
         constraints[1] = fixedb.constraintId;

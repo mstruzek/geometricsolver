@@ -8,8 +8,4 @@ public class MyCircle extends MyDrawElement{
 		p1=tp1;
 		p2=tp2;
 	}
-	public MyPoint[] getPoints(){
-		MyPoint[] mp =  {p1,p2};
-		return mp;
-	}
 }

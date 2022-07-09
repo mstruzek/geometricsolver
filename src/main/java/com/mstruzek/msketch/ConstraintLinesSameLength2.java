@@ -34,7 +34,7 @@ public class ConstraintLinesSameLength2 extends Constraint {
 	 * @param N
 	 */
 	public ConstraintLinesSameLength2(int constId, Point K, Point L ,Point M,Point N){
-		super(constId, GeometricConstraintType.LinesSameLength);
+		super(constId, GeometricConstraintType.LinesSameLength, true);
 		k_id = K.id;
 		l_id = L.id;
 		m_id = M.id;

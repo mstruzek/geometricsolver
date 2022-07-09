@@ -12,4 +12,6 @@ public interface ConstraintInterface {
 	int getN();
 	/** pobierz numer parametru */
 	int getParametr();
+	/** hidden point */
+	boolean isStorage();
 }

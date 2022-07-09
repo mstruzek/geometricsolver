@@ -4,12 +4,13 @@ import Jama.Matrix;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
-import com.mstruzek.controller.EventBus;
-import com.mstruzek.controller.EventType;
+import com.mstruzek.controller.Events;
 import com.mstruzek.msketch.matrix.BindMatrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 import java.util.ArrayList;
+
+import static com.mstruzek.controller.EventType.*;
 
 /**
  * Klasa w ktorej przechowujemy caly model
@@ -19,36 +20,7 @@ import java.util.ArrayList;
  */
 public final class Model {
 
-
-    /**
-     * To statyczna instacja a dlaczego ?
-     *
-     *  Dlatego iż =>
-     *
-     * - GeometricPrimitives    => static
-     * - Parameter              => static
-     * - Constraint             => static
-     */
-
-
-    /**
-     * zmienna w ktorej przechowujemy wszystkie elementy geometryczne
-     */
-    public static ArrayList<GeometricPrimitive> primitivesContainer = new ArrayList<GeometricPrimitive>();
-    /**
-     * zmienna w ktorej przechowujemy wszystkie wiezy nalozene przez uzytkownika
-     */
-    public static ArrayList<Parameter> parameterContainer = new ArrayList<Parameter>();
-    /**
-     * zmienna w ktorej przechowujemy wszystkie wiezy nalozene przez uzytkownika
-     */
-    public static ArrayList<Constraint> constraintContainer = new ArrayList<Constraint>();
-
-
     private Model() {
-
-        //addLine(new Vector(0,0), new Vector(50,50));
-
     }
 
     /**
@@ -219,54 +191,42 @@ public final class Model {
 
     }
 
-    public static ArrayList<Parameter> parameterContainer() {
-        return parameterContainer;
-    }
-
-
     public static void addLine(int primitiveId, Vector v1, Vector v2) {
-        primitivesContainer.add(new Line(primitiveId, v1, v2));
-        EventBus.send(EventType.PRIMITIVE_TABLE_FIRE_INSERT, new Object[]{primitivesContainer.size(), primitivesContainer.size()});
+        add(new Line(primitiveId, v1, v2));
     }
 
     public static void addLine(Vector v1, Vector v2) {
-        primitivesContainer.add(new Line(v1, v2));
-        EventBus.send(EventType.PRIMITIVE_TABLE_FIRE_INSERT, new Object[]{primitivesContainer.size(), primitivesContainer.size()});
+        add(new Line(v1, v2));
     }
 
-
     public static void addCircle(int primitiveId, Vector v1, Vector v2) {
-        primitivesContainer.add(new Circle(primitiveId, v1, v2));
-        EventBus.send(EventType.PRIMITIVE_TABLE_FIRE_INSERT, new Object[]{primitivesContainer.size(), primitivesContainer.size()});
+        add(new Circle(primitiveId, v1, v2));
     }
 
     public static void addCircle(Vector v1, Vector v2) {
-        primitivesContainer.add(new Circle(v1, v2));
-        EventBus.send(EventType.PRIMITIVE_TABLE_FIRE_INSERT, new Object[]{primitivesContainer.size(), primitivesContainer.size()});
+        add(new Circle(v1, v2));
     }
 
-
     public static void addArc(int primitiveId, Vector v1, Vector v2, Vector v3) {
-        primitivesContainer.add(new Arc(primitiveId, v1, v2, v3));
-        EventBus.send(EventType.PRIMITIVE_TABLE_FIRE_INSERT, new Object[]{primitivesContainer.size(), primitivesContainer.size()});
+        add(new Arc(primitiveId, v1, v2, v3));
     }
 
     public static void addArc(Vector v1, Vector v2, Vector v3) {
-        primitivesContainer.add(new Arc(v1, v2, v3));
-        EventBus.send(EventType.PRIMITIVE_TABLE_FIRE_INSERT, new Object[]{primitivesContainer.size(), primitivesContainer.size()});
+        add(new Arc(v1, v2, v3));
     }
 
-
     public static void addPoint(int primitiveId, Vector v1) {
-        primitivesContainer.add(new FreePoint(primitiveId, v1));
-        EventBus.send(EventType.PRIMITIVE_TABLE_FIRE_INSERT, new Object[]{primitivesContainer.size(), primitivesContainer.size()});
+        add(new FreePoint(primitiveId, v1));
     }
 
     public static void addPoint(Vector v1) {
-        primitivesContainer.add(new FreePoint(v1));
-        EventBus.send(EventType.PRIMITIVE_TABLE_FIRE_INSERT, new Object[]{primitivesContainer.size(), primitivesContainer.size()});
+        add(new FreePoint(v1));
     }
 
+    private static void add(GeometricPrimitive geometricPrimitive) {
+        /// self registrations into GeometricPrimitive.dbPrimitives
+        Events.send(PRIMITIVE_TABLE_INSERT, null);
+    }
 
     public static void addConstraint(GeometricConstraintType constraintType, int K, int L, int M, int N, Double paramValue) {
         Point pK = null, pL = null, pM = null, pN = null;
@@ -289,57 +249,51 @@ public final class Model {
     public static void addConstraint(int constId, GeometricConstraintType constraintType, Point K, Point L, Point M, Point N, Parameter parameter) {
         switch (constraintType) {
             case Connect2Points:
-                constraintContainer.add(new ConstraintConnect2Points(constId, K, L));
+                add(new ConstraintConnect2Points(constId, K, L));
                 break;
             case FixPoint:
-                constraintContainer.add(new ConstraintFixPoint(constId, K));
+                add(new ConstraintFixPoint(constId, K));
                 break;
             case LinesPerpendicular:
-                constraintContainer.add(new ConstraintLinesPerpendicular(constId, K, L, M, N));
+                add(new ConstraintLinesPerpendicular(constId, K, L, M, N));
                 break;
             case LinesParallelism:
-                constraintContainer.add(new ConstraintLinesParallelism(constId, K, L, M, N));
+                add(new ConstraintLinesParallelism(constId, K, L, M, N));
                 break;
             case Tangency:
-                constraintContainer.add(new ConstraintTangency(constId, K, L, M, N));
+                add(new ConstraintTangency(constId, K, L, M, N));
                 break;
             case Distance2Points:
-                constraintContainer.add(new ConstraintDistance2Points(constId, K, L, parameter));
-                parameterContainer.add(parameter);
+                add(new ConstraintDistance2Points(constId, K, L, parameter));
+                add(parameter);
                 break;
             case Angle2Lines:
-                constraintContainer.add(new ConstraintAngle2Lines(constId, K, L, M, N, parameter));
-                parameterContainer.add(parameter);
+                add(new ConstraintAngle2Lines(constId, K, L, M, N, parameter));
+                add(parameter);
                 break;
-            case DistancePointLine:
-                // FIXME - dokonczyc wiez , nie ma IMPL
-                constraintContainer.add(new ConstraintDistancePointLine(constId, K, L, M, parameter));
-                parameterContainer.add(parameter);
+            case DistancePointLine: // FIXME - dokonczyc wiez , nie ma IMPL
+                add(new ConstraintDistancePointLine(constId, K, L, M, parameter));
+                add(parameter);
                 break;
             case LinesSameLength:
-                constraintContainer.add(new ConstraintLinesSameLength(constId, K, L, M, N));
+                add(new ConstraintLinesSameLength(constId, K, L, M, N));
                 break;
             case SetVertical:
-                constraintContainer.add(new ConstraintVertical(constId, K, L));
+                add(new ConstraintVertical(constId, K, L));
                 break;
             case SetHorizontal:
-                constraintContainer.add(new ConstraintHorizontal(constId, K, L));
+                add(new ConstraintHorizontal(constId, K, L));
                 break;
         }
-
-        EventBus.send(EventType.CONSTRAINT_TABLE_FIRE_INSERT, new Object[]{constraintContainer.size(), constraintContainer.size()});
-        if(parameter != null) {
-            EventBus.send(EventType.PARAMETER_TABLE_FIRE_INSERT, new Object[]{parameterContainer.size(), parameterContainer.size()});
-        }
     }
 
-
-    public static ArrayList<GeometricPrimitive> primitivesContainer() {
-        return primitivesContainer;
+    public static void add(Constraint constraint) {
+        /// self registration Constraint.dbConstraint
+        Events.send(CONSTRAINT_TABLE_INSERT, new Object[]{});
     }
-
-    public static ArrayList<Constraint> constraintContainer() {
-        return constraintContainer;
+    public static void add(Parameter parameter) {
+        /// self registration Parameter.dbParameter
+        Events.send(PARAMETER_TABLE_INSERT, new Object[]{});
     }
 
 
@@ -352,11 +306,5 @@ public final class Model {
     public static void fluctuatePoints(double coefficient) {
         //FIXME dv =  [ Random Versor * coefficient] - wektor przesuniecia na kazdy prymitiw.
 
-    }
-
-    public static void removeAll() {
-        primitivesContainer.clear();
-        parameterContainer.clear();
-        constraintContainer.clear();
     }
 }

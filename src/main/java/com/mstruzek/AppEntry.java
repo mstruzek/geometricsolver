@@ -9,7 +9,7 @@ public class AppEntry {
 
 
         /*
-        * Glowny kontroller widoku swingowego.
+        * Glowny kontroller widoku swingowego. <= hUNd
         */
         Controller controller = new Controller();
 

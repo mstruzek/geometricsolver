@@ -12,9 +12,7 @@ import java.awt.geom.NoninvertibleTransformException;
 
 import java.util.ArrayList;
 
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.swing.event.MouseInputListener;
 
 import com.mstruzek.controller.ActiveKey;
@@ -32,47 +30,48 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
     public static final int S_WIDTH = 920;
     public static final int S_HEIGHT = 1000;
 
-    //tu skladujemy linie
-    ArrayList<MyLine> lineStore = new ArrayList<MyLine>();
-    ArrayList<MyCircle> circleStore = new ArrayList<MyCircle>();
-    ArrayList<MyFreePoint> freePointStore = new ArrayList<MyFreePoint>();
-    ArrayList<MyArc> arcStore = new ArrayList<MyArc>();
-    ArrayList<MyPoint> pointStore = new ArrayList<MyPoint>();
+    //tu skladujemy linie - @InternalState
+    private final ArrayList<MyLine> lineStore = new ArrayList<>();
+    private final ArrayList<MyCircle> circleStore = new ArrayList<>();
+    private final ArrayList<MyFreePoint> freePointStore = new ArrayList<>();
+    private final ArrayList<MyArc> arcStore = new ArrayList<>();
+    private final ArrayList<MyPoint> pointStore = new ArrayList<>();
+
 
     /**
      * aktualny stan podczas klikania myszka
      */
-    MySketchState stateSketch = MySketchState.Normal;
+    private MySketchState stateSketch = MySketchState.Normal;
 
-    Point lastPosition = new Point();
+    private final AffineTransform tx = new AffineTransform();
 
-    AffineTransform tx = new AffineTransform();
+    private Point lastPos= new Point();
 
-    int r = 10;
+    final int r = 10;
 
-    public MyPointContainer mpc = new MyPointContainer(-1, -1, -1, -1);
+    final MyPointContainer mpc = new MyPointContainer(-1, -1, -1, -1);
 
-    ActiveKey ack= ActiveKey.None;
+    private ActiveKey ack= ActiveKey.None;
 
-    public JLabel jl = new JLabel("K,L,M,N");
-
-    public JLabel currentPosition = new JLabel("Currrent Position:");
-    MyPopup popoup = new MyPopup(-1, mpc, jl);
+    private final MyPopup popoup;
 
 
-    Point tmp1 = null;
+    /// Picked candidates for new geometric primitives !
+    private int pId = 0;
+    private Point[] picked= new Point[3];
 
     /**
+     * FIXME -- usunac
      * pomin tyle punktow podczas wybierania prawym przyciskiem
      */
-    int pominPunkty;
+    private int pominPunkty;
 
     /**
      * glowny controller
      */
-    Controller controller;
+    private final Controller controller;
 
-    boolean withControlLines = false;
+    private boolean withControlLines = false;
 
     public MySketch(Controller controller) {
         super();
@@ -85,6 +84,7 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
         setBorder(BorderFactory.createTitledBorder("Szkicownik"));
         addMouseListener(this);
         addMouseMotionListener(this);
+        this.popoup=new MyPopup(-1,mpc);
     }
 
     /**
@@ -101,37 +101,6 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
         this.withControlLines = withControlLines;
     }
 
-    public void add(MyLine ml) {
-        lineStore.add(ml);
-        //pointStore.add(ml.getPoints()[0]);
-        //pointStore.add(ml.getPoints()[1]);
-    }
-
-    public void add(MyCircle ml) {
-        circleStore.add(ml);
-        //lineStore.add(new MyLine(ml.p1,ml.p2));
-        //pointStore.add(ml.getPoints()[0]);
-        //pointStore.add(ml.getPoints()[1]);
-    }
-
-    public void add(MyFreePoint fp) {
-        freePointStore.add(fp);
-    }
-
-    public void add(MyArc arc) {
-        arcStore.add(arc);
-        //lineStore.add(new MyLine(arc.p1,arc.p2));
-        //lineStore.add(new MyLine(arc.p1,arc.p3));
-    }
-
-    public void add(MyPoint p) {
-        pointStore.add(p);
-    }
-
-    public MySketchState getStateSketch() {
-        return stateSketch;
-    }
-
     public void setStateSketch(MySketchState stateSketch) {
         this.stateSketch = stateSketch;
     }
@@ -140,7 +109,7 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
      * Pobierz dane z modelu
      */
     public void refreshContainers() {
-        ArrayList<GeometricPrimitive> primitives = controller.getPrimitivesContainer();
+        ArrayList<GeometricPrimitive> primitives = new ArrayList<>(GeometricPrimitive.dbPrimitives.values());
 
         MyPoint p1, p2, p3;
         MyLine ml;
@@ -197,7 +166,26 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
                     break;
             }
         }
-        repaint();
+    }
+
+    private void add(MyLine ml) {
+        lineStore.add(ml);
+    }
+
+    private void add(MyCircle ml) {
+        circleStore.add(ml);
+    }
+
+    private void add(MyFreePoint fp) {
+        freePointStore.add(fp);
+    }
+
+    private void add(MyArc arc) {
+        arcStore.add(arc);
+    }
+
+    private void add(MyPoint p) {
+        pointStore.add(p);
     }
 
     @Override
@@ -415,7 +403,7 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
                 else if(ack==ActiveKey.L){ ack=ActiveKey.None; mpc.setPointL(pointStore.get(i).id); }
                 else if(ack==ActiveKey.M){ ack=ActiveKey.None; mpc.setPointM(pointStore.get(i).id); }
                 else if(ack==ActiveKey.N){ ack=ActiveKey.None; mpc.setPointN(pointStore.get(i).id); }
-                this.jl.setText(mpc.toString());
+                firePropertyChange(Property.KLMN_POINTS, "", mpc.toString());
                 break;
             }
         }
@@ -437,14 +425,14 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
 
         //odnosnie skalowania
         if (e.isControlDown()) {
-            lastPosition = e.getPoint();
+            lastPos= e.getPoint();
             repaint();
             return;
         }
 
         //odnosnie przemieszczania przesuwania
         if (e.isShiftDown()) {
-            lastPosition = e.getPoint();
+            lastPos= e.getPoint();
             repaint();
             return;
         }
@@ -460,6 +448,7 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
         }
         repaint();
     }
+
 
     @Override
     public void mouseReleased(MouseEvent e) {
@@ -482,7 +471,6 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
                         //popup menu
                         if (e.isPopupTrigger()) {
                             popoup.setPointId(pointStore.get(i).id);
-                            popoup.rebuild();
                             popoup.show(e.getComponent(), e.getX(), e.getY());
                         }
                         break;
@@ -493,101 +481,104 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
 
             case DrawLine:
                 //oczekuj 2 klikniec
-
-                if (tmp1 == null) {
-
-                    tmp1 = new Point(tp1);
-
-                } else {
-                    Point tmp2 = new Point(tp1);
-
-                    //add(new MyLine(tmp1.x,tmp1.y,tmp2.x,tmp2.y));
-                    controller.addLine(new Vector(tmp1.x, tmp1.y), new Vector(tmp2.x, tmp2.y));
-
-                    tmp1 = null;
-                    refreshContainers();
-                    stateSketch = MySketchState.Normal;
+                if(picked[pId] == null) {
+                    picked[pId++] = new Point(tp1);
+                    if(pId == 2) {
+                        Point p1 = picked[0];
+                        Point p2 = picked[1];
+                        controller.addLine(new Vector(p1.x, p1.y), new Vector(p2.x, p2.y));
+                        refreshContainers();
+                        stateSketch = MySketchState.Normal;
+                        pId = 0;
+                        picked[0] = null;
+                        picked[1] = null;
+                        repaint();
+                    }
                 }
-
-                break;
+                return;
 
             case DrawCircle:
-                //oczekuj 2 klikniec
-                if (tmp1 == null) {
-
-                    tmp1 = new Point(tp1);
-
-                } else {
-                    Point tmp2 = new Point(tp1);
-
-                    //add(new MyCircle(tmp1.x,tmp1.y,tmp2.x,tmp2.y));
-                    controller.addCircle(new Vector(tmp1.x, tmp1.y), new Vector(tmp2.x, tmp2.y));
-                    tmp1 = null;
-                    refreshContainers();
-                    stateSketch = MySketchState.Normal;
+                //oczekuje 2 klikniec
+                if(picked[pId] == null) {
+                    picked[pId++] = new Point(tp1);
+                    if(pId == 2) {
+                        Point p1 = picked[0];
+                        Point p2 = picked[1];
+                        controller.addCircle(new Vector(p1.x, p1.y), new Vector(p2.x, p2.y));
+                        refreshContainers();
+                        stateSketch = MySketchState.Normal;
+                        pId = 0;
+                        picked[0] = null;
+                        picked[1] = null;
+                        repaint();
+                    }
                 }
-                break;
+                return;
 
             case DrawArc:
-                //oczekuj 2 klikniec
-                if (tmp1 == null) {
-
-                    tmp1 = new Point(tp1);
-
-                } else {
-                    Point tmp2 = new Point(tp1);
-
-                    //add(new MyCircle(tmp1.x,tmp1.y,tmp2.x,tmp2.y));
-                    controller.addArc(new Vector(tmp1.x, tmp1.y), new Vector(tmp2.x, tmp2.y));
-                    tmp1 = null;
-                    refreshContainers();
-                    stateSketch = MySketchState.Normal;
+                if(picked[pId] == null) {
+                    picked[pId++] = new Point(tp1);
+                    //oczekuje 3 klikniec
+                    if(pId == 3) {
+                        Point p1 = picked[0];
+                        Point p2 = picked[1];
+                        Point p3 = picked[2];
+                        controller.addArc(new Vector(p1.x, p1.y), new Vector(p2.x, p2.y), new Vector(p3.x, p3.y));
+                        refreshContainers();
+                        stateSketch = MySketchState.Normal;
+                        pId = 0;
+                        picked[0] = null;
+                        picked[1] = null;
+                        picked[2] = null;
+                        repaint();
+                    }
                 }
-                break;
+                return;
+
             case DrawPoint:
-                //oczekuj 1 klikniecie
-                Point tmp2 = new Point(tp1);
-
-                //add(new MyPoint(tmp2.x,tmp2.y));
-                controller.addPoint(new Vector(tmp2.x, tmp2.y));
-                tmp1 = null;
-                refreshContainers();
-                stateSketch = MySketchState.Normal;
-
-                break;
+                if(picked[pId] == null) {
+                    picked[pId++] = new Point(tp1);
+                    //oczekuje 3 klikniec
+                    if(pId == 1) {
+                        Point p1 = picked[0];
+                        controller.addPoint(new Vector(p1.x, p1.y));
+                        refreshContainers();
+                        stateSketch = MySketchState.Normal;
+                        pId = 0;
+                        picked[0] = null;
+                        repaint();
+                    }
+                }
+                return;
         }
-
-        //this.getParent().getParent().getParent().getParent().getParent().setFocusable(true);
-
-        //repaint(); // jest w refreshContainer
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
 
         if (e.isControlDown()) {
-            double k = e.getPoint().getY() - lastPosition.getY();
+            double k = e.getPoint().getY() - lastPos.getY();
             //System.out.println(k);
             tx.scale((1 + k / 100), (1 + k / 100));
-            lastPosition = e.getPoint();
+            lastPos= e.getPoint();
             //System.out.println(tx);
             repaint();
             return;
         }
         //odnosnie przesuwania
         if (e.isShiftDown()) {
-            Point tr = new Point((int) Math.round(e.getPoint().getX() - lastPosition.getX()), (int) Math.round(e.getPoint().getY() - lastPosition.getY()));
+            Point tr = new Point((int) Math.round(e.getPoint().getX() - lastPos.getX()), (int) Math.round(e.getPoint().getY() - lastPos.getY()));
             tx.translate(tr.getX() / tx.getScaleX(), tr.getY() / tx.getScaleY());
-            lastPosition = e.getPoint();
+            lastPos= e.getPoint();
             repaint();
             return;
         }
         //pierw sprawdzamy czy klikniecie w jeden z naszych punktow
-        Point tp1 = getInverseTransformEvent(e);
+        Point pos = getInverseTransformEvent(e);
 
         for (int i = 0; i < pointStore.size(); i++) {
             if (pointStore.get(i).isDragged()) {
-                Point p = new Point((int) (tp1.getX()), (int) (tp1.getY()));
+                Point p = new Point((int) (pos.getX()), (int) (pos.getY()));
                 pointStore.get(i).setLocation(p);
                 break;
             }
@@ -603,8 +594,8 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
         } catch (NoninvertibleTransformException e1) {
             e1.printStackTrace();
         }
-        this.currentPosition.setText(String.format("X : %1$5.3f , Y : %2$5.3f", tp1.getX(), tp1.getY()));
 
+        firePropertyChange(Property.CURRENT_POSITION, "", String.format("X : %1$5.3f , Y : %2$5.3f", tp1.getX(), tp1.getY()));
     }
 
     @Override
@@ -614,8 +605,6 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
     @Override
     public void keyReleased(KeyEvent e) {
         pominPunkty = e.getKeyCode() - 48;
-
-        //System.out.println(e);
     }
 
     @Override
@@ -623,10 +612,28 @@ public class MySketch extends JPanel implements MouseInputListener, KeyListener 
 
     }
 
-    public KeyListener getMyKeyListener() {
-        return this;
+    public int getPointK() {
+        return mpc.getPointK();
     }
 
+    public int getPointL() {
+        return mpc.getPointL();
+    }
 
+    public int getPointM() {
+        return mpc.getPointM();
+    }
+
+    public int getPointN() {
+        return mpc.getPointN();
+    }
+
+    public void clearAll(){
+        mpc.clearAll();
+    }
+
+    public void setAck(ActiveKey activeKey){
+        this.ack = activeKey;
+    }
 }
 

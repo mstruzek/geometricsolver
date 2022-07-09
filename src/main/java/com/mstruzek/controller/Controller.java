@@ -28,8 +28,8 @@ public class Controller implements ControllerInterface {
     }
 
     @Override
-    public void addArc(Vector v1, Vector v2) {
-        Model.addArc(v1, v2, null);
+    public void addArc(Vector v1, Vector v2, Vector v3) {
+        Model.addArc(v1, v2, v3);
     }
 
     @Override
@@ -100,7 +100,6 @@ public class Controller implements ControllerInterface {
         Point.dbPoint.clear();
         Point.pointCounter = 0;
 
-        Model.removeAll();
     }
 
     private void updateModelConsistency() {
@@ -124,10 +123,6 @@ public class Controller implements ControllerInterface {
     }
 
 
-    public ArrayList<GeometricPrimitive> getPrimitivesContainer() {
-        return Model.primitivesContainer();
-    }
-
     @Override
     public void solveSystem() {
         Model.solveSystem();
@@ -149,6 +144,4 @@ public class Controller implements ControllerInterface {
         //TView view  =
         new TView("M-Sketcher", controller);
     }
-
-
 }

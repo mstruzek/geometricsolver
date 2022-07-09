@@ -169,11 +169,11 @@ public class Arc extends GeometricPrimitive{
 	@Override
 	public void setAssociateConstraints(Set<Integer> skipIds) {
 		if(skipIds == null) skipIds = Collections.emptySet();
-		ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(skipIds), a);
-		ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(skipIds), b);
-		ConstraintFixPoint fixPointc = new ConstraintFixPoint(Constraint.nextId(skipIds), c);
-		ConstraintFixPoint fixPointd = new ConstraintFixPoint(Constraint.nextId(skipIds), d);
-		ConstraintLinesSameLength sameLength = new ConstraintLinesSameLength(Constraint.nextId(skipIds), p1, p2, p1, p3);
+		ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(skipIds), a, false);
+		ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(skipIds), b, false);
+		ConstraintFixPoint fixPointc = new ConstraintFixPoint(Constraint.nextId(skipIds), c, false);
+		ConstraintFixPoint fixPointd = new ConstraintFixPoint(Constraint.nextId(skipIds), d, false);
+		ConstraintLinesSameLength sameLength = new ConstraintLinesSameLength(Constraint.nextId(skipIds), p1, p2, p1, p3, false);
 
 		//ConstraintLinesSameLength sameLength2= new ConstraintLinesSameLength(p2,c,p3,d);
 		//ConstraintLinesParallelism par1 = new ConstraintLinesParallelism(a,p1,p2,c);

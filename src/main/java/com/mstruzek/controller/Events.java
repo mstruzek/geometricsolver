@@ -7,7 +7,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Swing Event Bus
  */
-public class EventBus {
+public class Events{
 
 //    private static final Executor executor = Executors.newFixedThreadPool(4);
 

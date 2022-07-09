@@ -2,14 +2,14 @@ package com.mstruzek.graphic;
 
 class MyDrawElement {
 	
-	int PrimitiveId;
+	int primitiveId;
 	
 	/** Pobierz id PrimitiveElementu */
 	public int getPrimitiveId() {
-		return PrimitiveId;
+		return primitiveId;
 	}
 	/** Ustaw id PrimitiveElementu */
 	public void setPrimitiveId(int id) {
-		PrimitiveId =id;
+		primitiveId=id;
 	}
 }

@@ -11,7 +11,6 @@ import com.mstruzek.msketch.matrix.MatrixDouble;
  */
 public abstract class Constraint implements ConstraintInterface {
 
-
     /**
      * Licznik wiezow
      */
@@ -24,16 +23,20 @@ public abstract class Constraint implements ConstraintInterface {
 
     protected GeometricConstraintType constraintType = null;
 
+    /** [ false ] - this constraint is normally not visible unless CTRL function applied into layout */
+    protected boolean storage;
+
     /**
      * tablica wszystkich linii
      */
     public static TreeMap<Integer, Constraint> dbConstraint = new TreeMap<Integer, Constraint>();
 
 
-    public Constraint(Integer constraintId, GeometricConstraintType constraintType) {
+    public Constraint(Integer constraintId, GeometricConstraintType constraintType, boolean storage) {
         super();
         this.constraintId = constraintId;
         this.constraintType = constraintType;
+        this.storage = storage;
         dbConstraint.put(constraintId,this);
     }
 
@@ -237,5 +240,8 @@ public abstract class Constraint implements ConstraintInterface {
     }
 
 
-
+    @Override
+    public boolean isStorage(){
+        return storage;
+    }
 }

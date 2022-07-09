@@ -28,10 +28,7 @@ public class ConstraintFixPoint extends Constraint {
      * @param K       - Point zafiksowany bedzie w aktualnym miejscu
      */
     public ConstraintFixPoint(int constId, Point K) {
-        super(constId, GeometricConstraintType.FixPoint);
-        //pobierz id
-        k_id = K.id;
-        k0_vec = new Vector(K.x, K.y);
+        this(constId, K, true);
     }
 
     /**
@@ -41,11 +38,17 @@ public class ConstraintFixPoint extends Constraint {
      * @param L - Vector w ktorym bedzie zafiksowany K
      */
     public ConstraintFixPoint(Point K, Vector L) {
-        super(nextId(), GeometricConstraintType.FixPoint);
+        super(nextId(), GeometricConstraintType.FixPoint, true);
         //pobierz id
         k_id = ((Point) K).id;
         k0_vec = L;
         dbConstraint.put(constraintId, this);
+    }
+
+    public ConstraintFixPoint(Integer constId,Point K,boolean storage){
+        super(constId, GeometricConstraintType.FixPoint, storage);
+        this.k_id = K.id;
+        this.k0_vec = new Vector(K.x, K.y);
     }
 
     /**
