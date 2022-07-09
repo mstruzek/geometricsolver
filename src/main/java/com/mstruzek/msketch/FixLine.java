@@ -39,6 +39,16 @@ public class FixLine extends GeometricPrimitive {
     }
 
     @Override
+    public void getJacobian(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol){
+        // nothing
+    }
+
+    @Override
+    public MatrixDouble getForce(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol) {
+        return null;
+    }
+
+    @Override
     public MatrixDouble getJacobian() {
         //poniewaz nie ma punktow kontrolnych to brak macierzy
         return null;

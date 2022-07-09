@@ -1,7 +1,7 @@
 package com.mstruzek;
 
 import com.mstruzek.controller.Controller;
-import com.mstruzek.graphic.TView;
+import com.mstruzek.graphic.FrameView;
 
 public class AppEntry {
 
@@ -13,7 +13,7 @@ public class AppEntry {
         */
         Controller controller = new Controller();
 
-        new TView("M-Sketcher", controller);
+        new FrameView("M-Sketcher", controller);
 
     }
 }

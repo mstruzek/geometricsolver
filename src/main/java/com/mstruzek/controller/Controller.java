@@ -1,10 +1,9 @@
 package com.mstruzek.controller;
 
-import com.mstruzek.graphic.TView;
+import com.mstruzek.graphic.FrameView;
 import com.mstruzek.msketch.*;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -142,6 +141,6 @@ public class Controller implements ControllerInterface {
 
         Controller controller = new Controller();
         //TView view  =
-        new TView("M-Sketcher", controller);
+        new FrameView("M-Sketcher", controller);
     }
 }

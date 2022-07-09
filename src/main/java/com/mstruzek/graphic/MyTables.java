@@ -66,8 +66,8 @@ public class MyTables extends JPanel{
         primiTable.setPreferredScrollableViewportSize(new Dimension(D_WIDTH,D_HEIGHT_JTAB));
         variaTable.setPreferredScrollableViewportSize(new Dimension(D_WIDTH,D_HEIGHT_JTAB));
 
-        popoupConstaint=new ContextMenuPopup(e->contextMenuDeleteConstraint());
-        popupPrimitives=new ContextMenuPopup(e->contextMenuDeletePrimitive());
+        popoupConstaint=new ContextMenuPopup(e->tableDeleteConstraint());
+        popupPrimitives=new ContextMenuPopup(e->tableDeletePrimitive());
 
         MouseInputAdapter mouseInputListener=new MouseInputAdapter(){
             @Override
@@ -87,7 +87,7 @@ public class MyTables extends JPanel{
         primiTable.addMouseListener(mouseInputListener);
         primiTable.addMouseMotionListener(mouseInputListener);
 
-        setColumnPreferredWidth();
+        setColumnsPreferredWidth();
 
         //Do the layout.
         add(new JScrollPane(constTable));
@@ -111,7 +111,7 @@ public class MyTables extends JPanel{
         });
     }
 
-    private void setColumnPreferredWidth(){
+    private void setColumnsPreferredWidth(){
         TableColumn column=null;
         for(int i=0;i<8;i++){ //8
             column=constTable.getColumnModel().getColumn(i);
@@ -164,13 +164,13 @@ public class MyTables extends JPanel{
         }
     }
 
-    private void contextMenuDeleteConstraint(){
+    private void tableDeleteConstraint(){
         final int i=constTable.getSelectionModel().getMinSelectionIndex();
         if(i<0) return;
         Constraint constraint=
             Constraint.dbConstraint.values()
                 .stream()
-                .filter(Constraint::isStorage).skip(i)
+                .filter(Constraint::isStorable).skip(i)
                 .findFirst()
                 .orElseThrow(()->new IndexOutOfBoundsException("constraint: "+i));
 
@@ -188,7 +188,7 @@ public class MyTables extends JPanel{
         mtm.fireTableRowsDeleted(i,i);
     }
 
-    private void contextMenuDeletePrimitive(){
+    private void tableDeletePrimitive(){
         final int i=primiTable.getSelectionModel().getMinSelectionIndex();
         if(i<0){
             return;

@@ -20,7 +20,7 @@ public class ParametersTableModel extends AbstractTableModel{
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        Parameter parameter=Parameter.dbParameter.values().toArray(new Parameter[]{})[rowIndex];
+        Parameter parameter=Parameter.dbParameter.values().toArray(new Parameter[0])[rowIndex];
         switch (columnIndex) {
             case 0:
                 return parameter.getId();

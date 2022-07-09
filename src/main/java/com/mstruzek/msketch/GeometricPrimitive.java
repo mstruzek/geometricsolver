@@ -37,11 +37,32 @@ public abstract class GeometricPrimitive{
 	public abstract void recalculateControlPoints();
 	
 	/** Funkcja zwraca jakobian si� - czyli macierz szytnowsci Fq */
-	public abstract MatrixDouble getJacobian();
 
+
+
+	enum MtProcedure {
+
+		AddSubMtx,	/// assignment with addition operator 	`+=`
+
+		SetSubMtx	/// assignment operator 				`=`
+	};
+
+	/**
+	 * @param procedure MtProcedure
+	 * @param dest matrix
+	 * @param firstRow
+	 * @param firstCol
+	 * @return
+	 */
+	public abstract void getJacobian(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol);
+
+	public abstract MatrixDouble getForce(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol);
+
+
+	public abstract MatrixDouble getJacobian();
 	/** Funkcja zwraca wartosc sil w sprezynach dla poszczegolnych punkt�w w danym {@link GeometricPrimitive} */
 	public abstract MatrixDouble getForce();
-	
+
 	/** Pobierz wszystkie punkty powiazane z dana figura */
 	public abstract int[] getAllPointsId();
 	
@@ -79,10 +100,7 @@ public abstract class GeometricPrimitive{
 
 	/** Funkcja zwraca pelny jakobian sil dla wszystkich elementow geometrycznych */
 	public static MatrixDouble getAllJacobianForces(){
-		
-		int size = Point.dbPoint.size()*2;
-		
-		MatrixDouble out = MatrixDouble.fill(size, size, 0.0);
+		MatrixDouble out = MatrixDouble.fill(Point.dbPoint.size()*2, Point.dbPoint.size()*2, 0.0);
 		
 		int currentRowCol=0;
 		for(Integer i:dbPrimitives.keySet()){
@@ -94,17 +112,14 @@ public abstract class GeometricPrimitive{
 	
 	/** Funkcja zwraca wartosc sil w sprezynach dla wszystkich punktow */
 	public static MatrixDouble getAllForce(){
-		
-		int size = Point.dbPoint.size()*2;
-		
-		MatrixDouble out = MatrixDouble.fill(size, 1, 0.0);
+		MatrixDouble mt = MatrixDouble.fill(Point.dbPoint.size()*2, 1, 0.0);
 		
 		int currentRowCol=0;
 		for(Integer i:dbPrimitives.keySet()){
-			out.addSubMatrix(currentRowCol, 0, dbPrimitives.get(i).getForce());
+			mt.addSubMatrix(currentRowCol, 0, dbPrimitives.get(i).getForce());
 			currentRowCol+=dbPrimitives.get(i).getNumOfPoints()*2;
 		}
-		return out;		
+		return mt;
 	}
 	
 	//FIXME - trzeba jakos kontrolowac rozklad sily (glownie dla punktow kontrolnych a,b,c), jezeli sila jest zbyt duza na nowo poprzeliczac punkty

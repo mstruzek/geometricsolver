@@ -134,6 +134,16 @@ public class Arc extends GeometricPrimitive{
 		((ConstraintFixPoint)Constraint.dbConstraint.get(constraints[3])).setFixVector(vd);
 	}
 
+	@Override
+	public void getJacobian(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol){
+
+	}
+
+	@Override
+	public MatrixDouble getForce(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol) {
+		return null;
+	}
+
 
 	@Override
 	public MatrixDouble getJacobian() {

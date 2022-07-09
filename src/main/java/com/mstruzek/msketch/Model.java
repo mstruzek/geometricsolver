@@ -1,14 +1,8 @@
 package com.mstruzek.msketch;
 
-import Jama.Matrix;
-import cern.colt.matrix.DoubleMatrix1D;
-import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.linalg.LUDecompositionQuick;
 import com.mstruzek.controller.Events;
-import com.mstruzek.msketch.matrix.BindMatrix;
-import com.mstruzek.msketch.matrix.MatrixDouble;
-
-import java.util.ArrayList;
+import com.mstruzek.msketch.solver.GeometricSolver;
+import com.mstruzek.msketch.solver.GeometricSolverImpl;
 
 import static com.mstruzek.controller.EventType.*;
 
@@ -20,175 +14,18 @@ import static com.mstruzek.controller.EventType.*;
  */
 public final class Model {
 
+
+    private static GeometricSolver geometricSolver;
+
     private Model() {
+        geometricSolver = new GeometricSolverImpl();
     }
 
-    /**
-     * Rozwiaz model , przygotuj zadanie
-     */
     public static void solveSystem() {
-
-        System.out.println("*************************");
-        long start = System.currentTimeMillis(); // start timing
-
-        //pierw uakutalnic wspolrzedne punktow w kazdym GeometricPrimiticves
-        // relaxForces() ;
-
-        //teraz obliczenia
-
-        // System.out.println("Wymiar zadania:"  + Point.dbPoint.size()*2 );
-        // System.out.println("Mnozniki Lagrange'a :" + Constraint.allLagrangeSize());
-        // System.out.println("Stopnie swobody : " + (Point.dbPoint.size()*2 -  Constraint.allLagrangeSize()));
-
-        if(Point.dbPoint.size() == 0) return;
-
-        // Tworzymy Macierz "A" - dla tego zadania stala w czasie
-        int sizeA = Point.dbPoint.size() * 2 + Constraint.allLagrangeCoffSize();
-        MatrixDouble A = MatrixDouble.fill(sizeA, sizeA, 0.0);
-        MatrixDouble Fq = GeometricPrimitive.getAllJacobianForces();
-
-
-        MatrixDouble Wq = null;//Constraint.getFullJacobian(Point.dbPoint, Parameter.dbParameter);
-
-        BindMatrix mA = null;
-
-        // Tworzymy wektor prawych stron b
-        MatrixDouble b = null;
-        BindMatrix mb = null;
-        BindMatrix dmx = null;
-
-        BindMatrix bmX = new BindMatrix(Point.dbPoint.size() * 2 + Constraint.allLagrangeCoffSize(), 1);
-        bmX.bind(Point.dbPoint);
-
-
-        //FIXME - jezeli po 6 iteracjach problem ze zbieznoscia warto przeliczyc punkty kontrolne
-        // czyli przeliczyc punkty i nowe Fq - macierz obliczyc
-
-        double erri1, erri = 0, delta;
-        System.out.println(" Iter/Time [ms] /Norm ");
-        for(int i = 0; i < 10; i++) {
-            //zerujemy macierz A
-
-            A = MatrixDouble.fill(sizeA, sizeA, 0.0);
-
-            //Tworzymy Macierz vector b
-
-            MatrixDouble Fr = GeometricPrimitive.getAllForce(); // Sily  - F(q)
-            MatrixDouble Fi = Constraint.getFullConstraintValues(Point.dbPoint, Parameter.dbParameter); // Wiezy  - Fi(q)
-            b = MatrixDouble.mergeByColumn((Fr), (Fi));
-            b.dot(-1);
-
-
-            //System.out.println(b);
-            mb = new BindMatrix(b.m);
-
-            // JACOBIAN
-            Wq = Constraint.getFullJacobian(Point.dbPoint, Parameter.dbParameter); // Jq = d(Fi)/dq
-            //HESSIAN
-            MatrixDouble Hs = Constraint.getFullHessian(Point.dbPoint, Parameter.dbParameter, bmX);
-            A.addSubMatrix(0, 0, Fq.addC((Hs)));
-            //A.addSubMatrix(0, 0, MatrixDouble.diagonal(Fq.getHeight(), 1.0)); // macierz diagonalna
-
-            A.addSubMatrix(Fq.getHeight(), 0, Wq);
-            A.addSubMatrix(0, Fq.getWeight(), Wq.transpose());
-            mA = new BindMatrix(A.m);
-            //System.out.println("Rank + " + mA.rank());
-            // rozwiazjemy zadanie A*dx=b
-
-
-            //dmx = new BindMatrix(mA.solve(mb).getArray());
-
-
-            /** WS*/ // JEST PRZYSPIESZENIE WYRABIA SIE w 380 ms dla 20 lini gdzie 100ms na jedna decompozycje
-
-
-            DoubleMatrix2D matrix2DA = ParseToColt.toSparse(A);
-
-
-            DoubleMatrix1D matrix1Db = ParseToColt.toDenseVector(b);
-
-            //System.out.println(matrix2DA.cardinality() + " : " + (matrix1Db.size()*matrix1Db.size()));
-
-            //System.out.println(matrix2DA);
-            //System.out.println(A);
-            long start2 = System.currentTimeMillis(); // start timing
-
-            /**
-             *  LU Decomposition
-             *
-             */
-            LUDecompositionQuick LU = new LUDecompositionQuick();
-            LU.decompose(matrix2DA);
-            LU.solve(matrix1Db);
-
-
-            long stop2 = System.currentTimeMillis(); // stop timing
-            dmx = ParseToColt.toBindVector(matrix1Db);
-
-
-            long deltat2 = stop2 - start2;
-
-            //System.out.println("TimeMillis2: " + deltat2); // print execution time
-
-            /** KONIEC  WS*/
-
-
-            // jezeli chcemy symulowac na bierzaco jak sie zmieniaja wiezy to
-            // wstawiamy jakis faktor dmx.times(0.3) , i<12
-            bmX.plusEquals(dmx);
-            bmX.copyToPoints();//uaktualniamy punkty
-            //System.out.println(bmX);
-
-            Matrix nrm = new Matrix(Constraint.getFullConstraintValues(Point.dbPoint, Parameter.dbParameter).getArray());
-            System.out.println(" \n " + (i + 1) + " || " + deltat2 + "  ||  " + nrm.norm1() + "\n");
-
-
-            //stary warunek wyjscia
-            if(nrm.norm1() < 0.05) {
-                //System.out.println("New Norm + :" + Constraint.getFullNorm(Point.dbPoint, Parameter.dbParameter));
-                break;
-            }
-
-            //Matrix nforce = new Matrix(GeometricPrymitive.getAllForce().getArray());
-            //System.out.println( "Force " + i + " - " + nforce.norm1());
-            //minumalizujmy sily
-
-
-            if(i == 0) {
-                erri = nrm.norm1();
-            }
-
-            //liczymy zmiane bledu
-            if(i > 0) {
-                erri1 = nrm.norm1();
-                delta = erri1 - erri;
-                erri = erri1;
-                if(delta > 0) {
-                    System.out.println("CHANGES - STOP ITERATION *******\n");
-                    //bmX.minusEquals(dmx);
-                    //bmX.copyToPoints();//uaktualniamy punkty
-                    return;
-                    //relaxForces();
-                    //pierw uakutalnic wspolrzedne punktow w kazdym GeometricPrimiticves
-					/*	for(Integer g:GeometricPrymitive.dbPrimitives.keySet()){
-						GeometricPrymitive.dbPrimitives.get(g).recalculateControlPoints();
-					}*/
-                }
-
-            }
+        if(geometricSolver == null){
+            geometricSolver = new GeometricSolverImpl();
         }
-
-        //Teraz wyswietlmy wiezy
-        //System.out.println(Constraint.dbConstraint);
-        //Relaksacja sprezyn -to pewnei recalculateControlPoints
-
-        long stop = System.currentTimeMillis(); // stop timing
-        long deltat = stop - start;
-
-        System.out.println("TimeMillis: " + deltat); // print execution time
-
-        //System.out.println(Point.dbPoint);
-
+        geometricSolver.solveSystem();
     }
 
     public static void addLine(int primitiveId, Vector v1, Vector v2) {

@@ -8,7 +8,6 @@ public class PrimitivesTableModel extends AbstractTableModel{
 
     private static final String[] PRIMITIVES_COLUMN_NAMES = {"id", "Type", "p1", "p2", "p3"};
 
-
     @Override
     public int getColumnCount() {
         return 5;
@@ -17,13 +16,12 @@ public class PrimitivesTableModel extends AbstractTableModel{
     @Override
     public int getRowCount() {
         return GeometricPrimitive.dbPrimitives.size();
-        //return Model.primitivesContainer.size();
     }
 
     @Override
     public Object getValueAt(int rowId, int colmId) {
         int out;
-        GeometricPrimitive primitive = GeometricPrimitive.dbPrimitives.values().toArray(new GeometricPrimitive[]{})[rowId];
+        GeometricPrimitive primitive = GeometricPrimitive.dbPrimitives.values().toArray(new GeometricPrimitive[0])[rowId];
         switch (colmId) {
             case 0:
                 return primitive.getPrimitiveId();

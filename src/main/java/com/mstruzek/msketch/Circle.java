@@ -106,6 +106,16 @@ public class Circle extends GeometricPrimitive{
     }
 
     @Override
+    public void getJacobian(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol){
+
+    }
+
+    @Override
+    public MatrixDouble getForce(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol) {
+        return null;
+    }
+
+    @Override
     public MatrixDouble getJacobian(){
         // a ,p1 ,p2 ,b = 4*2 = 8x8
         MatrixDouble mt=MatrixDouble.fill(8,8,0.0);

@@ -126,10 +126,7 @@ public class GCModelWriter implements Closeable {
     }
 
     public void writeConstraints() throws IOException {
-        Set<Integer> associate = GeometricPrimitive.dbPrimitives.values().stream()
-            .flatMap(primitive -> Arrays.stream(primitive.associateConstraintsId()).boxed())
-            .collect(toSet());
-        for(Constraint constraint : Constraint.dbConstraint.values().stream().filter(c -> !associate.contains(c.getConstraintId())).collect(toList())) {
+        for(Constraint constraint : Constraint.dbConstraint.values().stream().filter(Constraint::isStorable).collect(toList())) {
             int cID = constraint.getConstraintId();
             GeometricConstraintType constraintType = constraint.getConstraintType();
             int K = constraint.getK();

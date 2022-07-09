@@ -6,6 +6,8 @@ import java.util.TreeMap;
 import com.mstruzek.msketch.matrix.BindMatrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
+import static com.mstruzek.msketch.Point.dbPoint;
+
 /*
  * Wiez jedowymairowy,iloczyn skalarny,
  */
@@ -24,7 +26,7 @@ public abstract class Constraint implements ConstraintInterface {
     protected GeometricConstraintType constraintType = null;
 
     /** [ false ] - this constraint is normally not visible unless CTRL function applied into layout */
-    protected boolean storage;
+    protected boolean storable;
 
     /**
      * tablica wszystkich linii
@@ -32,11 +34,11 @@ public abstract class Constraint implements ConstraintInterface {
     public static TreeMap<Integer, Constraint> dbConstraint = new TreeMap<Integer, Constraint>();
 
 
-    public Constraint(Integer constraintId, GeometricConstraintType constraintType, boolean storage) {
+    public Constraint(Integer constraintId, GeometricConstraintType constraintType, boolean storable) {
         super();
         this.constraintId = constraintId;
         this.constraintType = constraintType;
-        this.storage = storage;
+        this.storable = storable;
         dbConstraint.put(constraintId,this);
     }
 
@@ -57,30 +59,24 @@ public abstract class Constraint implements ConstraintInterface {
      * lub Vectora kolumnowego gdy size=2;
      * bedziemy uzywac podczas sprawdzania czy wiez jest wyzerowany
      *
-     * @param dbPoints    wszystkie ruchome punkty w naszym zadaniu
-     * @param dbParameter baza wszystkich parametrow
      * @return macierz albo 1x1 albo 2x1;
      */
-    public abstract MatrixDouble getValue(TreeMap<Integer, Point> dbPoints, TreeMap<Integer, Parameter> dbParameter);
+    public abstract MatrixDouble getValue();
 
     /**
      * Funkcja zwraca Jacobian w postaci wektora wierszowego gdy Constraint.size=1,
      * lub dwa wektory wierszowe gdy size=2;
      *
-     * @param dbPoints    wszystkie ruchome punkty w naszym zadaniu
-     * @param dbParameter baza wszystkich parametrow
      * @return Funkcja zwraca wktor wierszowy o dlugosci proporcjonalnej do ilosci Point'ow
      */
-    public abstract MatrixDouble getJacobian(TreeMap<Integer, Point> dbPoints, TreeMap<Integer, Parameter> dbParameter);
+    public abstract MatrixDouble getJacobian();
 
     /**
      * Funkcja zwraca norme danego wiezu
      *
-     * @param dbPoints
-     * @param dbParameter
      * @return
      */
-    public abstract double getNorm(TreeMap<Integer, Point> dbPoints, TreeMap<Integer, Parameter> dbParameter);
+    public abstract double getNorm();
 
     /**
      * Funkcja zwraca true jesli Jacobian jest staly
@@ -96,7 +92,7 @@ public abstract class Constraint implements ConstraintInterface {
      * Jedyny  wiez o size=2 czyli ConstraintConnect2Point ma staly
      * Jacobian zatem nie ma Hessianu
      */
-    public abstract MatrixDouble getHessian(TreeMap<Integer, Point> dbPoints, TreeMap<Integer, Parameter> dbParameter);
+    public abstract MatrixDouble getHessian();
 
     /**
      * Funkcja zwraca true jesli Hessian jest staly
@@ -134,15 +130,13 @@ public abstract class Constraint implements ConstraintInterface {
     /**
      * Funkcja zwraca Jakobian ze wszystkich wiezow
      *
-     * @param dbPoints
-     * @param dbParameter
      * @return macierz ,jakobian wiezow d(Wiezy)/dq
      */
-    public static MatrixDouble getFullJacobian(TreeMap<Integer, Point> dbPoints, TreeMap<Integer, Parameter> dbParameter) {
-        MatrixDouble jak = MatrixDouble.fill(allLagrangeCoffSize(), dbPoints.size() * 2, 0.0);
+    public static MatrixDouble getFullJacobian() {
+        MatrixDouble jak = MatrixDouble.fill(allLagrangeCoffSize(), dbPoint.size() * 2, 0.0);
         int rowPos = 0;
         for (Integer i : dbConstraint.keySet()) {
-            jak.addSubMatrix(rowPos, 0, dbConstraint.get(i).getJacobian(dbPoints, dbParameter));
+            jak.addSubMatrix(rowPos, 0, dbConstraint.get(i).getJacobian());
             rowPos += dbConstraint.get(i).size();
         }
         return jak;
@@ -152,15 +146,13 @@ public abstract class Constraint implements ConstraintInterface {
      * Funkcja zwraca prawe strony , czyli wartosci wszystkich wiezow
      * w wektorze kolumnowym
      *
-     * @param dbPoints
-     * @param dbParameter
      * @return
      */
-    public static MatrixDouble getFullConstraintValues(TreeMap<Integer, Point> dbPoints, TreeMap<Integer, Parameter> dbParameter) {
+    public static MatrixDouble getFullConstraintValues() {
         MatrixDouble wi = MatrixDouble.fill(allLagrangeCoffSize(), 1, 0.0);
         int currentRow = 0;
         for (Integer i : dbConstraint.keySet()) {
-            wi.addSubMatrix(currentRow, 0, dbConstraint.get(i).getValue(dbPoints, dbParameter));
+            wi.addSubMatrix(currentRow, 0, dbConstraint.get(i).getValue());
             currentRow += dbConstraint.get(i).size();
         }
         return wi;
@@ -169,15 +161,13 @@ public abstract class Constraint implements ConstraintInterface {
     /**
      * Funkcja zwraca calkowita norme dla wszystkich wiezow
      *
-     * @param dbPoints
-     * @param dbParameter
      * @return
      */
-    public static double getFullNorm(TreeMap<Integer, Point> dbPoints, TreeMap<Integer, Parameter> dbParameter) {
+    public static double getFullNorm() {
         double norm = 0;
         double tmp = 0;
         for (Integer i : dbConstraint.keySet()) {
-            tmp = dbConstraint.get(i).getNorm(dbPoints, dbParameter);
+            tmp = dbConstraint.get(i).getNorm();
             norm += tmp * tmp;
         }
 
@@ -188,15 +178,13 @@ public abstract class Constraint implements ConstraintInterface {
      * Funkcja zwraca macierz d(Jak'*a)/dq -czyli tak jakby calkowity hessian juz
      * przemnozony
      *
-     * @param dbPoints
-     * @param dbParameter
-     * @param bMX         - wektor x , z niego wyciagniemy mnozniki lagrange'a
+     * @param bMX - wektor x , z niego wyciagniemy mnozniki lagrange'a
      * @return
      */
-    public static MatrixDouble getFullHessian(TreeMap<Integer, Point> dbPoints, TreeMap<Integer, Parameter> dbParameter, BindMatrix bMX) {
+    public static MatrixDouble getFullHessian(BindMatrix bMX) {
 
         // Full  HESSIAN
-        MatrixDouble HSn = MatrixDouble.fill(dbPoints.size() * 2, dbPoints.size() * 2, 0.0);
+        MatrixDouble HSn = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
 
         int aCounter = 0; //licznik mnoznikow lagrange'a
 
@@ -206,13 +194,13 @@ public abstract class Constraint implements ConstraintInterface {
         for (Integer i : dbConstraint.keySet()) {
             if (!(dbConstraint.get(i).isJacobianConstant())) {
                 //jest hessian
-                currentA = bMX.get(Point.dbPoint.size() * 2 + aCounter, 0);
+                currentA = bMX.get(dbPoint.size() * 2 + aCounter, 0);
 
                 //
                 //  Hessian - dla tego wiezu liczony na cala macierz !
                 // -- ! add into mem in place AddVisitator
                 //
-                MatrixDouble Hs = dbConstraint.get(i).getHessian(dbPoints, dbParameter).dot(currentA);
+                MatrixDouble Hs = dbConstraint.get(i).getHessian().dot(currentA);
                 HSn.add((Hs));
             }
             //zwiekszamy aktualny mnoznik Lagrage'a
@@ -241,7 +229,7 @@ public abstract class Constraint implements ConstraintInterface {
 
 
     @Override
-    public boolean isStorage(){
-        return storage;
+    public boolean isStorable(){
+        return storable;
     }
 }

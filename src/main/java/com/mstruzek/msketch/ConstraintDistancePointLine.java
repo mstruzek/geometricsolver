@@ -3,8 +3,6 @@ package com.mstruzek.msketch;
 import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
-import java.util.TreeMap;
-
 public class ConstraintDistancePointLine extends Constraint {
 
     /** Punkty kontrolne */
@@ -36,24 +34,24 @@ public class ConstraintDistancePointLine extends Constraint {
 
 
     public String toString(){
-        MatrixDouble out = getValue(Point.dbPoint, Parameter.dbParameter);
+        MatrixDouble out = getValue();
         double norm = Matrix.constructWithCopy(out.getArray()).norm1();
         return "Constraint-DistancePointLine" + constraintId + "*s" + size() + " = " + norm  + " { K =" + Point.dbPoint.get(k_id) + "  ,L =" + Point.dbPoint.get(l_id) + " ,M =" + Point.dbPoint.get(m_id) + ", Parametr-" + Parameter.dbParameter.get(param_id).getId() + " = "+Parameter.dbParameter.get(param_id).getValue() + "} \n";
     }
 
 
     @Override
-    public MatrixDouble getValue(TreeMap<Integer, Point> dbPoints, TreeMap<Integer, Parameter> dbParameter) {
+    public MatrixDouble getValue() {
         return null;
     }
 
     @Override
-    public MatrixDouble getJacobian(TreeMap<Integer, Point> dbPoints, TreeMap<Integer, Parameter> dbParameter) {
+    public MatrixDouble getJacobian() {
         return null;
     }
 
     @Override
-    public double getNorm(TreeMap<Integer, Point> dbPoints, TreeMap<Integer, Parameter> dbParameter) {
+    public double getNorm() {
         return 0;
     }
 
@@ -63,7 +61,7 @@ public class ConstraintDistancePointLine extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian(TreeMap<Integer, Point> dbPoints, TreeMap<Integer, Parameter> dbParameter) {
+    public MatrixDouble getHessian() {
         return null;
     }
 

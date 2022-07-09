@@ -3,7 +3,7 @@ package com.mstruzek.msketch;
 import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
-import java.util.TreeMap;
+import static com.mstruzek.msketch.Point.dbPoint;
 
 /**
  * Wiez odpowiedzialny za stycznosc Okregu do Lini
@@ -52,17 +52,17 @@ public class ConstraintTangency extends Constraint{
     }
 
     public String toString(){
-        MatrixDouble out=getValue(Point.dbPoint,Parameter.dbParameter);
+        MatrixDouble out=getValue();
         double norm=Matrix.constructWithCopy(out.getArray()).norm1();
-        return "Constraint-Tangency"+constraintId+"*s"+size()+" = "+norm+" { K ="+Point.dbPoint.get(k_id)+"  ,L ="+Point.dbPoint.get(l_id)+" ,M ="+Point.dbPoint.get(m_id)+",N ="+Point.dbPoint.get(n_id)+"} \n";
+        return "Constraint-Tangency"+constraintId+"*s"+size()+" = "+norm+" { K ="+ dbPoint.get(k_id)+"  ,L ="+ dbPoint.get(l_id)+" ,M ="+ dbPoint.get(m_id)+",N ="+ dbPoint.get(n_id)+"} \n";
     }
 
     @Override
-    public MatrixDouble getValue(TreeMap<Integer,Point> dbPoints,TreeMap<Integer,Parameter> dbParameter){
+    public MatrixDouble getValue(){
 
-        Vector vMK=((Vector) dbPoints.get(m_id)).sub((Vector) dbPoints.get(k_id));
-        Vector vLK=((Vector) dbPoints.get(l_id)).sub((Vector) dbPoints.get(k_id));
-        Vector vNM=((Vector) dbPoints.get(n_id)).sub((Vector) dbPoints.get(m_id));
+        Vector vMK=((Vector) dbPoint.get(m_id)).sub((Vector) dbPoint.get(k_id));
+        Vector vLK=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id));
+        Vector vNM=((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id));
 
         MatrixDouble mt=new MatrixDouble(1,1);
 
@@ -72,35 +72,35 @@ public class ConstraintTangency extends Constraint{
     }
 
     @Override
-    public MatrixDouble getJacobian(TreeMap<Integer,Point> dbPoints,TreeMap<Integer,Parameter> dbParameter){
+    public MatrixDouble getJacobian(){
         //macierz 2 wierszowa
-        MatrixDouble out=MatrixDouble.fill(1,dbPoints.size()*2,0.0);
+        MatrixDouble out=MatrixDouble.fill(1,dbPoint.size()*2,0.0);
         //zerujemy cala macierz + wstawiamy na odpowiednie miejsce Jacobian wiezu
         int j=0;
-        Vector vMK=((Vector) dbPoints.get(m_id)).sub((Vector) dbPoints.get(k_id));
-        Vector vLK=((Vector) dbPoints.get(l_id)).sub((Vector) dbPoints.get(k_id));
-        Vector vLM=((Vector) dbPoints.get(l_id)).sub((Vector) dbPoints.get(m_id));
-        Vector vNM=((Vector) dbPoints.get(n_id)).sub((Vector) dbPoints.get(m_id));
+        Vector vMK=((Vector) dbPoint.get(m_id)).sub((Vector) dbPoint.get(k_id));
+        Vector vLK=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id));
+        Vector vLM=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(m_id));
+        Vector vNM=((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id));
         double g=vLK.cross(vMK);
         double zn=Math.signum(g);
 
-        for(Integer i: dbPoints.keySet()){
+        for(Integer i: dbPoint.keySet()){
 
             //a tu wstawiamy macierz dla tego wiezu
-            if(k_id==dbPoints.get(i).id){
+            if(k_id==dbPoint.get(i).id){
                 out.m[0][j*2]=zn*vLM.y+vNM.length()*vLK.unit().x;
                 out.m[0][j*2+1]=-zn*vLM.x+vNM.length()*vLK.unit().y;
             }
-            if(l_id==dbPoints.get(i).id){
+            if(l_id==dbPoint.get(i).id){
                 out.m[0][j*2]=zn*vMK.y-vNM.length()*vLK.unit().x;
                 out.m[0][j*2+1]=-zn*vMK.x-vNM.length()*vLK.unit().y;
             }
             //a tu wstawiamy macierz dla tego wiezu
-            if(m_id==dbPoints.get(i).id){
+            if(m_id==dbPoint.get(i).id){
                 out.m[0][j*2]=-zn*vLK.y+vLK.length()*vNM.unit().x;
                 out.m[0][j*2+1]=zn*vLK.x+vLK.length()*vNM.unit().y;
             }
-            if(n_id==dbPoints.get(i).id){
+            if(n_id==dbPoint.get(i).id){
                 out.m[0][j*2]=-vLK.length()*vNM.unit().x;
                 out.m[0][j*2+1]=-vLK.length()*vNM.unit().y;
             }
@@ -115,15 +115,15 @@ public class ConstraintTangency extends Constraint{
     }
 
     @Override
-    public MatrixDouble getHessian(TreeMap<Integer,Point> dbPoints,TreeMap<Integer,Parameter> dbParameter){
+    public MatrixDouble getHessian(){
 
         //macierz NxN
-        MatrixDouble out=MatrixDouble.fill(dbPoints.size()*2,dbPoints.size()*2,0.0);
+        MatrixDouble out=MatrixDouble.fill(dbPoint.size()*2,dbPoint.size()*2,0.0);
 
-        Vector vMK=((Vector) dbPoints.get(m_id)).sub((Vector) dbPoints.get(k_id));
-        Vector vLK=((Vector) dbPoints.get(l_id)).sub((Vector) dbPoints.get(k_id));
-        Vector vLM=((Vector) dbPoints.get(l_id)).sub((Vector) dbPoints.get(m_id));
-        Vector vNM=((Vector) dbPoints.get(n_id)).sub((Vector) dbPoints.get(m_id));
+        Vector vMK=((Vector) dbPoint.get(m_id)).sub((Vector) dbPoint.get(k_id));
+        Vector vLK=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id));
+        Vector vLM=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(m_id));
+        Vector vNM=((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id));
 
         double g=vLK.cross(vMK);
         double zn=Math.signum(g); //znak
@@ -131,71 +131,71 @@ public class ConstraintTangency extends Constraint{
 
         int i=0;
         //same punkty
-        for(Integer vI: dbPoints.keySet()){ //wiersz
+        for(Integer vI: dbPoint.keySet()){ //wiersz
             int j=0;
-            for(Integer vJ: dbPoints.keySet()){ //kolumna
+            for(Integer vJ: dbPoint.keySet()){ //kolumna
                 //k,k
-                if(k_id==dbPoints.get(vI).id && k_id==dbPoints.get(vJ).id){
+                if(k_id==dbPoint.get(vI).id && k_id==dbPoint.get(vJ).id){
                     // 0
                 }
                 //k,l
-                if(k_id==dbPoints.get(vI).id && l_id==dbPoints.get(vJ).id){
+                if(k_id==dbPoint.get(vI).id && l_id==dbPoint.get(vJ).id){
                     out.setSubMatrix(2*i,2*j,R.dotC(zn));
                 }
                 //k,m
-                if(k_id==dbPoints.get(vI).id && m_id==dbPoints.get(vJ).id){
+                if(k_id==dbPoint.get(vI).id && m_id==dbPoint.get(vJ).id){
                     out.setSubMatrix(2*i,2*j,mR.dotC(zn).addC(MatrixDouble.diagonal(2,-k)));
                 }
                 //k,n
-                if(k_id==dbPoints.get(vI).id && n_id==dbPoints.get(vJ).id){
+                if(k_id==dbPoint.get(vI).id && n_id==dbPoint.get(vJ).id){
                     out.setSubMatrix(2*i,2*j,MatrixDouble.diagonal(2,k));
                 }
                 //l,k
-                if(l_id==dbPoints.get(vI).id && k_id==dbPoints.get(vJ).id){
+                if(l_id==dbPoint.get(vI).id && k_id==dbPoint.get(vJ).id){
                     out.setSubMatrix(2*i,2*j,mR.dotC(zn));
                 }
                 //l,l
-                if(l_id==dbPoints.get(vI).id && l_id==dbPoints.get(vJ).id){
+                if(l_id==dbPoint.get(vI).id && l_id==dbPoint.get(vJ).id){
                     // 0
                 }
                 //l,m
-                if(l_id==dbPoints.get(vI).id && m_id==dbPoints.get(vJ).id){
+                if(l_id==dbPoint.get(vI).id && m_id==dbPoint.get(vJ).id){
                     out.setSubMatrix(2*i,2*j,R.dotC(zn).addC(MatrixDouble.diagonal(2,k)));
                 }
                 //l,n
-                if(l_id==dbPoints.get(vI).id && n_id==dbPoints.get(vJ).id){
+                if(l_id==dbPoint.get(vI).id && n_id==dbPoint.get(vJ).id){
                     out.setSubMatrix(2*i,2*j,MatrixDouble.diagonal(2,-k));
                 }
                 //m,k
-                if(m_id==dbPoints.get(vI).id && k_id==dbPoints.get(vJ).id){
+                if(m_id==dbPoint.get(vI).id && k_id==dbPoint.get(vJ).id){
                     out.setSubMatrix(2*i,2*j,R.dotC(zn).addC(MatrixDouble.diagonal(2,-k)));
                 }
                 //m,l
-                if(m_id==dbPoints.get(vI).id && l_id==dbPoints.get(vJ).id){
+                if(m_id==dbPoint.get(vI).id && l_id==dbPoint.get(vJ).id){
                     out.setSubMatrix(2*i,2*j,mR.dotC(zn).addC(MatrixDouble.diagonal(2,k)));
                 }
                 //m,m
-                if(m_id==dbPoints.get(vI).id && m_id==dbPoints.get(vJ).id){
+                if(m_id==dbPoint.get(vI).id && m_id==dbPoint.get(vJ).id){
                     //0
                 }
                 //m,n
-                if(m_id==dbPoints.get(vI).id && n_id==dbPoints.get(vJ).id){
+                if(m_id==dbPoint.get(vI).id && n_id==dbPoint.get(vJ).id){
                     // 0
                 }
                 //n,k
-                if(n_id==dbPoints.get(vI).id && k_id==dbPoints.get(vJ).id){
+                if(n_id==dbPoint.get(vI).id && k_id==dbPoint.get(vJ).id){
                     out.setSubMatrix(2*i,2*j,MatrixDouble.diagonal(2,k));
                 }
                 //n,l
-                if(n_id==dbPoints.get(vI).id && l_id==dbPoints.get(vJ).id){
+                if(n_id==dbPoint.get(vI).id && l_id==dbPoint.get(vJ).id){
                     out.setSubMatrix(2*i,2*j,MatrixDouble.diagonal(2,-k));
                 }
                 //n,m
-                if(n_id==dbPoints.get(vI).id && m_id==dbPoints.get(vJ).id){
+                if(n_id==dbPoint.get(vI).id && m_id==dbPoint.get(vJ).id){
                     // 0
                 }
                 //n,n
-                if(n_id==dbPoints.get(vI).id && n_id==dbPoints.get(vJ).id){
+                if(n_id==dbPoint.get(vI).id && n_id==dbPoint.get(vJ).id){
                     // 0
                 }
                 j++;
@@ -224,8 +224,8 @@ public class ConstraintTangency extends Constraint{
         //System.out.println(ConstraintTangency.R);
         ConstraintTangency cn=new ConstraintTangency(Constraint.nextId(),pn1,pn2,pn3,pn4);
         System.out.println(Constraint.dbConstraint);
-        System.out.println(cn.getJacobian(Point.dbPoint,Parameter.dbParameter));
-        System.out.println(cn.getValue(Point.dbPoint,Parameter.dbParameter));
+        System.out.println(cn.getJacobian());
+        System.out.println(cn.getValue());
 
     }
 
@@ -255,8 +255,7 @@ public class ConstraintTangency extends Constraint{
     }
 
     @Override
-    public double getNorm(TreeMap<Integer,Point> dbPoints,
-                          TreeMap<Integer,Parameter> dbParameter){
+    public double getNorm(){
         return 0;
     }
 }

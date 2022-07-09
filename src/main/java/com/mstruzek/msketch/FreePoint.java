@@ -86,6 +86,16 @@ public class FreePoint extends GeometricPrimitive{
     }
 
     @Override
+    public void getJacobian(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol){
+
+    }
+
+    @Override
+    public MatrixDouble getForce(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol) {
+        return null;
+    }
+
+    @Override
     public MatrixDouble getJacobian(){
         MatrixDouble mt=MatrixDouble.fill(6,6,0.0);
         /**

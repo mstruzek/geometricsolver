@@ -15,14 +15,14 @@ public class ConstraintsTableModel extends AbstractTableModel{
 
     @Override
     public int getRowCount(){
-        return (int) Constraint.dbConstraint.values().stream().filter(Constraint::isStorage).count();
+        return (int) Constraint.dbConstraint.values().stream().filter(Constraint::isStorable).count();
     }
 
     @Override
     public Object getValueAt(int rowId,int colId){
         int out;
         Constraint constraint=
-            Constraint.dbConstraint.values().stream().filter(Constraint::isStorage).skip(rowId)
+            Constraint.dbConstraint.values().stream().filter(Constraint::isStorable).skip(rowId)
                 .findFirst()
                 .orElseThrow(() -> new IndexOutOfBoundsException("constraint: " + rowId));
 

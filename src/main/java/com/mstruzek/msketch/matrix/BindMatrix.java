@@ -97,8 +97,9 @@ public class BindMatrix extends Matrix {
 		double[][] m = getArray();
 		int k=0;
 		for(Integer i:dbPoint.keySet()){
-			dbPoint.get(i).setX(m[k*2][0]); 
-			dbPoint.get(i).setY(m[k*2+1][0]);	
+			double x=m[k*2][0];
+			double y=m[k*2+1][0];
+			dbPoint.get(i).setLocation(x,y);
 			k++;
 		}
 	}

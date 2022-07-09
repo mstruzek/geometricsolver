@@ -3,7 +3,7 @@ package com.mstruzek.msketch;
 import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
-import java.util.TreeMap;
+import static com.mstruzek.msketch.Point.dbPoint;
 
 /**
  * Klasa reprezentujaca wiez rownej dlugosci pomiedzy
@@ -56,37 +56,37 @@ public class ConstraintLinesSameLength extends Constraint{
     }
 
     public String toString(){
-        MatrixDouble out=getValue(Point.dbPoint,Parameter.dbParameter);
+        MatrixDouble out=getValue();
         double norm=Matrix.constructWithCopy(out.getArray()).norm1();
-        return "Constraint-LinesSameLength"+constraintId+"*s"+size()+" = "+norm+" { K ="+Point.dbPoint.get(k_id)+"  ,L ="+Point.dbPoint.get(l_id)+" ,M ="+Point.dbPoint.get(m_id)+",N ="+Point.dbPoint.get(n_id)+"} \n";
+        return "Constraint-LinesSameLength"+constraintId+"*s"+size()+" = "+norm+" { K ="+ dbPoint.get(k_id)+"  ,L ="+ dbPoint.get(l_id)+" ,M ="+ dbPoint.get(m_id)+",N ="+ dbPoint.get(n_id)+"} \n";
 
     }
 
     @Override
-    public MatrixDouble getJacobian(TreeMap<Integer,Point> dbPoints,TreeMap<Integer,Parameter> dbParameter){
+    public MatrixDouble getJacobian(){
         //macierz 2 wierszowa
-        MatrixDouble out=MatrixDouble.fill(1,dbPoints.size()*2,0.0);
+        MatrixDouble out=MatrixDouble.fill(1,dbPoint.size()*2,0.0);
         //zerujemy cala macierz + wstawiamy na odpowiednie miejsce Jacobian wiezu
         int j=0;
-        Vector vLK=((Vector) dbPoints.get(l_id)).sub((Vector) dbPoints.get(k_id)).unit();
-        Vector vNM=((Vector) dbPoints.get(n_id)).sub((Vector) dbPoints.get(m_id)).unit();
-        for(Integer i: dbPoints.keySet()){
+        Vector vLK=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id)).unit();
+        Vector vNM=((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id)).unit();
+        for(Integer i: dbPoint.keySet()){
 
             //a tu wstawiamy macierz dla tego wiezu
-            if(k_id==dbPoints.get(i).id){
+            if(k_id==dbPoint.get(i).id){
                 out.m[0][j*2]=-vLK.x;
                 out.m[0][j*2+1]=-vLK.y;
             }
-            if(l_id==dbPoints.get(i).id){
+            if(l_id==dbPoint.get(i).id){
                 out.m[0][j*2]=vLK.x;
                 out.m[0][j*2+1]=vLK.y;
             }
             //a tu wstawiamy macierz dla tego wiezu
-            if(m_id==dbPoints.get(i).id){
+            if(m_id==dbPoint.get(i).id){
                 out.m[0][j*2]=vNM.x;
                 out.m[0][j*2+1]=vNM.y;
             }
-            if(n_id==dbPoints.get(i).id){
+            if(n_id==dbPoint.get(i).id){
                 out.m[0][j*2]=-vNM.x;
                 out.m[0][j*2+1]=-vNM.y;
             }
@@ -103,20 +103,20 @@ public class ConstraintLinesSameLength extends Constraint{
     }
 
     @Override
-    public MatrixDouble getValue(TreeMap<Integer,Point> dbPoints,TreeMap<Integer,Parameter> dbParameter){
+    public MatrixDouble getValue(){
 
-        Double vLK=((Vector) dbPoints.get(l_id)).sub((Vector) dbPoints.get(k_id)).length();
-        Double vNM=((Vector) dbPoints.get(n_id)).sub((Vector) dbPoints.get(m_id)).length();
+        Double vLK=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id)).length();
+        Double vNM=((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id)).length();
         MatrixDouble mt=new MatrixDouble(1,1);
         mt.m[0][0]=vLK-vNM;
         return mt;
     }
 
     @Override
-    public MatrixDouble getHessian(TreeMap<Integer,Point> dbPoints,TreeMap<Integer,Parameter> dbParameter){
+    public MatrixDouble getHessian(){
 
         //macierz NxN
-        MatrixDouble out=MatrixDouble.fill(dbPoints.size()*2,dbPoints.size()*2,0.0);
+        MatrixDouble out=MatrixDouble.fill(dbPoint.size()*2,dbPoint.size()*2,0.0);
 
         return out;
     }
@@ -160,9 +160,9 @@ public class ConstraintLinesSameLength extends Constraint{
     }
 
     @Override
-    public double getNorm(TreeMap<Integer,Point> dbPoints,TreeMap<Integer,Parameter> dbParameter){
+    public double getNorm(){
 
-        return getValue(dbPoints,dbParameter).m[0][0];
+        return getValue().m[0][0];
     }
 
 }

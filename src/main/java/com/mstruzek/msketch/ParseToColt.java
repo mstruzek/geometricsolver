@@ -22,10 +22,10 @@ public class ParseToColt {
 	 */
 	public static SparseDoubleMatrix2D toSparse(MatrixDouble md){
 		
-		SparseDoubleMatrix2D matrix2D = new SparseDoubleMatrix2D(md.getHeight(),md.getWeight());
+		SparseDoubleMatrix2D matrix2D = new SparseDoubleMatrix2D(md.getHeight(),md.getWidth());
 		
 		for(int i=0;i<md.getHeight();i++){
-			for(int j=0;j<md.getWeight();j++){
+			for(int j=0;j<md.getWidth();j++){
 				if(md.m[i][j]!=0.0){
 					matrix2D.setQuick(i, j, md.m[i][j]);
 				}

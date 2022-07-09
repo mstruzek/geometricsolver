@@ -1,9 +1,10 @@
 package com.mstruzek.msketch;
 
-import java.util.TreeMap;
-
 import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
+
+import static com.mstruzek.msketch.Parameter.dbParameter;
+import static com.mstruzek.msketch.Point.dbPoint;
 
 /**
  * Klasa reprezentujaca wiez odleglosci pomiedzy 2 punktami
@@ -42,27 +43,27 @@ public class ConstraintDistance2Points extends Constraint{
     }
 
     public String toString(){
-        MatrixDouble out=getValue(Point.dbPoint,Parameter.dbParameter);
+        MatrixDouble out=getValue();
         double norm=Matrix.constructWithCopy(out.getArray()).norm1();
-        return "Constraint-Distance2Points"+constraintId+"*s"+size()+" = "+norm+" { K ="+Point.dbPoint.get(k_id)+"  ,L ="+Point.dbPoint.get(l_id)+" , Parametr-"+Parameter.dbParameter.get(param_id).getId()+" = "+Parameter.dbParameter.get(param_id).getValue()+" } \n";
+        return "Constraint-Distance2Points"+constraintId+"*s"+size()+" = "+norm+" { K ="+ dbPoint.get(k_id)+"  ,L ="+ dbPoint.get(l_id)+" , Parametr-"+ dbParameter.get(param_id).getId()+" = "+ dbParameter.get(param_id).getValue()+" } \n";
 
     }
 
     @Override
-    public MatrixDouble getJacobian(TreeMap<Integer,Point> dbPoints,TreeMap<Integer,Parameter> dbParameter){
+    public MatrixDouble getJacobian(){
         //macierz 2 wierszowa
-        MatrixDouble out=MatrixDouble.fill(1,dbPoints.size()*2,0.0);
+        MatrixDouble out=MatrixDouble.fill(1,dbPoint.size()*2,0.0);
         //zerujemy cala macierz + wstawiamy na odpowiednie miejsce Jacobian wiezu
         int j=0;
-        Vector vLK=((Vector) dbPoints.get(l_id)).sub((Vector) dbPoints.get(k_id)).unit();
-        for(Integer i: dbPoints.keySet()){
+        Vector vLK=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id)).unit();
+        for(Integer i: dbPoint.keySet()){
 
             //a tu wstawiamy macierz dla tego wiezu
-            if(k_id==dbPoints.get(i).id){
+            if(k_id==dbPoint.get(i).id){
                 out.m[0][j*2]=-vLK.x;
                 out.m[0][j*2+1]=-vLK.y;
             }
-            if(l_id==dbPoints.get(i).id){
+            if(l_id==dbPoint.get(i).id){
                 out.m[0][j*2]=vLK.x;
                 out.m[0][j*2+1]=vLK.y;
             }
@@ -79,9 +80,9 @@ public class ConstraintDistance2Points extends Constraint{
     }
 
     @Override
-    public MatrixDouble getValue(TreeMap<Integer,Point> dbPoints,TreeMap<Integer,Parameter> dbParameter){
+    public MatrixDouble getValue(){
 
-        Double vLK=((Vector) dbPoints.get(l_id)).sub((Vector) dbPoints.get(k_id)).length();
+        Double vLK=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id)).length();
 
         MatrixDouble mt=new MatrixDouble(1,1);
         mt.m[0][0]=vLK-dbParameter.get(param_id).getRadians();
@@ -89,10 +90,10 @@ public class ConstraintDistance2Points extends Constraint{
     }
 
     @Override
-    public MatrixDouble getHessian(TreeMap<Integer,Point> dbPoints,TreeMap<Integer,Parameter> dbParameter){
+    public MatrixDouble getHessian(){
 
         //macierz NxN
-        MatrixDouble out=MatrixDouble.fill(dbPoints.size()*2,dbPoints.size()*2,0.0);
+        MatrixDouble out=MatrixDouble.fill(dbPoint.size()*2,dbPoint.size()*2,0.0);
 
         return out;
     }
@@ -143,9 +144,9 @@ public class ConstraintDistance2Points extends Constraint{
     }
 
     @Override
-    public double getNorm(TreeMap<Integer,Point> dbPoints,TreeMap<Integer,Parameter> dbParameter){
+    public double getNorm(){
 
-        Double vLK=((Vector) dbPoints.get(l_id)).sub((Vector) dbPoints.get(k_id)).length();
+        Double vLK=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id)).length();
 
         return (vLK-dbParameter.get(param_id).getRadians());
     }

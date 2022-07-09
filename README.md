@@ -142,7 +142,7 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 
 - [ :Relaxed  ] - nazewnictwo :Put - odkladamy  - :Relaxed - random q shifts   
 
-
+- [ auto KLMN  ]   - set K, L tuple when double clicked on K , or set auto K if db-clicked on L
 
 
 - 
@@ -150,4 +150,47 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 - @@@ ConstraintTangency, ConstraintLinesParallelism, ConstraintLinesPerpendicular , 
 
 - @@@ [ Save ]   - przycisk :save model -> Writer : FORMAT PLIKU [ WSZYSTKIE OBIEKTY , NUMERY PUNKTOW , WIEZY , PARAMATRY]
-- @@@ [ Load ]  -  przycisk :load model Reader 
+- @@@ [ Load ]  -  przycisk :load model Reader
+
+-- UNIFIED MATRIX INTERFACE
+
+
+
+/**
+* [ Problem Pętli !]
+* <p>
+* Single Bock
+* {
+* set(A)[x]
+* set(b)[x]
+* ToDevice =>>[ A, b] ,
+* solve(A,b,x)
+* ToCPU => [x]
+* }
+* <p>
+* <p>
+* TO PRZENISMY MODEL NA Device
+* <p>
+* {
+* po edycji wiezow i Primitive Type =>> sync model on stream onto Device
+* __shared__ ( POINTS )
+* <p>
+* L2, L1 => transportowac wiezy na rzyczenie
+* L2, L1 => budować macierz
+* <p>
+* <p>
+* Trzecia OPCJA
+* __shared__ ( POINTS )
+* L2, L1 - bezposrednio na pamiec DRAM
+* SpringForceInternal =>>> 1 thread   <=>  One Primitive stiffness BLOCK     - DIAGONAL
+* Hessian =>>> 1 thread               <=>  One Constraint => L1(,L2(,DRAM))
+* vector b -  w szyku
+* ForceValue - single - kernel  ( or device function)
+* lambda * FI = Sily od Wiezow - ( threadXDim -  just proportional to dimensions )
+* <p>
+* Czwarta OPCJA
+* -- model pod JNI    ==> c++
+* -- JNI odpytywac pozycje, update pozycji, ...
+* --
+* }
+  */

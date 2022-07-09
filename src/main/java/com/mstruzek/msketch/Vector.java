@@ -83,8 +83,8 @@ public class Vector{
 	
 	/** Ustawia wartpsco x i y wektora */
 	public void setLocation(double x,double y){
-		setX(x);
-		setY(y);
+		this.x = x;
+		this.y = y;
 	}
 	
 	/**

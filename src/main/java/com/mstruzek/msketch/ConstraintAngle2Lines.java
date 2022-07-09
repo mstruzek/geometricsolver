@@ -1,10 +1,12 @@
 package com.mstruzek.msketch;
 
-import java.util.TreeMap;
-
 import Jama.Matrix;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
+
+import static com.mstruzek.msketch.Parameter.dbParameter;
+import static com.mstruzek.msketch.Point.dbPoint;
+
 /**
  * Wiez odpowiedzialny za kat pomiedzy wektorami
  * 
@@ -44,16 +46,16 @@ public class ConstraintAngle2Lines extends Constraint {
 	}
 
 	public String toString(){
-		MatrixDouble out = getValue(Point.dbPoint, Parameter.dbParameter);
+		MatrixDouble out = getValue();
 		double norm = Matrix.constructWithCopy(out.getArray()).norm1();
-		return "Constraint-Angle2Lines" + constraintId + "*s" + size() + " = " + norm  + " { K =" + Point.dbPoint.get(k_id) + "  ,L =" + Point.dbPoint.get(l_id) + " ,M =" + Point.dbPoint.get(m_id) + ",N =" + Point.dbPoint.get(n_id) + ", Parametr-" + Parameter.dbParameter.get(param_id).getId() + " = "+Parameter.dbParameter.get(param_id).getValue() + "} \n";	
+		return "Constraint-Angle2Lines" + constraintId + "*s" + size() + " = " + norm  + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ",N =" + dbPoint.get(n_id) + ", Parametr-" + dbParameter.get(param_id).getId() + " = "+ dbParameter.get(param_id).getValue() + "} \n";
 	}
 	
 	@Override
-	public MatrixDouble getValue(TreeMap<Integer, Point> dbPoints,TreeMap<Integer, Parameter> dbParameter) {
+	public MatrixDouble getValue() {
 	
-		Vector vLK = ((Vector)dbPoints.get(l_id)).sub((Vector)dbPoints.get(k_id));
-		Vector vNM = ((Vector)dbPoints.get(n_id)).sub((Vector)dbPoints.get(m_id));
+		Vector vLK = ((Vector)dbPoint.get(l_id)).sub((Vector)dbPoint.get(k_id));
+		Vector vNM = ((Vector)dbPoint.get(n_id)).sub((Vector)dbPoint.get(m_id));
 		
 		MatrixDouble mt = new MatrixDouble(1,1);
 		
@@ -62,33 +64,33 @@ public class ConstraintAngle2Lines extends Constraint {
 		return mt;
 	}
 	@Override
-	public MatrixDouble getJacobian(TreeMap<Integer, Point> dbPoints,TreeMap<Integer, Parameter> dbParameter) {
+	public MatrixDouble getJacobian() {
 		//macierz 2 wierszowa
-		MatrixDouble out = MatrixDouble.fill(1,dbPoints.size()*2,0.0);
+		MatrixDouble out = MatrixDouble.fill(1,dbPoint.size()*2,0.0);
 		//zerujemy cala macierz + wstawiamy na odpowiednie miejsce Jacobian wiezu
 		int j=0;
-		Vector vLK = ((Vector)dbPoints.get(l_id)).sub((Vector)dbPoints.get(k_id));
-		Vector vNM = ((Vector)dbPoints.get(n_id)).sub((Vector)dbPoints.get(m_id));
+		Vector vLK = ((Vector)dbPoint.get(l_id)).sub((Vector)dbPoint.get(k_id));
+		Vector vNM = ((Vector)dbPoint.get(n_id)).sub((Vector)dbPoint.get(m_id));
 		Vector uLKdNM = vLK.unit().dot(vNM.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
 		Vector uNMdLK = vNM.unit().dot(vLK.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
 
-		for(Integer i:dbPoints.keySet()){
+		for(Integer i:dbPoint.keySet()){
 			
 			//a tu wstawiamy macierz dla tego wiezu
-			if(k_id==dbPoints.get(i).id){
+			if(k_id==dbPoint.get(i).id){
 				out.m[0][j*2]= -vNM.x + uLKdNM.x;
 				out.m[0][j*2+1] = -vNM.y + uLKdNM.y;
 			}	
-			if(l_id==dbPoints.get(i).id){
+			if(l_id==dbPoint.get(i).id){
 				out.m[0][j*2]= vNM.x - uLKdNM.x;
 				out.m[0][j*2+1] = vNM.y - uLKdNM.y;		
 			}
 			//a tu wstawiamy macierz dla tego wiezu
-			if(m_id==dbPoints.get(i).id){
+			if(m_id==dbPoint.get(i).id){
 				out.m[0][j*2]= -vLK.x + uNMdLK.x;
 				out.m[0][j*2+1] = -vLK.y + uNMdLK.y;
 			}	
-			if(n_id==dbPoints.get(i).id){
+			if(n_id==dbPoint.get(i).id){
 				out.m[0][j*2]= vLK.x - uNMdLK.x;
 				out.m[0][j*2+1] = vLK.y - uNMdLK.y;
 			}
@@ -102,81 +104,81 @@ public class ConstraintAngle2Lines extends Constraint {
 		return false;	
 	}
 	@Override
-	public MatrixDouble getHessian(TreeMap<Integer, Point> dbPoints,TreeMap<Integer, Parameter> dbParameter) {
+	public MatrixDouble getHessian() {
 		//macierz NxN
-		MatrixDouble out = MatrixDouble.fill(dbPoints.size()*2,dbPoints.size()*2,0.0);
+		MatrixDouble out = MatrixDouble.fill(dbPoint.size()*2,dbPoint.size()*2,0.0);
 
-		Vector vLK = ((Vector)dbPoints.get(l_id)).sub((Vector)dbPoints.get(k_id)).unit();
-		Vector vNM = ((Vector)dbPoints.get(n_id)).sub((Vector)dbPoints.get(m_id)).unit();
+		Vector vLK = ((Vector)dbPoint.get(l_id)).sub((Vector)dbPoint.get(k_id)).unit();
+		Vector vNM = ((Vector)dbPoint.get(n_id)).sub((Vector)dbPoint.get(m_id)).unit();
 		
 		double g = vLK.dot(vNM)*Math.cos(dbParameter.get(param_id).getRadians());
 		//same punkty
 		int i = 0;
-		for(Integer pI:dbPoints.keySet()){ //wiersz
+		for(Integer pI:dbPoint.keySet()){ //wiersz
 			int j = 0;
-			for(Integer pJ:dbPoints.keySet()){ //kolumna
+			for(Integer pJ:dbPoint.keySet()){ //kolumna
 				//k,k
-				if(k_id==dbPoints.get(pI).id && k_id==dbPoints.get(pJ).id ){
+				if(k_id==dbPoint.get(pI).id && k_id==dbPoint.get(pJ).id ){
 					// 0
 				}
 				//k,l
-				if(k_id==dbPoints.get(pI).id && l_id==dbPoints.get(pJ).id ){
+				if(k_id==dbPoint.get(pI).id && l_id==dbPoint.get(pJ).id ){
 					//0
 				}
 				//k,m
-				if(k_id==dbPoints.get(pI).id && m_id==dbPoints.get(pJ).id ){
+				if(k_id==dbPoint.get(pI).id && m_id==dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, 1-g));
 				}
 				//k,n
-				if(k_id==dbPoints.get(pI).id && n_id==dbPoints.get(pJ).id ){
+				if(k_id==dbPoint.get(pI).id && n_id==dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, g-1));
 				}
 				//l,k
-				if(l_id==dbPoints.get(pI).id && k_id==dbPoints.get(pJ).id ){
+				if(l_id==dbPoint.get(pI).id && k_id==dbPoint.get(pJ).id ){
 					//0
 				}
 				//l,l
-				if(l_id==dbPoints.get(pI).id && l_id==dbPoints.get(pJ).id ){
+				if(l_id==dbPoint.get(pI).id && l_id==dbPoint.get(pJ).id ){
 					// 0
 				}
 				//l,m
-				if(l_id==dbPoints.get(pI).id && m_id==dbPoints.get(pJ).id ){
+				if(l_id==dbPoint.get(pI).id && m_id==dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, g-1));
 				}
 				//l,n
-				if(l_id==dbPoints.get(pI).id && n_id==dbPoints.get(pJ).id ){
+				if(l_id==dbPoint.get(pI).id && n_id==dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, 1-g));
 				}
 				//m,k
-				if(m_id==dbPoints.get(pI).id && k_id==dbPoints.get(pJ).id ){
+				if(m_id==dbPoint.get(pI).id && k_id==dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, 1-g));
 				}
 				//m,l
-				if(m_id==dbPoints.get(pI).id && l_id==dbPoints.get(pJ).id ){
+				if(m_id==dbPoint.get(pI).id && l_id==dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, g-1));
 				}
 				//m,m
-				if(m_id==dbPoints.get(pI).id && m_id==dbPoints.get(pJ).id ){
+				if(m_id==dbPoint.get(pI).id && m_id==dbPoint.get(pJ).id ){
 					//0
 				}
 				//m,n
-				if(m_id==dbPoints.get(pI).id && n_id==dbPoints.get(pJ).id ){
+				if(m_id==dbPoint.get(pI).id && n_id==dbPoint.get(pJ).id ){
 					// 0
 				}
 				//n,k
-				if(n_id==dbPoints.get(pI).id && k_id==dbPoints.get(pJ).id ){
+				if(n_id==dbPoint.get(pI).id && k_id==dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, g-1));
 				}
 				//n,l
-				if(n_id==dbPoints.get(pI).id && l_id==dbPoints.get(pJ).id ){
+				if(n_id==dbPoint.get(pI).id && l_id==dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, 1-g));
 				}
 				//n,m
-				if(n_id==dbPoints.get(pI).id && m_id==dbPoints.get(pJ).id ){
+				if(n_id==dbPoint.get(pI).id && m_id==dbPoint.get(pJ).id ){
 					// 0
 				}
 				//n,n
-				if(n_id==dbPoints.get(pI).id && n_id==dbPoints.get(pJ).id ){
+				if(n_id==dbPoint.get(pI).id && n_id==dbPoint.get(pJ).id ){
 					// 0
 				}
 				j++;
@@ -220,10 +222,10 @@ public class ConstraintAngle2Lines extends Constraint {
 		
 	}
 	@Override
-	public double getNorm(TreeMap<Integer, Point> dbPoints,TreeMap<Integer, Parameter> dbParameter) {
-		Vector vLK = ((Vector)dbPoints.get(l_id)).sub((Vector)dbPoints.get(k_id));
-		Vector vNM = ((Vector)dbPoints.get(n_id)).sub((Vector)dbPoints.get(m_id));
-		MatrixDouble md =getValue(dbPoints, dbParameter);
+	public double getNorm() {
+		Vector vLK = ((Vector)dbPoint.get(l_id)).sub((Vector)dbPoint.get(k_id));
+		Vector vNM = ((Vector)dbPoint.get(n_id)).sub((Vector)dbPoint.get(m_id));
+		MatrixDouble md =getValue();
 		return md.m[0][0]/(vLK.length()*vNM.length());
 	}
 }

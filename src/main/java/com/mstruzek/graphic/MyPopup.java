@@ -8,6 +8,8 @@ import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
+import static com.mstruzek.graphic.Property.KLMN_POINTS;
+
 public class MyPopup extends JPopupMenu implements ActionListener {
 
     /**
@@ -70,6 +72,7 @@ public class MyPopup extends JPopupMenu implements ActionListener {
                 mpc.clearAll();
                 break;
         }
+        firePropertyChange(KLMN_POINTS, null, mpc.toString());
     }
 
 }

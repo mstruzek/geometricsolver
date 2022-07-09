@@ -103,6 +103,16 @@ public class Line extends GeometricPrimitive {
         ((ConstraintFixPoint) Constraint.dbConstraint.get(constraints[1])).setFixVector(vb);
     }
 
+    @Override
+    public void getJacobian(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol){
+
+    }
+
+    @Override
+    public MatrixDouble getForce(MtProcedure procedure, MatrixDouble dest, int firstRow, int firstCol) {
+        return null;
+    }
+
 
     @Override
     public MatrixDouble getJacobian() {
