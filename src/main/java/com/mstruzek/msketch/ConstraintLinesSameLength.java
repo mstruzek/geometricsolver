@@ -71,22 +71,21 @@ public class ConstraintLinesSameLength extends Constraint {
         Vector vLK = ((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id)).unit();
         Vector vNM = ((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id)).unit();
         for (Integer i : dbPoint.keySet()) {
-            Point pointI = dbPoint.get(i);
             //a tu wstawiamy macierz dla tego wiezu
-            if (k_id == pointI.id) {
+            if (k_id == dbPoint.get(i).id) {
                 out.m[0][j * 2] = -vLK.x;
                 out.m[0][j * 2 + 1] = -vLK.y;
             }
-            if (l_id == pointI.id) {
+            if (l_id == dbPoint.get(i).id) {
                 out.m[0][j * 2] = vLK.x;
                 out.m[0][j * 2 + 1] = vLK.y;
             }
             //a tu wstawiamy macierz dla tego wiezu
-            if (m_id == pointI.id) {
+            if (m_id == dbPoint.get(i).id) {
                 out.m[0][j * 2] = vNM.x;
                 out.m[0][j * 2 + 1] = vNM.y;
             }
-            if (n_id == pointI.id) {
+            if (n_id == dbPoint.get(i).id) {
                 out.m[0][j * 2] = -vNM.x;
                 out.m[0][j * 2 + 1] = -vNM.y;
             }

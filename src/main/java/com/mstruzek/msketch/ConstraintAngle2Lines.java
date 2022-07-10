@@ -75,25 +75,21 @@ public class ConstraintAngle2Lines extends Constraint {
 		Vector uNMdLK = vNM.unit().dot(vLK.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
 
 		for(Integer i:dbPoint.keySet()){
-
-			Point pointI = dbPoint.get(i);
-
 			//a tu wstawiamy macierz dla tego wiezu
-
-			if(k_id== pointI.id){
+			if(k_id== dbPoint.get(i).id){
 				out.m[0][j*2]= -vNM.x + uLKdNM.x;
 				out.m[0][j*2+1] = -vNM.y + uLKdNM.y;
 			}	
-			if(l_id== pointI.id){
+			if(l_id== dbPoint.get(i).id){
 				out.m[0][j*2]= vNM.x - uLKdNM.x;
 				out.m[0][j*2+1] = vNM.y - uLKdNM.y;		
 			}
 			//a tu wstawiamy macierz dla tego wiezu
-			if(m_id== pointI.id){
+			if(m_id== dbPoint.get(i).id){
 				out.m[0][j*2]= -vLK.x + uNMdLK.x;
 				out.m[0][j*2+1] = -vLK.y + uNMdLK.y;
 			}	
-			if(n_id== pointI.id){
+			if(n_id== dbPoint.get(i).id){
 				out.m[0][j*2]= vLK.x - uNMdLK.x;
 				out.m[0][j*2+1] = vLK.y - uNMdLK.y;
 			}
@@ -119,71 +115,69 @@ public class ConstraintAngle2Lines extends Constraint {
 		int i = 0;
 		for(Integer pI:dbPoint.keySet()){ //wiersz
 			int j = 0;
-			Point pointI = dbPoint.get(pI);
 			for(Integer pJ:dbPoint.keySet()){ //kolumna
-				Point pointJ = dbPoint.get(pJ);
 				//k,k
-				if(k_id== pointI.id && k_id== pointJ.id ){
+				if(k_id== dbPoint.get(pI).id && k_id== dbPoint.get(pJ).id ){
 					// 0
 				}
 				//k,l
-				if(k_id== pointI.id && l_id== pointJ.id ){
+				if(k_id== dbPoint.get(pI).id && l_id== dbPoint.get(pJ).id ){
 					//0
 				}
 				//k,m
-				if(k_id== pointI.id && m_id== pointJ.id ){
+				if(k_id== dbPoint.get(pI).id && m_id== dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, 1-g));
 				}
 				//k,n
-				if(k_id== pointI.id && n_id== pointJ.id ){
+				if(k_id== dbPoint.get(pI).id && n_id== dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, g-1));
 				}
 				//l,k
-				if(l_id== pointI.id && k_id== pointJ.id ){
+				if(l_id== dbPoint.get(pI).id && k_id== dbPoint.get(pJ).id ){
 					//0
 				}
 				//l,l
-				if(l_id== pointI.id && l_id== pointJ.id ){
+				if(l_id== dbPoint.get(pI).id && l_id== dbPoint.get(pJ).id ){
 					// 0
 				}
 				//l,m
-				if(l_id== pointI.id && m_id== pointJ.id ){
+				if(l_id== dbPoint.get(pI).id && m_id== dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, g-1));
 				}
 				//l,n
-				if(l_id== pointI.id && n_id== pointJ.id ){
+				if(l_id== dbPoint.get(pI).id && n_id== dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, 1-g));
 				}
 				//m,k
-				if(m_id== pointI.id && k_id== pointJ.id ){
+				if(m_id== dbPoint.get(pI).id && k_id== dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, 1-g));
 				}
 				//m,l
-				if(m_id== pointI.id && l_id== pointJ.id ){
+				if(m_id== dbPoint.get(pI).id && l_id== dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, g-1));
 				}
 				//m,m
-				if(m_id== pointI.id && m_id== pointJ.id ){
+				if(m_id== dbPoint.get(pI).id && m_id== dbPoint.get(pJ).id ){
 					//0
 				}
 				//m,n
-				if(m_id== pointI.id && n_id== pointJ.id ){
+				if(m_id== dbPoint.get(pI).id && n_id== dbPoint.get(pJ).id ){
 					// 0
 				}
 				//n,k
-				if(n_id== pointI.id && k_id== pointJ.id ){
+				if(n_id== dbPoint.get(pI).id && k_id== dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, g-1));
 				}
 				//n,l
-				if(n_id== pointI.id && l_id== pointJ.id ){
+				if(n_id== dbPoint.get(pI).id && l_id== dbPoint.get(pJ).id ){
 					out.setSubMatrix(2*i, 2*j,MatrixDouble.diagonal(2, 1-g));
 				}
 				//n,m
-				if(n_id== pointI.id && m_id== pointJ.id ){
+				if(n_id== dbPoint.get(pI).id && m_id== dbPoint.get(pJ).id ){
 					// 0
 				}
 				//n,n
-				if(n_id== pointI.id && n_id== pointJ.id ){
+				if(n_id== dbPoint.get(pI).id && n_id== dbPoint.get(pJ).id ){
 					// 0
 				}
 				j++;

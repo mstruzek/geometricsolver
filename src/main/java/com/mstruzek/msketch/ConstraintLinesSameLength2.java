@@ -66,22 +66,21 @@ public class ConstraintLinesSameLength2 extends Constraint {
         Vector vLK = ((Vector) dbPoint.get(k_id)).sub((Vector) dbPoint.get(l_id)).dot(2.0);
         Vector vNM = ((Vector) dbPoint.get(m_id)).sub((Vector) dbPoint.get(n_id)).dot(2.0);
         for (Integer i : dbPoint.keySet()) {
-            Point pointI = dbPoint.get(i);
             //a tu wstawiamy macierz dla tego wiezu
-            if (k_id == pointI.id) {
+            if (k_id == dbPoint.get(i).id) {
                 out.m[0][j * 2] = vLK.x;
                 out.m[0][j * 2 + 1] = vLK.y;
             }
-            if (l_id == pointI.id) {
+            if (l_id == dbPoint.get(i).id) {
                 out.m[0][j * 2] = -vLK.x;
                 out.m[0][j * 2 + 1] = -vLK.y;
             }
             //a tu wstawiamy macierz dla tego wiezu
-            if (m_id == pointI.id) {
+            if (m_id == dbPoint.get(i).id) {
                 out.m[0][j * 2] = -vNM.x;
                 out.m[0][j * 2 + 1] = -vNM.y;
             }
-            if (n_id == pointI.id) {
+            if (n_id == dbPoint.get(i).id) {
                 out.m[0][j * 2] = vNM.x;
                 out.m[0][j * 2 + 1] = vNM.y;
             }
@@ -116,40 +115,38 @@ public class ConstraintLinesSameLength2 extends Constraint {
         MatrixDouble mI = MatrixDouble.identity(2).dot(-2.0);
 
         for (Integer i : dbPoint.keySet()) { //wiersz
-            Point pointI = dbPoint.get(i);
             for (Integer j : dbPoint.keySet()) { //kolumna
-                Point pointJ = dbPoint.get(j);
                 //wstawiamy I,-I w odpowiednie miejsca
                 //k,k
-                if (k_id == pointI.id && k_id == pointJ.id) {
+                if (k_id == dbPoint.get(i).id && k_id == dbPoint.get(j).id) {
                     out.addSubMatrix(2 * i, 2 * j, I);
                 }
                 //k,l
-                if (k_id == pointI.id && l_id == pointJ.id) {
+                if (k_id == dbPoint.get(i).id && l_id == dbPoint.get(j).id) {
                     out.addSubMatrix(2 * i, 2 * j, mI);
                 }
                 //l,k
-                if (l_id == pointI.id && k_id == pointJ.id) {
+                if (l_id == dbPoint.get(i).id && k_id == dbPoint.get(j).id) {
                     out.addSubMatrix(2 * i, 2 * j, mI);
                 }
                 //l,l
-                if (l_id == pointI.id && l_id == pointJ.id) {
+                if (l_id == dbPoint.get(i).id && l_id == dbPoint.get(j).id) {
                     out.addSubMatrix(2 * i, 2 * j, I);
                 }
                 //m,m
-                if (m_id == pointI.id && m_id == pointJ.id) {
+                if (m_id == dbPoint.get(i).id && m_id == dbPoint.get(j).id) {
                     out.addSubMatrix(2 * i, 2 * j, mI);
                 }
                 //m,n
-                if (m_id == pointI.id && n_id == pointJ.id) {
+                if (m_id == dbPoint.get(i).id && n_id == dbPoint.get(j).id) {
                     out.addSubMatrix(2 * i, 2 * j, I);
                 }
                 //n,m
-                if (n_id == pointI.id && m_id == pointJ.id) {
+                if (n_id == dbPoint.get(i).id && m_id == dbPoint.get(j).id) {
                     out.addSubMatrix(2 * i, 2 * j, I);
                 }
                 //n,n
-                if (n_id == pointI.id && n_id == pointJ.id) {
+                if (n_id == dbPoint.get(i).id && n_id == dbPoint.get(j).id) {
                     out.addSubMatrix(2 * i, 2 * j, mI);
                 }
             }

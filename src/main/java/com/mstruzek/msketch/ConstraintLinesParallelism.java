@@ -108,28 +108,24 @@ public class ConstraintLinesParallelism extends Constraint {
         int j = 0;
         if ((m == null) && (n == null)) {
             for (Integer i : dbPoint.keySet()) {
-
-                Point pointI = dbPoint.get(i);
-
                 //a tu wstawiamy macierz dla tego wiezu
-
-                if (k_id == pointI.id) {
+                if (k_id == dbPoint.get(i).id) {
                     Vector v1 = ((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id));
                     out.m[0][j * 2] += -v1.y;
                     out.m[0][j * 2 + 1] = v1.x;
                 }
-                if (l_id == pointI.id) {
+                if (l_id == dbPoint.get(i).id) {
                     Vector v1 = ((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id));
                     out.m[0][j * 2] += v1.y;
                     out.m[0][j * 2 + 1] = -v1.x;
                 }
                 //a tu wstawiamy macierz dla tego wiezu
-                if (m_id == pointI.id) {
+                if (m_id == dbPoint.get(i).id) {
                     Vector v1 = ((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id));
                     out.m[0][j * 2] += v1.y;
                     out.m[0][j * 2 + 1] = -v1.x;
                 }
-                if (n_id == pointI.id) {
+                if (n_id == dbPoint.get(i).id) {
                     Vector v1 = ((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id));
                     out.m[0][j * 2] += -v1.y;
                     out.m[0][j * 2 + 1] = v1.x;
@@ -139,15 +135,12 @@ public class ConstraintLinesParallelism extends Constraint {
         } else {
             Vector v1 = n.sub(m);
             for (Integer i : dbPoint.keySet()) {
-
-                Point pointI = dbPoint.get(i);
-
                 //a tu wstawiamy macierz dla tego wiezu
-                if (k_id == pointI.id) {
+                if (k_id == dbPoint.get(i).id) {
                     out.m[0][j * 2] += -v1.y;
                     out.m[0][j * 2 + 1] = v1.x;
                 }
-                if (l_id == pointI.id) {
+                if (l_id == dbPoint.get(i).id) {
                     out.m[0][j * 2] += v1.y;
                     out.m[0][j * 2 + 1] = -v1.x;
                 }
@@ -181,40 +174,38 @@ public class ConstraintLinesParallelism extends Constraint {
             int i = 0;
             for (Integer vI : dbPoint.keySet()) { //wiersz
                 int j = 0;
-                Point pointI = dbPoint.get(vI);
                 for (Integer vJ : dbPoint.keySet()) { //kolumna
-                    Point pointJ = dbPoint.get(vJ);
                     //wstawiamy I,-I w odpowiednie miejsca
                     //k,m
-                    if (k_id == pointI.id && m_id == pointJ.id) {
+                    if (k_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
                         mt.addSubMatrix(2 * i, 2 * j, R);
                     }
                     //k,n
-                    if (k_id == pointI.id && n_id == pointJ.id) {
+                    if (k_id == dbPoint.get(vI).id && n_id == dbPoint.get(vJ).id) {
                         mt.addSubMatrix(2 * i, 2 * j, mR);
                     }
                     //l,m
-                    if (l_id == pointI.id && m_id == pointJ.id) {
+                    if (l_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
                         mt.addSubMatrix(2 * i, 2 * j, mR);
                     }
                     //l,n
-                    if (l_id == pointI.id && n_id == pointJ.id) {
+                    if (l_id == dbPoint.get(vI).id && n_id == dbPoint.get(vJ).id) {
                         mt.addSubMatrix(2 * i, 2 * j, R);
                     }
                     //m,k
-                    if (m_id == pointI.id && k_id == pointJ.id) {
+                    if (m_id == dbPoint.get(vI).id && k_id == dbPoint.get(vJ).id) {
                         mt.addSubMatrix(2 * i, 2 * j, mR);
                     }
                     //m,l
-                    if (m_id == pointI.id && l_id == pointJ.id) {
+                    if (m_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
                         mt.addSubMatrix(2 * i, 2 * j, R);
                     }
                     //n,k
-                    if (n_id == pointI.id && k_id == pointJ.id) {
+                    if (n_id == dbPoint.get(vI).id && k_id == dbPoint.get(vJ).id) {
                         mt.addSubMatrix(2 * i, 2 * j, R);
                     }
                     //n,l
-                    if (n_id == pointI.id && l_id == pointJ.id) {
+                    if (n_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
                         mt.addSubMatrix(2 * i, 2 * j, mR);
                     }
                     j++;
