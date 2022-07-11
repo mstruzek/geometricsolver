@@ -38,12 +38,12 @@ public interface ControllerInterface {
     /**
      * Przelicz punkty kontrolne -wyzeruj sily
      */
-    void relaxForces();
+    void evaluateGuidePoints();
 
     /**
      * Wprowadza zaklocenia na punktach
      */
-    void fluctuatePoints(double coefficient);
+    void relaxControlPoints(double coefficient);
 
     /**
      * Dodaj wiez do modelu

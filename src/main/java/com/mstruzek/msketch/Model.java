@@ -4,6 +4,8 @@ import com.mstruzek.controller.Events;
 import com.mstruzek.msketch.solver.GeometricSolver;
 import com.mstruzek.msketch.solver.GeometricSolverImpl;
 
+import java.util.Random;
+
 import static com.mstruzek.controller.EventType.*;
 
 /**
@@ -22,7 +24,7 @@ public final class Model {
     }
 
     public static void solveSystem() {
-        if(geometricSolver == null){
+        if (geometricSolver == null) {
             geometricSolver = new GeometricSolverImpl();
         }
         geometricSolver.solveSystem();
@@ -68,7 +70,7 @@ public final class Model {
     public static void addConstraint(GeometricConstraintType constraintType, int K, int L, int M, int N, Double paramValue) {
         Point pK = null, pL = null, pM = null, pN = null;
         Parameter parameter = null;
-        if(K < 0) {
+        if (K < 0) {
             return;
         }
         pK = Point.dbPoint.get(K);
@@ -76,7 +78,7 @@ public final class Model {
         pM = Point.dbPoint.get(M);
         pN = Point.dbPoint.get(N);
 
-        if(paramValue != null && constraintType.isParametrized()) {
+        if (paramValue != null && constraintType.isParametrized()) {
             parameter = new Parameter(paramValue);
         }
 
@@ -128,20 +130,34 @@ public final class Model {
         /// self registration Constraint.dbConstraint
         Events.send(CONSTRAINT_TABLE_INSERT, new Object[]{});
     }
+
     public static void add(Parameter parameter) {
         /// self registration Parameter.dbParameter
         Events.send(PARAMETER_TABLE_INSERT, new Object[]{});
     }
 
 
-    public static void relaxForces() {
-        for(Integer g : GeometricPrimitive.dbPrimitives.keySet()) {
+    public static void evaluateGuidePoints() {
+        for (Integer g : GeometricPrimitive.dbPrimitives.keySet()) {
             GeometricPrimitive.dbPrimitives.get(g).recalculateControlPoints();
         }
     }
 
-    public static void fluctuatePoints(double coefficient) {
-        //FIXME dv =  [ Random Versor * coefficient] - wektor przesuniecia na kazdy prymitiw.
+    public static void relaxControlPoints(double scale) {
+        for (GeometricPrimitive geometricPrimitive : GeometricPrimitive.dbPrimitives.values()) {
+            relaxPoint(geometricPrimitive.getP1(), scale);
+            relaxPoint(geometricPrimitive.getP1(), scale);
+            relaxPoint(geometricPrimitive.getP1(), scale);
+        }
+    }
 
+    private static Random random = new Random();
+
+    private static void relaxPoint(int pID, double scale) {
+        if (pID == -1) return;
+        Point point = Point.dbPoint.get(pID);
+        double untenseX = point.getX() + scale * (random.nextDouble() - 0.5) * point.getX();
+        double untenseY = point.getY() + scale * (random.nextDouble() - 0.5) * point.getY();
+        point.setLocation(untenseX, untenseY);
     }
 }

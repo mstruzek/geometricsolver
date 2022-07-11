@@ -32,6 +32,9 @@ public class FrameView extends JFrame {
     public static final int L_HEIGHT = 1400;
     public static final int R_WIDTH = 1420;
 
+    public static final int CONSOLE_WIDTH = 920;
+    public static final int CONSOLE_OUTPUT_HEIGHT = 420;
+
     private Container pane = getContentPane();
 
     /**
@@ -51,7 +54,7 @@ public class FrameView extends JFrame {
     /**
      * wypisujemy tutaj wszystko co idzie na System.out.println();
      */
-    final JTextArea sytemOutPrintln = new JTextArea(25, 85);
+    final JTextArea consoleOutput = new JTextArea();
     /**
      * glowny controller
      */
@@ -107,8 +110,8 @@ public class FrameView extends JFrame {
         left.setPreferredSize(new Dimension(L_WIDTH, L_HEIGHT));
         right.setPreferredSize(new Dimension(R_WIDTH, R_HEIGHT));
 
-        left.setBorder(BorderFactory.createLineBorder(Color.CYAN));
-        right.setBorder(BorderFactory.createLineBorder(Color.CYAN));
+        ///  left.setBorder(BorderFactory.createLineBorder(Color.CYAN));
+        /// right.setBorder(BorderFactory.createLineBorder(Color.CYAN));
 
         main.add(left);
         main.add(right);
@@ -166,7 +169,7 @@ public class FrameView extends JFrame {
                 JComboBox cb = (JComboBox) e.getSource();
                 GeometricConstraintType what = (GeometricConstraintType) cb.getSelectedItem();
                 consDescr.setText(Objects.requireNonNull(what).getHelp());
-                if(consDescr.getParent() != null) {
+                if (consDescr.getParent() != null) {
                     consDescr.getParent().repaint();
                 }
             }
@@ -181,7 +184,7 @@ public class FrameView extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 GeometricConstraintType constraintType = (GeometricConstraintType) combo.getSelectedItem();
 
-                if(constraintType == null) {
+                if (constraintType == null) {
                     throw new Error("constraint type invalid !");
                 }
                 FrameView.this.controller.addConstraint(constraintType,
@@ -207,8 +210,12 @@ public class FrameView extends JFrame {
         myTables.setFocusable(false);
 
         right.add(myTables);
-        right.add(new JScrollPane(sytemOutPrintln));
-        redirectSystemStreams();
+
+        JScrollPane consoleScrollPane = new JScrollPane(consoleOutput);
+        consoleScrollPane.setPreferredSize(new Dimension(CONSOLE_WIDTH, CONSOLE_OUTPUT_HEIGHT));
+        redirectStdErrOut();
+
+        right.add(consoleScrollPane);
 
         // ToolBar
         JToolBar jToolBar = new JToolBar();
@@ -221,8 +228,8 @@ public class FrameView extends JFrame {
         JButton dpoint = new JButton("Draw Point");
         JButton drefresh = new JButton("REFRESH");
         JButton dsolve = new JButton("SOLVE");
-        JButton drelax = new JButton("RELAX");
-        JButton dfluctuate = new JButton("FLUCTUATE");
+        JButton dreposition = new JButton("Repos");
+        JButton drelaxe = new JButton("Relax");
         JButton dcontrol = new JButton("CTRL");
         dsolve.setBackground(Color.GREEN);
         dcontrol.setBackground(Color.CYAN);
@@ -233,7 +240,7 @@ public class FrameView extends JFrame {
                 JFileChooser jFileChooser = new JFileChooser();
                 jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", "gcm"));
                 int response = jFileChooser.showSaveDialog(null);
-                if(response == JFileChooser.APPROVE_OPTION) {
+                if (response == JFileChooser.APPROVE_OPTION) {
                     controller.readModelFrom(jFileChooser.getSelectedFile());
                 }
             }
@@ -245,7 +252,7 @@ public class FrameView extends JFrame {
                 JFileChooser jFileChooser = new JFileChooser();
                 jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", "gcm"));
                 int response = jFileChooser.showSaveDialog(null);
-                if(response == JFileChooser.APPROVE_OPTION) {
+                if (response == JFileChooser.APPROVE_OPTION) {
                     controller.writeModelInto(jFileChooser.getSelectedFile());
                 }
             }
@@ -285,23 +292,23 @@ public class FrameView extends JFrame {
             }
         });
 
-        drelax.addActionListener(new ActionListener() {
+        dreposition.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                controller.relaxForces();
+                controller.evaluateGuidePoints();
                 ms.refreshContainers();
                 ms.repaint();
             }
         });
 
-        dfluctuate.addActionListener(new ActionListener() {
+        drelaxe.addActionListener(new ActionListener() {
 
             private final Random random = new Random();
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                double coefficient = random.nextDouble() * 20;
-                controller.fluctuatePoints(coefficient);
+                double scale = random.nextDouble() / 7;
+                controller.relaxControlPoints(scale);
                 ms.refreshContainers();
                 ms.repaint();
             }
@@ -330,8 +337,8 @@ public class FrameView extends JFrame {
         dpoint.setFocusable(false);
         drefresh.setFocusable(false);
         dsolve.setFocusable(false);
-        drelax.setFocusable(false);
-        dfluctuate.setFocusable(false);
+        dreposition.setFocusable(false);
+        drelaxe.setFocusable(false);
         dcontrol.setFocusable(false);
 
         jToolBar.add(dload);
@@ -346,9 +353,9 @@ public class FrameView extends JFrame {
         jToolBar.add(drefresh);
         jToolBar.addSeparator(new Dimension(20, 1));
         jToolBar.add(dsolve);
-        jToolBar.add(drelax);
         jToolBar.addSeparator(new Dimension(20, 1));
-        jToolBar.add(dfluctuate);
+        jToolBar.add(dreposition);
+        jToolBar.add(drelaxe);
         jToolBar.add(dcontrol);
 
         // GLOWNY ROZKLAD TOOLBAR I OKNO
@@ -365,12 +372,12 @@ public class FrameView extends JFrame {
     private void updateTextArea(final String text) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                sytemOutPrintln.append(text);
+                consoleOutput.append(text);
             }
         });
     }
 
-    private void redirectSystemStreams() {
+    private void redirectStdErrOut() {
         System.setOut(new PrintStream(new OutputStreamDelegate(System.out), true));
         System.setErr(new PrintStream(new OutputStreamDelegate(System.err), true));
     }

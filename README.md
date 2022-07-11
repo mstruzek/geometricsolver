@@ -127,11 +127,7 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 - Date : 2022
 
 - [ Relexed ] - przerobic Relaxed na random position for points - fluctuate - random shifts 
- 
-- [ Guides ] - show guidelines and  points  - gdzies zgubilsmy ta wersje z drukowaiem.
-
-
- 
+  
 - [ GPU ]  - sprawdzic model , zaciagnac bindowanie memory 
 
 - [ Selector ] Solver Selector - Local Host , GPU Blas H ( handmade ), GPU CGM , 
@@ -142,55 +138,35 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 
 - [ :Relaxed  ] - nazewnictwo :Put - odkladamy  - :Relaxed - random q shifts   
 
-- [ auto KLMN  ]   - set K, L tuple when double clicked on K , or set auto K if db-clicked on L
 
 
-- 
 - @@@ [!!!!! Error ] - Hessian Evaluation   -  iterable on keySet()  !!!! --   remove/add Primitives ( => Points ) - all constraints 3 wiezy !!!
+
 - @@@ ConstraintTangency, ConstraintLinesParallelism, ConstraintLinesPerpendicular , 
 
 - @@@ [ Save ]   - przycisk :save model -> Writer : FORMAT PLIKU [ WSZYSTKIE OBIEKTY , NUMERY PUNKTOW , WIEZY , PARAMATRY]
+ 
 - @@@ [ Load ]  -  przycisk :load model Reader
 
--- UNIFIED MATRIX INTERFACE
+- @@@ [ Guides ] - show guidelines and  points  - gdzies zgubilsmy ta wersje z drukowaiem.
+
+- @@@ [ auto KLMN  ]   - set K, L tuple when double clicked on K , or set auto K if db-clicked on L
 
 
 
-/**
-* [ Problem Pętli !]
-* <p>
-* Single Bock
-* {
-* set(A)[x]
-* set(b)[x]
-* ToDevice =>>[ A, b] ,
-* solve(A,b,x)
-* ToCPU => [x]
-* }
-* <p>
-* <p>
-* TO PRZENISMY MODEL NA Device
-* <p>
-* {
-* po edycji wiezow i Primitive Type =>> sync model on stream onto Device
-* __shared__ ( POINTS )
-* <p>
-* L2, L1 => transportowac wiezy na rzyczenie
-* L2, L1 => budować macierz
-* <p>
-* <p>
-* Trzecia OPCJA
-* __shared__ ( POINTS )
-* L2, L1 - bezposrednio na pamiec DRAM
-* SpringForceInternal =>>> 1 thread   <=>  One Primitive stiffness BLOCK     - DIAGONAL
-* Hessian =>>> 1 thread               <=>  One Constraint => L1(,L2(,DRAM))
-* vector b -  w szyku
-* ForceValue - single - kernel  ( or device function)
-* lambda * FI = Sily od Wiezow - ( threadXDim -  just proportional to dimensions )
-* <p>
-* Czwarta OPCJA
-* -- model pod JNI    ==> c++
-* -- JNI odpytywac pozycje, update pozycji, ...
-* --
-* }
-  */
+
+## UNIFIED MATRIX INTERFACE
+/*
+* [  KERNEL Matrix Evaluations ] on-submit unit-of-work ->> model jest  zarzadzany  z  JNISolverGate 
+* 
+* ( Points >> , Primitives >> , Constraints >> )! .
+* 
+* Gridem ( szykiem Kerneli ) -> uzupelanimy macierze A, b, x
+* 
+* 1 - kernel - single primitive (8,8)
+* 
+* 1 - kernel - single jacobian tuple (1,2) , (2,2)
+* 
+* 1 - kernel - single Hessian ( J,K ) GRID(32,32) == 1024  ~ iterate all constraints
+* 
+*/

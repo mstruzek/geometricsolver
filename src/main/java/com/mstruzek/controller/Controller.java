@@ -128,13 +128,13 @@ public class Controller implements ControllerInterface {
     }
 
     @Override
-    public void relaxForces() {
-        Model.relaxForces();
+    public void evaluateGuidePoints() {
+        Model.evaluateGuidePoints();
     }
 
     @Override
-    public void fluctuatePoints(double coefficient) {
-        Model.fluctuatePoints(coefficient);
+    public void relaxControlPoints(double coefficient) {
+        Model.relaxControlPoints(coefficient);
     }
 
     public static void main(String[] args) {
