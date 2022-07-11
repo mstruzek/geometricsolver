@@ -152,13 +152,13 @@ public class Arc extends GeometricPrimitive {
         Vector fp2c = c.sub(p2).unit().dot(Consts.springStiffnessLow).dot(c.sub(p2).length() - d_p2_c);
         Vector fp3d = d.sub(p3).unit().dot(Consts.springStiffnessLow).dot(d.sub(p3).length() - d_p3_d);
 
-        mt.setSubVector(r + 0, 0, fap1);
-        mt.setSubVector(r + 2, 0, fbp1);
-        mt.setSubVector(r + 4, 0, fp2c.dot(-1));
-        mt.setSubVector(r + 6, 0, fp3d.dot(-1));
-        mt.setSubVector(r + 8, 0, fp1p2.add(fp1p3).sub(fap1).sub(fbp1));
-        mt.setSubVector(r + 10, 0, fp2c.sub(fp1p2));
-        mt.setSubVector(r + 12, 0, fp3d.sub(fp1p3));
+        mt.setVector(r + 0, 0, fap1);
+        mt.setVector(r + 2, 0, fbp1);
+        mt.setVector(r + 4, 0, fp2c.dot(-1));
+        mt.setVector(r + 6, 0, fp3d.dot(-1));
+        mt.setVector(r + 8, 0, fp1p2.add(fp1p3).sub(fap1).sub(fbp1));
+        mt.setVector(r + 10, 0, fp2c.sub(fp1p2));
+        mt.setVector(r + 12, 0, fp3d.sub(fp1p3));
     }
 
 

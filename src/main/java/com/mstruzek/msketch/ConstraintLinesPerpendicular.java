@@ -78,56 +78,37 @@ public class ConstraintLinesPerpendicular extends Constraint {
 
     @Override
     public MatrixDouble getJacobian() {
-        //macierz 2 wierszowa
-        MatrixDouble out = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
-        //zerujemy cala macierz + wstawiamy na odpowiednie miejsce Jacobian wiezu
+        /// macierz 1xN
+        MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
         int j = 0;
         if ((m == null) && (n == null)) {
             for (Integer i : dbPoint.keySet()) {
-                //a tu wstawiamy macierz dla tego wiezu
-
                 if (k_id == dbPoint.get(i).id) {
-                    Vector v1 = ((Vector) dbPoint.get(m_id).Vector()).sub((Vector) dbPoint.get(n_id));
-                    out.m[0][j * 2] = v1.x;
-                    out.m[0][j * 2 + 1] = v1.y;
+                    mt.setVectorR(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
                 }
                 if (l_id == dbPoint.get(i).id) {
-                    Vector v1 = ((Vector) dbPoint.get(m_id)).sub((Vector) dbPoint.get(n_id));
-                    out.m[0][j * 2] = -v1.x;
-                    out.m[0][j * 2 + 1] = -v1.y;
+                    mt.setVectorR(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
                 }
-                //a tu wstawiamy macierz dla tego wiezu
                 if (m_id == dbPoint.get(i).id) {
-                    Vector v1 = ((Vector) dbPoint.get(k_id)).sub((Vector) dbPoint.get(l_id));
-                    out.m[0][j * 2] = v1.x;
-                    out.m[0][j * 2 + 1] = v1.y;
+                    mt.setVectorR(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
                 }
                 if (n_id == dbPoint.get(i).id) {
-                    Vector v1 = ((Vector) dbPoint.get(k_id)).sub((Vector) dbPoint.get(l_id));
-                    out.m[0][j * 2] = -v1.x;
-                    out.m[0][j * 2 + 1] = -v1.y;
+                    mt.setVectorR(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
                 }
                 j++;
             }
         } else {
             for (Integer i : dbPoint.keySet()) {
-                //a tu wstawiamy macierz dla tego wiezu
                 if (k_id == dbPoint.get(i).id) {
-                    Vector v1 = m.sub(n);
-                    out.m[0][j * 2] = v1.x;
-                    out.m[0][j * 2 + 1] = v1.y;
+                    mt.setVectorR(0, j * 2, m.sub(n));
                 }
                 if (l_id == dbPoint.get(i).id) {
-                    Vector v1 = m.sub(n);
-                    out.m[0][j * 2] = -v1.x;
-                    out.m[0][j * 2 + 1] = -v1.y;
+                    mt.setVectorR(0, j * 2, m.sub(n).dot(-1.0));
                 }
-                //reszta dla m,n =0
                 j++;
             }
         }
-
-        return out;
+        return mt;
     }
 
     @Override
@@ -143,28 +124,22 @@ public class ConstraintLinesPerpendicular extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        Vector out = new Vector(dbPoint.get(k_id));
-        out = out.sub((Vector) dbPoint.get(l_id));
-        //out =out.unit();
-
         MatrixDouble mt = new MatrixDouble(1, 1);
-
         if ((m == null) && (n == null)) {
-            mt.m[0][0] = out.dot(((Vector) dbPoint.get(m_id)).sub((Vector) dbPoint.get(n_id)));
+            mt.set(0, 0, (dbPoint.get(k_id).sub(dbPoint.get(l_id))).dot(dbPoint.get(m_id).sub(dbPoint.get(n_id))));
         } else {
-            mt.m[0][0] = out.dot(m.sub(n));
+            mt.set(0, 0, (dbPoint.get(k_id).sub(dbPoint.get(l_id))).dot(m.sub(n)));
         }
         return mt;
     }
 
     @Override
     public MatrixDouble getHessian(double alfa) {
-
-        //macierz NxN
+        /// macierz NxN
         MatrixDouble mt = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-
-
         if ((m == null) && (n == null)) {
+            MatrixDouble I = MatrixDouble.identity(2).dot(alfa);
+            MatrixDouble Im = MatrixDouble.identity(2).dot(alfa);
             //same punkty
             int i = 0;
             for (Integer vI : dbPoint.keySet()) { //wiersz
@@ -173,53 +148,44 @@ public class ConstraintLinesPerpendicular extends Constraint {
                     //wstawiamy I,-I w odpowiednie miejsca
                     //k,m
                     if (k_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
-                        mt.m[2 * i][2 * j] = 1.0;
-                        mt.m[2 * i + 1][2 * j + 1] = 1.0;
+                        mt.setSubMatrix(2 * i, 2 * j, I);
                     }
                     //k,n
                     if (k_id == dbPoint.get(vI).id && n_id == dbPoint.get(vJ).id) {
-                        mt.m[2 * i][2 * j] = -1.0;
-                        mt.m[2 * i + 1][2 * j + 1] = -1.0;
+                        mt.setSubMatrix(2 * i, 2 * j, Im);
                     }
                     //l,m
                     if (l_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
-                        mt.m[2 * i][2 * j] = -1.0;
-                        mt.m[2 * i + 1][2 * j + 1] = -1.0;
+                        mt.setSubMatrix(2 * i, 2 * j, Im);
                     }
                     //l,n
                     if (l_id == dbPoint.get(vI).id && n_id == dbPoint.get(vJ).id) {
-                        mt.m[2 * i][2 * j] = 1.0;
-                        mt.m[2 * i + 1][2 * j + 1] = 1.0;
+                        mt.setSubMatrix(2 * i, 2 * j, I);
                     }
                     //m,k
                     if (m_id == dbPoint.get(vI).id && k_id == dbPoint.get(vJ).id) {
-                        mt.m[2 * i][2 * j] = 1.0;
-                        mt.m[2 * i + 1][2 * j + 1] = 1.0;
+                        mt.setSubMatrix(2 * i, 2 * j, I);
                     }
                     //m,l
                     if (m_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
-                        mt.m[2 * i][2 * j] = -1.0;
-                        mt.m[2 * i + 1][2 * j + 1] = -1.0;
+                        mt.setSubMatrix(2 * i, 2 * j, Im);
                     }
                     //n,k
                     if (n_id == dbPoint.get(vI).id && k_id == dbPoint.get(vJ).id) {
-                        mt.m[2 * i][2 * j] = -1.0;
-                        mt.m[2 * i + 1][2 * j + 1] = -1.0;
+                        mt.setSubMatrix(2 * i, 2 * j, Im);
                     }
                     //n,l
                     if (n_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
-                        mt.m[2 * i][2 * j] = 1.0;
-                        mt.m[2 * i + 1][2 * j + 1] = 1.0;
+                        mt.setSubMatrix(2 * i, 2 * j, I);
                     }
                     j++;
                 }
                 i++;
             }
-
             return mt;
         } else {
-            //m,n - vectory
-            // HESSIAN ZERO
+            /// m,n - vectory
+            /// HESSIAN ZERO
             return null;
         }
     }
@@ -254,38 +220,15 @@ public class ConstraintLinesPerpendicular extends Constraint {
         return -1;
     }
 
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
-
-        Point pn1 = new Point(Point.nextId(), 0.0, 0.0);
-        Point pn2 = new Point(Point.nextId(), 10.0, 0.0);
-        Point pn3 = new Point(Point.nextId(), 0.0, 0.0);
-        Point pn4 = new Point(Point.nextId(), 1.0, 10.0);
-        //Vector pn3 = new Vector(1.0,1.0);
-        //Vector pn4 = new Vector(1.0,2.0);
-        ConstraintLinesPerpendicular cn = new ConstraintLinesPerpendicular(Constraint.nextId(), pn2, pn1, pn4, pn3);
-        System.out.println(Constraint.dbConstraint);
-        System.out.println(cn.getNorm());
-        System.out.println(cn.getValue());
-    }
-
     @Override
     public double getNorm() {
-
-        double val = getValue().m[0][0];
-
-        Vector out = new Vector(((Vector) dbPoint.get(k_id)).sub((Vector) dbPoint.get(l_id)));
-        val = val / out.length();
-
+        Vector vKL = dbPoint.get(k_id).sub(dbPoint.get(l_id));
+        MatrixDouble mt = getValue();
         if ((m == null) && (n == null)) {
-            val = val / ((Vector) dbPoint.get(m_id)).sub((Vector) dbPoint.get(n_id)).length();
+            return mt.get(0, 0) / vKL.length() / dbPoint.get(m_id).sub(dbPoint.get(n_id)).length();
         } else {
-            val = val / (m.sub(n)).length();
+            return mt.get(0, 0) / vKL.length() / (m.sub(n)).length();
         }
-
-        return val;
     }
 
 }

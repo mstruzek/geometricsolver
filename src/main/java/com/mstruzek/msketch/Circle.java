@@ -112,10 +112,10 @@ public class Circle extends GeometricPrimitive {
         Vector f23 = p2.sub(p1).unit().dot(Consts.springStiffnessHigh * springAlfa).dot(p2.sub(p1).length() - d_p1_p2);     //F23
         Vector f34 = b.sub(p2).unit().dot(Consts.springStiffnessLow).dot(b.sub(p2).length() - d_p2_b);                      //F34
         
-        force.setSubVector(0, 0, f12);                          //F1 - silu na poszczegolne punkty
-        force.setSubVector(2, 0, f23.sub(f12));                 //F2
-        force.setSubVector(4, 0, f34.sub(f23));                 //F3
-        force.setSubVector(6, 0, f34.dot(-1.0));                //F4
+        force.setVector(0, 0, f12);                          //F1 - silu na poszczegolne punkty
+        force.setVector(2, 0, f23.sub(f12));                 //F2
+        force.setVector(4, 0, f34.sub(f23));                 //F3
+        force.setVector(6, 0, f34.dot(-1.0));                //F4
     }
 
 

@@ -68,8 +68,7 @@ public class MatrixDouble {
     }
 
     /**
-     * Get element of matrix
-     *
+     * Get value at corresponding coordinates.
      * @param i - row
      * @param j - column
      * @return double value
@@ -77,7 +76,6 @@ public class MatrixDouble {
     public double get(int i, int j) {
         return this.m[i][j];
     }
-
 
     /**
      * Number of columns
@@ -194,6 +192,15 @@ public class MatrixDouble {
         return array;
     }
 
+    /**
+     * Set value at corresponding coordinates.
+     * @param r row column
+     * @param c
+     * @param value
+     */
+    public void set(int r, int c, double value) {
+        this.m[r][c] = value;
+    }
 
     /**
      * Funkcja wstawia macierz mt na dana pozycje w akutalnej macierzy
@@ -221,9 +228,26 @@ public class MatrixDouble {
         }
     }
 
-    public void setSubVector(int r, int c, Vector vector) {
+    /**
+     * Column oriented sub vector.
+     * @param r
+     * @param c
+     * @param vector
+     */
+    public void setVector(int r, int c, Vector vector) {
         this.m[r + 0 ][c] = vector.getX();
         this.m[r + 1 ][c] = vector.getY();
+    }
+
+    /**
+     * Row oriented sub vector.
+     * @param r
+     * @param c
+     * @param vector
+     */
+    public void setVectorR(int r, int c, Vector vector) {
+        this.m[r][c + 0 ] = vector.getX();
+        this.m[r][c + 1] = vector.getY();
     }
 
 
@@ -538,6 +562,5 @@ public class MatrixDouble {
         MatrixDouble mg = MatrixDouble.createFromArray(tab);
         System.out.println(mg.transpose());
     }
-
 
 }

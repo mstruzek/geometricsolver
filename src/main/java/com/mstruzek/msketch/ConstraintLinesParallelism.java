@@ -13,7 +13,6 @@ import static com.mstruzek.msketch.Point.dbPoint;
  */
 public class ConstraintLinesParallelism extends Constraint {
 
-
     /** Punkty kontrolne */
     /**
      * Point K-id
@@ -40,11 +39,6 @@ public class ConstraintLinesParallelism extends Constraint {
      */
     Vector n = null;
 
-    /**
-     * macierz rotacji o 90 stopni
-     */
-    static MatrixDouble R = MatrixDouble.getRotation2x2(90 + 180);
-    static MatrixDouble mR = MatrixDouble.getRotation2x2(90); //mR=-R
 
     /**
      * Konstruktor pomiedzy 4 punktami lub
@@ -61,7 +55,6 @@ public class ConstraintLinesParallelism extends Constraint {
      */
     public ConstraintLinesParallelism(int constId, Point K, Point L, Vector M, Vector N) {
         super(constId, GeometricConstraintType.LinesParallelism, true);
-
         k_id = K.id;
         l_id = L.id;
         if ((M instanceof Point) && (N instanceof Point)) {
@@ -74,82 +67,70 @@ public class ConstraintLinesParallelism extends Constraint {
     }
 
     public String toString() {
-        MatrixDouble out = getValue();
-        double norm = Matrix.constructWithCopy(out.getArray()).norm1();
+        MatrixDouble mt = getValue();
+        double norm = Matrix.constructWithCopy(mt.getArray()).norm1();
         if (m == null && n == null)
             return "Constraint-LinesParallelism" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ",N =" + dbPoint.get(n_id) + "} \n";
         else {
             return "Constraint-LinesParallelism" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,vecM =" + m + ",vecN =" + n + "} \n";
         }
-
     }
 
     @Override
     public MatrixDouble getValue() {
-        Vector out = new Vector(dbPoint.get(l_id));
-        out = out.sub((Vector) dbPoint.get(k_id));
-        //out =out.unit();
-
         MatrixDouble mt = new MatrixDouble(1, 1);
-
+        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         if ((m == null) && (n == null)) {
-            mt.m[0][0] = out.cross(((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id)));
+            mt.set(0, 0, LK.cross(dbPoint.get(n_id).sub(dbPoint.get(m_id))));
         } else {
-            mt.m[0][0] = out.cross(n.sub(m));
+            mt.set(0, 0, LK.cross(n.sub(m)));
         }
         return mt;
     }
 
     @Override
     public MatrixDouble getJacobian() {
-        //macierz 2 wierszowa
-        MatrixDouble out = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
-        //zerujemy cala macierz + wstawiamy na odpowiednie miejsce Jacobian wiezu
+        MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
         int j = 0;
         if ((m == null) && (n == null)) {
             for (Integer i : dbPoint.keySet()) {
-                //a tu wstawiamy macierz dla tego wiezu
                 if (k_id == dbPoint.get(i).id) {
-                    Vector v1 = ((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id));
-                    out.m[0][j * 2] += -v1.y;
-                    out.m[0][j * 2 + 1] = v1.x;
+                    Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+                    mt.set(0, j * 2, -NM.y);
+                    mt.set(0, j * 2 + 1, NM.x);
                 }
                 if (l_id == dbPoint.get(i).id) {
-                    Vector v1 = ((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id));
-                    out.m[0][j * 2] += v1.y;
-                    out.m[0][j * 2 + 1] = -v1.x;
+                    Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+                    mt.set(0, j * 2, NM.y);
+                    mt.set(0, j * 2 + 1, -NM.x);
                 }
-                //a tu wstawiamy macierz dla tego wiezu
                 if (m_id == dbPoint.get(i).id) {
-                    Vector v1 = ((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id));
-                    out.m[0][j * 2] += v1.y;
-                    out.m[0][j * 2 + 1] = -v1.x;
+                    Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+                    mt.set(0, j * 2, LK.y);
+                    mt.set(0, j * 2 + 1, -LK.x);
                 }
                 if (n_id == dbPoint.get(i).id) {
-                    Vector v1 = ((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id));
-                    out.m[0][j * 2] += -v1.y;
-                    out.m[0][j * 2 + 1] = v1.x;
+                    Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+                    mt.set(0, j * 2, -LK.y);
+                    mt.set(0, j * 2 + 1, LK.x);
                 }
                 j++;
             }
         } else {
-            Vector v1 = n.sub(m);
+            Vector NM = n.sub(m);
             for (Integer i : dbPoint.keySet()) {
-                //a tu wstawiamy macierz dla tego wiezu
                 if (k_id == dbPoint.get(i).id) {
-                    out.m[0][j * 2] += -v1.y;
-                    out.m[0][j * 2 + 1] = v1.x;
+                    mt.set(0, j * 2, -NM.y);
+                    mt.set(0, j * 2 + 1, NM.x);
                 }
                 if (l_id == dbPoint.get(i).id) {
-                    out.m[0][j * 2] += v1.y;
-                    out.m[0][j * 2 + 1] = -v1.x;
+                    mt.set(0, j * 2, NM.y);
+                    mt.set(0, j * 2 + 1, -NM.x);
                 }
-                //reszta dla m,n =0
                 j++;
             }
         }
-
-        return out;
+        return mt;
     }
 
     @Override
@@ -160,33 +141,30 @@ public class ConstraintLinesParallelism extends Constraint {
             //jezeli m,n vectory to constatnt i wtedy Hessian =0
             return true;
         }
-
     }
 
     @Override
     public MatrixDouble getHessian(double alfa) {
-
-        //macierz NxN
+        /// macierz NxN
         MatrixDouble mt = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-
+        final MatrixDouble R = MatrixDouble.getRotation2x2(90 + 180).dot(alfa);     /// R
+        final MatrixDouble Rm = MatrixDouble.getRotation2x2(90).dot(alfa);          /// Rm = -R
         if ((m == null) && (n == null)) {
-            //same punkty
             int i = 0;
-            for (Integer vI : dbPoint.keySet()) { //wiersz
+            for (Integer vI : dbPoint.keySet()) { /// wiersz
                 int j = 0;
-                for (Integer vJ : dbPoint.keySet()) { //kolumna
-                    //wstawiamy I,-I w odpowiednie miejsca
+                for (Integer vJ : dbPoint.keySet()) { /// kolumna
                     //k,m
                     if (k_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
                         mt.addSubMatrix(2 * i, 2 * j, R);
                     }
                     //k,n
                     if (k_id == dbPoint.get(vI).id && n_id == dbPoint.get(vJ).id) {
-                        mt.addSubMatrix(2 * i, 2 * j, mR);
+                        mt.addSubMatrix(2 * i, 2 * j, Rm);
                     }
                     //l,m
                     if (l_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
-                        mt.addSubMatrix(2 * i, 2 * j, mR);
+                        mt.addSubMatrix(2 * i, 2 * j, Rm);
                     }
                     //l,n
                     if (l_id == dbPoint.get(vI).id && n_id == dbPoint.get(vJ).id) {
@@ -194,7 +172,7 @@ public class ConstraintLinesParallelism extends Constraint {
                     }
                     //m,k
                     if (m_id == dbPoint.get(vI).id && k_id == dbPoint.get(vJ).id) {
-                        mt.addSubMatrix(2 * i, 2 * j, mR);
+                        mt.addSubMatrix(2 * i, 2 * j, Rm);
                     }
                     //m,l
                     if (m_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
@@ -206,7 +184,7 @@ public class ConstraintLinesParallelism extends Constraint {
                     }
                     //n,l
                     if (n_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
-                        mt.addSubMatrix(2 * i, 2 * j, mR);
+                        mt.addSubMatrix(2 * i, 2 * j, Rm);
                     }
                     j++;
                 }
@@ -250,38 +228,15 @@ public class ConstraintLinesParallelism extends Constraint {
         return -1;
     }
 
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
-
-        Point pn1 = new Point(Point.nextId(), 0.0, 0.0);
-        Point pn2 = new Point(Point.nextId(), 10.0, 0.0);
-        Point pn3 = new Point(Point.nextId(), 1., 1.0);
-        Point pn4 = new Point(Point.nextId(), 10.0, 1.1);
-
-        ConstraintLinesParallelism cn = new ConstraintLinesParallelism(Constraint.nextId(), pn1, pn2, pn3, pn4);
-        System.out.println(Constraint.dbConstraint);
-        System.out.println(cn.getJacobian());
-        System.out.println(cn.getValue());
-        System.out.println(cn.getNorm());
-
-    }
 
     @Override
     public double getNorm() {
-
-        double val = getValue().m[0][0];
-
-        Vector out = new Vector(((Vector) dbPoint.get(k_id)).sub((Vector) dbPoint.get(l_id)));
-        val = val / out.length();
-
+        Vector LK = dbPoint.get(k_id).sub(dbPoint.get(l_id));
+        MatrixDouble mt = getValue();
         if ((m == null) && (n == null)) {
-            val = val / ((Vector) dbPoint.get(m_id)).sub((Vector) dbPoint.get(n_id)).length();
+            return mt.get(0,0) / LK.length() / dbPoint.get(m_id).sub(dbPoint.get(n_id)).length();
         } else {
-            val = val / (m.sub(n)).length();
+            return mt.get(0,0) / LK.length() / (m.sub(n)).length();
         }
-
-        return val;
     }
 }

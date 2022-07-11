@@ -52,60 +52,53 @@ public class ConstraintTangency extends Constraint {
     }
 
     public String toString() {
-        MatrixDouble out = getValue();
-        double norm = Matrix.constructWithCopy(out.getArray()).norm1();
+        MatrixDouble mt = getValue();
+        double norm = Matrix.constructWithCopy(mt.getArray()).norm1();
         return "Constraint-Tangency" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ",N =" + dbPoint.get(n_id) + "} \n";
     }
 
     @Override
     public MatrixDouble getValue() {
-
-        Vector vMK = ((Vector) dbPoint.get(m_id)).sub((Vector) dbPoint.get(k_id));
-        Vector vLK = ((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id));
-        Vector vNM = ((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id));
-
+        Vector vMK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
+        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         MatrixDouble mt = new MatrixDouble(1, 1);
-
-        mt.m[0][0] = Math.sqrt(vLK.cross(vMK) * vLK.cross(vMK)) - vLK.length() * vNM.length();
-
+        mt.set(0, 0, Math.sqrt(vLK.cross(vMK) * vLK.cross(vMK)) - vLK.length() * vNM.length());
         return mt;
     }
 
     @Override
     public MatrixDouble getJacobian() {
-        //macierz 2 wierszowa
-        MatrixDouble out = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
-        //zerujemy cala macierz + wstawiamy na odpowiednie miejsce Jacobian wiezu
-        int j = 0;
-        Vector vMK = ((Vector) dbPoint.get(m_id)).sub((Vector) dbPoint.get(k_id));
-        Vector vLK = ((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id));
-        Vector vLM = ((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(m_id));
-        Vector vNM = ((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id));
+        MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
+        Vector vMK = (dbPoint.get(m_id)).sub(dbPoint.get(k_id));
+        Vector vLK = (dbPoint.get(l_id)).sub(dbPoint.get(k_id));
+        Vector vLM = (dbPoint.get(l_id)).sub(dbPoint.get(m_id));
+        Vector vNM = (dbPoint.get(n_id)).sub(dbPoint.get(m_id));
         double g = vLK.cross(vMK);
         double zn = Math.signum(g);
-
-        for (Integer i : dbPoint.keySet()) { /// FIXME ??? outside
+        int j = 0;
+        for (Integer i : dbPoint.keySet()) {
             //a tu wstawiamy macierz dla tego wiezu
             if (k_id == dbPoint.get(i).id) {
-                out.m[0][j * 2] = zn * vLM.y + vNM.length() * vLK.unit().x;
-                out.m[0][j * 2 + 1] = -zn * vLM.x + vNM.length() * vLK.unit().y;
+                mt.set(0, j * 2     ,  zn * vLM.y + vNM.length() * vLK.unit().x);
+                mt.set(0, j * 2 + 1 , -zn * vLM.x + vNM.length() * vLK.unit().y);
             }
             if (l_id == dbPoint.get(i).id) {
-                out.m[0][j * 2] = zn * vMK.y - vNM.length() * vLK.unit().x;
-                out.m[0][j * 2 + 1] = -zn * vMK.x - vNM.length() * vLK.unit().y;
+                mt.set(0, j * 2     ,  zn * vMK.y - vNM.length() * vLK.unit().x);
+                mt.set(0, j * 2 + 1 , -zn * vMK.x - vNM.length() * vLK.unit().y);
             }
             //a tu wstawiamy macierz dla tego wiezu
             if (m_id == dbPoint.get(i).id) {
-                out.m[0][j * 2] = -zn * vLK.y + vLK.length() * vNM.unit().x;
-                out.m[0][j * 2 + 1] = zn * vLK.x + vLK.length() * vNM.unit().y;
+                mt.set(0, j * 2     , -zn * vLK.y + vLK.length() * vNM.unit().x);
+                mt.set(0, j * 2 + 1 ,  zn * vLK.x + vLK.length() * vNM.unit().y);
             }
             if (n_id == dbPoint.get(i).id) {
-                out.m[0][j * 2] = -vLK.length() * vNM.unit().x;
-                out.m[0][j * 2 + 1] = -vLK.length() * vNM.unit().y;
+                mt.set(0, j * 2     , -vLK.length() * vNM.unit().x);
+                mt.set(0, j * 2 + 1 , -vLK.length() * vNM.unit().y);
             }
             j++;
         }
-        return out;
+        return mt;
     }
 
     @Override
@@ -115,19 +108,15 @@ public class ConstraintTangency extends Constraint {
 
     @Override
     public MatrixDouble getHessian(double alfa) {
-
         //macierz NxN
-        MatrixDouble out = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-
-        Vector vMK = ((Vector) dbPoint.get(m_id)).sub((Vector) dbPoint.get(k_id));
-        Vector vLK = ((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id));
-        Vector vLM = ((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(m_id));
-        Vector vNM = ((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id));
-
+        MatrixDouble mt = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
+        Vector vMK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
+        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector vLM = dbPoint.get(l_id).sub(dbPoint.get(m_id));
+        Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         double g = vLK.cross(vMK);
-        double zn = Math.signum(g); //znak
+        double zn = Math.signum(g);
         double k = vNM.unit().dot(vLK.unit());
-
         int i = 0;
         //same punkty
         for (Integer vI : dbPoint.keySet()) { //wiersz         /// FIXME -- outer loop
@@ -139,19 +128,19 @@ public class ConstraintTangency extends Constraint {
                 }
                 //k,l
                 if (k_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
-                    out.setSubMatrix(2 * i, 2 * j, R.dotC(zn));
+                    mt.setSubMatrix(2 * i, 2 * j, R.dotC(zn).dot(alfa));
                 }
                 //k,m
                 if (k_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
-                    out.setSubMatrix(2 * i, 2 * j, mR.dotC(zn).addC(MatrixDouble.diagonal(2, -k)));
+                    mt.setSubMatrix(2 * i, 2 * j, mR.dotC(zn).add(MatrixDouble.diagonal(2, -k)).dot(alfa));
                 }
                 //k,n
                 if (k_id == dbPoint.get(vI).id && n_id == dbPoint.get(vJ).id) {
-                    out.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, k));
+                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, k).dot(alfa));
                 }
                 //l,k
                 if (l_id == dbPoint.get(vI).id && k_id == dbPoint.get(vJ).id) {
-                    out.setSubMatrix(2 * i, 2 * j, mR.dotC(zn));
+                    mt.setSubMatrix(2 * i, 2 * j, mR.dotC(zn).dot(alfa));
                 }
                 //l,l
                 if (l_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
@@ -159,19 +148,19 @@ public class ConstraintTangency extends Constraint {
                 }
                 //l,m
                 if (l_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
-                    out.setSubMatrix(2 * i, 2 * j, R.dotC(zn).addC(MatrixDouble.diagonal(2, k)));
+                    mt.setSubMatrix(2 * i, 2 * j, R.dotC(zn).add(MatrixDouble.diagonal(2, k)).dot(alfa));
                 }
                 //l,n
                 if (l_id == dbPoint.get(vI).id && n_id == dbPoint.get(vJ).id) {
-                    out.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, -k));
+                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, -k).dot(alfa));
                 }
                 //m,k
                 if (m_id == dbPoint.get(vI).id && k_id == dbPoint.get(vJ).id) {
-                    out.setSubMatrix(2 * i, 2 * j, R.dotC(zn).addC(MatrixDouble.diagonal(2, -k)));
+                    mt.setSubMatrix(2 * i, 2 * j, R.dotC(zn).add(MatrixDouble.diagonal(2, -k)).dot(alfa));
                 }
                 //m,l
                 if (m_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
-                    out.setSubMatrix(2 * i, 2 * j, mR.dotC(zn).addC(MatrixDouble.diagonal(2, k)));
+                    mt.setSubMatrix(2 * i, 2 * j, mR.dotC(zn).add(MatrixDouble.diagonal(2, k)).dot(alfa));
                 }
                 //m,m
                 if (m_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
@@ -183,11 +172,11 @@ public class ConstraintTangency extends Constraint {
                 }
                 //n,k
                 if (n_id == dbPoint.get(vI).id && k_id == dbPoint.get(vJ).id) {
-                    out.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, k));
+                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, k).dot(alfa));
                 }
                 //n,l
                 if (n_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
-                    out.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, -k));
+                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, -k).dot(alfa));
                 }
                 //n,m
                 if (n_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
@@ -201,31 +190,12 @@ public class ConstraintTangency extends Constraint {
             }
             i++;
         }
-
-        return out;
+        return mt;
     }
 
     @Override
     public boolean isHessianConst() {
         return false;
-    }
-
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
-        Point pn1 = new Point(Point.nextId(), 0.0, 0.0);
-        Point pn2 = new Point(Point.nextId(), 10.0, 0.01);
-        Point pn3 = new Point(Point.nextId(), 0.01, 10.0);
-        Point pn4 = new Point(Point.nextId(), 10.0, 10.0);
-        //Vector pn3 = new Vector(1.0,1.0);
-        //Vector pn4 = new Vector(1.0,2.0);
-        //System.out.println(ConstraintTangency.R);
-        ConstraintTangency cn = new ConstraintTangency(Constraint.nextId(), pn1, pn2, pn3, pn4);
-        System.out.println(Constraint.dbConstraint);
-        System.out.println(cn.getJacobian());
-        System.out.println(cn.getValue());
-
     }
 
     @Override
@@ -255,6 +225,7 @@ public class ConstraintTangency extends Constraint {
 
     @Override
     public double getNorm() {
-        return 0;
+        MatrixDouble mt = getValue();
+        return mt.get(0,0);
     }
 }

@@ -59,40 +59,30 @@ public class ConstraintLinesSameLength extends Constraint {
         MatrixDouble out = getValue();
         double norm = Matrix.constructWithCopy(out.getArray()).norm1();
         return "Constraint-LinesSameLength" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ",N =" + dbPoint.get(n_id) + "} \n";
-
     }
 
     @Override
     public MatrixDouble getJacobian() {
-        //macierz 2 wierszowa
-        MatrixDouble out = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
-        //zerujemy cala macierz + wstawiamy na odpowiednie miejsce Jacobian wiezu
+        MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
+        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
+        Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
         int j = 0;
-        Vector vLK = ((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id)).unit();
-        Vector vNM = ((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id)).unit();
         for (Integer i : dbPoint.keySet()) {
-            //a tu wstawiamy macierz dla tego wiezu
             if (k_id == dbPoint.get(i).id) {
-                out.m[0][j * 2] = -vLK.x;
-                out.m[0][j * 2 + 1] = -vLK.y;
+                mt.setVectorR(0, j * 2 , vLK.dot(-1.0));
             }
             if (l_id == dbPoint.get(i).id) {
-                out.m[0][j * 2] = vLK.x;
-                out.m[0][j * 2 + 1] = vLK.y;
+                mt.setVectorR(0, j * 2 , vLK);
             }
-            //a tu wstawiamy macierz dla tego wiezu
             if (m_id == dbPoint.get(i).id) {
-                out.m[0][j * 2] = vNM.x;
-                out.m[0][j * 2 + 1] = vNM.y;
+                mt.setVectorR(0, j * 2 , vNM);
             }
             if (n_id == dbPoint.get(i).id) {
-                out.m[0][j * 2] = -vNM.x;
-                out.m[0][j * 2 + 1] = -vNM.y;
+                mt.setVectorR(0, j * 2 , vNM.dot(-1.0));
             }
             j++;
         }
-
-        return out;
+        return mt;
     }
 
     @Override
@@ -103,11 +93,10 @@ public class ConstraintLinesSameLength extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-
-        Double vLK = ((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id)).length();
-        Double vNM = ((Vector) dbPoint.get(n_id)).sub((Vector) dbPoint.get(m_id)).length();
         MatrixDouble mt = new MatrixDouble(1, 1);
-        mt.m[0][0] = vLK - vNM;
+        Double vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).length();
+        Double vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).length();
+        mt.set(0, 0 , vLK - vNM);
         return mt;
     }
 
@@ -146,18 +135,10 @@ public class ConstraintLinesSameLength extends Constraint {
         return -1;
     }
 
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
-
-
-    }
-
     @Override
     public double getNorm() {
-
-        return getValue().m[0][0];
+        MatrixDouble md = getValue();
+        return md.get(0, 0);
     }
 
 }

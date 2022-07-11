@@ -11,7 +11,7 @@ import static com.mstruzek.msketch.Point.dbPoint;
  *
  * @author root
  */
-public class ConstraintDistance2Points extends Constraint{
+public class ConstraintDistance2Points extends Constraint {
 
     /** Punkty kontrolne */
     /**
@@ -35,115 +35,88 @@ public class ConstraintDistance2Points extends Constraint{
      * @param K
      * @param L
      */
-    public ConstraintDistance2Points(int constId,Point K,Point L,Parameter param){
+    public ConstraintDistance2Points(int constId, Point K, Point L, Parameter param) {
         super(constId, GeometricConstraintType.Distance2Points, true);
-        k_id=K.id;
-        l_id=L.id;
-        param_id=param.getId();
+        k_id = K.id;
+        l_id = L.id;
+        param_id = param.getId();
     }
 
-    public String toString(){
-        MatrixDouble out=getValue();
-        double norm=Matrix.constructWithCopy(out.getArray()).norm1();
-        return "Constraint-Distance2Points"+constraintId+"*s"+size()+" = "+norm+" { K ="+ dbPoint.get(k_id)+"  ,L ="+ dbPoint.get(l_id)+" , Parametr-"+ dbParameter.get(param_id).getId()+" = "+ dbParameter.get(param_id).getValue()+" } \n";
+    public String toString() {
+        MatrixDouble mt = getValue();
+        double norm = Matrix.constructWithCopy(mt.getArray()).norm1();
+        return "Constraint-Distance2Points" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " , Parametr-" + dbParameter.get(param_id).getId() + " = " + dbParameter.get(param_id).getValue() + " } \n";
 
     }
 
     @Override
-    public MatrixDouble getJacobian(){
-        //macierz 2 wierszowa
-        MatrixDouble out=MatrixDouble.fill(1,dbPoint.size()*2,0.0);
-        //zerujemy cala macierz + wstawiamy na odpowiednie miejsce Jacobian wiezu
-        int j=0;
-        Vector vLK=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id)).unit();
-        for(Integer i: dbPoint.keySet()){
-            //a tu wstawiamy macierz dla tego wiezu
-            if(k_id== dbPoint.get(i).id){
-                out.m[0][j*2]=-vLK.x;
-                out.m[0][j*2+1]=-vLK.y;
+    public MatrixDouble getJacobian() {
+        /// macierz 1xN
+        MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
+        Vector vLK = dbPoint.get(l_id).Vector().sub(dbPoint.get(k_id)).unit();
+        int j = 0;
+        for (Integer i : dbPoint.keySet()) {
+            if (k_id == dbPoint.get(i).id) {
+                mt.setVectorR(0, j * 2, vLK.dot(-1.0));
             }
-            if(l_id== dbPoint.get(i).id){
-                out.m[0][j*2]=vLK.x;
-                out.m[0][j*2+1]=vLK.y;
+            if (l_id == dbPoint.get(i).id) {
+                mt.setVectorR(0, j * 2, vLK);
             }
             j++;
         }
-
-        return out;
-    }
-
-    @Override
-    public boolean isJacobianConstant(){
-        return true;
-
-    }
-
-    @Override
-    public MatrixDouble getValue(){
-
-        Double vLK=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id)).length();
-
-        MatrixDouble mt=new MatrixDouble(1,1);
-        mt.m[0][0]=vLK-dbParameter.get(param_id).getRadians();
         return mt;
     }
 
     @Override
-    public MatrixDouble getHessian(double alfa){
-        return null;
-    }
-
-    @Override
-    public boolean isHessianConst(){
+    public boolean isJacobianConstant() {
         return true;
     }
 
     @Override
-    public int getK(){
+    public MatrixDouble getValue() {
+        MatrixDouble mt = new MatrixDouble(1, 1);
+        mt.set(0, 0, dbPoint.get(l_id).sub(dbPoint.get(k_id)).length() - dbParameter.get(param_id).getRadians());
+        return mt;
+    }
+
+    @Override
+    public MatrixDouble getHessian(double alfa) {
+        return null;
+    }
+
+    @Override
+    public boolean isHessianConst() {
+        return true;
+    }
+
+    @Override
+    public int getK() {
         return k_id;
     }
 
     @Override
-    public int getL(){
+    public int getL() {
         return l_id;
     }
 
     @Override
-    public int getM(){
+    public int getM() {
         return -1;
     }
 
     @Override
-    public int getN(){
+    public int getN() {
         return -1;
     }
 
     @Override
-    public int getParametr(){
+    public int getParametr() {
         return param_id;
     }
 
-    /**
-     * @param args
-     */
-    public static void main(String[] args){
-
-        Point p1=new Point(Point.nextId(),0.0,0.1);
-        Point p2=new Point(Point.nextId(),1.0,0.2);
-        Parameter par=new Parameter(1.0);
-        ConstraintDistance2Points con=new ConstraintDistance2Points(Constraint.nextId(),p1,p2,new Parameter(0.8));
-        ConstraintDistance2Points con2=new ConstraintDistance2Points(Constraint.nextId(),p1,p2,par);
-        System.out.println(con);
-
-
-    }
-
     @Override
-    public double getNorm(){
-
-        Double vLK=((Vector) dbPoint.get(l_id)).sub((Vector) dbPoint.get(k_id)).length();
-
-        return (vLK-dbParameter.get(param_id).getRadians());
+    public double getNorm() {
+        MatrixDouble md = getValue();
+        return md.get(0, 0);
     }
-
 }

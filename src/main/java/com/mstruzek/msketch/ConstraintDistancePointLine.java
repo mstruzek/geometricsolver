@@ -32,17 +32,15 @@ public class ConstraintDistancePointLine extends Constraint {
         param_id =param.getId();
     }
 
-
     public String toString(){
-        MatrixDouble out = getValue();
-        double norm = Matrix.constructWithCopy(out.getArray()).norm1();
+        MatrixDouble mt = getValue();
+        double norm = Matrix.constructWithCopy(mt.getArray()).norm1();
         return "Constraint-DistancePointLine" + constraintId + "*s" + size() + " = " + norm  + " { K =" + Point.dbPoint.get(k_id) + "  ,L =" + Point.dbPoint.get(l_id) + " ,M =" + Point.dbPoint.get(m_id) + ", Parametr-" + Parameter.dbParameter.get(param_id).getId() + " = "+Parameter.dbParameter.get(param_id).getValue() + "} \n";
     }
 
-
     @Override
     public MatrixDouble getValue() {
-        return null;
+        return new MatrixDouble(1,1);
     }
 
     @Override

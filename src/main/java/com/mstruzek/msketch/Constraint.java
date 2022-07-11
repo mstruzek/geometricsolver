@@ -1,10 +1,10 @@
 package com.mstruzek.msketch;
 
-import java.util.Set;
-import java.util.TreeMap;
-
 import com.mstruzek.msketch.matrix.BindMatrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
+
+import java.util.Set;
+import java.util.TreeMap;
 
 import static com.mstruzek.msketch.Point.dbPoint;
 
@@ -25,13 +25,15 @@ public abstract class Constraint implements ConstraintInterface {
 
     protected GeometricConstraintType constraintType = null;
 
-    /** [ false ] - this constraint is normally not visible unless CTRL function applied into layout */
+    /**
+     * [ false ] - this constraint is normally not visible unless CTRL function applied into layout
+     */
     protected boolean storable;
 
     /**
      * tablica wszystkich linii
      */
-    public static TreeMap<Integer, Constraint> dbConstraint = new TreeMap<Integer, Constraint>();
+    public static TreeMap<Integer, Constraint> dbConstraint = new TreeMap<>();
 
 
     public Constraint(Integer constraintId, GeometricConstraintType constraintType, boolean storable) {
@@ -39,14 +41,14 @@ public abstract class Constraint implements ConstraintInterface {
         this.constraintId = constraintId;
         this.constraintType = constraintType;
         this.storable = storable;
-        dbConstraint.put(constraintId,this);
+        dbConstraint.put(constraintId, this);
     }
 
-    public static Integer nextId(){
+    public static Integer nextId() {
         return constraintCounter++;
     }
 
-    public static Integer nextId(Set<Integer> skipIdentifiers){
+    public static Integer nextId(Set<Integer> skipIdentifiers) {
         int nextId = constraintCounter++;
         while (skipIdentifiers.contains(nextId)) {
             nextId = constraintCounter++;
@@ -120,24 +122,24 @@ public abstract class Constraint implements ConstraintInterface {
      * @return
      */
     public static int allLagrangeCoffSize() {
-        int out = 0;
-        for (Integer i : dbConstraint.keySet()) {
-            out += dbConstraint.get(i).size();
+        int coffSize = 0;
+        for (Constraint constraint: dbConstraint.values()) {
+            coffSize += constraint.size();
         }
-        return out;
+        return coffSize;
     }
 
     /**
      * Funkcja zwraca Jakobian ze wszystkich wiezow
      *
-     * @return macierz ,jakobian wiezow d(Wiezy)/dq
      * @param mt
+     * @return macierz ,jakobian wiezow d(Wiezy)/dq
      */
     public static void getFullJacobian(MatrixDouble mt) {
         int rowPos = 0;
-        for (Integer i : dbConstraint.keySet()) {
-            mt.setSubMatrix(rowPos, 0, dbConstraint.get(i).getJacobian());
-            rowPos += dbConstraint.get(i).size();
+        for (Constraint constraint : dbConstraint.values()) {
+            mt.setSubMatrix(rowPos, 0, constraint.getJacobian());
+            rowPos += constraint.size();
         }
     }
 
@@ -145,14 +147,14 @@ public abstract class Constraint implements ConstraintInterface {
      * Funkcja zwraca prawe strony , czyli wartosci wszystkich wiezow
      * w wektorze kolumnowym
      *
-     * @return
      * @param mt
+     * @return
      */
     public static void getFullConstraintValues(MatrixDouble mt) {
         int currentRow = 0;
-        for (Integer i : dbConstraint.keySet()) {
-            mt.setSubMatrix(currentRow, 0, dbConstraint.get(i).getValue());
-            currentRow += dbConstraint.get(i).size();
+        for (Constraint constraint : dbConstraint.values()) {
+            mt.setSubMatrix(currentRow, 0, constraint.getValue());
+            currentRow += constraint.size();
         }
     }
 
@@ -163,12 +165,9 @@ public abstract class Constraint implements ConstraintInterface {
      */
     public static double getFullNorm() {
         double norm = 0;
-        double tmp = 0;
-        for (Integer i : dbConstraint.keySet()) {
-            tmp = dbConstraint.get(i).getNorm();
-            norm += tmp * tmp;
+        for (Constraint constraint : dbConstraint.values()) {
+            norm += constraint.getNorm() * constraint.getNorm();
         }
-
         return Math.sqrt(norm);
     }
 
@@ -176,8 +175,8 @@ public abstract class Constraint implements ConstraintInterface {
      * Funkcja zwraca macierz d(Jak'*a)/dq -czyli tak jakby calkowity hessian juz
      * przemnozony
      *
-     * @param hs - Full  HESSIAN
-     * @param dmx  - wektor x , z niego wyciagniemy mnozniki lagrange'a
+     * @param hs  - Full  HESSIAN
+     * @param dmx - wektor x , z niego wyciagniemy mnozniki lagrange'a
      * @return
      */
     public static MatrixDouble getFullHessian(MatrixDouble hs, BindMatrix dmx) {
@@ -185,23 +184,21 @@ public abstract class Constraint implements ConstraintInterface {
         int offset = 0; //licznik mnoznikow lagrange'a
         double alfa = 0.0;//wartosc aktualnego mnoznika
 
-        // Po wszystkich wiezach
-        for (Integer i : dbConstraint.keySet()) {
-            if (!(dbConstraint.get(i).isJacobianConstant())) {
-                //jest hessian
+        for (Constraint constraint : dbConstraint.values()) {
+            if (!(constraint.isJacobianConstant())) {
+                /// jest hessian
                 alfa = dmx.get(dbPoint.size() * 2 + offset, 0);
-
-                //
-                //  Hessian - dla tego wiezu liczony na cala macierz !
-                // -- ! add into mem in place AddVisitator
-                //
-                MatrixDouble Hs = dbConstraint.get(i).getHessian(alfa); /// FIXME -- alfa not implemented
+                ///
+                ///   Hessian - dla tego wiezu liczony na cala macierz !
+                ///  -- ! add into mem in place AddVisitator
+                ///
+                MatrixDouble Hs = constraint.getHessian(alfa);
                 if (Hs != null) {
                     hs.add((Hs));
                 }
             }
             //zwiekszamy aktualny mnoznik Lagrage'a
-            offset += dbConstraint.get(i).size();
+            offset += constraint.size();
         }
         return hs;
     }
@@ -215,7 +212,7 @@ public abstract class Constraint implements ConstraintInterface {
     }
 
     @Override
-    public boolean isStorable(){
+    public boolean isStorable() {
         return storable;
     }
 }

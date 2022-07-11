@@ -96,11 +96,11 @@ public class FreePoint extends GeometricPrimitive {
         Vector f23 = b.sub(p1).unit().dot(Consts.springStiffnessLow).dot(b.sub(p1).length() - d_p1_b);
 
         //F1 - sily na poszczegolne punkty
-        mt.setSubVector(r + 0, 0, f12);
+        mt.setVector(r + 0, 0, f12);
         //F2
-        mt.setSubVector(r + 2, 0, f23.sub(f12));
+        mt.setVector(r + 2, 0, f23.sub(f12));
         //F3
-        mt.setSubVector(r + 4, 0, f23.dot(-1));
+        mt.setVector(r + 4, 0, f23.dot(-1));
     }
 
 

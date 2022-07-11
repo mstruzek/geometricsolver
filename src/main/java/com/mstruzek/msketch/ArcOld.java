@@ -134,18 +134,18 @@ public class ArcOld extends GeometricPrimitive {
         Vector f23 = b.sub(p1).unit().dot(Consts.springStiffnessHigh * dS).dot(b.sub(p1).length() - d_p1_b);        //F23
 
         //FREEPOINT
-        mt.setSubVector(r + 0, 0, f12);             //F1 - silu na poszczegolne punkty
-        mt.setSubVector(r + 2, 0, f23.sub(f12));    //F2
-        mt.setSubVector(r + 4, 0, f23.dot(-1));     //F3
+        mt.setVector(r + 0, 0, f12);             //F1 - silu na poszczegolne punkty
+        mt.setVector(r + 2, 0, f23.sub(f12));    //F2
+        mt.setVector(r + 4, 0, f23.dot(-1));     //F3
 
         Vector fcp2 = p2.sub(c).unit().dot(Consts.springStiffnessLow).dot(p2.sub(c).length() - d_c_p2);         //LINE
         Vector fp2p3 = p3.sub(p2).unit().dot(Consts.springStiffnessHigh).dot(p3.sub(p2).length() - d_p2_p3);    //F23
         Vector fp3d = d.sub(p3).unit().dot(Consts.springStiffnessLow).dot(d.sub(p3).length() - d_p3_d);
 
-        mt.setSubVector(r + 6, 0, fcp2);
-        mt.setSubVector(r + 7, 0, fp2p3.sub(fcp2));
-        mt.setSubVector(r + 10, 0, fp3d.sub(fp2p3));
-        mt.setSubVector(r + 12, 0, fp3d.dot(-1));
+        mt.setVector(r + 6, 0, fcp2);
+        mt.setVector(r + 7, 0, fp2p3.sub(fcp2));
+        mt.setVector(r + 10, 0, fp3d.sub(fp2p3));
+        mt.setVector(r + 12, 0, fp3d.dot(-1));
     }
 
 

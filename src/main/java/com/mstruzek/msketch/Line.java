@@ -110,10 +110,10 @@ public class Line extends GeometricPrimitive {
         Vector f23 = p2.sub(p1).unit().dot(Consts.springStiffnessHigh).dot(p2.sub(p1).length() - d_p1_p2);      //F23
         Vector f34 = b.sub(p2).unit().dot(Consts.springStiffnessLow).dot(b.sub(p2).length() - d_p2_b);          //F34
 
-        mt.setSubVector(r + 0, 0, f12);                     //F1 - silu na poszczegolne punkty
-        mt.setSubVector(r + 2, 0, f23.sub(f12));            //F2
-        mt.setSubVector(r + 4, 0, f34.sub(f23));            //F3
-        mt.setSubVector(r + 6, 0, f34.dot(-1.0));           //F4
+        mt.setVector(r + 0, 0, f12);                     //F1 - silu na poszczegolne punkty
+        mt.setVector(r + 2, 0, f23.sub(f12));            //F2
+        mt.setVector(r + 4, 0, f34.sub(f23));            //F3
+        mt.setVector(r + 6, 0, f34.dot(-1.0));           //F4
     }
 
 

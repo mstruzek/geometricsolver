@@ -32,8 +32,8 @@ public class ConstraintConnect2Points extends Constraint {
     public ConstraintConnect2Points(int constId, Point K, Point L) {
         super(constId, GeometricConstraintType.Connect2Points, true);
         //pobierz id
-        k_id = ((Point) K).id;
-        l_id = ((Point) L).id;
+        k_id = K.id;
+        l_id = L.id;
     }
 
 
@@ -45,34 +45,18 @@ public class ConstraintConnect2Points extends Constraint {
 
     @Override
     public MatrixDouble getJacobian() {
-        //macierz 2 wierszowa
-        MatrixDouble out = MatrixDouble.fill(2, dbPoint.size() * 2, 0.0);
-        //zerujemy cala macierz + wstawiamy na odpowiednie miejsce Jacobian wiezu
+        MatrixDouble mt = MatrixDouble.fill(2, dbPoint.size() * 2, 0.0);
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
-            out.m[0][j * 2] = 0.0;
-            out.m[0][j * 2 + 1] = 0.0;
-            out.m[1][j * 2] = 0.0;
-            out.m[1][j * 2 + 1] = 0.0;
-
-            //a tu wstawiamy macierz dla tego wiezu
             if (k_id == dbPoint.get(i).id) {
-                //macierz jednostkowa = I
-                out.m[0][j * 2] = 1.0;
-                out.m[0][j * 2 + 1] = 0.0;
-                out.m[1][j * 2] = 0.0;
-                out.m[1][j * 2 + 1] = 1.0;
+                mt.setSubMatrix(0, j * 2, MatrixDouble.diagonal(2, 1.0));        //macierz jednostkowa = I
             }
             if (l_id == dbPoint.get(i).id) {
-                // = -I
-                out.m[0][j * 2] = -1.0;
-                out.m[0][j * 2 + 1] = 0.0;
-                out.m[1][j * 2] = 0.0;
-                out.m[1][j * 2 + 1] = -1.0;
+                mt.setSubMatrix(0, j * 2, MatrixDouble.diagonal(2, -1.0));       // = -I
             }
             j++;
         }
-        return out;
+        return mt;
     }
 
     @Override
@@ -83,7 +67,7 @@ public class ConstraintConnect2Points extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        return new MatrixDouble(((Vector) dbPoint.get(k_id)).sub((Vector) dbPoint.get(l_id)), true);
+        return new MatrixDouble(dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)), true);
     }
 
     @Override
@@ -124,8 +108,7 @@ public class ConstraintConnect2Points extends Constraint {
     @Override
     public double getNorm() {
         MatrixDouble md = getValue();
-        return Math.sqrt(md.m[0][0] * md.m[0][0] + md.m[1][0] * md.m[1][0]);
-
+        return Math.sqrt(md.get(0, 0) * md.get(0, 0) + md.get(1, 0) * md.get(1, 0));
     }
 
 }

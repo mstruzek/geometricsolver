@@ -26,8 +26,8 @@ public class ParseToColt {
 		
 		for(int i = 0; i<md.height(); i++){
 			for(int j = 0; j<md.width(); j++){
-				if(md.m[i][j]!=0.0){
-					matrix2D.setQuick(i, j, md.m[i][j]);
+				if(md.get(i,j)!=0.0){
+					matrix2D.setQuick(i, j, md.get(i,j));
 				}
 			}
 		}
@@ -39,7 +39,7 @@ public class ParseToColt {
 		DoubleMatrix1D doubleMatrix1D = new DenseDoubleMatrix1D(b.height());
 		
 		for(int i = 0; i<b.height(); i++){
-			doubleMatrix1D.setQuick(i, b.m[i][0]);
+			doubleMatrix1D.setQuick(i, b.get(i,0));
 		}
 		
 		return doubleMatrix1D;
