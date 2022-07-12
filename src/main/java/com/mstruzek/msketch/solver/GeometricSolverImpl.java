@@ -9,23 +9,29 @@ import com.mstruzek.msketch.ParseToColt;
 import com.mstruzek.msketch.matrix.BindMatrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
+import java.time.Clock;
+
 import static com.mstruzek.msketch.Constraint.allLagrangeCoffSize;
 import static com.mstruzek.msketch.Point.dbPoint;
-import static java.lang.System.out;
 
 public class GeometricSolverImpl implements GeometricSolver {
 
     // 200x200 macierz A = > 50 okregow/linii  =>   200*200*8 = 320kB
 
+    public static final int MAX_SOLVER_ITERATIONS = 15;
+
+    private static final Clock clock = Clock.systemUTC();
+
+
     @Override
-    public void solveSystem() {
+    public SolverStat solveSystem(StateReporter reporter, SolverStat solverStat) {
 
-        out.println("*************************");
+        long start = clock.millis();                  /// start timing
 
-        long start = System.currentTimeMillis();                  /// start timing
+        solverStat.startTime = start;
 
         if (dbPoint.size() == 0) {
-            return;
+            return solverStat;
         }
 
         /// Tworzymy Macierz "A" - dla tego zadania stala w czasie
@@ -35,6 +41,12 @@ public class GeometricSolverImpl implements GeometricSolver {
         final int size = dbPoint.size() * 2;
         final int coffSize = allLagrangeCoffSize();
         final int dimension = size + coffSize;
+
+        solverStat.size = size;
+        solverStat.coefficientArity = coffSize;
+        solverStat.dimension = dimension;
+
+        long evaluationStart = clock.millis();
 
         MatrixDouble A = MatrixDouble.fill(dimension, dimension, 0.0);
         MatrixDouble Fq = MatrixDouble.fill(size, size, 0.0);               // CONST
@@ -48,10 +60,8 @@ public class GeometricSolverImpl implements GeometricSolver {
         MatrixDouble Fr = MatrixDouble.fill(size, 1, 0.0);
         MatrixDouble Fi = MatrixDouble.fill(coffSize, 1, 0.0);
 
-
         /// CONST
         GeometricPrimitive.getAllJacobianForces(Fq);
-
 
         // Tworzymy wektor prawych stron b
         MatrixDouble b = null;
@@ -60,23 +70,24 @@ public class GeometricSolverImpl implements GeometricSolver {
         BindMatrix Bmt = new BindMatrix(dimension, 1);
         Bmt.bind(dbPoint);
 
+        solverStat.accEvaluationTime += clock.millis() - evaluationStart;
 
-        double erri1, erri = 0, delta;
-        out.println(" Iter/Time [ms] /Norm ");
+        double norm1 = 0.0;
+        double prevNorm = 0.0;
+        double errorFluctuation = 0.0;
 
 
-        //// Matrix -- VIEW on MATRIX
+        int itr = 0;
+        while (itr < MAX_SOLVER_ITERATIONS) {
 
+            solverStat.iterations = itr;
 
-        //// ADD ----> SET ( reuse mts )
-
-        for (int i = 0; i < 10; i++) {
-
+            evaluationStart = clock.millis();
             /// zerujemy macierz A
             A.reset(0.0);
 
-            /// Tworzymy Macierz vector b
 
+            /// Tworzymy Macierz vector b
             GeometricPrimitive.getAllForce(Fr);                 /// Sily  - F(q)
             Constraint.getFullConstraintValues(Fi);             /// Wiezy  - Fi(q)
 
@@ -96,67 +107,79 @@ public class GeometricSolverImpl implements GeometricSolver {
             A.setSubMatrix(size, 0, Wq);
             A.setSubMatrix(0, size, Wq.transpose());
 
+            solverStat.accEvaluationTime += (clock.millis() - evaluationStart);
 
-            /**
+            /*
              *  LU Decomposition  -- Colt Linera Equatio Solver
              *
              */
-
-            // rozwiazjemy zadanie A*dx=b
-
+            /// rozwiazjemy zadanie A*dx=b
             /// Zaproponowac Wspolny interfejs Macierzowy
+
+/// [ TIMED ]
+            long solverStep = clock.millis(); // start timing
 
             DoubleMatrix2D matrix2DA = ParseToColt.toSparse(A);
             DoubleMatrix1D matrix1Db = ParseToColt.toDenseVector(b);
 
-            long stepStart = System.currentTimeMillis(); // start timing
             {
                 LUDecompositionQuick LU = new LUDecompositionQuick();
                 LU.decompose(matrix2DA);
                 LU.solve(matrix1Db);
             }
-            // stop timing
-            long stepDelta = System.currentTimeMillis() - stepStart;
+            solverStat.accSolverTime += (clock.millis() - solverStep);
+
+/// [ TIMED ]
 
             dmx = ParseToColt.toBindVector(matrix1Db);
-
 
             /// uaktualniamy punkty
             Bmt.plusEquals(dmx);
             Bmt.copyToPoints();
 
-
             /// AFTER -- copyToPoints  x2
             Constraint.getFullConstraintValues(Fi);
 
-            double norm1 = Fi.norm1();
-            out.println(" \n " + (i + 1) + " || " + stepDelta + "  ||  " + norm1 + "\n");
+            norm1 = Fi.norm1();
+
+            reporter.writelnf(" [ step :: %d]  duration [ms] = %d  norm = %e ", itr, (clock.millis() - solverStep), norm1);
 
             //stary warunek wyjscia
-            if (norm1 < 0.05) {
-                double constraintNorm = Constraint.getFullNorm();
-                out.println("New Norm + :" + constraintNorm);
+            if (norm1 < 10e-5) {
+                solverStat.delta = norm1;
+                reporter.writelnf("fast convergence - norm [ %e ]  , constraint error = %e", norm1, Constraint.getFullNorm());
+                reporter.writeln("");
                 break;
             }
 
-            if (i == 0) {
-                erri = norm1;
+            /// liczymy zmiane bledu
+            errorFluctuation = norm1 - prevNorm;
+            prevNorm = norm1;
+
+            solverStat.delta = norm1;
+
+            if (itr > 1 && errorFluctuation/prevNorm > 0.70) {
+                reporter.writeln("CHANGES - STOP ITERATION *******");
+                reporter.writeln(" errorFluctuation          :" + errorFluctuation);
+                reporter.writeln(" relative error            :" + (errorFluctuation/norm1));
+                solverStat.constraintDelta = Constraint.getFullNorm();
+                solverStat.converged = false;
+                solverStat.stopTime = clock.millis();
+                return solverStat;
             }
 
-            //liczymy zmiane bledu
-            if (i > 0) {
-                erri1 = norm1;
-                delta = erri1 - erri;
-                erri = erri1;
-                if (delta > 0) {
-                    out.println("CHANGES - STOP ITERATION *******\n");
-                    return;
-                }
-            }
+            itr++;
         }
-        long solutionDelta = System.currentTimeMillis() - start;
-        out.println("solution delta [ ms ] : " + solutionDelta); // print execution time
-    }
 
+        long solutionDelta = (clock.millis() - start);
+        reporter.writeln("# solution error : " + solutionDelta); // print execution time
+        reporter.writeln(""); // print execution time
+
+        solverStat.constraintDelta = Constraint.getFullNorm();
+        solverStat.converged = true;
+        solverStat.stopTime = clock.millis();
+
+        return solverStat;
+    }
 }
 

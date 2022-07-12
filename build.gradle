@@ -12,4 +12,6 @@ repositories {
 dependencies {
     compile group: 'colt', name: 'colt', version: '1.2.0'
     compile group: 'gov.nist.math', name: 'jama', version: '1.0.3'
+    testImplementation group: 'junit', name: 'junit', version: '4.13.2'
+
 }

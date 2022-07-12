@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -115,10 +114,10 @@ public class GCModelReader implements Closeable {
             String fieldValue = matcher.group(2);
             switch (fieldName) {
                 case "ID":
-                    slots[0] = Integer.parseInt(fieldValue);
+                    slots[0] = ObjectDeserializer.toInteger(fieldValue);
                     return;
                 case "VALUE":
-                    slots[12] = Double.parseDouble(fieldValue);
+                    slots[12] = ObjectDeserializer.toDouble(fieldValue);
                     return;
                 default:
                     throw new Error("invalid input fieldLine : " + input);
@@ -151,13 +150,13 @@ public class GCModelReader implements Closeable {
             String fieldValue = matcher.group(2);
             switch (fieldName) {
                 case "ID":
-                    slots[0] = Integer.parseInt(fieldValue);
+                    slots[0] = ObjectDeserializer.toInteger(fieldValue);
                     return;
                 case "PX":
-                    slots[1] = Double.parseDouble(fieldValue);
+                    slots[1] = ObjectDeserializer.toDouble(fieldValue);
                     return;
                 case "PY":
-                    slots[2] = Double.parseDouble(fieldValue);
+                    slots[2] = ObjectDeserializer.toDouble(fieldValue);
                     return;
                 default:
                     throw new Error("invalid input fieldLine : " + input);
@@ -194,19 +193,19 @@ public class GCModelReader implements Closeable {
             String fieldValue = matcher.group(2);
             switch (fieldName) {
                 case "ID":
-                    slots[0] = Integer.parseInt(fieldValue);
+                    slots[0] = ObjectDeserializer.toInteger(fieldValue);
                     return;
                 case "TYPE":
-                    slots[3] = String.valueOf(fieldValue);
+                    slots[3] = ObjectDeserializer.toString(fieldValue);
                     return;
                 case "P1":
-                    slots[4] = Integer.parseInt(fieldValue);
+                    slots[4] = ObjectDeserializer.toInteger(fieldValue);
                     return;
                 case "P2":
-                    slots[5] = Integer.parseInt(fieldValue);
+                    slots[5] = ObjectDeserializer.toInteger(fieldValue);
                     return;
                 case "P3":
-                    slots[6] = Integer.parseInt(fieldValue);
+                    slots[6] = ObjectDeserializer.toInteger(fieldValue);
                     return;
                 default:
                     throw new Error("invalid input fieldLine : " + input);
@@ -275,25 +274,25 @@ public class GCModelReader implements Closeable {
             String fieldValue = matcher.group(2);
             switch (fieldName) {
                 case "ID":
-                    slots[0] = Integer.parseInt(fieldValue);
+                    slots[0] = ObjectDeserializer.toInteger(fieldValue);
                     return;
                 case "TYPE":
-                    slots[3] = String.valueOf(fieldValue);
+                    slots[3] = ObjectDeserializer.toString(fieldValue);
                     return;
                 case "K":
-                    slots[7] = Integer.parseInt(fieldValue);
+                    slots[7] = ObjectDeserializer.toInteger(fieldValue);
                     return;
                 case "L":
-                    slots[8] = Integer.parseInt(fieldValue);
+                    slots[8] = ObjectDeserializer.toInteger(fieldValue);
                     return;
                 case "M":
-                    slots[9] = Integer.parseInt(fieldValue);
+                    slots[9] = ObjectDeserializer.toInteger(fieldValue);
                     return;
                 case "N":
-                    slots[10] = Integer.parseInt(fieldValue);
+                    slots[10] = ObjectDeserializer.toInteger(fieldValue);
                     return;
                 case "PARAM":
-                    slots[11] = Integer.parseInt(fieldValue);
+                    slots[11] = ObjectDeserializer.toInteger(fieldValue);
                     return;
                 default:
                     throw new Error("invalid input fieldLine : " + input);
@@ -404,4 +403,5 @@ public class GCModelReader implements Closeable {
             throw new Error("unrecognized input ! =  `" + input + "`");
         }
     }
+
 }

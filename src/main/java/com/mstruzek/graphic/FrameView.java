@@ -55,6 +55,9 @@ public class FrameView extends JFrame {
      * wypisujemy tutaj wszystko co idzie na System.out.println();
      */
     final JTextArea consoleOutput = new JTextArea();
+
+    final JScrollPane consoleScrollPane;
+
     /**
      * glowny controller
      */
@@ -211,8 +214,9 @@ public class FrameView extends JFrame {
 
         right.add(myTables);
 
-        JScrollPane consoleScrollPane = new JScrollPane(consoleOutput);
+        consoleScrollPane = new JScrollPane(consoleOutput);
         consoleScrollPane.setPreferredSize(new Dimension(CONSOLE_WIDTH, CONSOLE_OUTPUT_HEIGHT));
+        consoleScrollPane.scrollRectToVisible(consoleOutput.getVisibleRect());
         redirectStdErrOut();
 
         right.add(consoleScrollPane);
@@ -373,6 +377,7 @@ public class FrameView extends JFrame {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 consoleOutput.append(text);
+                consoleOutput.setCaretPosition(consoleOutput.getDocument().getLength()); /// auto scroll - follow caret position
             }
         });
     }

@@ -4,7 +4,9 @@ public interface GeometricSolver{
 
     /**
      * Statyczne modelowanie macierzy  na wewnetrzym statycznym modelu matematycznym.
+     *
+     * @return
      */
-    void solveSystem();
+    SolverStat solveSystem(StateReporter reporter, SolverStat solverStat);
 
 }

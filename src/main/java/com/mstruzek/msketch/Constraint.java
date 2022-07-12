@@ -183,6 +183,7 @@ public abstract class Constraint implements ConstraintInterface {
 
         int offset = 0; //licznik mnoznikow lagrange'a
         double alfa = 0.0;//wartosc aktualnego mnoznika
+        MatrixDouble conHs = null;
 
         for (Constraint constraint : dbConstraint.values()) {
             if (!(constraint.isJacobianConstant())) {
@@ -192,9 +193,11 @@ public abstract class Constraint implements ConstraintInterface {
                 ///   Hessian - dla tego wiezu liczony na cala macierz !
                 ///  -- ! add into mem in place AddVisitator
                 ///
-                MatrixDouble Hs = constraint.getHessian(alfa);
-                if (Hs != null) {
-                    hs.add((Hs));
+
+                conHs = constraint.getHessian(alfa);
+
+                if (conHs != null) {
+                    hs.add((conHs));
                 }
             }
             //zwiekszamy aktualny mnoznik Lagrage'a

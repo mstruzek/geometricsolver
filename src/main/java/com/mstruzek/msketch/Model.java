@@ -3,6 +3,8 @@ package com.mstruzek.msketch;
 import com.mstruzek.controller.Events;
 import com.mstruzek.msketch.solver.GeometricSolver;
 import com.mstruzek.msketch.solver.GeometricSolverImpl;
+import com.mstruzek.msketch.solver.SolverStat;
+import com.mstruzek.msketch.solver.StateReporter;
 
 import java.util.Random;
 
@@ -27,7 +29,14 @@ public final class Model {
         if (geometricSolver == null) {
             geometricSolver = new GeometricSolverImpl();
         }
-        geometricSolver.solveSystem();
+
+        final StateReporter reporter = new StateReporter();
+
+        SolverStat stat = new SolverStat();
+
+        geometricSolver.solveSystem(reporter, stat);
+
+        stat.report(reporter);
     }
 
     public static void addLine(int primitiveId, Vector v1, Vector v2) {

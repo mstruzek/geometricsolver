@@ -72,7 +72,7 @@ public class ConstraintAngle2Lines extends Constraint {
     @Override
     public MatrixDouble getJacobian() {
         MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
-        Vector vLK = dbPoint.get(k_id).sub(dbPoint.get(l_id));
+        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         Vector uLKdNM = vLK.unit().dot(vNM.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
         Vector uNMdLK = vNM.unit().dot(vLK.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));

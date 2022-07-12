@@ -35,6 +35,8 @@ public class Parameter {
 		this.id = parameterCounter++;
 		dbParameter.put(id,this);
 	}
+
+
 	/**
 	 * Pobierz parametr
 	 * @return
