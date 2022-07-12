@@ -1,5 +1,6 @@
 package com.mstruzek.msketch;
 
+import com.mstruzek.msketch.matrix.MatrixDouble;
 import com.mstruzek.msketch.solver.GeometricSolver;
 import com.mstruzek.msketch.solver.GeometricSolverImpl;
 import com.mstruzek.msketch.solver.SolverStat;
@@ -276,6 +277,31 @@ public class ConstraintConvergenceTest {
         Assert.assertTrue(solverStat.delta < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
+    }
+
+
+
+    @Test
+    public void testPrintTensor() {
+        Point p10 = new Point(1, 0.0, 00.0);
+        Point p20 = new Point(2, 10.0, 80.0);
+        Point p30 = new Point(5, 60.0, 60.0);
+        Point p40 = new Point(6, 120.0, 120.0);
+
+        Line f10 = new Line(p10, p20);
+        Circle f20 = new Circle(p30, p40);
+        f10.setAssociateConstraints(null);
+        f20.setAssociateConstraints(null);
+
+        Constraint constraint = new ConstraintTangency(Constraint.nextId(), p10, p20, p30, p40);
+
+
+        MatrixDouble jacobian = constraint.getJacobian();
+
+        System.out.println(jacobian.toString());
+
+        MatrixDouble hessian = constraint.getHessian(1.0);
+        System.out.println(hessian.toString());
     }
 
 
