@@ -2,6 +2,7 @@ plugins {
     id 'java'
 }
 
+
 group 'com.mstruzek'
 version '1.0-SNAPSHOT'
 
@@ -9,9 +10,18 @@ repositories {
     mavenCentral()
 }
 
+
+
+compileJava {
+    targetCompatibility = 17
+    sourceCompatibility = 17
+}
+
+
+
 dependencies {
-    compile group: 'colt', name: 'colt', version: '1.2.0'
-    compile group: 'gov.nist.math', name: 'jama', version: '1.0.3'
+    implementation group: 'colt', name: 'colt', version: '1.2.0'
+    implementation group: 'gov.nist.math', name: 'jama', version: '1.0.3'
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
 
 }

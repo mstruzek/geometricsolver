@@ -128,7 +128,7 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 
 - [ Relexed ] - przerobic Relaxed na random position for points - fluctuate - random shifts 
   
-- [ GPU ]  - sprawdzic model , zaciagnac bindowanie memory 
+- [ prepartion GPU ]  - sprawdzic model , zaciagnac bindowanie memory - caly model przenisc pod JNI i wiezy, stiffness. 
 
 - [ Selector ] Solver Selector - Local Host , GPU Blas H ( handmade ), GPU CGM , 
 
