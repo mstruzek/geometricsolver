@@ -137,9 +137,9 @@ public abstract class Constraint implements ConstraintInterface {
      */
     public static void getFullJacobian(MatrixDouble mt) {
         int rowPos = 0;
-        for (Constraint constraint : dbConstraint.values()) {
-            mt.setSubMatrix(rowPos, 0, constraint.getJacobian());
-            rowPos += constraint.size();
+        for (Integer id : dbConstraint.keySet()) {
+            mt.setSubMatrix(rowPos, 0, Constraint.dbConstraint.get(id).getJacobian());
+            rowPos += Constraint.dbConstraint.get(id).size();
         }
     }
 
@@ -152,9 +152,9 @@ public abstract class Constraint implements ConstraintInterface {
      */
     public static void getFullConstraintValues(MatrixDouble mt) {
         int currentRow = 0;
-        for (Constraint constraint : dbConstraint.values()) {
-            mt.setSubMatrix(currentRow, 0, constraint.getValue());
-            currentRow += constraint.size();
+        for (Integer id : dbConstraint.keySet()) {
+            mt.setSubMatrix(currentRow, 0, Constraint.dbConstraint.get(id).getValue());
+            currentRow += Constraint.dbConstraint.get(id).size();
         }
     }
 
@@ -165,8 +165,9 @@ public abstract class Constraint implements ConstraintInterface {
      */
     public static double getFullNorm() {
         double norm = 0;
-        for (Constraint constraint : dbConstraint.values()) {
-            norm += constraint.getNorm() * constraint.getNorm();
+        for (Integer id : dbConstraint.keySet()) {
+            double consNorm = Constraint.dbConstraint.get(id).getNorm();
+            norm += (consNorm * consNorm);
         }
         return Math.sqrt(norm);
     }
@@ -185,8 +186,8 @@ public abstract class Constraint implements ConstraintInterface {
         double alfa = 0.0;//wartosc aktualnego mnoznika
         MatrixDouble conHs = null;
 
-        for (Constraint constraint : dbConstraint.values()) {
-            if (!(constraint.isJacobianConstant())) {
+        for (Integer id : dbConstraint.keySet()) {
+            if (!(Constraint.dbConstraint.get(id).isJacobianConstant())) {
                 /// jest hessian
                 alfa = dmx.get(dbPoint.size() * 2 + offset, 0);
                 ///
@@ -194,14 +195,14 @@ public abstract class Constraint implements ConstraintInterface {
                 ///  -- ! add into mem in place AddVisitator
                 ///
 
-                conHs = constraint.getHessian(alfa);
+                conHs = Constraint.dbConstraint.get(id).getHessian(alfa);
 
                 if (conHs != null) {
                     hs.add((conHs));
                 }
             }
             //zwiekszamy aktualny mnoznik Lagrage'a
-            offset += constraint.size();
+            offset += Constraint.dbConstraint.get(id).size();
         }
         return hs;
     }
