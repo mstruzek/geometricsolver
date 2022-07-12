@@ -50,6 +50,50 @@ public enum GeometricConstraintType{
     },
 
     /**
+     * 2 punkty maja to same polozenie zero-X - Coincidence
+     */
+    ConnectHorizontal{
+        @Override
+        public int size(){
+            return 1;
+        }
+
+        @Override
+        public String getHelp(){
+            return "Dwa punkty maja to samo polozenie , czyli tak zwany wiez Coincidence na osi zero-x\n"+
+                "K - pierwszy punkt\n"+
+                "L - drugi punkt\n";
+        }
+
+        @Override
+        public boolean isParametrized(){
+            return false;
+        }
+    },
+
+    /**
+     * 2 punkty maja to same polozenie zero-Y - Coincidence
+     */
+    ConnectVertical{
+        @Override
+        public int size(){
+            return 1;
+        }
+
+        @Override
+        public String getHelp(){
+            return "Dwa punkty maja to samo polozenie , czyli tak zwany wiez Coincidence na osi zero-y\n"+
+                "K - pierwszy punkt\n"+
+                "L - drugi punkt\n";
+        }
+
+        @Override
+        public boolean isParametrized(){
+            return false;
+        }
+    },
+
+    /**
      * Dwie linie Rownolegle - iloczyn wektorowy ,CROSS
      */
     LinesParallelism{
@@ -173,7 +217,7 @@ public enum GeometricConstraintType{
     },
 
     /**
-     * Odleg�o�c punktu od prostej FIXME - zrobic ten ponizej
+     * Odleg�o�c punktu od prostej - rownania odpowiednio jak tangency !
      */
     DistancePointLine{
         @Override

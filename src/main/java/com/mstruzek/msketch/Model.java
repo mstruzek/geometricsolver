@@ -99,6 +99,12 @@ public final class Model {
             case Connect2Points:
                 add(new ConstraintConnect2Points(constId, K, L));
                 break;
+            case ConnectHorizontal:
+                add(new ConstraintConnectHorizontal(constId, K, L));
+                break;
+            case ConnectVertical:
+                add(new ConstraintConnectVertical(constId, K, L));
+                break;
             case FixPoint:
                 add(new ConstraintFixPoint(constId, K));
                 break;
