@@ -69,16 +69,16 @@ public class ConstraintLinesSameLength extends Constraint {
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setVectorR(0, j * 2 , vLK.dot(-1.0));
+                mt.setVectorT(0, j * 2 , vLK.dot(-1.0));
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setVectorR(0, j * 2 , vLK);
+                mt.setVectorT(0, j * 2 , vLK);
             }
             if (m_id == dbPoint.get(i).id) {
-                mt.setVectorR(0, j * 2 , vNM);
+                mt.setVectorT(0, j * 2 , vNM);
             }
             if (n_id == dbPoint.get(i).id) {
-                mt.setVectorR(0, j * 2 , vNM.dot(-1.0));
+                mt.setVectorT(0, j * 2 , vNM.dot(-1.0));
             }
             j++;
         }

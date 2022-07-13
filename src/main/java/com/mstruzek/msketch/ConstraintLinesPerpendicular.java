@@ -84,26 +84,26 @@ public class ConstraintLinesPerpendicular extends Constraint {
         if ((m == null) && (n == null)) {
             for (Integer i : dbPoint.keySet()) {
                 if (k_id == dbPoint.get(i).id) {
-                    mt.setVectorR(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
+                    mt.setVectorT(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
                 }
                 if (l_id == dbPoint.get(i).id) {
-                    mt.setVectorR(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
+                    mt.setVectorT(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
                 }
                 if (m_id == dbPoint.get(i).id) {
-                    mt.setVectorR(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
+                    mt.setVectorT(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
                 }
                 if (n_id == dbPoint.get(i).id) {
-                    mt.setVectorR(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
+                    mt.setVectorT(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
                 }
                 j++;
             }
         } else {
             for (Integer i : dbPoint.keySet()) {
                 if (k_id == dbPoint.get(i).id) {
-                    mt.setVectorR(0, j * 2, m.sub(n));
+                    mt.setVectorT(0, j * 2, m.sub(n));
                 }
                 if (l_id == dbPoint.get(i).id) {
-                    mt.setVectorR(0, j * 2, m.sub(n).dot(-1.0));
+                    mt.setVectorT(0, j * 2, m.sub(n).dot(-1.0));
                 }
                 j++;
             }

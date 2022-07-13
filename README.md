@@ -127,11 +127,7 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 - Date : 2022
 
 
-
 - [ ConstraintDistancePointLine : extend Tangency ] - przygotowac rownania na kartce. !  
-
-- [ ConstrainConnectVertical   : alignedOnX ]
-- [ ConstrainConnectHorizontal : alignedOnY ]
 
 - [ 14 dni prepartion GPU ]  - sprawdzic model , zaciagnac bindowanie memory - caly model przenisc pod JNI i wiezy, stiffness. 
 - 
@@ -158,6 +154,10 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 - @@@ [ auto KLMN  ]   - set K, L tuple when double clicked on K , or set auto K if db-clicked on L
 
 - @@@ [ Relexed ] - przerobic Relaxed na random position for points - fluctuate - random shifts
+
+- @@@[ ConstrainVerticalPoints   : alignedOnX ]
+- 
+- @@@ [ ConstrainHorizontalPoint : alignedOnY ]
 
 
 ## UNIFIED MATRIX INTERFACE

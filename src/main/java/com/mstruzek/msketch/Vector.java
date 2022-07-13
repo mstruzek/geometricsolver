@@ -1,4 +1,7 @@
 package com.mstruzek.msketch;
+
+import com.mstruzek.msketch.matrix.MatrixDouble;
+
 /**
  * Klasa wektora 2D
  * + podstawowe operacje , iloczyn skalarny i wektorowy , dlugosc ;
@@ -39,9 +42,9 @@ public class Vector{
 		return new Vector(this.x-vec1.x,this.y-vec1.y);
 	}
 	
-	/** Zwraca mno�enie wektora przez skalar C=alfa*A; */
-	public Vector dot(double skalar){
-		return new Vector(this.x*skalar,this.y*skalar);
+	/** Zwraca mno�enie wektora przez scalar C=alfa*A; */
+	public Vector dot(double scalar){
+		return new Vector(this.x*scalar,this.y*scalar);
 	}
 	
 	/** Zwraca iloczyn skalarny aktualnego i zadanego wektora; C=A'*B; */
@@ -54,7 +57,15 @@ public class Vector{
 	public double cross(Vector vec1){
 		return (this.x * vec1.y - this.y*vec1.x);
 	}
-	
+
+	/**
+	 * Equivalent of rotation vector by MatrixDouble of R*a = ~a
+	 * @return
+	 */
+	public Vector inv() {
+		return new Vector(-this.y, this.x);
+	}
+
 	/** Zwraca dlugosc wektora */
 	public double length(){
 		return Math.sqrt(this.x * this.x + this.y*this.y);
@@ -106,4 +117,10 @@ public class Vector{
 		return new Vector(this.x/this.length(),this.y/this.length());
 	}
 
+	public MatrixDouble dotTrans(Vector rhs) {
+		return new MatrixDouble.SmallMatrixDouble(
+			this.x * rhs.x , this.x * rhs.y ,
+			this.y * rhs.x , this.y * rhs.y
+		);
+	}
 }

@@ -18,7 +18,7 @@ public class GeometricSolverImpl implements GeometricSolver {
 
     // 200x200 macierz A = > 50 okregow/linii  =>   200*200*8 = 320kB
 
-    public static final int MAX_SOLVER_ITERATIONS = 15;
+    public static final int MAX_SOLVER_ITERATIONS = 20;
 
     private static final Clock clock = Clock.systemUTC();
 
@@ -143,6 +143,8 @@ public class GeometricSolverImpl implements GeometricSolver {
             norm1 = Fi.norm1();
 
             reporter.writelnf(" [ step :: %d]  duration [ms] = %d  norm = %e ", itr, (clock.millis() - solverStep), norm1);
+
+            /// Gdy po 5-6 iteracja normy wiezow kieruja sie w strone minimum energii, to repozycjonowac prowadzacych "straznikow"
 
             //stary warunek wyjscia
             if (norm1 < 10e-5) {

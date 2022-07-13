@@ -3,16 +3,26 @@ package com.mstruzek.msketch;
 import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
+import static com.mstruzek.msketch.Point.dbPoint;
+
 public class ConstraintDistancePointLine extends Constraint {
 
     /** Punkty kontrolne */
-    /** Point K-id */
+    /**
+     * Point K-id
+     */
     int k_id;
-    /** Point L-id */
+    /**
+     * Point L-id
+     */
     int l_id;
-    /** Point M-id */
+    /**
+     * Point M-id
+     */
     int m_id;
-    /** Numer parametru przechowujacy kat w radianach */
+    /**
+     * Numer parametru przechowujacy kat w radianach
+     */
     int param_id;
 
     /**
@@ -24,33 +34,63 @@ public class ConstraintDistancePointLine extends Constraint {
      * @param L       punkt prowadzacy prostej
      * @param M       punkt odlegly od prowadzacej
      */
-    public ConstraintDistancePointLine(int constId,Point K,Point L ,Point M,Parameter param){
+    public ConstraintDistancePointLine(int constId, Point K, Point L, Point M, Parameter param) {
         super(constId, GeometricConstraintType.DistancePointLine, true);
         k_id = K.id;
         l_id = L.id;
         m_id = M.id;
-        param_id =param.getId();
+        param_id = param.getId();
     }
 
-    public String toString(){
+    public String toString() {
         MatrixDouble mt = getValue();
         double norm = Matrix.constructWithCopy(mt.getArray()).norm1();
-        return "Constraint-DistancePointLine" + constraintId + "*s" + size() + " = " + norm  + " { K =" + Point.dbPoint.get(k_id) + "  ,L =" + Point.dbPoint.get(l_id) + " ,M =" + Point.dbPoint.get(m_id) + ", Parametr-" + Parameter.dbParameter.get(param_id).getId() + " = "+Parameter.dbParameter.get(param_id).getValue() + "} \n";
+        return "Constraint-DistancePointLine" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ", Parametr-" + Parameter.dbParameter.get(param_id).getId() + " = " + Parameter.dbParameter.get(param_id).getValue() + "} \n";
     }
 
     @Override
     public MatrixDouble getValue() {
-        return new MatrixDouble(1,1);
+        MatrixDouble mt = new MatrixDouble(1, 1);
+        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector vMK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
+        double d = Parameter.dbParameter.get(param_id).getValue();
+
+        mt.set(0, 0, vLK.cross(vMK) * vLK.cross(vMK) - d * d * vLK.length() * vLK.length());
+
+        return mt;
     }
 
     @Override
     public MatrixDouble getJacobian() {
-        return null;
+        MatrixDouble mt = new MatrixDouble(1, dbPoint.size() * 2);
+        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector vMK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
+        Vector vML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
+        double d = Parameter.dbParameter.get(param_id).getValue(); /// parameter value
+        double z = vLK.cross(vMK);
+        int j = 0;
+        for (Integer id : dbPoint.keySet()) {
+            /// ################################################################## k  /// Explicitly Repeated Accessor
+            if (k_id == dbPoint.get(id).id) {
+                mt.setVectorT(0, 2 * j, vML.inv().dot(z * 2).add(vLK.dot(2 * d * d)));
+            }
+            /// ################################################################## l
+            if (l_id == dbPoint.get(id).id) {
+                mt.setVectorT(0, 2 * j, vMK.inv().dot(z * -2.0).add(vLK.dot(-2.0 * d * d)));
+            }
+            /// ################################################################## m
+            if (m_id == dbPoint.get(id).id) {
+                mt.setVectorT(0, 2 * j, vLK.inv().dot(z * 2.0));
+            }
+            j++;
+        }
+        return mt;
     }
 
     @Override
     public double getNorm() {
-        return 0;
+        MatrixDouble mt = getValue();
+        return mt.get(0, 0);
     }
 
     @Override
@@ -60,7 +100,73 @@ public class ConstraintDistancePointLine extends Constraint {
 
     @Override
     public MatrixDouble getHessian(double alfa) {
-        return null;
+        /// macierz NxN
+        MatrixDouble mt = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
+        Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
+        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector ML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
+        double d = Parameter.dbParameter.get(param_id).getValue();
+        MatrixDouble R = MatrixDouble.matR();
+        MatrixDouble D = MatrixDouble.diagonal(2, 2 * d * d);
+        MatrixDouble Dm = MatrixDouble.diagonal(2, -2 * d * d);
+        double SC = MK.dot(LK.inv()); ///
+        int i = 0;
+        for (Integer qI : dbPoint.keySet()) { //wiersz
+            int j = 0;
+            for (Integer qJ : dbPoint.keySet()) { //kolumna
+                /// # # # FI - k
+                //k,k
+                if (k_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
+                    var mat = ML.inv().dotTrans(MK.inv().sub(LK.inv())).dot(2).add(Dm);
+                    mt.setSubMatrix(2 * i, 2 * j, mat);
+                }
+                //k,l
+                if (k_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
+                    var mat = R.dotC(-2.0 * SC).add(ML.inv().dotTrans(MK).mult(R).dot(2.0)).add(D);
+                    mt.setSubMatrix(2 * i, 2 * j, mat);
+                }
+                //k,m
+                if (k_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
+                    var mat = R.dotC(2 * SC).add(ML.inv().dotTrans(LK.inv()).dot(2.0));
+                    mt.setSubMatrix(2 * i, 2 * j, mat);
+                }
+                /// # # # FI - l
+                //l,k
+                if (l_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
+                    var mat = R.dotC(2 * SC).add(MK.inv().dotTrans(ML.inv()).dot(-2.0)).add(D);
+                    mt.setSubMatrix(2 * i, 2 * j, mat);
+                }
+                //l,l
+                if (l_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
+                    var mat = MK.inv().dotTrans(MK.inv()).dot(2.0).add(Dm);
+                    mt.setSubMatrix(2 * i, 2 * j, mat);
+                }
+                //l,m
+                if (l_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
+                    var mat = R.dotC(-2.0 * SC).add(MK.inv().dotTrans(LK.inv()).dot(-2.0));
+                    mt.setSubMatrix(2 * i, 2 * j, mat);
+                }
+                /// # # # FI - m
+                //m,k
+                if (m_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
+                    var mat = R.dotC(-2.0 * SC).add( LK.inv().dotTrans( MK.inv()).dot(-2.0));
+                    mt.setSubMatrix(2 * i, 2 * j, mat);
+                }
+                //m,l
+                if (m_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
+                    var mat = R.dotC(2.0 * SC).add( LK.inv().dotTrans( MK.inv()).dot(-2.0));
+                    mt.setSubMatrix(2 * i, 2 * j, mat);
+                }
+                //m,m
+                if (m_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
+                    var mat = LK.inv().dotTrans( LK.inv()).dot(2.0);
+                    mt.setSubMatrix(2 * i, 2 * j, mat);
+                }
+                j++;
+            }
+            i++;
+        }
+        return mt;
     }
 
     @Override

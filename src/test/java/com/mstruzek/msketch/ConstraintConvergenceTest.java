@@ -258,6 +258,9 @@ public class ConstraintConvergenceTest {
 
     @Test
     public void convergenceConstraintTangency() {
+        /*
+         * Macierz Hessian'a ?
+         */
         Point p10 = new Point(1, 0.0, 00.0);
         Point p20 = new Point(2, 10.0, 80.0);
         Point p30 = new Point(5, 60.0, 60.0);
@@ -279,10 +282,38 @@ public class ConstraintConvergenceTest {
         Assert.assertTrue(constraint.getNorm() < 10e-5);
     }
 
+    @Test
+    public void convergenceConstraintDistancePointLine() {
+        /*
+         * Macierz Hessian'a ?
+         */
+        Point p10 = new Point(1, 0.0, 00.0);
+        Point p20 = new Point(2, 0.0, 80.0);
+        Point p30 = new Point(5, 60.0, 60.0);
+
+        Parameter param = new Parameter(30.0);// 30 units of distance
+
+        Line f10 = new Line(p10, p20);
+        FreePoint f30 = new FreePoint(p30);
+        f10.setAssociateConstraints(null);
+        f30.setAssociateConstraints(null);
+
+        Constraint constraint = new ConstraintDistancePointLine(Constraint.nextId(), p10, p20, p30, param);
+
+        geometricSolver.solveSystem(reporter, solverStat);
+
+        /* no Hessian implementations evaluation into closing equation */
+
+        Assert.assertEquals(19, solverStat.iterations);
+        Assert.assertTrue(solverStat.converged);
+        Assert.assertTrue(solverStat.delta < 1e-2);
+        Assert.assertTrue(solverStat.constraintDelta < 1.0e-2);
+        Assert.assertTrue(constraint.getNorm() < 10e-3);
+    }
 
 
     @Test
-    public void testPrintTensor() {
+    public void testWriteStdOutTensor() {
         Point p10 = new Point(1, 0.0, 00.0);
         Point p20 = new Point(2, 10.0, 80.0);
         Point p30 = new Point(5, 60.0, 60.0);
@@ -302,6 +333,13 @@ public class ConstraintConvergenceTest {
 
         MatrixDouble hessian = constraint.getHessian(1.0);
         System.out.println(hessian.toString());
+
+
+        MatrixDouble R = MatrixDouble.getRotation2x2(90 + 180);
+        MatrixDouble mR = MatrixDouble.getRotation2x2(90); //mR=-R
+
+        System.out.println(R.toString());
+        System.out.println(mR.toString());
     }
 
 

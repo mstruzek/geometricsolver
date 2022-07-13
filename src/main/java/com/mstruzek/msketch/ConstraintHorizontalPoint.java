@@ -11,7 +11,7 @@ import static com.mstruzek.msketch.Point.dbPoint;
  *
  * @author root
  */
-public class ConstraintConnectHorizontal extends Constraint {
+public class ConstraintHorizontalPoint extends Constraint {
 
     /**
      * Point K-id
@@ -29,8 +29,8 @@ public class ConstraintConnectHorizontal extends Constraint {
      * @param K       - zrzutowany Point na Vector
      * @param L       - Vector w ktorym bedzie zafiksowany K
      */
-    public ConstraintConnectHorizontal(int constId, Point K, Point L) {
-        super(constId, GeometricConstraintType.ConnectHorizontal, true);
+    public ConstraintHorizontalPoint(int constId, Point K, Point L) {
+        super(constId, GeometricConstraintType.HorizontalPoint, true);
         //pobierz id
         k_id = K.id;
         l_id = L.id;

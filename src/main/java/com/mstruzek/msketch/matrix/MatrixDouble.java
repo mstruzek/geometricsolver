@@ -24,6 +24,10 @@ public class MatrixDouble {
     int rows;
 
 
+
+    final static MatrixDouble R = new MatrixDouble(2,2);
+
+
     /**
      * Konstruktor macierzy
      *
@@ -69,6 +73,7 @@ public class MatrixDouble {
 
     /**
      * Get value at corresponding coordinates.
+     *
      * @param i - row
      * @param j - column
      * @return double value
@@ -95,6 +100,42 @@ public class MatrixDouble {
         return rows;
     }
 
+
+    /**
+     * Multiplication matrix to transform left operand vector in cross product equations  (a x b) =>  (R * a * b )
+     * @return matrix double // FIXME SmallMatrixDouble
+     */
+    public static MatrixDouble matR() {
+        SmallMatrixDouble mt = new SmallMatrixDouble(
+            0.0, -1.0,
+            1.0,  0.0);
+        return mt;
+    }
+
+
+
+    public static class SmallMatrixDouble extends  MatrixDouble {
+        double[] sm = new double[4];
+        public SmallMatrixDouble(double a00, double a01, double a10, double a11) {
+            super(2,2);
+            sm[0] = a00;
+            sm[1] = a01;
+            sm[2] = a10;
+            sm[3] = a11;
+        }
+
+
+        @Override
+        public double get(int i, int j) {
+            return sm[i * 2 + j];
+        }
+
+        @Override
+        public void set(int r, int c, double value) {
+            sm[r * 2 + c] = value;
+        }
+    }
+
     /**
      * Dodaj skalar do kazdej pozycji macierzy
      *
@@ -102,8 +143,8 @@ public class MatrixDouble {
      * @return aktualan macierz this
      */
     public MatrixDouble add(double a) {
-        for(int i = 0; i < this.m.length; i++) {
-            for(int j = 0; j < this.m[i].length; j++) {
+        for (int i = 0; i < this.m.length; i++) {
+            for (int j = 0; j < this.m[i].length; j++) {
                 this.m[i][j] = this.m[i][j] + a;
             }
         }
@@ -118,8 +159,8 @@ public class MatrixDouble {
      */
     public MatrixDouble add(MatrixDouble rhs) {
         assertEqualDimensions(this, rhs);
-        for(int i = 0; i < this.m.length; i++) {
-            for(int j = 0; j < this.m[i].length; j++) {
+        for (int i = 0; i < this.m.length; i++) {
+            for (int j = 0; j < this.m[i].length; j++) {
                 this.m[i][j] = this.m[i][j] + rhs.m[i][j];
             }
         }
@@ -140,8 +181,8 @@ public class MatrixDouble {
     public MatrixDouble addC(MatrixDouble rhs) {
         assertEqualDimensions(this, rhs);
         MatrixDouble rm = new MatrixDouble(this.rows, this.columns);
-        for(int i = 0; i < this.m.length; i++) {
-            for(int j = 0; j < this.m[i].length; j++) {
+        for (int i = 0; i < this.m.length; i++) {
+            for (int j = 0; j < this.m[i].length; j++) {
                 rm.m[i][j] = this.m[i][j] + rhs.m[i][j];
             }
         }
@@ -155,8 +196,8 @@ public class MatrixDouble {
      * @return this
      */
     public MatrixDouble dot(double c) {
-        for(int i = 0; i < height(); i++) {
-            for(int j = 0; j < width(); j++) {
+        for (int i = 0; i < height(); i++) {
+            for (int j = 0; j < width(); j++) {
                 this.m[i][j] *= c;
             }
         }
@@ -172,12 +213,53 @@ public class MatrixDouble {
      */
     public MatrixDouble dotC(double c) {
         MatrixDouble mt = this.copy();
-        for(int i = 0; i < height(); i++) {
-            for(int j = 0; j < width(); j++) {
+        for (int i = 0; i < height(); i++) {
+            for (int j = 0; j < width(); j++) {
                 mt.m[i][j] *= c;
             }
         }
         return mt;
+    }
+
+
+    /**
+     * Mnozezenie kazdego vectora macierzy na odpowiadajacy  vector columnowy.
+     *
+     * @param rhs prawy operand
+     * @return
+     */
+    public MatrixDouble mult(MatrixDouble rhs) {
+        if (this.width() != rhs.height()) throw new Error("Illegal dimension of right-hand side operand matrix");
+
+        if(height() == 2 && width() == 2 &&  rhs.height() == 2 && rhs.width() ==2) {
+            MatrixDouble mt = new MatrixDouble(rhs.width(), this.height());
+            ///#########################################################
+            double a00 = m[0][0];
+            double a01 = m[0][1];
+            double a10 = m[1][0];
+            double a11 = m[1][1];
+            double b00 = rhs.m[0][0];
+            double b01 = rhs.m[0][1];
+            double b10 = rhs.m[1][0];
+            double b11 = rhs.m[1][1];
+            mt.m[0][0] = a00 * b00 + a01 * b10;
+            mt.m[0][1] = a00 * b01 + a01 * b11;
+            mt.m[1][0] = a10 * b00 + a11 * b10;
+            mt.m[1][1] = a10 * b01 + a11 * b11;
+            return mt;
+        } else {
+            MatrixDouble mt = new MatrixDouble(rhs.width(), this.height());
+            for (int i = 0; i < height(); i++) { /// this row
+                for (int j = 0; j < rhs.width(); j++) { // other column
+                    double acc = 0.0;
+                    for (int k = 0; k < width(); k++) {     // other column
+                        acc += this.m[i][k] * rhs.m[k][j];
+                    }
+                    mt.m[i][j] = acc;
+                }
+            }
+            return mt;
+        }
     }
 
     /**
@@ -187,14 +269,15 @@ public class MatrixDouble {
      */
     public MatrixDouble copy() {
         MatrixDouble array = new MatrixDouble(this.m.length, this.m[0].length);
-        for(int i = 0; i < array.m.length; i++)
+        for (int i = 0; i < array.m.length; i++)
             System.arraycopy(this.m[i], 0, array.m[i], 0, this.m[i].length);
         return array;
     }
 
     /**
      * Set value at corresponding coordinates.
-     * @param r row column
+     *
+     * @param r     row column
      * @param c
      * @param value
      */
@@ -212,11 +295,11 @@ public class MatrixDouble {
      */
     public MatrixDouble setSubMatrix(int firstRow, int firstColumn, MatrixDouble mt) {
         //sprawdzamy czy macierz wstawiana nie jest za duza
-        if(this.height() >= (firstRow + mt.height())) {
-            if(this.width() >= (firstColumn + mt.width())) {
+        if (this.height() >= (firstRow + mt.height())) {
+            if (this.width() >= (firstColumn + mt.width())) {
                 //mozna wstawic
                 //System.arraycopy(this.m[i + i1], j1, array.m[i], 0, j2 - j1 + 1);
-                for(int k = 0; k < mt.height(); k++) {
+                for (int k = 0; k < mt.height(); k++) {
                     System.arraycopy(mt.m[k], 0, this.m[k + firstRow], firstColumn, mt.m[k].length);
                 }
                 return this;
@@ -230,23 +313,24 @@ public class MatrixDouble {
 
     /**
      * Column oriented sub vector.
+     *
      * @param r
      * @param c
      * @param vector
      */
     public void setVector(int r, int c, Vector vector) {
-        this.m[r + 0 ][c] = vector.getX();
-        this.m[r + 1 ][c] = vector.getY();
+        this.m[r + 0][c] = vector.getX();
+        this.m[r + 1][c] = vector.getY();
     }
 
     /**
-     * Row oriented sub vector.
+     * Row oriented sub vector. Transposed vector inserted into consecutive columns.
      * @param r
      * @param c
      * @param vector
      */
-    public void setVectorR(int r, int c, Vector vector) {
-        this.m[r][c + 0 ] = vector.getX();
+    public void setVectorT(int r, int c, Vector vector) {
+        this.m[r][c + 0] = vector.getX();
         this.m[r][c + 1] = vector.getY();
     }
 
@@ -267,12 +351,12 @@ public class MatrixDouble {
      * @return this matrix
      */
     public MatrixDouble addSubMatrix(int firstRow, int firstColumn, MatrixDouble mt) {
-        if(this.height() < (firstRow + mt.height()) || this.width() < (firstColumn + mt.width())) {
+        if (this.height() < (firstRow + mt.height()) || this.width() < (firstColumn + mt.width())) {
             throw new Error("matrix dimension out of bounds");
         }
 
-        for(int i = 0; i < mt.height(); i++) {
-            for(int j = 0; j < mt.width(); j++) {
+        for (int i = 0; i < mt.height(); i++) {
+            for (int j = 0; j < mt.width(); j++) {
                 m[i + firstRow][j + firstColumn] += mt.m[i][j];
             }
         }
@@ -288,8 +372,8 @@ public class MatrixDouble {
      */
     public MatrixDouble transpose() {
         MatrixDouble tm = new MatrixDouble(columns, rows);
-        for(int i = 0; i < rows; i++) {
-            for(int j = 0; j < columns; j++) {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
                 tm.m[j][i] = this.m[i][j];
             }
         }
@@ -304,8 +388,8 @@ public class MatrixDouble {
      */
     public MatrixDouble transposeC() {
         MatrixDouble tM = new MatrixDouble(this.m[0].length, this.m.length);
-        for(int i = 0; i < tM.m.length; i++){
-            for(int j = 0; j < tM.m[0].length; j++){
+        for (int i = 0; i < tM.m.length; i++) {
+            for (int j = 0; j < tM.m[0].length; j++) {
                 tM.m[i][j] = this.m[j][i];
             }
         }
@@ -330,7 +414,7 @@ public class MatrixDouble {
      */
     public static MatrixDouble createFromArray(double[][] mat) {
         MatrixDouble mt = new MatrixDouble(mat.length, mat[0].length);
-        for(int i = 0; i < mat.length; i++) {
+        for (int i = 0; i < mat.length; i++) {
             System.arraycopy(mat[i], 0, mt.m[i], 0, mat[i].length);
         }
         return mt;
@@ -356,10 +440,10 @@ public class MatrixDouble {
      * @return m x m 2D array of doubles.
      */
     public static MatrixDouble diagonal(int m, double c) {
-        if(m < 1)
+        if (m < 1)
             throw new IllegalArgumentException("First argument must be > 0");
         MatrixDouble I = new MatrixDouble(m, m);
-        for(int i = 0; i < I.m.length; i++)
+        for (int i = 0; i < I.m.length; i++)
             I.m[i][i] = c;
         return I;
     }
@@ -373,7 +457,7 @@ public class MatrixDouble {
      */
     public static MatrixDouble diagonal(double... c) {
         MatrixDouble I = new MatrixDouble(c.length, c.length);
-        for(int i = 0; i < I.m.length; i++)
+        for (int i = 0; i < I.m.length; i++)
             I.m[i][i] = c[i];
         return I;
     }
@@ -405,8 +489,8 @@ public class MatrixDouble {
      */
     public static MatrixDouble fill(int m, int n, double c) {
         MatrixDouble o = new MatrixDouble(m, n);
-        for(int i = 0; i < o.m.length; i++)
-            for(int j = 0; j < o.m[i].length; j++)
+        for (int i = 0; i < o.m.length; i++)
+            for (int j = 0; j < o.m[i].length; j++)
                 o.m[i][j] = c;
         return o;
     }
@@ -439,14 +523,14 @@ public class MatrixDouble {
     public static MatrixDouble mergeByColumn(MatrixDouble... MD) {
         int maxRows = 0;
         int maxColumns = 0;
-        for(int i = 0; i < MD.length; i++) {
+        for (int i = 0; i < MD.length; i++) {
             maxRows += MD[i].height();
-            if(MD[i].width() > maxColumns) maxColumns = MD[i].width();
+            if (MD[i].width() > maxColumns) maxColumns = MD[i].width();
         }
         MatrixDouble MT = new MatrixDouble(maxRows, maxColumns);
         int currentRow = 0;
-        for(int i = 0; i < MD.length; i++) {
-            for(int j = 0; j < MD[i].height(); j++) { //j - numer wiersza w danej macierzy
+        for (int i = 0; i < MD.length; i++) {
+            for (int j = 0; j < MD[i].height(); j++) { //j - numer wiersza w danej macierzy
                 System.arraycopy(MD[i].m[j], 0, MT.m[currentRow + j], 0, MD[i].m[j].length);
             }
             currentRow += MD[i].height();
@@ -467,14 +551,14 @@ public class MatrixDouble {
     public static MatrixDouble mergeByRow(MatrixDouble... MD) {
         int maxRows = 0;
         int maxColumns = 0;
-        for(int i = 0; i < MD.length; i++) {
+        for (int i = 0; i < MD.length; i++) {
             maxColumns += MD[i].width();
-            if(MD[i].height() > maxRows) maxRows = MD[i].height();
+            if (MD[i].height() > maxRows) maxRows = MD[i].height();
         }
         MatrixDouble MT = new MatrixDouble(maxRows, maxColumns);
         int currentColumn = 0;
-        for(int i = 0; i < MD.length; i++) {
-            for(int j = 0; j < MD[i].height(); j++) { //j - numer wiersza w danej macierzy
+        for (int i = 0; i < MD.length; i++) {
+            for (int j = 0; j < MD[i].height(); j++) { //j - numer wiersza w danej macierzy
                 System.arraycopy(MD[i].m[j], 0, MT.m[j], currentColumn, MD[i].m[j].length);
             }
             currentColumn += MD[i].width();
@@ -520,11 +604,11 @@ public class MatrixDouble {
      */
     public String toString(String format) {
         StringBuffer str = new StringBuffer();
-        for(int i = 0; i < this.m.length; i++) {
-            for(int j = 0; j < this.m[i].length - 1; j++)
+        for (int i = 0; i < this.m.length; i++) {
+            for (int j = 0; j < this.m[i].length - 1; j++)
                 str.append(String.format(format + " ", this.m[i][j]));
             str.append(String.format(format, this.m[i][this.m[i].length - 1]));
-            if(i < this.m.length - 1)
+            if (i < this.m.length - 1)
                 str.append("\n");
         }
         return str.toString();
@@ -548,6 +632,19 @@ public class MatrixDouble {
      * @param args
      */
     public static void main(String[] args) {
+        MatrixDouble A = MatrixDouble.fill(3, 2, 1.0);
+        A.set(0,1, 5);
+        A.set(1,1, 7);
+        A.set(2,1, 9);
+        MatrixDouble B = MatrixDouble.fill(2, 3, 3.0);
+
+        MatrixDouble C = A.mult(B);
+
+        System.out.println(A.toString());
+        System.out.println(B.toString());
+        System.out.println(C.toString());
+    }
+    public static void main2(String[] args) {
         MatrixDouble m1 = MatrixDouble.fill(1, 3, 1.0);
         System.out.println(m1);
         //m1.resize(3, 3);

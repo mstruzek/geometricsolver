@@ -187,6 +187,7 @@ public class ConstraintTangency extends Constraint {
             i++;
         }
         return mt;
+//        return MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
     }
 
     @Override

@@ -52,7 +52,7 @@ public enum GeometricConstraintType{
     /**
      * 2 punkty maja to same polozenie zero-X - Coincidence
      */
-    ConnectHorizontal{
+    HorizontalPoint {
         @Override
         public int size(){
             return 1;
@@ -74,7 +74,7 @@ public enum GeometricConstraintType{
     /**
      * 2 punkty maja to same polozenie zero-Y - Coincidence
      */
-    ConnectVertical{
+    VerticalPoint {
         @Override
         public int size(){
             return 1;
