@@ -55,42 +55,42 @@ public class ConstraintTangency extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        Vector vMK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
-        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+        Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
+        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         MatrixDouble mt = new MatrixDouble(1, 1);
-        mt.set(0, 0, Math.sqrt(vLK.cross(vMK) * vLK.cross(vMK)) - vLK.length() * vNM.length());
+        mt.set(0, 0, Math.sqrt(LK.cross(MK) * LK.cross(MK)) - LK.length() * NM.length());
         return mt;
     }
 
     @Override
     public MatrixDouble getJacobian() {
         MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
-        Vector vMK = (dbPoint.get(m_id)).sub(dbPoint.get(k_id));
-        Vector vLK = (dbPoint.get(l_id)).sub(dbPoint.get(k_id));
-        Vector vLM = (dbPoint.get(l_id)).sub(dbPoint.get(m_id));
-        Vector vNM = (dbPoint.get(n_id)).sub(dbPoint.get(m_id));
-        double g = vLK.cross(vMK);
+        Vector MK = (dbPoint.get(m_id)).sub(dbPoint.get(k_id));
+        Vector LK = (dbPoint.get(l_id)).sub(dbPoint.get(k_id));
+        Vector LM = (dbPoint.get(l_id)).sub(dbPoint.get(m_id));
+        Vector NM = (dbPoint.get(n_id)).sub(dbPoint.get(m_id));
+        double g = LK.cross(MK);
         double zn = Math.signum(g);
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             //a tu wstawiamy macierz dla tego wiezu
             if (k_id == dbPoint.get(i).id) {
-                mt.set(0, j * 2     ,  zn * vLM.y + vNM.length() * vLK.unit().x);
-                mt.set(0, j * 2 + 1 , -zn * vLM.x + vNM.length() * vLK.unit().y);
+                mt.set(0, j * 2     ,  zn * LM.y + NM.length() * LK.unit().x);
+                mt.set(0, j * 2 + 1 , -zn * LM.x + NM.length() * LK.unit().y);
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.set(0, j * 2     ,  zn * vMK.y - vNM.length() * vLK.unit().x);
-                mt.set(0, j * 2 + 1 , -zn * vMK.x - vNM.length() * vLK.unit().y);
+                mt.set(0, j * 2     ,  zn * MK.y - NM.length() * LK.unit().x);
+                mt.set(0, j * 2 + 1 , -zn * MK.x - NM.length() * LK.unit().y);
             }
             //a tu wstawiamy macierz dla tego wiezu
             if (m_id == dbPoint.get(i).id) {
-                mt.set(0, j * 2     , -zn * vLK.y + vLK.length() * vNM.unit().x);
-                mt.set(0, j * 2 + 1 ,  zn * vLK.x + vLK.length() * vNM.unit().y);
+                mt.set(0, j * 2     , -zn * LK.y + LK.length() * NM.unit().x);
+                mt.set(0, j * 2 + 1 ,  zn * LK.x + LK.length() * NM.unit().y);
             }
             if (n_id == dbPoint.get(i).id) {
-                mt.set(0, j * 2     , -vLK.length() * vNM.unit().x);
-                mt.set(0, j * 2 + 1 , -vLK.length() * vNM.unit().y);
+                mt.set(0, j * 2     , -LK.length() * NM.unit().x);
+                mt.set(0, j * 2 + 1 , -LK.length() * NM.unit().y);
             }
             j++;
         }
@@ -106,13 +106,13 @@ public class ConstraintTangency extends Constraint {
     public MatrixDouble getHessian(double alfa) {
         //macierz NxN
         MatrixDouble mt = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-        Vector vMK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
-        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector vLM = dbPoint.get(l_id).sub(dbPoint.get(m_id));
-        Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
-        double g = vLK.cross(vMK);
+        Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
+        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector LM = dbPoint.get(l_id).sub(dbPoint.get(m_id));
+        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+        double g = LK.cross(MK);
         double zn = Math.signum(g);
-        double k = vNM.unit().dot(vLK.unit());
+        double k = NM.unit().dot(LK.unit());
         int i = 0;
         //same punkty
         for (Integer qI : dbPoint.keySet()) { //wiersz         /// FIXME -- outer loop

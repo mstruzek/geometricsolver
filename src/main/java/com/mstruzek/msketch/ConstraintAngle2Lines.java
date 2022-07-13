@@ -62,37 +62,37 @@ public class ConstraintAngle2Lines extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         MatrixDouble mt = new MatrixDouble(1, 1);
-        mt.set(0, 0, vLK.dot(vNM) - vLK.length() * vNM.length() * Math.cos(dbParameter.get(param_id).getRadians()));
+        mt.set(0, 0, LK.dot(NM) - LK.length() * NM.length() * Math.cos(dbParameter.get(param_id).getRadians()));
         return mt;
     }
 
     @Override
     public MatrixDouble getJacobian() {
         MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
-        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
-        Vector uLKdNM = vLK.unit().dot(vNM.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
-        Vector uNMdLK = vNM.unit().dot(vLK.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
+        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+        Vector uLKdNM = LK.unit().dot(NM.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
+        Vector uNMdLK = NM.unit().dot(LK.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.set(0, j * 2     , -vNM.x + uLKdNM.x);
-                mt.set(0, j * 2 + 1 , -vNM.y + uLKdNM.y);
+                mt.set(0, j * 2     , -NM.x + uLKdNM.x);
+                mt.set(0, j * 2 + 1 , -NM.y + uLKdNM.y);
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.set(0, j * 2     , vNM.x - uLKdNM.x);
-                mt.set(0, j * 2 + 1 , vNM.y - uLKdNM.y);
+                mt.set(0, j * 2     , NM.x - uLKdNM.x);
+                mt.set(0, j * 2 + 1 , NM.y - uLKdNM.y);
             }
             if (m_id == dbPoint.get(i).id) {
-                mt.set(0, j * 2     , -vLK.x + uNMdLK.x);
-                mt.set(0, j * 2 + 1 , -vLK.y + uNMdLK.y);
+                mt.set(0, j * 2     , -LK.x + uNMdLK.x);
+                mt.set(0, j * 2 + 1 , -LK.y + uNMdLK.y);
             }
             if (n_id == dbPoint.get(i).id) {
-                mt.set(0, j * 2     , vLK.x - uNMdLK.x);
-                mt.set(0, j * 2 + 1 , vLK.y - uNMdLK.y);
+                mt.set(0, j * 2     , LK.x - uNMdLK.x);
+                mt.set(0, j * 2 + 1 , LK.y - uNMdLK.y);
             }
             j++;
         }
@@ -107,9 +107,9 @@ public class ConstraintAngle2Lines extends Constraint {
     @Override
     public MatrixDouble getHessian(double alfa) {
         MatrixDouble mt = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
-        Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
-        double g = vLK.dot(vNM) * Math.cos(dbParameter.get(param_id).getRadians());
+        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
+        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
+        double g = LK.dot(NM) * Math.cos(dbParameter.get(param_id).getRadians());
         int i = 0;
         for (Integer pI : dbPoint.keySet()) { /// wiersz
             int j = 0;
@@ -218,9 +218,9 @@ public class ConstraintAngle2Lines extends Constraint {
 
     @Override
     public double getNorm() {
-        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         MatrixDouble mt = getValue();
-        return mt.get(0, 0) / (vLK.length() * vNM.length());
+        return mt.get(0, 0) / (LK.length() * NM.length());
     }
 }

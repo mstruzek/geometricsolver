@@ -64,21 +64,21 @@ public class ConstraintLinesSameLength extends Constraint {
     @Override
     public MatrixDouble getJacobian() {
         MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
-        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
-        Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
+        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
+        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2 , vLK.dot(-1.0));
+                mt.setVectorT(0, j * 2 , LK.dot(-1.0));
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2 , vLK);
+                mt.setVectorT(0, j * 2 , LK);
             }
             if (m_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2 , vNM);
+                mt.setVectorT(0, j * 2 , NM);
             }
             if (n_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2 , vNM.dot(-1.0));
+                mt.setVectorT(0, j * 2 , NM.dot(-1.0));
             }
             j++;
         }
@@ -94,9 +94,9 @@ public class ConstraintLinesSameLength extends Constraint {
     @Override
     public MatrixDouble getValue() {
         MatrixDouble mt = new MatrixDouble(1, 1);
-        Double vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).length();
-        Double vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).length();
-        mt.set(0, 0 , vLK - vNM);
+        Double LK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).length();
+        Double NM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).length();
+        mt.set(0, 0 , LK - NM);
         return mt;
     }
 

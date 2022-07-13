@@ -51,11 +51,11 @@ public class ConstraintDistancePointLine extends Constraint {
     @Override
     public MatrixDouble getValue() {
         MatrixDouble mt = new MatrixDouble(1, 1);
-        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector vMK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
+        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
         double d = Parameter.dbParameter.get(param_id).getValue();
 
-        mt.set(0, 0, vLK.cross(vMK) * vLK.cross(vMK) - d * d * vLK.length() * vLK.length());
+        mt.set(0, 0, LK.cross(MK) * LK.cross(MK) - d * d * LK.length() * LK.length());
 
         return mt;
     }
@@ -63,24 +63,24 @@ public class ConstraintDistancePointLine extends Constraint {
     @Override
     public MatrixDouble getJacobian() {
         MatrixDouble mt = new MatrixDouble(1, dbPoint.size() * 2);
-        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector vMK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
-        Vector vML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
+        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
+        Vector ML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
         double d = Parameter.dbParameter.get(param_id).getValue(); /// parameter value
-        double z = vLK.cross(vMK);
+        double z = LK.cross(MK);
         int j = 0;
         for (Integer id : dbPoint.keySet()) {
             /// ################################################################## k  /// Explicitly Repeated Accessor
             if (k_id == dbPoint.get(id).id) {
-                mt.setVectorT(0, 2 * j, vML.inv().dot(z * 2).add(vLK.dot(2 * d * d)));
+                mt.setVectorT(0, 2 * j, ML.inv().dot(z * 2).add(LK.dot(2 * d * d)));
             }
             /// ################################################################## l
             if (l_id == dbPoint.get(id).id) {
-                mt.setVectorT(0, 2 * j, vMK.inv().dot(z * -2.0).add(vLK.dot(-2.0 * d * d)));
+                mt.setVectorT(0, 2 * j, MK.inv().dot(z * -2.0).add(LK.dot(-2.0 * d * d)));
             }
             /// ################################################################## m
             if (m_id == dbPoint.get(id).id) {
-                mt.setVectorT(0, 2 * j, vLK.inv().dot(z * 2.0));
+                mt.setVectorT(0, 2 * j, LK.inv().dot(z * 2.0));
             }
             j++;
         }
