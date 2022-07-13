@@ -115,7 +115,8 @@ public final class Model {
                 add(new ConstraintLinesParallelism(constId, K, L, M, N));
                 break;
             case Tangency:
-                add(new ConstraintTangency(constId, K, L, M, N));
+//                add(new ConstraintTangency(constId, K, L, M, N));
+                add(new ConstraintZTangency(constId, K, L, M, N));
                 break;
             case Distance2Points:
                 add(new ConstraintDistance2Points(constId, K, L, parameter));
@@ -125,7 +126,7 @@ public final class Model {
                 add(new ConstraintAngle2Lines(constId, K, L, M, N, parameter));
                 add(parameter);
                 break;
-            case DistancePointLine: // FIXME - dokonczyc wiez , nie ma IMPL
+            case DistancePointLine:
                 add(new ConstraintDistancePointLine(constId, K, L, M, parameter));
                 add(parameter);
                 break;

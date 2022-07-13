@@ -71,7 +71,7 @@ public class ConstraintVerticalPoint extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian(double alfa) {
+    public MatrixDouble getHessian(double lagrange) {
         return null;
     }
 

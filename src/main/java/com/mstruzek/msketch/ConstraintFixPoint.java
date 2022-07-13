@@ -92,7 +92,7 @@ public class ConstraintFixPoint extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian(double alfa) {
+    public MatrixDouble getHessian(double lagrange) {
         return null;
     }
 

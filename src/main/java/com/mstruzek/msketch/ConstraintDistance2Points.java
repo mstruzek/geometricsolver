@@ -80,7 +80,7 @@ public class ConstraintDistance2Points extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian(double alfa) {
+    public MatrixDouble getHessian(double lagrange) {
         return null;
     }
 

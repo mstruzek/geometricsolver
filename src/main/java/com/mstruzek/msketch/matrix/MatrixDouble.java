@@ -116,6 +116,11 @@ public class MatrixDouble {
 
     public static class SmallMatrixDouble extends  MatrixDouble {
         double[] sm = new double[4];
+
+        public SmallMatrixDouble() {
+            super(2,2);
+        }
+
         public SmallMatrixDouble(double a00, double a01, double a10, double a11) {
             super(2,2);
             sm[0] = a00;
@@ -624,7 +629,7 @@ public class MatrixDouble {
     public String toString() {
         StringBuffer str = new StringBuffer();
         str.append("\nMatrixDouble.m " + this.height() + "x" + this.width() + "\n**************************************** \n");
-        str.append(toString("%7.3f"));
+        str.append(toString("%9.2f"));
         return str.toString();
     }
 

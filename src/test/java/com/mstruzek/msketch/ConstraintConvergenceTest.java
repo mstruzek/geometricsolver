@@ -1,6 +1,5 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
 import com.mstruzek.msketch.solver.GeometricSolver;
 import com.mstruzek.msketch.solver.GeometricSolverImpl;
 import com.mstruzek.msketch.solver.SolverStat;
@@ -9,6 +8,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import static java.lang.System.out;
 
 public class ConstraintConvergenceTest {
 
@@ -48,7 +49,7 @@ public class ConstraintConvergenceTest {
         f10.setAssociateConstraints(null);
 
         Constraint constraint = new ConstraintFixPoint(Constraint.nextId(), p10);
-        p10.setLocation(100.0,100.0);
+        p10.setLocation(100.0, 100.0);
 
         geometricSolver.solveSystem(reporter, solverStat);
 
@@ -271,15 +272,15 @@ public class ConstraintConvergenceTest {
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
 
-        Constraint constraint = new ConstraintTangency(Constraint.nextId(), p10, p20, p30, p40);
+        Constraint constraint = new ConstraintZTangency(Constraint.nextId(), p10, p20, p30, p40);
 
         geometricSolver.solveSystem(reporter, solverStat);
 
-        Assert.assertEquals(14, solverStat.iterations);
-        Assert.assertTrue(solverStat.converged);
+        Assert.assertEquals(19, solverStat.iterations);
+        Assert.assertTrue(!solverStat.converged);
         Assert.assertTrue(solverStat.delta < 10e-2);
-        Assert.assertTrue(solverStat.constraintDelta < 10e-5);
-        Assert.assertTrue(constraint.getNorm() < 10e-5);
+        Assert.assertTrue(solverStat.constraintDelta < 10e-2);
+        Assert.assertTrue(constraint.getNorm() < 1e-6);
     }
 
     @Test
@@ -324,22 +325,11 @@ public class ConstraintConvergenceTest {
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
 
-        Constraint constraint = new ConstraintTangency(Constraint.nextId(), p10, p20, p30, p40);
+        Constraint constraint = new ConstraintZTangency(Constraint.nextId(), p10, p20, p30, p40);
 
+        out.println(constraint.getJacobian().toString());
+        out.println(constraint.getHessian(1.0).toString());
 
-        MatrixDouble jacobian = constraint.getJacobian();
-
-        System.out.println(jacobian.toString());
-
-        MatrixDouble hessian = constraint.getHessian(1.0);
-        System.out.println(hessian.toString());
-
-
-        MatrixDouble R = MatrixDouble.getRotation2x2(90 + 180);
-        MatrixDouble mR = MatrixDouble.getRotation2x2(90); //mR=-R
-
-        System.out.println(R.toString());
-        System.out.println(mR.toString());
     }
 
 

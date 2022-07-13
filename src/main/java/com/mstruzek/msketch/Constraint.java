@@ -94,7 +94,7 @@ public abstract class Constraint implements ConstraintInterface {
      * Jedyny  wiez o size=2 czyli ConstraintConnect2Point ma staly
      * Jacobian zatem nie ma Hessianu
      */
-    public abstract MatrixDouble getHessian(double alfa);
+    public abstract MatrixDouble getHessian(double lagrange);
 
     /**
      * Funkcja zwraca true jesli Hessian jest staly
@@ -183,19 +183,19 @@ public abstract class Constraint implements ConstraintInterface {
     public static MatrixDouble getFullHessian(MatrixDouble hs, BindMatrix dmx) {
 
         int offset = 0; //licznik mnoznikow lagrange'a
-        double alfa = 0.0;//wartosc aktualnego mnoznika
+        double lagrange = 0.0;//wartosc aktualnego mnoznika
         MatrixDouble conHs = null;
 
         for (Integer id : dbConstraint.keySet()) {
             if (!(Constraint.dbConstraint.get(id).isJacobianConstant())) {
                 /// jest hessian
-                alfa = dmx.get(dbPoint.size() * 2 + offset, 0);
+                lagrange = dmx.get(dbPoint.size() * 2 + offset, 0);
                 ///
                 ///   Hessian - dla tego wiezu liczony na cala macierz !
                 ///  -- ! add into mem in place AddVisitator
                 ///
 
-                conHs = Constraint.dbConstraint.get(id).getHessian(alfa);
+                conHs = Constraint.dbConstraint.get(id).getHessian(lagrange);
 
                 if (conHs != null) {
                     hs.add((conHs));

@@ -72,15 +72,15 @@ public class ConstraintDistancePointLine extends Constraint {
         for (Integer id : dbPoint.keySet()) {
             /// ################################################################## k  /// Explicitly Repeated Accessor
             if (k_id == dbPoint.get(id).id) {
-                mt.setVectorT(0, 2 * j, ML.inv().dot(z * 2).add(LK.dot(2 * d * d)));
+                mt.setVectorT(0, 2 * j, ML.cross().dot(z * 2).add(LK.dot(2 * d * d)));
             }
             /// ################################################################## l
             if (l_id == dbPoint.get(id).id) {
-                mt.setVectorT(0, 2 * j, MK.inv().dot(z * -2.0).add(LK.dot(-2.0 * d * d)));
+                mt.setVectorT(0, 2 * j, MK.cross().dot(z * -2.0).add(LK.dot(-2.0 * d * d)));
             }
             /// ################################################################## m
             if (m_id == dbPoint.get(id).id) {
-                mt.setVectorT(0, 2 * j, LK.inv().dot(z * 2.0));
+                mt.setVectorT(0, 2 * j, LK.cross().dot(z * 2.0));
             }
             j++;
         }
@@ -99,7 +99,7 @@ public class ConstraintDistancePointLine extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian(double alfa) {
+    public MatrixDouble getHessian(double lagrange) {
         /// macierz NxN
         MatrixDouble mt = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
         Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
@@ -109,57 +109,57 @@ public class ConstraintDistancePointLine extends Constraint {
         MatrixDouble R = MatrixDouble.matR();
         MatrixDouble D = MatrixDouble.diagonal(2, 2 * d * d);
         MatrixDouble Dm = MatrixDouble.diagonal(2, -2 * d * d);
-        double SC = MK.dot(LK.inv()); ///
+        double SC = MK.dot(LK.cross()); ///
         int i = 0;
-        for (Integer qI : dbPoint.keySet()) { //wiersz
+        for (Integer qI : dbPoint.keySet()) { // wiersz
             int j = 0;
-            for (Integer qJ : dbPoint.keySet()) { //kolumna
+            for (Integer qJ : dbPoint.keySet()) { // kolumna
                 /// # # # FI - k
                 //k,k
                 if (k_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
-                    var mat = ML.inv().dotTrans(MK.inv().sub(LK.inv())).dot(2).add(Dm);
+                    var mat = ML.cross().cartesian(MK.cross().sub(LK.cross())).dot(2).add(Dm);
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 //k,l
                 if (k_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(-2.0 * SC).add(ML.inv().dotTrans(MK).mult(R).dot(2.0)).add(D);
+                    var mat = R.dotC(-2.0 * SC).add(ML.cross().cartesian(MK).mult(R).dot(2.0)).add(D);
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 //k,m
                 if (k_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(2 * SC).add(ML.inv().dotTrans(LK.inv()).dot(2.0));
+                    var mat = R.dotC(2 * SC).add(ML.cross().cartesian(LK.cross()).dot(2.0));
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 /// # # # FI - l
                 //l,k
                 if (l_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(2 * SC).add(MK.inv().dotTrans(ML.inv()).dot(-2.0)).add(D);
+                    var mat = R.dotC(2 * SC).add(MK.cross().cartesian(ML.cross()).dot(-2.0)).add(D);
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 //l,l
                 if (l_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
-                    var mat = MK.inv().dotTrans(MK.inv()).dot(2.0).add(Dm);
+                    var mat = MK.cross().cartesian(MK.cross()).dot(2.0).add(Dm);
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 //l,m
                 if (l_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(-2.0 * SC).add(MK.inv().dotTrans(LK.inv()).dot(-2.0));
+                    var mat = R.dotC(-2.0 * SC).add(MK.cross().cartesian(LK.cross()).dot(-2.0));
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 /// # # # FI - m
                 //m,k
                 if (m_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(-2.0 * SC).add( LK.inv().dotTrans( MK.inv()).dot(-2.0));
+                    var mat = R.dotC(-2.0 * SC).add( LK.cross().cartesian( MK.cross()).dot(-2.0));
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 //m,l
                 if (m_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(2.0 * SC).add( LK.inv().dotTrans( MK.inv()).dot(-2.0));
+                    var mat = R.dotC(2.0 * SC).add( LK.cross().cartesian( MK.cross()).dot(-2.0));
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 //m,m
                 if (m_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
-                    var mat = LK.inv().dotTrans( LK.inv()).dot(2.0);
+                    var mat = LK.cross().cartesian( LK.cross()).dot(2.0);
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 j++;

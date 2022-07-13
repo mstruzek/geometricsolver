@@ -98,11 +98,11 @@ public class ConstraintLinesSameLength2 extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian(double alfa) {
+    public MatrixDouble getHessian(double lagrange) {
         /// macierz NxN
         MatrixDouble mt = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-        MatrixDouble I = MatrixDouble.identity(2).dot(2.0).dot(alfa);
-        MatrixDouble mI = MatrixDouble.identity(2).dot(-2.0).dot(alfa);
+        MatrixDouble I = MatrixDouble.identity(2).dot(2.0).dot(lagrange);
+        MatrixDouble mI = MatrixDouble.identity(2).dot(-2.0).dot(lagrange);
         for (Integer i : dbPoint.keySet()) { //wiersz
             for (Integer j : dbPoint.keySet()) { //kolumna
                 //wstawiamy I,-I w odpowiednie miejsca

@@ -22,6 +22,10 @@ public class GeometricSolverImpl implements GeometricSolver {
 
     private static final Clock clock = Clock.systemUTC();
 
+    /** convergence level */
+    public static final double CONVERGENCE_LIMIT = 10e-5;
+
+
 
     @Override
     public SolverStat solveSystem(StateReporter reporter, SolverStat solverStat) {
@@ -140,16 +144,20 @@ public class GeometricSolverImpl implements GeometricSolver {
             /// AFTER -- copyToPoints  x2
             Constraint.getFullConstraintValues(Fi);
 
-            norm1 = Fi.norm1();
+//            norm1 = Fi.norm1();
+
+
+            norm1 = Constraint.getFullNorm();
 
             reporter.writelnf(" [ step :: %d]  duration [ms] = %d  norm = %e ", itr, (clock.millis() - solverStep), norm1);
 
             /// Gdy po 5-6 iteracja normy wiezow kieruja sie w strone minimum energii, to repozycjonowac prowadzacych "straznikow"
 
             //stary warunek wyjscia
-            if (norm1 < 10e-5) {
+            if (norm1 < CONVERGENCE_LIMIT) {
                 solverStat.delta = norm1;
-                reporter.writelnf("fast convergence - norm [ %e ]  , constraint error = %e", norm1, Constraint.getFullNorm());
+                reporter.writelnf("fast convergence - norm [ %e ]  ", norm1);
+                reporter.writelnf("constraint error = %e", Constraint.getFullNorm());
                 reporter.writeln("");
                 break;
             }
@@ -178,7 +186,7 @@ public class GeometricSolverImpl implements GeometricSolver {
         reporter.writeln(""); // print execution time
 
         solverStat.constraintDelta = Constraint.getFullNorm();
-        solverStat.converged = true;
+        solverStat.converged = norm1 < CONVERGENCE_LIMIT;
         solverStat.stopTime = clock.millis();
 
         return solverStat;

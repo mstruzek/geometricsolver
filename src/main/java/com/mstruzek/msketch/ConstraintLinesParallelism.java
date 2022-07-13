@@ -144,12 +144,12 @@ public class ConstraintLinesParallelism extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian(double alfa) {  /// FIXME BLAD hesianu - "unstable"
+    public MatrixDouble getHessian(double lagrange) {  /// FIXME BLAD hesianu - "unstable"
         /// macierz NxN
         MatrixDouble mt = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
 
-        final MatrixDouble R = MatrixDouble.getRotation2x2(90 + 180).dot(alfa);     /// R
-        final MatrixDouble Rm = MatrixDouble.getRotation2x2(90).dot(alfa);          /// Rm = -R
+        final MatrixDouble R = MatrixDouble.getRotation2x2(90 + 180).dot(lagrange);     /// R
+        final MatrixDouble Rm = MatrixDouble.getRotation2x2(90).dot(lagrange);          /// Rm = -R
         if ((m == null) && (n == null)) {
             int i = 0;
             for (Integer vI : dbPoint.keySet()) { /// wiersz

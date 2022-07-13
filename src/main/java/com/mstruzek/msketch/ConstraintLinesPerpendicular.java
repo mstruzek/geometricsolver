@@ -134,12 +134,12 @@ public class ConstraintLinesPerpendicular extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian(double alfa) {
+    public MatrixDouble getHessian(double lagrange) {
         /// macierz NxN
         MatrixDouble mt = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
         if ((m == null) && (n == null)) {
-            MatrixDouble I = MatrixDouble.identity(2).dot(alfa);
-            MatrixDouble Im = MatrixDouble.identity(2).dot(alfa);
+            MatrixDouble I = MatrixDouble.identity(2).dot(lagrange);
+            MatrixDouble Im = MatrixDouble.identity(2).dot(lagrange);
             //same punkty
             int i = 0;
             for (Integer vI : dbPoint.keySet()) { //wiersz
