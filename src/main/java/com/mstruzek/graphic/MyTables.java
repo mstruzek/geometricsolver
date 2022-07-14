@@ -98,6 +98,12 @@ public class MyTables extends JPanel {
         add(consScrollPane);
         add(variaScrollPane);
 
+        Events.addListener(EventType.REBUILD_TABLES, (eventType, arguments) -> {
+            ptm.fireTableChanged(new TableModelEvent(ptm, 0, ptm.getRowCount(), TableModelEvent.ALL_COLUMNS, TableModelEvent.DELETE));
+            vtm.fireTableChanged(new TableModelEvent(vtm, 0, vtm.getRowCount(), TableModelEvent.ALL_COLUMNS, TableModelEvent.DELETE));
+            mtm.fireTableChanged(new TableModelEvent(mtm, 0, mtm.getRowCount(), TableModelEvent.ALL_COLUMNS, TableModelEvent.DELETE));
+        });
+
         Events.addListener(EventType.PRIMITIVE_TABLE_INSERT, (eventType, arguments) -> {
             int rowCount = ptm.getRowCount();
             ptm.fireTableRowsInserted(rowCount, rowCount);
@@ -177,7 +183,7 @@ public class MyTables extends JPanel {
                 .findFirst()
                 .orElseThrow(() -> new IndexOutOfBoundsException("constraint: " + i));
 
-        int parId = constraint.getParametr();
+        int parId = constraint.getParameter();
         if (parId >= 0) {
             Parameter[] parameters = Parameter.dbParameter.values().toArray(new Parameter[]{});
             for (int k = 0; k < parameters.length; k++) {
@@ -211,7 +217,7 @@ public class MyTables extends JPanel {
 
         for (int j : constraints) {
             Constraint constraint = Constraint.dbConstraint.get(j);
-            int parameterId = constraint.getParametr();
+            int parameterId = constraint.getParameter();
             if (parameterId != -1) {
                 Parameter.dbParameter.remove(parameterId);
             }

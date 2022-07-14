@@ -61,7 +61,7 @@ public class MySketch extends JPanel implements MouseInputListener{
      */
     private final Controller controller;
 
-    private boolean withControlLines=false;
+    private boolean guideLines =false;
 
     public MySketch(Controller controller){
         super();
@@ -87,15 +87,15 @@ public class MySketch extends JPanel implements MouseInputListener{
     /**
      * Czy rysowanie linii kontrolnych wlaczone.
      */
-    public boolean isWithControlLines(){
-        return withControlLines;
+    public boolean isGuideLines(){
+        return guideLines;
     }
 
     /**
      * Ustaw rysowanie linii kontrolnych.
      */
-    public void setWithControlLines(boolean withControlLines){
-        this.withControlLines=withControlLines;
+    public void setGuideLines(boolean guideLines){
+        this.guideLines = guideLines;
     }
 
     public void setStateSketch(MySketchState stateSketch){
@@ -204,7 +204,7 @@ public class MySketch extends JPanel implements MouseInputListener{
             g2d.draw(new Line2D.Double(tp1.x,tp1.y,tp2.x,tp2.y));
 
             //dodatki
-            if(withControlLines){
+            if(guideLines){
                 g2d.setColor(Color.LIGHT_GRAY);
 
                 int pA=GeometricPrimitive.dbPrimitives.get(ml.getPrimitiveId()).getA();
@@ -234,7 +234,7 @@ public class MySketch extends JPanel implements MouseInputListener{
             g2d.draw(new Ellipse2D.Double(tp1.x-r,tp1.y-r,2*r,2*r));
             g2d.draw(new Line2D.Double(tp1.x,tp1.y,tp2.x,tp2.y));
 
-            if(withControlLines){
+            if(guideLines){
                 g2d.setColor(Color.LIGHT_GRAY);
 
                 int pA=GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getA();
@@ -289,7 +289,7 @@ public class MySketch extends JPanel implements MouseInputListener{
             g2d.draw(new Line2D.Double(tp1.x,tp1.y,tp3.x,tp3.y));
 
 
-            if(withControlLines){
+            if(guideLines){
                 g2d.setColor(Color.LIGHT_GRAY);
 
                 int pA=GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getA();
@@ -325,7 +325,7 @@ public class MySketch extends JPanel implements MouseInputListener{
 
         }
         for(int i=0;i<freePointStore.size();i++){
-            if(withControlLines){
+            if(guideLines){
                 g2d.setColor(Color.LIGHT_GRAY);
                 MyFreePoint mfp=freePointStore.get(i);
 

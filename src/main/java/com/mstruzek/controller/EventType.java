@@ -10,4 +10,5 @@ public final class EventType {
 
     public static final String REFRESH_N_REPAINT = "REFRESH_N_REPAINT";
 
+    public static final String REBUILD_TABLES = "REBUILD_TABLES";
 }

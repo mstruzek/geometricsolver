@@ -2,6 +2,9 @@ package com.mstruzek.msketch.matrix;
 
 import com.mstruzek.msketch.Vector;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * Klasa reprezentuje macierz
  * + dodatkowe operacje
@@ -24,8 +27,7 @@ public class MatrixDouble {
     int rows;
 
 
-
-    final static MatrixDouble R = new MatrixDouble(2,2);
+    final static MatrixDouble R = new MatrixDouble(2, 2);
 
 
     /**
@@ -103,26 +105,26 @@ public class MatrixDouble {
 
     /**
      * Multiplication matrix to transform left operand vector in cross product equations  (a x b) =>  (R * a * b )
+     *
      * @return matrix double // FIXME SmallMatrixDouble
      */
     public static MatrixDouble matR() {
         SmallMatrixDouble mt = new SmallMatrixDouble(
             0.0, -1.0,
-            1.0,  0.0);
+            1.0, 0.0);
         return mt;
     }
 
 
-
-    public static class SmallMatrixDouble extends  MatrixDouble {
+    public static class SmallMatrixDouble extends MatrixDouble {
         double[] sm = new double[4];
 
         public SmallMatrixDouble() {
-            super(2,2);
+            super(2, 2);
         }
 
         public SmallMatrixDouble(double a00, double a01, double a10, double a11) {
-            super(2,2);
+            super(2, 2);
             sm[0] = a00;
             sm[1] = a01;
             sm[2] = a10;
@@ -236,7 +238,7 @@ public class MatrixDouble {
     public MatrixDouble mult(MatrixDouble rhs) {
         if (this.width() != rhs.height()) throw new Error("Illegal dimension of right-hand side operand matrix");
 
-        if(height() == 2 && width() == 2 &&  rhs.height() == 2 && rhs.width() ==2) {
+        if (height() == 2 && width() == 2 && rhs.height() == 2 && rhs.width() == 2) {
             MatrixDouble mt = new MatrixDouble(rhs.width(), this.height());
             ///#########################################################
             double a00 = m[0][0];
@@ -330,6 +332,7 @@ public class MatrixDouble {
 
     /**
      * Row oriented sub vector. Transposed vector inserted into consecutive columns.
+     *
      * @param r
      * @param c
      * @param vector
@@ -433,7 +436,7 @@ public class MatrixDouble {
      * @return m x m two dimensional MatrixDouble.
      */
     public static MatrixDouble identity(int m) {
-        return diagonal(m, 1.0);
+        return diag(m, 1.0);
     }
 
     /**
@@ -444,7 +447,7 @@ public class MatrixDouble {
      * @param c Constant that lies along diagonal. Set c=1 for identity matrix.
      * @return m x m 2D array of doubles.
      */
-    public static MatrixDouble diagonal(int m, double c) {
+    public static MatrixDouble diag(int m, double c) {
         if (m < 1)
             throw new IllegalArgumentException("First argument must be > 0");
         MatrixDouble I = new MatrixDouble(m, m);
@@ -460,7 +463,7 @@ public class MatrixDouble {
      * @param c Values that lies along diagonal.
      * @return c.length x c.length 2D array of doubles.
      */
-    public static MatrixDouble diagonal(double... c) {
+    public static MatrixDouble diag(double... c) {
         MatrixDouble I = new MatrixDouble(c.length, c.length);
         for (int i = 0; i < I.m.length; i++)
             I.m[i][i] = c[i];
@@ -626,9 +629,14 @@ public class MatrixDouble {
      *
      * @return A string of a nicely organized version of the matrix or array.
      */
-    public String toString() {
+    public <T> String toString(T... args) {
         StringBuffer str = new StringBuffer();
-        str.append("\nMatrixDouble.m " + this.height() + "x" + this.width() + "\n**************************************** \n");
+        str.append("\n").append("MatrixDouble.m ").append(this.height()).append("x").append(this.width())
+            .append("\n****************************************\n");
+        if (args.length != 0) {
+            str.append(Arrays.stream(args).map(s -> String.format("%19s ", s.toString())).collect(Collectors.joining()))
+                .append("\n");
+        }
         str.append(toString("%9.2f"));
         return str.toString();
     }
@@ -638,9 +646,9 @@ public class MatrixDouble {
      */
     public static void main(String[] args) {
         MatrixDouble A = MatrixDouble.fill(3, 2, 1.0);
-        A.set(0,1, 5);
-        A.set(1,1, 7);
-        A.set(2,1, 9);
+        A.set(0, 1, 5);
+        A.set(1, 1, 7);
+        A.set(2, 1, 9);
         MatrixDouble B = MatrixDouble.fill(2, 3, 3.0);
 
         MatrixDouble C = A.mult(B);
@@ -649,6 +657,7 @@ public class MatrixDouble {
         System.out.println(B.toString());
         System.out.println(C.toString());
     }
+
     public static void main2(String[] args) {
         MatrixDouble m1 = MatrixDouble.fill(1, 3, 1.0);
         System.out.println(m1);

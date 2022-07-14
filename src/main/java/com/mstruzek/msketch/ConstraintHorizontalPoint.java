@@ -101,7 +101,7 @@ public class ConstraintHorizontalPoint extends Constraint {
     }
 
     @Override
-    public int getParametr() {
+    public int getParameter() {
         return -1;
     }
 

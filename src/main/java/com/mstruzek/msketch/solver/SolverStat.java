@@ -40,7 +40,7 @@ public class SolverStat {
     /**
      * Solution converge below desired threshold
      */
-    public boolean converged;
+    public boolean convergence;
 
     /**
      * Normalized error
@@ -73,7 +73,7 @@ public class SolverStat {
         reporter.writeln("acc solver time [ms]  : " + accSolverTime);
 
         reporter.writeln("");
-        reporter.writeln("converged                 : " + (converged ? "T" : "F"));
+        reporter.writeln("converged                 : " + (convergence ? "T" : "F"));
         reporter.writeln("delta (error)             : " + delta);
         reporter.writeln("constraint delta (error)  : " + constraintDelta);
         reporter.writeln("iterations  (n)           : " + iterations);

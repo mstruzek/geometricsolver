@@ -176,11 +176,12 @@ public abstract class Constraint implements ConstraintInterface {
      * Funkcja zwraca macierz d(Jak'*a)/dq -czyli tak jakby calkowity hessian juz
      * przemnozony
      *
-     * @param hs  - Full  HESSIAN
-     * @param dmx - wektor x , z niego wyciagniemy mnozniki lagrange'a
+     * @param hs   - Full  HESSIAN
+     * @param mtq  - wektor x , z niego wyciagniemy mnozniki lagrange'a
+     * @param size - liczebnosc prymitywnych punktow
      * @return
      */
-    public static MatrixDouble getFullHessian(MatrixDouble hs, BindMatrix dmx) {
+    public static MatrixDouble getFullHessian(MatrixDouble hs, BindMatrix mtq, int size) {
 
         int offset = 0; //licznik mnoznikow lagrange'a
         double lagrange = 0.0;//wartosc aktualnego mnoznika
@@ -189,11 +190,14 @@ public abstract class Constraint implements ConstraintInterface {
         for (Integer id : dbConstraint.keySet()) {
             if (!(Constraint.dbConstraint.get(id).isJacobianConstant())) {
                 /// jest hessian
-                lagrange = dmx.get(dbPoint.size() * 2 + offset, 0);
+                lagrange = mtq.get(size + offset, 0);
+
                 ///
                 ///   Hessian - dla tego wiezu liczony na cala macierz !
                 ///  -- ! add into mem in place AddVisitator
                 ///
+
+                /// FIXME !!!!   langrange = 2.106151810818924E-8
 
                 conHs = Constraint.dbConstraint.get(id).getHessian(lagrange);
 

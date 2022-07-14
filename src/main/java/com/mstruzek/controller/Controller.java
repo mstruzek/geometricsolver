@@ -86,7 +86,7 @@ public class Controller implements ControllerInterface {
         }
     }
 
-    private void clearDatabasesModel() {
+    public void clearDatabasesModel() {
         Constraint.dbConstraint.clear();
         Constraint.constraintCounter = 0;
 

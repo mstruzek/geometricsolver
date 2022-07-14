@@ -89,7 +89,7 @@ public class Line extends GeometricPrimitive {
     }
 
     @Override
-    public void recalculateControlPoints() {
+    public void evaluateGuidePoints() {
 
         Vector va = (Vector) (p1.sub(p2).dot(alfa).add(p1));
         Vector vb = (Vector) (p2.sub(p1).dot(alfa).add(p2));
@@ -128,9 +128,9 @@ public class Line extends GeometricPrimitive {
          *     0  	 0     ks    -ks];
          */
         // K -mala sztywnosci
-        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
+        MatrixDouble Ks = MatrixDouble.diag(Consts.springStiffnessLow, Consts.springStiffnessLow);
         // K - duza szytwnosci
-        MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
+        MatrixDouble Kb = MatrixDouble.diag(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
         // -Ks-Kb
         MatrixDouble Ksb = Ks.dotC(-1).addSubMatrix(0, 0, Kb.dotC(-1));
 

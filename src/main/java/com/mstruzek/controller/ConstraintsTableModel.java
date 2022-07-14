@@ -46,7 +46,7 @@ public class ConstraintsTableModel extends AbstractTableModel{
                 if(out==-1) return null;
                 else return out;
             case 6:
-                out=constraint.getParametr();
+                out=constraint.getParameter();
                 if(out==-1) return null;
                 else return out;
             case 7:

@@ -122,7 +122,7 @@ public class ConstraintFixPoint extends Constraint {
     }
 
     @Override
-    public int getParametr() {
+    public int getParameter() {
         return -1;
     }
 

@@ -115,8 +115,8 @@ public final class Model {
                 add(new ConstraintLinesParallelism(constId, K, L, M, N));
                 break;
             case Tangency:
-//                add(new ConstraintTangency(constId, K, L, M, N));
-                add(new ConstraintZTangency(constId, K, L, M, N));
+//                add(new ConstraintTangency2(constId, K, L, M, N));
+                add(new ConstraintTangency(constId, K, L, M, N));
                 break;
             case Distance2Points:
                 add(new ConstraintDistance2Points(constId, K, L, parameter));
@@ -155,7 +155,7 @@ public final class Model {
 
     public static void evaluateGuidePoints() {
         for (Integer g : GeometricPrimitive.dbPrimitives.keySet()) {
-            GeometricPrimitive.dbPrimitives.get(g).recalculateControlPoints();
+            GeometricPrimitive.dbPrimitives.get(g).evaluateGuidePoints();
         }
     }
 

@@ -121,7 +121,7 @@ public class FrameView extends JFrame {
 
         // SZKICOWNIK
         ms = new MySketch(this.controller);
-        ms.setWithControlLines(false);
+        ms.setGuideLines(false);
         ms.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -225,6 +225,7 @@ public class FrameView extends JFrame {
         JToolBar jToolBar = new JToolBar();
         JButton dload = new JButton("Load");
         JButton dstore = new JButton("Store");
+        JButton dclear = new JButton("Clear");
         JButton dnorm = new JButton("Normal");
         JButton dline = new JButton("Draw Line");
         JButton dcircle = new JButton("Draw Circle");
@@ -234,9 +235,9 @@ public class FrameView extends JFrame {
         JButton dsolve = new JButton("SOLVE");
         JButton dreposition = new JButton("Repos");
         JButton drelaxe = new JButton("Relax");
-        JButton dcontrol = new JButton("CTRL");
+        JButton dguide = new JButton("Guide");
         dsolve.setBackground(Color.GREEN);
-        dcontrol.setBackground(Color.CYAN);
+        dguide.setBackground(Color.CYAN);
 
         dload.addActionListener(new ActionListener() {
             @Override
@@ -261,15 +262,21 @@ public class FrameView extends JFrame {
                 }
             }
         });
+        dclear.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                controller.clearDatabasesModel();
+                ms.refreshContainers();
+                ms.repaint();
+                clearTextArea();
+                Events.send(EventType.REBUILD_TABLES, null);
+            }
+        });
 
         dnorm.addActionListener(e -> ms.setStateSketch(MySketchState.Normal));
-
         dline.addActionListener(e -> ms.setStateSketch(MySketchState.DrawLine));
-
         dcircle.addActionListener(e -> ms.setStateSketch(MySketchState.DrawCircle));
-
         darc.addActionListener(e -> ms.setStateSketch(MySketchState.DrawArc));
-
         dpoint.addActionListener(e -> ms.setStateSketch(MySketchState.DrawPoint));
 
         drefresh.addActionListener(new ActionListener() {
@@ -318,10 +325,10 @@ public class FrameView extends JFrame {
             }
         });
 
-        dcontrol.addActionListener(new ActionListener() {
+        dguide.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ms.setWithControlLines(!ms.isWithControlLines());
+                ms.setGuideLines(!ms.isGuideLines());
                 ms.repaint();
             }
         });
@@ -334,6 +341,7 @@ public class FrameView extends JFrame {
         // FIXME - wazne dla setFocusable
         dload.setFocusable(false);
         dstore.setFocusable(false);
+        dclear.setFocusable(false);
         dnorm.setFocusable(false);
         dline.setFocusable(false);
         dcircle.setFocusable(false);
@@ -343,10 +351,11 @@ public class FrameView extends JFrame {
         dsolve.setFocusable(false);
         dreposition.setFocusable(false);
         drelaxe.setFocusable(false);
-        dcontrol.setFocusable(false);
+        dguide.setFocusable(false);
 
         jToolBar.add(dload);
         jToolBar.add(dstore);
+        jToolBar.add(dclear);
         jToolBar.addSeparator(new Dimension(20, 1));
         jToolBar.add(dnorm);
         jToolBar.add(dline);
@@ -360,7 +369,7 @@ public class FrameView extends JFrame {
         jToolBar.addSeparator(new Dimension(20, 1));
         jToolBar.add(dreposition);
         jToolBar.add(drelaxe);
-        jToolBar.add(dcontrol);
+        jToolBar.add(dguide);
 
         // GLOWNY ROZKLAD TOOLBAR I OKNO
         pane.add(jToolBar, BorderLayout.NORTH);
@@ -371,6 +380,16 @@ public class FrameView extends JFrame {
 
         pack();
         setVisible(true);
+    }
+
+
+    private void clearTextArea() {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                consoleOutput.setText("");
+                consoleOutput.setCaretPosition(consoleOutput.getDocument().getLength()); /// auto scroll - follow caret position
+            }
+        });
     }
 
     private void updateTextArea(final String text) {

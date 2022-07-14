@@ -55,7 +55,7 @@ public class ConstraintDistancePointLine extends Constraint {
         Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
         double d = Parameter.dbParameter.get(param_id).getValue();
 
-        mt.set(0, 0, LK.cross(MK) * LK.cross(MK) - d * d * LK.length() * LK.length());
+        mt.set(0, 0, LK.cr(MK) * LK.cr(MK) - d * d * LK.length() * LK.length());
 
         return mt;
     }
@@ -67,20 +67,20 @@ public class ConstraintDistancePointLine extends Constraint {
         Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
         Vector ML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
         double d = Parameter.dbParameter.get(param_id).getValue(); /// parameter value
-        double z = LK.cross(MK);
+        double z = LK.cr(MK);
         int j = 0;
         for (Integer id : dbPoint.keySet()) {
             /// ################################################################## k  /// Explicitly Repeated Accessor
             if (k_id == dbPoint.get(id).id) {
-                mt.setVectorT(0, 2 * j, ML.cross().dot(z * 2).add(LK.dot(2 * d * d)));
+                mt.setVectorT(0, 2 * j, ML.cr().dot(z * 2).add(LK.dot(2 * d * d)));
             }
             /// ################################################################## l
             if (l_id == dbPoint.get(id).id) {
-                mt.setVectorT(0, 2 * j, MK.cross().dot(z * -2.0).add(LK.dot(-2.0 * d * d)));
+                mt.setVectorT(0, 2 * j, MK.cr().dot(z * -2.0).add(LK.dot(-2.0 * d * d)));
             }
             /// ################################################################## m
             if (m_id == dbPoint.get(id).id) {
-                mt.setVectorT(0, 2 * j, LK.cross().dot(z * 2.0));
+                mt.setVectorT(0, 2 * j, LK.cr().dot(z * 2.0));
             }
             j++;
         }
@@ -107,59 +107,56 @@ public class ConstraintDistancePointLine extends Constraint {
         Vector ML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
         double d = Parameter.dbParameter.get(param_id).getValue();
         MatrixDouble R = MatrixDouble.matR();
-        MatrixDouble D = MatrixDouble.diagonal(2, 2 * d * d);
-        MatrixDouble Dm = MatrixDouble.diagonal(2, -2 * d * d);
-        double SC = MK.dot(LK.cross()); ///
+        MatrixDouble D = MatrixDouble.diag(2, 2 * d * d);
+        MatrixDouble Dm = MatrixDouble.diag(2, -2 * d * d);
+        double SC = MK.dot(LK.cr()); ///
         int i = 0;
         for (Integer qI : dbPoint.keySet()) { // wiersz
             int j = 0;
             for (Integer qJ : dbPoint.keySet()) { // kolumna
-                /// # # # FI - k
                 //k,k
                 if (k_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
-                    var mat = ML.cross().cartesian(MK.cross().sub(LK.cross())).dot(2).add(Dm);
+                    var mat = ML.cr().cartesian(MK.cr().sub(LK.cr())).dot(2).add(Dm);
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 //k,l
                 if (k_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(-2.0 * SC).add(ML.cross().cartesian(MK).mult(R).dot(2.0)).add(D);
+                    var mat = R.dotC(-2.0 * SC).add(ML.cr().cartesian(MK).mult(R).dot(2.0)).add(D);
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 //k,m
                 if (k_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(2 * SC).add(ML.cross().cartesian(LK.cross()).dot(2.0));
+                    var mat = R.dotC(2 * SC).add(ML.cr().cartesian(LK.cr()).dot(2.0));
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
-                /// # # # FI - l
                 //l,k
                 if (l_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(2 * SC).add(MK.cross().cartesian(ML.cross()).dot(-2.0)).add(D);
+                    var mat = R.dotC(2 * SC).add(MK.cr().cartesian(ML.cr()).dot(-2.0)).add(D);
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 //l,l
                 if (l_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
-                    var mat = MK.cross().cartesian(MK.cross()).dot(2.0).add(Dm);
+                    var mat = MK.cr().cartesian(MK.cr()).dot(2.0).add(Dm);
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 //l,m
                 if (l_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(-2.0 * SC).add(MK.cross().cartesian(LK.cross()).dot(-2.0));
+                    var mat = R.dotC(-2.0 * SC).add(MK.cr().cartesian(LK.cr()).dot(-2.0));
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
-                /// # # # FI - m
                 //m,k
                 if (m_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(-2.0 * SC).add( LK.cross().cartesian( MK.cross()).dot(-2.0));
+                    var mat = R.dotC(-2.0 * SC).add( LK.cr().cartesian( MK.cr()).dot(-2.0));
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 //m,l
                 if (m_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(2.0 * SC).add( LK.cross().cartesian( MK.cross()).dot(-2.0));
+                    var mat = R.dotC(2.0 * SC).add( LK.cr().cartesian( MK.cr()).dot(-2.0));
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 //m,m
                 if (m_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
-                    var mat = LK.cross().cartesian( LK.cross()).dot(2.0);
+                    var mat = LK.cr().cartesian( LK.cr()).dot(2.0);
                     mt.setSubMatrix(2 * i, 2 * j, mat);
                 }
                 j++;
@@ -195,7 +192,7 @@ public class ConstraintDistancePointLine extends Constraint {
     }
 
     @Override
-    public int getParametr() {
+    public int getParameter() {
         return param_id;
     }
 }

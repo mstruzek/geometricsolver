@@ -43,9 +43,9 @@ public abstract class GeometricPrimitive {
     }
 
     /**
-     * Przelicza na nowo pozycje punktow kontrolnych
+     * Przelicza na nowo pozycje punktow prowadzacych
      */
-    public abstract void recalculateControlPoints();
+    public abstract void evaluateGuidePoints();
 
 
     /**

@@ -66,16 +66,16 @@ public class Vector {
     /**
      * Zwraca iloczyn wektorowy aktualnego i zadanego wektora; C =A x B ;
      */
-    public double cross(Vector vec1) {
+    public double cr(Vector vec1) {
         return (this.x * vec1.y - this.y * vec1.x);
     }
 
     /**
-     * Equivalent of rotation vector by MatrixDouble of R*a = ~a
+     * Equivalent of rotation vector by MatrixDouble of R*a = ~a , R  = [ 0 -1 , 1  0]
      *
      * @return
      */
-    public Vector cross() {
+    public Vector cr() {
         return new Vector(-this.y, this.x);
     }
 

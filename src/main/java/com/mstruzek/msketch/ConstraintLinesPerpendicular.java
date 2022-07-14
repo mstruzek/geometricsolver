@@ -216,7 +216,7 @@ public class ConstraintLinesPerpendicular extends Constraint {
     }
 
     @Override
-    public int getParametr() {
+    public int getParameter() {
         return -1;
     }
 

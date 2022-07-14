@@ -39,7 +39,6 @@ public class ConstraintLinesParallelism extends Constraint {
      */
     Vector n = null;
 
-
     /**
      * Konstruktor pomiedzy 4 punktami lub
      * 2 punktami i FixLine(czyli 2 wektory)
@@ -81,9 +80,9 @@ public class ConstraintLinesParallelism extends Constraint {
         MatrixDouble mt = new MatrixDouble(1, 1);
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         if ((m == null) && (n == null)) {
-            mt.set(0, 0, LK.cross(dbPoint.get(n_id).sub(dbPoint.get(m_id))));
+            mt.set(0, 0, LK.cr(dbPoint.get(n_id).sub(dbPoint.get(m_id))));
         } else {
-            mt.set(0, 0, LK.cross(n.sub(m)));
+            mt.set(0, 0, LK.cr(n.sub(m)));
         }
         return mt;
     }
@@ -225,10 +224,9 @@ public class ConstraintLinesParallelism extends Constraint {
     }
 
     @Override
-    public int getParametr() {
+    public int getParameter() {
         return -1;
     }
-
 
     @Override
     public double getNorm() {

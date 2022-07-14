@@ -34,7 +34,7 @@ public class FixLine extends GeometricPrimitive {
     }
 
     @Override
-    public void recalculateControlPoints() {
+    public void evaluateGuidePoints() {
 
     }
 

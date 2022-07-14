@@ -130,7 +130,7 @@ public class GCModelWriter implements Closeable {
             int L = constraint.getL();
             int M = constraint.getM();
             int N = constraint.getN();
-            int PARAM = constraint.getParametr();
+            int PARAM = constraint.getParameter();
             buff.write("BEGIN Constraint:\n");
             buff.write("     ID: " + ObjectSerializer.writeToString(cID) + ";\n");
             buff.write("     TYPE: " + ObjectSerializer.writeToString(constraintType) + ";\n");

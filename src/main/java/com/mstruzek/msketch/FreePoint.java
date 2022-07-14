@@ -72,7 +72,7 @@ public class FreePoint extends GeometricPrimitive {
     }
 
     @Override
-    public void recalculateControlPoints() {
+    public void evaluateGuidePoints() {
         Vector va = (p1.sub(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
         Vector vb = (p1.add(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
         a.setLocation(va.x, va.y);
@@ -114,7 +114,7 @@ public class FreePoint extends GeometricPrimitive {
 
          */
         // K -mala sztywnosci
-        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
+        MatrixDouble Ks = MatrixDouble.diag(Consts.springStiffnessLow, Consts.springStiffnessLow);
         MatrixDouble Km = Ks.dotC(-1);
 
         mt.addSubMatrix(r + 0, c + 0, Km);

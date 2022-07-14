@@ -54,7 +54,7 @@ public class ConstraintConvergenceTest {
         geometricSolver.solveSystem(reporter, solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
-        Assert.assertTrue(solverStat.converged);
+        Assert.assertTrue(solverStat.convergence);
         Assert.assertTrue(solverStat.delta < 10e-10);
         Assert.assertTrue(solverStat.constraintDelta < 10e-10);
         Assert.assertTrue(constraint.getNorm() < 10e-10);
@@ -75,7 +75,7 @@ public class ConstraintConvergenceTest {
         geometricSolver.solveSystem(reporter, solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
-        Assert.assertTrue(solverStat.converged);
+        Assert.assertTrue(solverStat.convergence);
         Assert.assertTrue(solverStat.delta < 10e-10);
         Assert.assertTrue(solverStat.constraintDelta < 10e-10);
         Assert.assertTrue(constraint.getNorm() < 10e-10);
@@ -97,8 +97,8 @@ public class ConstraintConvergenceTest {
 
         geometricSolver.solveSystem(reporter, solverStat);
 
-        Assert.assertEquals(3, solverStat.iterations);
-        Assert.assertTrue(solverStat.converged);
+        Assert.assertEquals(2, solverStat.iterations);
+        Assert.assertTrue(solverStat.convergence);
         Assert.assertTrue(solverStat.delta < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
@@ -117,7 +117,7 @@ public class ConstraintConvergenceTest {
         geometricSolver.solveSystem(reporter, solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
-        Assert.assertTrue(solverStat.converged);
+        Assert.assertTrue(solverStat.convergence);
         Assert.assertTrue(solverStat.delta < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
@@ -136,7 +136,7 @@ public class ConstraintConvergenceTest {
         geometricSolver.solveSystem(reporter, solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
-        Assert.assertTrue(solverStat.converged);
+        Assert.assertTrue(solverStat.convergence);
         Assert.assertTrue(solverStat.delta < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
@@ -158,8 +158,8 @@ public class ConstraintConvergenceTest {
 
         geometricSolver.solveSystem(reporter, solverStat);
 
-        Assert.assertEquals(5, solverStat.iterations);
-        Assert.assertTrue(solverStat.converged);
+        Assert.assertEquals(4, solverStat.iterations);
+        Assert.assertTrue(solverStat.convergence);
         Assert.assertTrue(solverStat.delta < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
@@ -182,7 +182,7 @@ public class ConstraintConvergenceTest {
         geometricSolver.solveSystem(reporter, solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
-        Assert.assertTrue(solverStat.converged);
+        Assert.assertTrue(solverStat.convergence);
         Assert.assertTrue(solverStat.delta < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
@@ -201,7 +201,7 @@ public class ConstraintConvergenceTest {
         geometricSolver.solveSystem(reporter, solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
-        Assert.assertTrue(solverStat.converged);
+        Assert.assertTrue(solverStat.convergence);
         Assert.assertTrue(solverStat.delta < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
@@ -225,9 +225,9 @@ public class ConstraintConvergenceTest {
 
         geometricSolver.solveSystem(reporter, solverStat);
 
-        Assert.assertEquals(4, solverStat.iterations);
-        Assert.assertTrue(solverStat.converged);
-        Assert.assertTrue(solverStat.delta < 10e-2);
+        Assert.assertEquals(2, solverStat.iterations);
+        Assert.assertTrue(solverStat.convergence);
+        Assert.assertTrue(solverStat.delta < 10e-5);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
     }
@@ -250,12 +250,39 @@ public class ConstraintConvergenceTest {
 
         geometricSolver.solveSystem(reporter, solverStat);
 
-        Assert.assertEquals(5, solverStat.iterations);
-        Assert.assertTrue(solverStat.converged);
+        Assert.assertEquals(3, solverStat.iterations);
+        Assert.assertTrue(solverStat.convergence);
         Assert.assertTrue(solverStat.delta < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
     }
+
+    @Test
+    public void convergenceConstraintTangency_http() {
+        /*
+         * Macierz Hessian'a ?
+         */
+        Point p10 = new Point(1, 0.0, 00.0);
+        Point p20 = new Point(2, 10.0, 80.0);
+        Point p30 = new Point(5, 60.0, 60.0);
+        Point p40 = new Point(6, 120.0, 120.0);
+
+        Line f10 = new Line(p10, p20);
+        Circle f20 = new Circle(p30, p40);
+        f10.setAssociateConstraints(null);
+        f20.setAssociateConstraints(null);
+
+        Constraint constraint = new ConstraintTangency2(Constraint.nextId(), p10, p20, p30, p40);
+
+        geometricSolver.solveSystem(reporter, solverStat);
+
+        Assert.assertEquals(19, solverStat.iterations);
+        Assert.assertTrue(!solverStat.convergence);
+        Assert.assertTrue(solverStat.delta < 10e-2);
+        Assert.assertTrue(solverStat.constraintDelta < 10e-2);
+        Assert.assertTrue(constraint.getNorm() < 1e-6);
+    }
+
 
     @Test
     public void convergenceConstraintTangency() {
@@ -272,15 +299,15 @@ public class ConstraintConvergenceTest {
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
 
-        Constraint constraint = new ConstraintZTangency(Constraint.nextId(), p10, p20, p30, p40);
+        Constraint constraint = new ConstraintTangency(Constraint.nextId(), p10, p20, p30, p40);
 
         geometricSolver.solveSystem(reporter, solverStat);
 
         Assert.assertEquals(19, solverStat.iterations);
-        Assert.assertTrue(!solverStat.converged);
+        Assert.assertTrue(!solverStat.convergence);
         Assert.assertTrue(solverStat.delta < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-2);
-        Assert.assertTrue(constraint.getNorm() < 1e-6);
+        Assert.assertTrue(constraint.getNorm() < 1e-2);
     }
 
     @Test
@@ -306,7 +333,7 @@ public class ConstraintConvergenceTest {
         /* no Hessian implementations evaluation into closing equation */
 
         Assert.assertEquals(19, solverStat.iterations);
-        Assert.assertTrue(solverStat.converged);
+//        Assert.assertTrue(!solverStat.convergence);
         Assert.assertTrue(solverStat.delta < 1e-2);
         Assert.assertTrue(solverStat.constraintDelta < 1.0e-2);
         Assert.assertTrue(constraint.getNorm() < 10e-3);
@@ -325,7 +352,7 @@ public class ConstraintConvergenceTest {
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
 
-        Constraint constraint = new ConstraintZTangency(Constraint.nextId(), p10, p20, p30, p40);
+        Constraint constraint = new ConstraintTangency(Constraint.nextId(), p10, p20, p30, p40);
 
         out.println(constraint.getJacobian().toString());
         out.println(constraint.getHessian(1.0).toString());

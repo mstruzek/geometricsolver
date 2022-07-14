@@ -110,7 +110,7 @@ public class ConstraintDistance2Points extends Constraint {
     }
 
     @Override
-    public int getParametr() {
+    public int getParameter() {
         return param_id;
     }
 

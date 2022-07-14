@@ -124,11 +124,11 @@ public class ConstraintAngle2Lines extends Constraint {
                 }
                 //k,m
                 if (k_id == dbPoint.get(pI).id && m_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, 1 - g).dot(lagrange));
+                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diag(2, 1 - g).dot(lagrange));
                 }
                 //k,n
                 if (k_id == dbPoint.get(pI).id && n_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, g - 1).dot(lagrange));
+                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diag(2, g - 1).dot(lagrange));
                 }
                 //l,k
                 if (l_id == dbPoint.get(pI).id && k_id == dbPoint.get(pJ).id) {
@@ -140,19 +140,19 @@ public class ConstraintAngle2Lines extends Constraint {
                 }
                 //l,m
                 if (l_id == dbPoint.get(pI).id && m_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, g - 1).dot(lagrange));
+                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diag(2, g - 1).dot(lagrange));
                 }
                 //l,n
                 if (l_id == dbPoint.get(pI).id && n_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, 1 - g).dot(lagrange));
+                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diag(2, 1 - g).dot(lagrange));
                 }
                 //m,k
                 if (m_id == dbPoint.get(pI).id && k_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, 1 - g).dot(lagrange));
+                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diag(2, 1 - g).dot(lagrange));
                 }
                 //m,l
                 if (m_id == dbPoint.get(pI).id && l_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, g - 1).dot(lagrange));
+                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diag(2, g - 1).dot(lagrange));
                 }
                 //m,m
                 if (m_id == dbPoint.get(pI).id && m_id == dbPoint.get(pJ).id) {
@@ -164,11 +164,11 @@ public class ConstraintAngle2Lines extends Constraint {
                 }
                 //n,k
                 if (n_id == dbPoint.get(pI).id && k_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, g - 1).dot(lagrange));
+                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diag(2, g - 1).dot(lagrange));
                 }
                 //n,l
                 if (n_id == dbPoint.get(pI).id && l_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, 1 - g).dot(lagrange));
+                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diag(2, 1 - g).dot(lagrange));
                 }
                 //n,m
                 if (n_id == dbPoint.get(pI).id && m_id == dbPoint.get(pJ).id) {
@@ -212,7 +212,7 @@ public class ConstraintAngle2Lines extends Constraint {
     }
 
     @Override
-    public int getParametr() {
+    public int getParameter() {
         return param_id;
     }
 

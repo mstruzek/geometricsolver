@@ -63,7 +63,7 @@ public class Circle extends GeometricPrimitive {
             //ustawienie pozycji dla punktow kontrolnych
             //Kolejnosc inicjalizacji ma znaczenie
             a = new Point(Point.nextId(), v10.sub(v20).dot(alfa).add(v10).x, v10.sub(v20).dot(alfa).add(v10).y);
-            p1 = new Point(Point.nextId(), v10.x, v10.y);//przepisujemy wartosci
+            p1 = new Point(Point.nextId(), v10.x, v10.y); /// przepisujemy wartosci
             p2 = new Point(Point.nextId(), v20.x, v20.y);
             b = new Point(Point.nextId(), v20.sub(v10).dot(alfa).add(v20).x, v20.sub(v10).dot(alfa).add(v20).y);
             setAssociateConstraints(null);
@@ -85,14 +85,13 @@ public class Circle extends GeometricPrimitive {
      * Funkcja oblicza dlugosci poczatkowe pomiedzy wektorami
      */
     private void calculateDistance() {
-
         d_a_p1 = Math.abs(p1.sub(a).length());
         d_p1_p2 = Math.abs(p2.sub(p1).length());
         d_p2_b = Math.abs(b.sub(p2).length());
     }
 
     @Override
-    public void recalculateControlPoints() {
+    public void evaluateGuidePoints() {
         Vector va = (Vector) (p1.sub(p2).dot(alfa).add(p1));
         Vector vb = (Vector) (p2.sub(p1).dot(alfa).add(p2));
         a.setLocation(va.x, va.y);
@@ -130,9 +129,9 @@ public class Circle extends GeometricPrimitive {
          *     0  	 0     ks    -ks];
          */
         // K -mala sztywnosci
-        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
+        MatrixDouble Ks = MatrixDouble.diag(Consts.springStiffnessLow, Consts.springStiffnessLow);
         // K - duza szytwnosci
-        MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh * springAlfa, Consts.springStiffnessHigh * springAlfa);
+        MatrixDouble Kb = MatrixDouble.diag(Consts.springStiffnessHigh * springAlfa, Consts.springStiffnessHigh * springAlfa);
         // -Ks-Kb
         MatrixDouble Ksb = Ks.dotC(-1).addSubMatrix(0, 0, Kb.dotC(-1));
 
@@ -153,14 +152,10 @@ public class Circle extends GeometricPrimitive {
         if (skipIds == null) skipIds = Collections.emptySet();
         ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(skipIds), a, false);
         ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(skipIds), b, false);
-        //FIXME UWAGA - wiez ponizej nalezy nadac w specyficzny sposob
-        // ConstraintLinesParallelism lineParallel = new ConstraintLinesParallelism(p1,b,p2,b);
-        //ConstraintLinesParallelism lineParallel = new ConstraintLinesParallelism(p2,a,p1,a);
         constraints = new int[2];
         constraints[0] = fixPointa.constraintId;
         constraints[1] = fixPointb.constraintId;
     }
-
 
     @Override
     public int getNumOfPoints() {
@@ -206,13 +201,11 @@ public class Circle extends GeometricPrimitive {
     @Override
     public int[] getAllPointsId() {
         int[] out = new int[4];
-
         out[0] = a.getId();
         out[1] = b.getId();
         out[2] = p1.getId();
         out[3] = p2.getId();
         return out;
     }
-
 
 }

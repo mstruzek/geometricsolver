@@ -169,7 +169,7 @@ public class ConstraintLinesSameLength2 extends Constraint {
     }
 
     @Override
-    public int getParametr() {
+    public int getParameter() {
         return -1;
     }
 

@@ -22,10 +22,8 @@ public class GeometricSolverImpl implements GeometricSolver {
 
     private static final Clock clock = Clock.systemUTC();
 
-    /** convergence level */
+    /** convergence limit */
     public static final double CONVERGENCE_LIMIT = 10e-5;
-
-
 
     @Override
     public SolverStat solveSystem(StateReporter reporter, SolverStat solverStat) {
@@ -59,7 +57,6 @@ public class GeometricSolverImpl implements GeometricSolver {
         /// HESSIAN
         MatrixDouble Hs = MatrixDouble.fill(size, size, 0.0);
 
-
         // right-hand side vector ~ b
         MatrixDouble Fr = MatrixDouble.fill(size, 1, 0.0);
         MatrixDouble Fi = MatrixDouble.fill(coffSize, 1, 0.0);
@@ -71,15 +68,14 @@ public class GeometricSolverImpl implements GeometricSolver {
         MatrixDouble b = null;
         BindMatrix dmx = null;
 
-        BindMatrix Bmt = new BindMatrix(dimension, 1);
-        Bmt.bind(dbPoint);
+        BindMatrix MTQ = new BindMatrix(dimension, 1);
+        MTQ.bind(dbPoint);
 
         solverStat.accEvaluationTime += clock.millis() - evaluationStart;
 
         double norm1 = 0.0;
         double prevNorm = 0.0;
         double errorFluctuation = 0.0;
-
 
         int itr = 0;
         while (itr < MAX_SOLVER_ITERATIONS) {
@@ -89,7 +85,6 @@ public class GeometricSolverImpl implements GeometricSolver {
             evaluationStart = clock.millis();
             /// zerujemy macierz A
             A.reset(0.0);
-
 
             /// Tworzymy Macierz vector b
             GeometricPrimitive.getAllForce(Fr);                 /// Sily  - F(q)
@@ -103,7 +98,7 @@ public class GeometricSolverImpl implements GeometricSolver {
 
             Hs.reset(0.0);
 
-            Constraint.getFullHessian(Hs, Bmt);
+            Constraint.getFullHessian(Hs, MTQ, size);
 
             A.setSubMatrix(0, 0, Fq);                   /// procedure SET
             A.addSubMatrix(0, 0, Hs);                   /// procedure ADD
@@ -130,30 +125,28 @@ public class GeometricSolverImpl implements GeometricSolver {
                 LUDecompositionQuick LU = new LUDecompositionQuick();
                 LU.decompose(matrix2DA);
                 LU.solve(matrix1Db);
+//                System.out.println(LU.toString());
             }
             solverStat.accSolverTime += (clock.millis() - solverStep);
 
 /// [ TIMED ]
-
             dmx = ParseToColt.toBindVector(matrix1Db);
 
             /// uaktualniamy punkty
-            Bmt.plusEquals(dmx);
-            Bmt.copyToPoints();
+            MTQ.plusEquals(dmx);
+            MTQ.copyToPoints();
 
             /// AFTER -- copyToPoints  x2
-            Constraint.getFullConstraintValues(Fi);
-
+//            Constraint.getFullConstraintValues(Fi);
+//
 //            norm1 = Fi.norm1();
-
 
             norm1 = Constraint.getFullNorm();
 
             reporter.writelnf(" [ step :: %d]  duration [ms] = %d  norm = %e ", itr, (clock.millis() - solverStep), norm1);
 
-            /// Gdy po 5-6 iteracja normy wiezow kieruja sie w strone minimum energii, to repozycjonowac prowadzacych "straznikow"
+            /// Gdy po 5-6 przejsciach iteracji, normy wiezow kieruja sie w strone minimum energii, to repozycjonowac prowadzacych punktow
 
-            //stary warunek wyjscia
             if (norm1 < CONVERGENCE_LIMIT) {
                 solverStat.delta = norm1;
                 reporter.writelnf("fast convergence - norm [ %e ]  ", norm1);
@@ -168,12 +161,20 @@ public class GeometricSolverImpl implements GeometricSolver {
 
             solverStat.delta = norm1;
 
+            ///
+            ///
+            ///  ######### 1 . przeprowadzimy snapshot punktow w czasie i przy narastajacym bledzie - revert(Guide Points) i kontynuacja !
+            ///
+            ///  ######### 2. evaluacja bledow wzgledem dominujecej skladowej wiezu NORM !
+            ///
+            ///
+
             if (itr > 1 && errorFluctuation/prevNorm > 0.70) {
                 reporter.writeln("CHANGES - STOP ITERATION *******");
                 reporter.writeln(" errorFluctuation          :" + errorFluctuation);
                 reporter.writeln(" relative error            :" + (errorFluctuation/norm1));
                 solverStat.constraintDelta = Constraint.getFullNorm();
-                solverStat.converged = false;
+                solverStat.convergence = false;
                 solverStat.stopTime = clock.millis();
                 return solverStat;
             }
@@ -186,7 +187,7 @@ public class GeometricSolverImpl implements GeometricSolver {
         reporter.writeln(""); // print execution time
 
         solverStat.constraintDelta = Constraint.getFullNorm();
-        solverStat.converged = norm1 < CONVERGENCE_LIMIT;
+        solverStat.convergence = norm1 < CONVERGENCE_LIMIT;
         solverStat.stopTime = clock.millis();
 
         return solverStat;
