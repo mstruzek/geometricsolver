@@ -9,18 +9,11 @@ public class Point extends Vector{
 
     public static final Point EMPTY=new Point(-1, 0.0,0.0);
 
-    /**
-     * Licznik punktow
-     */
+    /** Licznik punktow */
     public static int pointCounter =0;
-    /**
-     * numer kolejno utworzonego punktu
-     */
+
+    /** numer kolejno utworzonego punktu */
     protected int id;
-    /**
-     * tablica wszystkich Point�w
-     */
-    //static ArrayList<Point> dbPoint = new ArrayList<Point>();
 
     public Vector Vector=this;
 
@@ -35,8 +28,7 @@ public class Point extends Vector{
     }
 
     public String toString(){
-        return "p"+id+" : "+"[ "+this.x+" , "+this.y+" ] ";
-
+        return String.format("p%d : [ %7.3f , %7.3f ]", id, x, y);
     }
 
     public Vector Vector(){

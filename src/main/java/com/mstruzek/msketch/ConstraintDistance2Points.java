@@ -14,17 +14,11 @@ import static com.mstruzek.msketch.Point.dbPoint;
 public class ConstraintDistance2Points extends Constraint {
 
     /** Punkty kontrolne */
-    /**
-     * Point K-id
-     */
+    /** Point K-id */
     int k_id;
-    /**
-     * Point L-id
-     */
+    /** Point L-id */
     int l_id;
-    /**
-     * Numer parametru
-     */
+    /** Numer parametru */
     int param_id;
 
     /**
@@ -75,7 +69,7 @@ public class ConstraintDistance2Points extends Constraint {
     @Override
     public MatrixDouble getValue() {
         MatrixDouble mt = new MatrixDouble(1, 1);
-        mt.set(0, 0, dbPoint.get(l_id).sub(dbPoint.get(k_id)).length() - dbParameter.get(param_id).getRadians());
+        mt.set(0, 0, dbPoint.get(l_id).sub(dbPoint.get(k_id)).length() - dbParameter.get(param_id).getValue());
         return mt;
     }
 

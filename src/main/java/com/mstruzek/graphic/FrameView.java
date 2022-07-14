@@ -7,6 +7,7 @@ import com.mstruzek.controller.Events;
 import com.mstruzek.msketch.GeometricConstraintType;
 
 import javax.swing.*;
+import javax.swing.GroupLayout.Alignment;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -21,8 +22,7 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
-import static com.mstruzek.graphic.Property.CURRENT_POSITION;
-import static com.mstruzek.graphic.Property.KLMN_POINTS;
+import static com.mstruzek.graphic.Property.*;
 
 public class FrameView extends JFrame {
 
@@ -40,10 +40,10 @@ public class FrameView extends JFrame {
     /**
      * zmienna na parametry
      */
-    final JTextField param = new JTextField(5);
+    final JTextField parameterField = new JTextField(5);
 
     {
-        param.setText("10.0");
+        parameterField.setText("10.0");
     }
 
     /**
@@ -65,6 +65,8 @@ public class FrameView extends JFrame {
 
     // widok na pojemnik K,L,M,N
     final JLabel klmn = new JLabel("K,L,M,N", SwingConstants.CENTER);
+
+    final JLabel pickedPoint = new JLabel("", SwingConstants.CENTER);
     ;
 
     // wyswietla aktualna pozycje kursora
@@ -121,11 +123,13 @@ public class FrameView extends JFrame {
 
         // SZKICOWNIK
         ms = new MySketch(this.controller);
-        ms.setGuideLines(false);
+        ms.setControlGuidelines(false);
         ms.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 switch (evt.getPropertyName()) {
+                    case SELECTED_POINT:
+                        pickedPoint.setText((String)evt.getNewValue());
                     case KLMN_POINTS:
                         klmn.setText((String) evt.getNewValue());
                         return;
@@ -142,21 +146,25 @@ public class FrameView extends JFrame {
         JPanel panPoints = new JPanel();
         panPoints.setLayout(new BorderLayout());
         panPoints.setBackground(new Color(250, 200, 200));
-        panPoints.setPreferredSize(new Dimension(920, 50));
+        panPoints.setPreferredSize(new Dimension(920, 60));
         panPoints.setBorder(BorderFactory.createLineBorder(Color.black));
         panPoints.add(klmn, BorderLayout.NORTH);
         panPoints.add(currentPosition, BorderLayout.SOUTH);
+        panPoints.add(pickedPoint, BorderLayout.EAST);
 
         left.add(panPoints);
 
         // Dodawanie wiezow
 
-        JPanel constMenu = new JPanel();
-        constMenu.setBackground(new Color(244, 249, 192));
-        constMenu.setPreferredSize(new Dimension(400, 240));
-        constMenu.setBorder(BorderFactory.createTitledBorder("Add Constraint"));
+        JPanel constraintPanel = new JPanel();
+        GroupLayout groupLayout = new GroupLayout(constraintPanel);
+        constraintPanel.setLayout(groupLayout);
+        constraintPanel.setBackground(new Color(244, 249, 192));
+        constraintPanel.setPreferredSize(new Dimension(680, 250));
+        constraintPanel.setBorder(BorderFactory.createTitledBorder("Add Constraint"));
 
-        final JTextArea consDescr = new JTextArea(7, 30);
+
+        final JTextArea consDescr = new JTextArea(7, 40);
         consDescr.setBorder(BorderFactory.createTitledBorder("HELP"));
         consDescr.setLineWrap(true);
         consDescr.setWrapStyleWord(true);
@@ -166,6 +174,7 @@ public class FrameView extends JFrame {
 
         final JComboBox combo = new JComboBox(GeometricConstraintType.values());
         combo.setFocusable(false);
+        combo.setPreferredSize(new Dimension(200, -1));
         combo.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -180,8 +189,8 @@ public class FrameView extends JFrame {
 
         combo.setSelectedItem(GeometricConstraintType.FixPoint);
 
-        JButton addCons = new JButton("Add Constraint");
-        addCons.addActionListener(new ActionListener() {
+        JButton constraintButton = new JButton("Add Constraint");
+        constraintButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -195,18 +204,36 @@ public class FrameView extends JFrame {
                     ms.getPointL(),
                     ms.getPointM(),
                     ms.getPointN(),
-                    Double.parseDouble(param.getText())
+                    Double.parseDouble(parameterField.getText())
                 );
                 ms.clearAll();
                 requestFocus();
             }
         });
-        constMenu.add(combo);
-        constMenu.add(consDescr);
-        constMenu.add(param);
-        constMenu.add(addCons);
+        groupLayout.setAutoCreateGaps(true);
+        groupLayout.setHorizontalGroup(
+            groupLayout.createSequentialGroup()
+                .addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
+                    .addComponent(combo)
+                    .addComponent(parameterField))
+                .addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
+                    .addComponent(consDescr)
+                    .addComponent(constraintButton)
+                )
+        );
 
-        left.add(constMenu);
+        groupLayout.setVerticalGroup(
+            groupLayout.createSequentialGroup()
+                .addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
+                    .addComponent(combo)
+                    .addComponent(consDescr))
+                .addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
+                    .addComponent(parameterField)
+                    .addComponent(constraintButton))
+        );
+
+
+        left.add(constraintPanel);
 
         // Tabelki
         myTables = new MyTables();
@@ -235,9 +262,9 @@ public class FrameView extends JFrame {
         JButton dsolve = new JButton("SOLVE");
         JButton dreposition = new JButton("Repos");
         JButton drelaxe = new JButton("Relax");
-        JButton dguide = new JButton("Guide");
+        JButton dctrl = new JButton("CTRL");
         dsolve.setBackground(Color.GREEN);
-        dguide.setBackground(Color.CYAN);
+        dctrl.setBackground(Color.CYAN);
 
         dload.addActionListener(new ActionListener() {
             @Override
@@ -325,10 +352,10 @@ public class FrameView extends JFrame {
             }
         });
 
-        dguide.addActionListener(new ActionListener() {
+        dctrl.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ms.setGuideLines(!ms.isGuideLines());
+                ms.setControlGuidelines(!ms.isControlGuidelines());
                 ms.repaint();
             }
         });
@@ -351,7 +378,7 @@ public class FrameView extends JFrame {
         dsolve.setFocusable(false);
         dreposition.setFocusable(false);
         drelaxe.setFocusable(false);
-        dguide.setFocusable(false);
+        dctrl.setFocusable(false);
 
         jToolBar.add(dload);
         jToolBar.add(dstore);
@@ -369,7 +396,7 @@ public class FrameView extends JFrame {
         jToolBar.addSeparator(new Dimension(20, 1));
         jToolBar.add(dreposition);
         jToolBar.add(drelaxe);
-        jToolBar.add(dguide);
+        jToolBar.add(dctrl);
 
         // GLOWNY ROZKLAD TOOLBAR I OKNO
         pane.add(jToolBar, BorderLayout.NORTH);

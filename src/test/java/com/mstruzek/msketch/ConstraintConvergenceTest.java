@@ -26,9 +26,7 @@ public class ConstraintConvergenceTest {
 
     @After
     public void afterTest() {
-
         solverStat.report(reporter);
-
 
         Constraint.dbConstraint.clear();
         Parameter.dbParameter.clear();
@@ -59,6 +57,9 @@ public class ConstraintConvergenceTest {
         Assert.assertTrue(solverStat.constraintDelta < 10e-10);
         Assert.assertTrue(constraint.getNorm() < 10e-10);
     }
+
+
+
 
     @Test
     public void convergenceConstraintConnect2Points() {

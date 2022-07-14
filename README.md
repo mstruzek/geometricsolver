@@ -127,38 +127,26 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 - Date : 2022
 
 
-- [ ConstraintDistancePointLine : extend Tangency ] - przygotowac rownania na kartce. !  
+- [ SetCoordinateX , SetCoordinateY Constraints]
+- [ Solver - snapshoting , podarzanie za bledem ]
 
-- [ 14 dni prepartion GPU ]  - sprawdzic model , zaciagnac bindowanie memory - caly model przenisc pod JNI i wiezy, stiffness. 
-- 
+- [ 14 dni prepartion GPU ]  - sprawdzic model , zaciagnac bindowanie memory - caly model przenisc pod JNI i wiezy, stiffness.
 - [ JNI ] - otworzyc dzwignie do C++  -- jni.h  - handler do memory , read , write Byte , Integer , Long , Double, Float
-
 - [ Selector ] Solver Selector - Local Host , GPU Blas H ( handmade ), GPU CGM , 
+- [ Visitator ] -  zapis ByteBuffer free, [ Ax = b ] cudaHostFree, cudaHostMalloc(_) albo lokalnie albo z `cuda.
+                                                                                   
 
-- [ Visitator ] - przerobic zapis ByteBuffer free, [ Ax = b ] cudaHostFree, cudaHostMalloc(_) albo lokalnie albo z `nudy
-
-- [ :Relaxed  ] - nazewnictwo :Put - odkladamy  - :Relaxed - random q shifts   
-
-- [ 14 dni JavasScript Version - element.block.x,y, width, height - simple only Jacobian GRID ]
-
-- @@@ [!!!!! Error ] - Hessian Evaluation   -  iterable on keySet()  !!!! --   remove/add Primitives ( => Points ) - all constraints 3 wiezy !!!
-
-- @@@ ConstraintTangency, ConstraintLinesParallelism, ConstraintLinesPerpendicular , 
-
-- @@@ [ Save ]   - przycisk :save model -> Writer : FORMAT PLIKU [ WSZYSTKIE OBIEKTY , NUMERY PUNKTOW , WIEZY , PARAMATRY]
- 
-- @@@ [ Load ]  -  przycisk :load model Reader
-
-- @@@ [ Guides ] - show guidelines and  points  - gdzies zgubilsmy ta wersje z drukowaiem.
-
-- @@@ [ auto KLMN  ]   - set K, L tuple when double clicked on K , or set auto K if db-clicked on L
-
-- @@@ [ Relexed ] - przerobic Relaxed na random position for points - fluctuate - random shifts
-
-- @@@[ ConstrainVerticalPoints   : alignedOnX ]
-- 
-- @@@ [ ConstrainHorizontalPoint : alignedOnY ]
-
+- @ [!!!!! Error ] - Hessian Evaluation   -  iterable on keySet()  !!!! --   remove/add Primitives ( => Points ) - all constraints 3 wiezy !!!
+- @ [ConstraintTangency, ConstraintLinesParallelism, ConstraintLinesPerpendicular ]
+- @ [ Save ]   - przycisk :save model -> Writer : FORMAT PLIKU [ WSZYSTKIE OBIEKTY , NUMERY PUNKTOW , WIEZY , PARAMATRY]
+- @ [ Load ]  -  przycisk :load model Reader
+- @ [ Guides ] - show guidelines and  points  - gdzies zgubilsmy ta wersje z drukowaiem.
+- @ [ auto KLMN  ]   - set K, L tuple when double clicked on K , or set auto K if db-clicked on L
+- @ [ Relexed ] - przerobic Relaxed na random position for points - fluctuate - random shifts
+- @ [ ConstrainVerticalPoints   : alignedOnX ]
+- @ [ ConstrainHorizontalPoint : alignedOnY ]
+- @ [ ConstraintDistancePointLine : extend Tangency ] - przygotowac rownania na kartce. !
+- @ [ ConstraintParametrizedLength] - dlugoscie wzgledne nad wspolczynnik 
 
 ## UNIFIED MATRIX INTERFACE
 /*
