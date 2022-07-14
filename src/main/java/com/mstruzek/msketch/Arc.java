@@ -207,7 +207,7 @@ public class Arc extends GeometricPrimitive {
         ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(skipIds), b, false);
         ConstraintFixPoint fixPointc = new ConstraintFixPoint(Constraint.nextId(skipIds), c, false);
         ConstraintFixPoint fixPointd = new ConstraintFixPoint(Constraint.nextId(skipIds), d, false);
-        ConstraintLinesSameLength sameLength = new ConstraintLinesSameLength(Constraint.nextId(skipIds), p1, p2, p1, p3, false);
+        ConstraintEqualLength sameLength = new ConstraintEqualLength(Constraint.nextId(skipIds), p1, p2, p1, p3, false);
 
         //ConstraintLinesSameLength sameLength2= new ConstraintLinesSameLength(p2,c,p3,d);
         //ConstraintLinesParallelism par1 = new ConstraintLinesParallelism(a,p1,p2,c);

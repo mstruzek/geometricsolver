@@ -11,7 +11,7 @@ import static com.mstruzek.msketch.Point.dbPoint;
  *
  * @author root
  */
-public class ConstraintLinesSameLength extends Constraint {
+public class ConstraintEqualLength extends Constraint {
 
     /** Punkty kontrolne */
     /**
@@ -43,12 +43,12 @@ public class ConstraintLinesSameLength extends Constraint {
      * @param M
      * @param N
      */
-    public ConstraintLinesSameLength(int constId, Point K, Point L, Point M, Point N) {
+    public ConstraintEqualLength(int constId, Point K, Point L, Point M, Point N) {
         this(constId, K, L, M, N, true);
     }
 
-    public ConstraintLinesSameLength(int constId, Point K, Point L, Point M, Point N, boolean storage) {
-        super(constId, GeometricConstraintType.LinesSameLength, storage);
+    public ConstraintEqualLength(int constId, Point K, Point L, Point M, Point N, boolean persistent) {
+        super(constId, GeometricConstraintType.EqualLength, persistent);
         k_id = K.id;
         l_id = L.id;
         m_id = M.id;
@@ -94,9 +94,9 @@ public class ConstraintLinesSameLength extends Constraint {
     @Override
     public MatrixDouble getValue() {
         MatrixDouble mt = new MatrixDouble(1, 1);
-        Double LK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).length();
-        Double NM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).length();
-        mt.set(0, 0 , LK - NM);
+        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+        mt.set(0, 0 , LK.length() - NM.length());
         return mt;
     }
 

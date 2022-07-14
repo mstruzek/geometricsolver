@@ -130,8 +130,12 @@ public final class Model {
                 add(new ConstraintDistancePointLine(constId, K, L, M, parameter));
                 add(parameter);
                 break;
-            case LinesSameLength:
-                add(new ConstraintLinesSameLength(constId, K, L, M, N));
+            case EqualLength:
+                add(new ConstraintEqualLength(constId, K, L, M, N));
+                break;
+            case ParametrizedLength:
+                add(new ConstraintParametrizedLength(constId, K, L, M, N, parameter));
+                add(parameter);
                 break;
             case SetVertical:
                 add(new ConstraintVertical(constId, K, L));

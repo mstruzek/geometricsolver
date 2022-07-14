@@ -12,7 +12,6 @@ import static com.mstruzek.msketch.matrix.MatrixDouble.diag;
  * @author root
  */
 public class ConstraintTangency extends Constraint {
-
     /** Punkty kontrolne */
 
     /*** Point K-id */

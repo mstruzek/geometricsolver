@@ -3,26 +3,26 @@ package com.mstruzek.msketch;
 /**
  * Typ wyliczeniowy - rozne rodzaje wiezow geometrycznych
  */
-public enum GeometricConstraintType{
+public enum GeometricConstraintType {
 
     /**
      * Zamocowanie punktu w danym miejscu (vectorze)
      */
-    FixPoint{
+    FixPoint {
         @Override
-        public int size(){
+        public int size() {
             return 2;
         }
 
         @Override
-        public String getHelp(){
+        public String getHelp() {
 
-            return "Funkcja powoduje zamocowanie danego punktu w obecnym miejscu\n"+
+            return "Funkcja powoduje zamocowanie danego punktu w obecnym miejscu\n" +
                 "K - punkt do zamocowania";
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return false;
         }
     },
@@ -30,21 +30,21 @@ public enum GeometricConstraintType{
     /**
      * 2 punkty maja to same polozenie - Coincidence
      */
-    Connect2Points{
+    Connect2Points {
         @Override
-        public int size(){
+        public int size() {
             return 2;
         }
 
         @Override
-        public String getHelp(){
-            return "Dwa punkty maja to samo polozenie , czyli tak zwany wiez Coincidence\n"+
-                "K - pierwszy punkt\n"+
+        public String getHelp() {
+            return "Dwa punkty maja to samo polozenie , czyli tak zwany wiez Coincidence\n" +
+                "K - pierwszy punkt\n" +
                 "L - drugi punkt\n";
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return false;
         }
     },
@@ -54,19 +54,19 @@ public enum GeometricConstraintType{
      */
     HorizontalPoint {
         @Override
-        public int size(){
+        public int size() {
             return 1;
         }
 
         @Override
-        public String getHelp(){
-            return "Dwa punkty maja to samo polozenie , czyli tak zwany wiez Coincidence na osi zero-x\n"+
-                "K - pierwszy punkt\n"+
+        public String getHelp() {
+            return "Dwa punkty maja to samo polozenie , czyli tak zwany wiez Coincidence na osi zero-x\n" +
+                "K - pierwszy punkt\n" +
                 "L - drugi punkt\n";
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return false;
         }
     },
@@ -76,19 +76,19 @@ public enum GeometricConstraintType{
      */
     VerticalPoint {
         @Override
-        public int size(){
+        public int size() {
             return 1;
         }
 
         @Override
-        public String getHelp(){
-            return "Dwa punkty maja to samo polozenie , czyli tak zwany wiez Coincidence na osi zero-y\n"+
-                "K - pierwszy punkt\n"+
+        public String getHelp() {
+            return "Dwa punkty maja to samo polozenie , czyli tak zwany wiez Coincidence na osi zero-y\n" +
+                "K - pierwszy punkt\n" +
                 "L - drugi punkt\n";
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return false;
         }
     },
@@ -96,24 +96,24 @@ public enum GeometricConstraintType{
     /**
      * Dwie linie Rownolegle - iloczyn wektorowy ,CROSS
      */
-    LinesParallelism{
+    LinesParallelism {
         @Override
-        public int size(){
+        public int size() {
             return 1;
         }
 
         @Override
-        public String getHelp(){
-            return "Wiez odpowiedzialny za rownoleglosc dwoch linii\n"+
-                "K - punkt 1 linii 1\n"+
-                "L - punkt 2 linii 1\n"+
-                "M - punkt 1 linii 2\n"+
-                "N - punkt 2 linii 2\n"+
+        public String getHelp() {
+            return "Wiez odpowiedzialny za rownoleglosc dwoch linii\n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n" +
+                "M - punkt 1 linii 2\n" +
+                "N - punkt 2 linii 2\n" +
                 "punkty M,N -moga byc punktami nalezacymi do FixLine";
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return false;
         }
     },
@@ -121,24 +121,24 @@ public enum GeometricConstraintType{
     /**
      * Dwie linie Prostopadle - iloczyn skalarny , DOT
      */
-    LinesPerpendicular{
+    LinesPerpendicular {
         @Override
-        public int size(){
+        public int size() {
             return 1;
         }
 
         @Override
-        public String getHelp(){
-            return "Wiez odpowiedzialny za prostopadlosc dwoch linii\n"+
-                "K - punkt 1 linii 1\n"+
-                "L - punkt 2 linii 1\n"+
-                "M - punkt 1 linii 2\n"+
-                "N - punkt 2 linii 2\n"+
+        public String getHelp() {
+            return "Wiez odpowiedzialny za prostopadlosc dwoch linii\n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n" +
+                "M - punkt 1 linii 2\n" +
+                "N - punkt 2 linii 2\n" +
                 "punkty M,N -moga byc punktami nalezacymi do FixLine";
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return false;
         }
     },
@@ -146,47 +146,68 @@ public enum GeometricConstraintType{
     /**
      * Te same dlugo�ci linie
      */
-    LinesSameLength{
+    EqualLength {
         @Override
-        public int size(){
+        public int size() {
             return 1;
         }
 
         @Override
-        public String getHelp(){
-            return "Dlugosc 1 linii = Dlugosci 2 linii \n"+
-                "K - punkt 1 linii 1\n"+
-                "L - punkt 2 linii 1\n"+
-                "M - punkt 1 linii 2\n"+
+        public String getHelp() {
+            return "Dlugosc 1 linii = Dlugosci 2 linii \n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n" +
+                "M - punkt 1 linii 2\n" +
                 "N - punkt 2 linii 2\n";
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return false;
+        }
+    },
+    ParametrizedLength {
+        @Override
+        public int size() {
+            return 1;
+        }
+
+        @Override
+        public String getHelp() {
+            return "Dlugosc 1 linii * P  = Dlugosci 2 linii \n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n" +
+                "M - punkt 1 linii 2\n" +
+                "N - punkt 2 linii 2\n" +
+                "P - parametr proporcji\n";
+        }
+
+        @Override
+        public boolean isParametrized() {
+            return true;
         }
     },
 
     /**
      * Stycznosc okregu do prostej
      */
-    Tangency{
+    Tangency {
         @Override
-        public int size(){
+        public int size() {
             return 1;
         }
 
         @Override
-        public String getHelp(){
-            return "Stycznosc okregu do linii \n"+
-                "K - punkt 1 linii 1\n"+
-                "L - punkt 2 linii 1\n"+
-                "M - srodek okregu \n"+
+        public String getHelp() {
+            return "Stycznosc okregu do linii \n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n" +
+                "M - srodek okregu \n" +
                 "N - promien okregu\n";
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return false;
         }
 
@@ -196,22 +217,22 @@ public enum GeometricConstraintType{
     /**
      * Odleglosc pomiedzy punktami
      */
-    Distance2Points{
+    Distance2Points {
         @Override
-        public int size(){
+        public int size() {
             return 1;
         }
 
         @Override
-        public String getHelp(){
-            return "Odleglosc 2 punktow sparametryzowana \n"+
-                "K - punkt 1 \n"+
-                "L - punkt 2\n"+
+        public String getHelp() {
+            return "Odleglosc 2 punktow sparametryzowana \n" +
+                "K - punkt 1 \n" +
+                "L - punkt 2\n" +
                 "P - parametr\n";
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return true;
         }
     },
@@ -219,23 +240,23 @@ public enum GeometricConstraintType{
     /**
      * Odleg�o�c punktu od prostej - rownania odpowiednio jak tangency !
      */
-    DistancePointLine{
+    DistancePointLine {
         @Override
-        public int size(){
+        public int size() {
             return 1;
         }
 
         @Override
-        public String getHelp(){
-            return "Odleglosc punktu od prostej sparametryzowana \n"+
-                "K - punkt 1 linii 1 \n"+
-                "L - punkt 2 linii 1\n"+
-                "M - punkt odlegly od prostej o parametr P\n"+
+        public String getHelp() {
+            return "Odleglosc punktu od prostej sparametryzowana \n" +
+                "K - punkt 1 linii 1 \n" +
+                "L - punkt 2 linii 1\n" +
+                "M - punkt odlegly od prostej o parametr P\n" +
                 "P - parametr\n";
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return true;
         }
     },
@@ -243,24 +264,24 @@ public enum GeometricConstraintType{
     /**
      * K�t pomiedzy dwiema prostymi
      */
-    Angle2Lines{
+    Angle2Lines {
         @Override
-        public int size(){
+        public int size() {
             return 1;
         }
 
         @Override
-        public String getHelp(){
-            return "Kat pomiedzy dwiema prostymi \n"+
-                "K - punkt 1 linii 1\n"+
-                "L - punkt 2 linii 1\n"+
-                "M - punkt 1 linii 2\n"+
-                "N - punkt 2 linii 2\n"+
+        public String getHelp() {
+            return "Kat pomiedzy dwiema prostymi \n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n" +
+                "M - punkt 1 linii 2\n" +
+                "N - punkt 2 linii 2\n" +
                 "P - parametr ,wartosc kata\n";
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return true;
         }
     },
@@ -268,22 +289,22 @@ public enum GeometricConstraintType{
     /**
      * Ustawia prosta horyzontalnie - rownolegle do osi X
      */
-    SetHorizontal{
+    SetHorizontal {
         @Override
-        public int size(){
+        public int size() {
             return 1;
         }
 
         @Override
-        public String getHelp(){
-            return "Ustawia linie rownolegle do osi X \n"+
-                "K - punkt 1 linii 1\n"+
+        public String getHelp() {
+            return "Ustawia linie rownolegle do osi X \n" +
+                "K - punkt 1 linii 1\n" +
                 "L - punkt 2 linii 1\n";
 
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return false;
         }
     },
@@ -291,21 +312,21 @@ public enum GeometricConstraintType{
     /**
      * Ustawia prosta vertycalnie - rownolegle do osi Y
      */
-    SetVertical{
+    SetVertical {
         @Override
-        public int size(){
+        public int size() {
             return 1;
         }
 
         @Override
-        public String getHelp(){
-            return "Ustawia linie rownolegle do osi Y \n"+
-                "K - punkt 1 linii 1\n"+
+        public String getHelp() {
+            return "Ustawia linie rownolegle do osi Y \n" +
+                "K - punkt 1 linii 1\n" +
                 "L - punkt 2 linii 1\n";
         }
 
         @Override
-        public boolean isParametrized(){
+        public boolean isParametrized() {
             return false;
         }
     };

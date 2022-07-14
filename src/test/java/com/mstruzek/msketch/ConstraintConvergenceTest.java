@@ -166,7 +166,7 @@ public class ConstraintConvergenceTest {
     }
 
     @Test
-    public void convergenceConstraintLinesSameLength() {
+    public void convergenceConstraintEqualLength() {
         Point p10 = new Point(1, 0.0, 40.0);
         Point p20 = new Point(2, 10.0, 80.0);
         Point p30 = new Point(5, 40.0, 0.0);
@@ -177,7 +177,7 @@ public class ConstraintConvergenceTest {
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
 
-        Constraint constraint = new ConstraintLinesSameLength(Constraint.nextId(), p10, p20, p30, p40);
+        Constraint constraint = new ConstraintEqualLength(Constraint.nextId(), p10, p20, p30, p40);
 
         geometricSolver.solveSystem(reporter, solverStat);
 
@@ -186,6 +186,30 @@ public class ConstraintConvergenceTest {
         Assert.assertTrue(solverStat.delta < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
+    }
+
+
+    @Test
+    public void convergenceConstraintParametrizedLength() {
+        Point p10 = new Point(1, 0.0, 40.0);
+        Point p20 = new Point(2, 10.0, 80.0);
+        Point p30 = new Point(5, 40.0, 0.0);
+        Point p40 = new Point(6, 190.0, 10.0);
+
+        Line f10 = new Line(p10, p20);
+        Line f20 = new Line(p30, p40);
+        f10.setAssociateConstraints(null);
+        f20.setAssociateConstraints(null);
+        Parameter param = new Parameter(2.5);
+        Constraint constraint = new ConstraintParametrizedLength(Constraint.nextId(), p10, p20, p30, p40, param);
+
+        geometricSolver.solveSystem(reporter, solverStat);
+
+        Assert.assertEquals(0, solverStat.iterations);
+        Assert.assertTrue(solverStat.convergence);
+        Assert.assertTrue(solverStat.delta < 10e-10);
+        Assert.assertTrue(solverStat.constraintDelta < 10e-10);
+        Assert.assertTrue(constraint.getNorm() < 10e-10);
     }
 
     @Test
@@ -206,7 +230,6 @@ public class ConstraintConvergenceTest {
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
     }
-
 
     @Test
     public void convergenceConstraintAngle2Lines() {
@@ -258,33 +281,6 @@ public class ConstraintConvergenceTest {
     }
 
     @Test
-    public void convergenceConstraintTangency_http() {
-        /*
-         * Macierz Hessian'a ?
-         */
-        Point p10 = new Point(1, 0.0, 00.0);
-        Point p20 = new Point(2, 10.0, 80.0);
-        Point p30 = new Point(5, 60.0, 60.0);
-        Point p40 = new Point(6, 120.0, 120.0);
-
-        Line f10 = new Line(p10, p20);
-        Circle f20 = new Circle(p30, p40);
-        f10.setAssociateConstraints(null);
-        f20.setAssociateConstraints(null);
-
-        Constraint constraint = new ConstraintTangency2(Constraint.nextId(), p10, p20, p30, p40);
-
-        geometricSolver.solveSystem(reporter, solverStat);
-
-        Assert.assertEquals(19, solverStat.iterations);
-        Assert.assertTrue(!solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-2);
-        Assert.assertTrue(solverStat.constraintDelta < 10e-2);
-        Assert.assertTrue(constraint.getNorm() < 1e-6);
-    }
-
-
-    @Test
     public void convergenceConstraintTangency() {
         /*
          * Macierz Hessian'a ?
@@ -330,6 +326,7 @@ public class ConstraintConvergenceTest {
 
         geometricSolver.solveSystem(reporter, solverStat);
 
+
         /* no Hessian implementations evaluation into closing equation */
 
         Assert.assertEquals(19, solverStat.iterations);
@@ -338,7 +335,6 @@ public class ConstraintConvergenceTest {
         Assert.assertTrue(solverStat.constraintDelta < 1.0e-2);
         Assert.assertTrue(constraint.getNorm() < 10e-3);
     }
-
 
     @Test
     public void testWriteStdOutTensor() {
@@ -356,8 +352,6 @@ public class ConstraintConvergenceTest {
 
         out.println(constraint.getJacobian().toString());
         out.println(constraint.getHessian(1.0).toString());
-
     }
-
 
 }

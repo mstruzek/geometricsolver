@@ -205,7 +205,7 @@ public class ArcOld extends GeometricPrimitive {
         ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(skipIds), b, false);
         ConstraintFixPoint fixPointc = new ConstraintFixPoint(Constraint.nextId(skipIds), c, false);
         ConstraintFixPoint fixPointd = new ConstraintFixPoint(Constraint.nextId(skipIds), d, false);
-        ConstraintLinesSameLength sameLength = new ConstraintLinesSameLength(Constraint.nextId(skipIds), p1, p2, p1, p3, false);
+        ConstraintEqualLength sameLength = new ConstraintEqualLength(Constraint.nextId(skipIds), p1, p2, p1, p3, false);
         constraints = new int[5];
         constraints[0] = fixPointa.constraintId;
         constraints[1] = fixPointb.constraintId;

@@ -45,8 +45,8 @@ public class ConstraintFixPoint extends Constraint {
         dbConstraint.put(constraintId, this);
     }
 
-    public ConstraintFixPoint(Integer constId,Point K,boolean storage){
-        super(constId, GeometricConstraintType.FixPoint, storage);
+    public ConstraintFixPoint(Integer constId,Point K,boolean persistent){
+        super(constId, GeometricConstraintType.FixPoint, persistent);
         this.k_id = K.id;
         this.k0_vec = new Vector(K.x, K.y);
     }

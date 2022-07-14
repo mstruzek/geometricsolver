@@ -336,7 +336,7 @@ public class GCModelReader implements Closeable {
                 case Connect2Points:
                 case LinesParallelism:
                 case LinesPerpendicular:
-                case LinesSameLength:
+                case EqualLength:
                 case Tangency:
                 case Distance2Points:
                 case DistancePointLine:

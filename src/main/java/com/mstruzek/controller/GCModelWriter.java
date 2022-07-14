@@ -123,7 +123,7 @@ public class GCModelWriter implements Closeable {
     }
 
     public void writeConstraints() throws IOException {
-        for(Constraint constraint : Constraint.dbConstraint.values().stream().filter(Constraint::isStorable).collect(toList())) {
+        for(Constraint constraint : Constraint.dbConstraint.values().stream().filter(Constraint::isPersistent).collect(toList())) {
             int cID = constraint.getConstraintId();
             GeometricConstraintType constraintType = constraint.getConstraintType();
             int K = constraint.getK();

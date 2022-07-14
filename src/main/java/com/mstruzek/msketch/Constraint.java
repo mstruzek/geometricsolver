@@ -6,8 +6,6 @@ import com.mstruzek.msketch.matrix.MatrixDouble;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static com.mstruzek.msketch.Point.dbPoint;
-
 /*
  * Wiez jedowymairowy,iloczyn skalarny,
  */
@@ -28,7 +26,7 @@ public abstract class Constraint implements ConstraintInterface {
     /**
      * [ false ] - this constraint is normally not visible unless CTRL function applied into layout
      */
-    protected boolean storable;
+    protected boolean persistent;
 
     /**
      * tablica wszystkich linii
@@ -36,11 +34,11 @@ public abstract class Constraint implements ConstraintInterface {
     public static TreeMap<Integer, Constraint> dbConstraint = new TreeMap<>();
 
 
-    public Constraint(Integer constraintId, GeometricConstraintType constraintType, boolean storable) {
+    public Constraint(Integer constraintId, GeometricConstraintType constraintType, boolean persistent) {
         super();
         this.constraintId = constraintId;
         this.constraintType = constraintType;
-        this.storable = storable;
+        this.persistent = persistent;
         dbConstraint.put(constraintId, this);
     }
 
@@ -220,7 +218,7 @@ public abstract class Constraint implements ConstraintInterface {
     }
 
     @Override
-    public boolean isStorable() {
-        return storable;
+    public boolean isPersistent() {
+        return persistent;
     }
 }

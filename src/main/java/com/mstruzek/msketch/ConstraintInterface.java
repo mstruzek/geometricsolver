@@ -13,5 +13,5 @@ public interface ConstraintInterface {
 	/** pobierz numer parametru */
 	int getParameter();
 	/** hidden point */
-	boolean isStorable();
+	boolean isPersistent();
 }

@@ -179,7 +179,7 @@ public class MyTables extends JPanel {
         Constraint constraint =
             Constraint.dbConstraint.values()
                 .stream()
-                .filter(Constraint::isStorable).skip(i)
+                .filter(Constraint::isPersistent).skip(i)
                 .findFirst()
                 .orElseThrow(() -> new IndexOutOfBoundsException("constraint: " + i));
 
