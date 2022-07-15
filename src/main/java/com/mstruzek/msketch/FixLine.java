@@ -39,13 +39,13 @@ public class FixLine extends GeometricPrimitive {
     }
 
     @Override
-    public void setForce(int r, MatrixDouble dest) {
+    public void setForce(int row, MatrixDouble dest) {
 
     }
 
 
     @Override
-    public void setJacobian(int r, int c, MatrixDouble dest) {
+    public void setJacobian(int row, int col, MatrixDouble dest) {
         //poniewaz nie ma punktow kontrolnych to brak macierzy
     }
 

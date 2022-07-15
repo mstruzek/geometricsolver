@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
+import static com.mstruzek.controller.EventType.CONTROLLER_ERROR;
 import static com.mstruzek.graphic.Property.*;
 
 public class FrameView extends JFrame {
@@ -161,7 +162,7 @@ public class FrameView extends JFrame {
         constraintPanel.setLayout(groupLayout);
         constraintPanel.setBackground(new Color(244, 249, 192));
         constraintPanel.setPreferredSize(new Dimension(680, 250));
-        constraintPanel.setBorder(BorderFactory.createTitledBorder("Add Constraint"));
+        constraintPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), "Add Constraint"));
 
 
         final JTextArea consDescr = new JTextArea(7, 40);
@@ -364,6 +365,14 @@ public class FrameView extends JFrame {
             ms.refreshContainers();
             ms.repaint();
         });
+
+        Events.addListener(EventType.CONTROLLER_ERROR, (eventType, arguments) -> {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(this, (String)arguments[0], "Application Error", JOptionPane.ERROR_MESSAGE);
+
+            });
+        });
+
 
         // FIXME - wazne dla setFocusable
         dload.setFocusable(false);

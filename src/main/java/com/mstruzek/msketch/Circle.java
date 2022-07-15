@@ -105,21 +105,24 @@ public class Circle extends GeometricPrimitive {
     }
 
     @Override
-    public void setForce(int r, MatrixDouble force) {
+    public void setForce(int row, MatrixDouble force) {
         // 8 = 4*2 (4 punkty kontrolne)
         Vector f12 = p1.sub(a).unit().dot(Consts.springStiffnessLow).dot(p1.sub(a).length() - d_a_p1);                      //F12 - sily w sprezynach
         Vector f23 = p2.sub(p1).unit().dot(Consts.springStiffnessHigh * springAlfa).dot(p2.sub(p1).length() - d_p1_p2);     //F23
         Vector f34 = b.sub(p2).unit().dot(Consts.springStiffnessLow).dot(b.sub(p2).length() - d_p2_b);                      //F34
         
-        force.setVector(0, 0, f12);                          //F1 - silu na poszczegolne punkty
-        force.setVector(2, 0, f23.sub(f12));                 //F2
-        force.setVector(4, 0, f34.sub(f23));                 //F3
-        force.setVector(6, 0, f34.dot(-1.0));                //F4
+        //F1 - silu na poszczegolne punkty
+        force.setVector(row + 0, 0, f12);
+        //F2
+        force.setVector(row + 2, 0, f23.sub(f12));
+        //F3
+        force.setVector(row + 4, 0, f34.sub(f23));
+        //F4
+        force.setVector(row + 6, 0, f34.dot(-1.0));
     }
 
-
     @Override
-    public void setJacobian(int r, int c, MatrixDouble mt) {
+    public void setJacobian(int row, int col, MatrixDouble mt) {
         // a ,p1 ,p2 ,b = 4*2 = 8x8
         /**
          * k= I*k
@@ -135,16 +138,16 @@ public class Circle extends GeometricPrimitive {
         // -Ks-Kb
         MatrixDouble Ksb = Ks.dotC(-1).addSubMatrix(0, 0, Kb.dotC(-1));
 
-        mt.addSubMatrix(r + 0, c + 0, Ks.dotC(-1));
-        mt.addSubMatrix(r + 0, c + 2, Ks);
-        mt.addSubMatrix(r + 2, c + 0, Ks);
-        mt.addSubMatrix(r + 2, c + 2, Ksb);
-        mt.addSubMatrix(r + 2, c + 4, Kb);
-        mt.addSubMatrix(r + 4, c + 2, Kb);
-        mt.addSubMatrix(r + 4, c + 4, Ksb);
-        mt.addSubMatrix(r + 4, c + 6, Ks);
-        mt.addSubMatrix(r + 6, c + 4, Ks);
-        mt.addSubMatrix(r + 6, c + 6, Ks.dotC(-1));
+        mt.addSubMatrix(row + 0, col + 0, Ks.dotC(-1));
+        mt.addSubMatrix(row + 0, col + 2, Ks);
+        mt.addSubMatrix(row + 2, col + 0, Ks);
+        mt.addSubMatrix(row + 2, col + 2, Ksb);
+        mt.addSubMatrix(row + 2, col + 4, Kb);
+        mt.addSubMatrix(row + 4, col + 2, Kb);
+        mt.addSubMatrix(row + 4, col + 4, Ksb);
+        mt.addSubMatrix(row + 4, col + 6, Ks);
+        mt.addSubMatrix(row + 6, col + 4, Ks);
+        mt.addSubMatrix(row + 6, col + 6, Ks.dotC(-1));
     }
 
     @Override

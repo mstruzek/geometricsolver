@@ -129,28 +129,28 @@ public class ArcOld extends GeometricPrimitive {
     }
 
     @Override
-    public void setForce(int r, MatrixDouble mt) {
+    public void setForce(int row, MatrixDouble mt) {
         Vector f12 = p1.sub(a).unit().dot(Consts.springStiffnessHigh * dS).dot(p1.sub(a).length() - d_a_p1);        //F12 - sily w sprezynach
         Vector f23 = b.sub(p1).unit().dot(Consts.springStiffnessHigh * dS).dot(b.sub(p1).length() - d_p1_b);        //F23
 
         //FREEPOINT
-        mt.setVector(r + 0, 0, f12);             //F1 - silu na poszczegolne punkty
-        mt.setVector(r + 2, 0, f23.sub(f12));    //F2
-        mt.setVector(r + 4, 0, f23.dot(-1));     //F3
+        mt.setVector(row + 0, 0, f12);             //F1 - silu na poszczegolne punkty
+        mt.setVector(row + 2, 0, f23.sub(f12));    //F2
+        mt.setVector(row + 4, 0, f23.dot(-1));     //F3
 
         Vector fcp2 = p2.sub(c).unit().dot(Consts.springStiffnessLow).dot(p2.sub(c).length() - d_c_p2);         //LINE
         Vector fp2p3 = p3.sub(p2).unit().dot(Consts.springStiffnessHigh).dot(p3.sub(p2).length() - d_p2_p3);    //F23
         Vector fp3d = d.sub(p3).unit().dot(Consts.springStiffnessLow).dot(d.sub(p3).length() - d_p3_d);
 
-        mt.setVector(r + 6, 0, fcp2);
-        mt.setVector(r + 7, 0, fp2p3.sub(fcp2));
-        mt.setVector(r + 10, 0, fp3d.sub(fp2p3));
-        mt.setVector(r + 12, 0, fp3d.dot(-1));
+        mt.setVector(row + 6, 0, fcp2);
+        mt.setVector(row + 7, 0, fp2p3.sub(fcp2));
+        mt.setVector(row + 10, 0, fp3d.sub(fp2p3));
+        mt.setVector(row + 12, 0, fp3d.dot(-1));
     }
 
 
     @Override
-    public void setJacobian(int r, int c, MatrixDouble mt) {
+    public void setJacobian(int row, int col, MatrixDouble mt) {
 
         /** Free Point
          * k= I*k
@@ -176,26 +176,26 @@ public class ArcOld extends GeometricPrimitive {
         MatrixDouble Ksb = Ks.dotC(-1).addSubMatrix(0, 0, Kb.dotC(-1));
 
         //FREEPOINT
-        mt.addSubMatrix(r + 0, c + 0, Ksm);
-        mt.addSubMatrix(r + 0, c + 2, Ksp);
-        mt.addSubMatrix(r + 2, c + 0, Ksp);
-        mt.addSubMatrix(r + 2, c + 2, Ksp.dotC(2.0));
-        mt.addSubMatrix(r + 2, c + 4, Ksp);
-        mt.addSubMatrix(r + 4, c + 2, Ksp);
-        mt.addSubMatrix(r + 4, c + 4, Ksm);
+        mt.addSubMatrix(row + 0, col + 0, Ksm);
+        mt.addSubMatrix(row + 0, col + 2, Ksp);
+        mt.addSubMatrix(row + 2, col + 0, Ksp);
+        mt.addSubMatrix(row + 2, col + 2, Ksp.dotC(2.0));
+        mt.addSubMatrix(row + 2, col + 4, Ksp);
+        mt.addSubMatrix(row + 4, col + 2, Ksp);
+        mt.addSubMatrix(row + 4, col + 4, Ksm);
 
         //LINE
         int s = 6;//przesuniecie
-        mt.addSubMatrix(r + 0 + s, c + 0 + s, Ks.dotC(-1));
-        mt.addSubMatrix(r + 0 + s, c + 2 + s, Ks);
-        mt.addSubMatrix(r + 2 + s, c + 0 + s, Ks);
-        mt.addSubMatrix(r + 2 + s, c + 2 + s, Ksb.dotC(2.0));
-        mt.addSubMatrix(r + 2 + s, c + 4 + s, Kb);
-        mt.addSubMatrix(r + 4 + s, c + 2 + s, Kb);
-        mt.addSubMatrix(r + 4 + s, c + 4 + s, Ksb);
-        mt.addSubMatrix(r + 4 + s, c + 6 + s, Ks);
-        mt.addSubMatrix(r + 6 + s, c + 4 + s, Ks);
-        mt.addSubMatrix(r + 6 + s, c + 6 + s, Ks.dotC(-1));
+        mt.addSubMatrix(row + 0 + s, col + 0 + s, Ks.dotC(-1));
+        mt.addSubMatrix(row + 0 + s, col + 2 + s, Ks);
+        mt.addSubMatrix(row + 2 + s, col + 0 + s, Ks);
+        mt.addSubMatrix(row + 2 + s, col + 2 + s, Ksb.dotC(2.0));
+        mt.addSubMatrix(row + 2 + s, col + 4 + s, Kb);
+        mt.addSubMatrix(row + 4 + s, col + 2 + s, Kb);
+        mt.addSubMatrix(row + 4 + s, col + 4 + s, Ksb);
+        mt.addSubMatrix(row + 4 + s, col + 6 + s, Ks);
+        mt.addSubMatrix(row + 6 + s, col + 4 + s, Ks);
+        mt.addSubMatrix(row + 6 + s, col + 6 + s, Ks.dotC(-1));
     }
 
     @Override

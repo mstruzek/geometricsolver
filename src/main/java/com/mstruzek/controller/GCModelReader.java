@@ -334,15 +334,18 @@ public class GCModelReader implements Closeable {
             switch (constraintType) {
                 case FixPoint:
                 case Connect2Points:
-                case LinesParallelism:
-                case LinesPerpendicular:
-                case EqualLength:
-                case Tangency:
                 case Distance2Points:
                 case DistancePointLine:
+                case LinesParallelism:
+                case LinesPerpendicular:
                 case Angle2Lines:
                 case SetHorizontal:
                 case SetVertical:
+                case HorizontalPoint:
+                case VerticalPoint:
+                case EqualLength:
+                case ParametrizedLength:
+                case Tangency:
                     Model.addConstraint(constId, constraintType, K, L, M, N, parameter);
                     break;
                 default:

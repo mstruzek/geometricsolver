@@ -27,6 +27,7 @@ public class MySketch extends JPanel implements MouseInputListener {
     private static final long serialVersionUID = 1L;
     public static final int S_WIDTH = 920;
     public static final int S_HEIGHT = 1000;
+    public static final Color CONTROL_GUIDES_COLOR = Color.ORANGE;
 
     ///tu skladujemy oddzielnie kategorie obiektow do odrysowania
     private final ArrayList<MyLine> lineStore = new ArrayList<>();
@@ -73,7 +74,7 @@ public class MySketch extends JPanel implements MouseInputListener {
         setBackground(new Color(180, 250, 179));
         tx.translate(40, 900);
         tx.scale(1, -1);
-        setBorder(BorderFactory.createTitledBorder("Szkicownik"));
+        setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), "Szkicownik"));
         addMouseListener(this);
         addMouseMotionListener(this);
         this.popoup = new MyPopup(-1, mpc);
@@ -207,7 +208,7 @@ public class MySketch extends JPanel implements MouseInputListener {
 
             //dodatki
             if (controlGuidelines) {
-                g2d.setColor(Color.LIGHT_GRAY);
+                g2d.setColor(CONTROL_GUIDES_COLOR);
 
                 int pA = GeometricPrimitive.dbPrimitives.get(ml.getPrimitiveId()).getA();
                 int pB = GeometricPrimitive.dbPrimitives.get(ml.getPrimitiveId()).getB();
@@ -237,7 +238,7 @@ public class MySketch extends JPanel implements MouseInputListener {
             g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
 
             if (controlGuidelines) {
-                g2d.setColor(Color.LIGHT_GRAY);
+                g2d.setColor(CONTROL_GUIDES_COLOR);
 
                 int pA = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getA();
                 int pB = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getB();
@@ -292,7 +293,7 @@ public class MySketch extends JPanel implements MouseInputListener {
 
 
             if (controlGuidelines) {
-                g2d.setColor(Color.LIGHT_GRAY);
+                g2d.setColor(CONTROL_GUIDES_COLOR);
 
                 int pA = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getA();
                 int pB = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getB();
@@ -328,7 +329,7 @@ public class MySketch extends JPanel implements MouseInputListener {
         }
         for (int i = 0; i < freePointStore.size(); i++) {
             if (controlGuidelines) {
-                g2d.setColor(Color.LIGHT_GRAY);
+                g2d.setColor(CONTROL_GUIDES_COLOR);
                 MyFreePoint mfp = freePointStore.get(i);
 
                 int pA = GeometricPrimitive.dbPrimitives.get(mfp.getPrimitiveId()).getA();
@@ -371,7 +372,7 @@ public class MySketch extends JPanel implements MouseInputListener {
         tx.transform(px, px);
         tx.transform(py, py);
         tx.transform(p0, p0);
-        g2d.setColor(Color.RED);
+        g2d.setColor(Color.BLUE);
         g2d.draw(new Line2D.Double(p0, px)); //X
         g2d.draw(new Line2D.Double(p0, py)); //Y
     }

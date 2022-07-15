@@ -144,7 +144,7 @@ public class Arc extends GeometricPrimitive {
     }
 
     @Override
-    public void setForce(int r, MatrixDouble mt) {
+    public void setForce(int row, MatrixDouble mt) {
         Vector fap1 = p1.sub(a).unit().dot(Consts.springStiffnessLow).dot(p1.sub(a).length() - d_a_p1);
         Vector fbp1 = p1.sub(b).unit().dot(Consts.springStiffnessLow).dot(p1.sub(b).length() - d_b_p1);
         Vector fp1p2 = p2.sub(p1).unit().dot(Consts.springStiffnessHigh).dot(p2.sub(p1).length() - d_p1_p2);
@@ -152,18 +152,18 @@ public class Arc extends GeometricPrimitive {
         Vector fp2c = c.sub(p2).unit().dot(Consts.springStiffnessLow).dot(c.sub(p2).length() - d_p2_c);
         Vector fp3d = d.sub(p3).unit().dot(Consts.springStiffnessLow).dot(d.sub(p3).length() - d_p3_d);
 
-        mt.setVector(r + 0, 0, fap1);
-        mt.setVector(r + 2, 0, fbp1);
-        mt.setVector(r + 4, 0, fp2c.dot(-1));
-        mt.setVector(r + 6, 0, fp3d.dot(-1));
-        mt.setVector(r + 8, 0, fp1p2.add(fp1p3).sub(fap1).sub(fbp1));
-        mt.setVector(r + 10, 0, fp2c.sub(fp1p2));
-        mt.setVector(r + 12, 0, fp3d.sub(fp1p3));
+        mt.setVector(row + 0, 0, fap1);
+        mt.setVector(row + 2, 0, fbp1);
+        mt.setVector(row + 4, 0, fp2c.dot(-1));
+        mt.setVector(row + 6, 0, fp3d.dot(-1));
+        mt.setVector(row + 8, 0, fp1p2.add(fp1p3).sub(fap1).sub(fbp1));
+        mt.setVector(row + 10, 0, fp2c.sub(fp1p2));
+        mt.setVector(row + 12, 0, fp3d.sub(fp1p3));
     }
 
 
     @Override
-    public void setJacobian(int r, int c, MatrixDouble mt) {
+    public void setJacobian(int row, int col, MatrixDouble mt) {
 
         // K -mala sztywnosci
         MatrixDouble Kb = MatrixDouble.diag(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
@@ -173,31 +173,31 @@ public class Arc extends GeometricPrimitive {
         MatrixDouble mKb = Kb.dotC(-1);
         MatrixDouble KsKbm = mKs.add(mKb);
 
-        mt.addSubMatrix(r + 0, c + 0, mKs);
-        mt.addSubMatrix(r + 0, c + 8, Ks);//a
+        mt.addSubMatrix(row + 0, col + 0, mKs);
+        mt.addSubMatrix(row + 0, col + 8, Ks);//a
 
-        mt.addSubMatrix(r + 2, c + 2, mKs);
-        mt.addSubMatrix(r + 2, c + 8, Ks);//b
+        mt.addSubMatrix(row + 2, col + 2, mKs);
+        mt.addSubMatrix(row + 2, col + 8, Ks);//b
 
-        mt.addSubMatrix(r + 4, c + 4, mKs);
-        mt.addSubMatrix(r + 4, c + 10, Ks);//c
+        mt.addSubMatrix(row + 4, col + 4, mKs);
+        mt.addSubMatrix(row + 4, col + 10, Ks);//c
 
-        mt.addSubMatrix(r + 6, c + 6, mKs);
-        mt.addSubMatrix(r + 6, c + 12, Ks);//d
+        mt.addSubMatrix(row + 6, col + 6, mKs);
+        mt.addSubMatrix(row + 6, col + 12, Ks);//d
 
-        mt.addSubMatrix(r + 8, c + 0, Ks);
-        mt.addSubMatrix(r + 8, c + 2, Ks);
-        mt.addSubMatrix(r + 8, c + 8, KsKbm.dotC(2.0));
-        mt.addSubMatrix(r + 8, c + 10, Kb);
-        mt.addSubMatrix(r + 8, c + 12, Kb); //p1
+        mt.addSubMatrix(row + 8, col + 0, Ks);
+        mt.addSubMatrix(row + 8, col + 2, Ks);
+        mt.addSubMatrix(row + 8, col + 8, KsKbm.dotC(2.0));
+        mt.addSubMatrix(row + 8, col + 10, Kb);
+        mt.addSubMatrix(row + 8, col + 12, Kb); //p1
 
-        mt.addSubMatrix(r + 10, c + 4, Ks);
-        mt.addSubMatrix(r + 10, c + 8, Kb);
-        mt.addSubMatrix(r + 10, c + 10, KsKbm); //p2
+        mt.addSubMatrix(row + 10, col + 4, Ks);
+        mt.addSubMatrix(row + 10, col + 8, Kb);
+        mt.addSubMatrix(row + 10, col + 10, KsKbm); //p2
 
-        mt.addSubMatrix(r + 12, c + 6, Ks);
-        mt.addSubMatrix(r + 12, c + 8, Kb);
-        mt.addSubMatrix(r + 12, c + 12, KsKbm); //p3
+        mt.addSubMatrix(row + 12, col + 6, Ks);
+        mt.addSubMatrix(row + 12, col + 8, Kb);
+        mt.addSubMatrix(row + 12, col + 12, KsKbm); //p3
     }
 
     @Override

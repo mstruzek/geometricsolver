@@ -86,7 +86,7 @@ public class FreePoint extends GeometricPrimitive {
     }
 
     @Override
-    public void setForce(int r, MatrixDouble mt) {
+    public void setForce(int row, MatrixDouble mt) {
 
         // 8 = 4*2 (4 punkty kontrolne)
 
@@ -96,16 +96,16 @@ public class FreePoint extends GeometricPrimitive {
         Vector f23 = b.sub(p1).unit().dot(Consts.springStiffnessLow).dot(b.sub(p1).length() - d_p1_b);
 
         //F1 - sily na poszczegolne punkty
-        mt.setVector(r + 0, 0, f12);
+        mt.setVector(row + 0, 0, f12);
         //F2
-        mt.setVector(r + 2, 0, f23.sub(f12));
+        mt.setVector(row + 2, 0, f23.sub(f12));
         //F3
-        mt.setVector(r + 4, 0, f23.dot(-1));
+        mt.setVector(row + 4, 0, f23.dot(-1));
     }
 
 
     @Override
-    public void setJacobian(int r, int c, MatrixDouble mt) {
+    public void setJacobian(int row, int col, MatrixDouble mt) {
         /**
          * k= I*k
          * [ -ks    ks     0;
@@ -117,15 +117,15 @@ public class FreePoint extends GeometricPrimitive {
         MatrixDouble Ks = MatrixDouble.diag(Consts.springStiffnessLow, Consts.springStiffnessLow);
         MatrixDouble Km = Ks.dotC(-1);
 
-        mt.addSubMatrix(r + 0, c + 0, Km);
-        mt.addSubMatrix(r + 0, c + 2, Ks);
+        mt.addSubMatrix(row + 0, col + 0, Km);
+        mt.addSubMatrix(row + 0, col + 2, Ks);
 
-        mt.addSubMatrix(r + 2, c + 0, Ks);
-        mt.addSubMatrix(r + 2, c + 2, Km.dotC(2.0));
-        mt.addSubMatrix(r + 2, c + 4, Ks);
+        mt.addSubMatrix(row + 2, col + 0, Ks);
+        mt.addSubMatrix(row + 2, col + 2, Km.dotC(2.0));
+        mt.addSubMatrix(row + 2, col + 4, Ks);
 
-        mt.addSubMatrix(r + 4, c + 2, Ks);
-        mt.addSubMatrix(r + 4, c + 4, Km);
+        mt.addSubMatrix(row + 4, col + 2, Ks);
+        mt.addSubMatrix(row + 4, col + 4, Km);
     }
 
     @Override

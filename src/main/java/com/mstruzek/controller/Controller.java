@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.Set;
 import java.util.TreeMap;
 
+
 public class Controller implements ControllerInterface {
 
     /**
@@ -38,8 +39,12 @@ public class Controller implements ControllerInterface {
 
     @Override
     public void addConstraint(GeometricConstraintType constraintType, int K, int L, int M, int N, double d) {
-        Model.addConstraint(constraintType, K, L, M, N, d);
-
+        try {
+            Model.addConstraint(constraintType, K, L, M, N, d);
+        }catch (Exception e) {
+            e.printStackTrace();
+            Events.send(EventType.CONTROLLER_ERROR, new Object[]{ e.getMessage()} );
+        }
     }
 
     public void writeModelInto(File selectedFile) {
@@ -98,7 +103,6 @@ public class Controller implements ControllerInterface {
 
         Point.dbPoint.clear();
         Point.pointCounter = 0;
-
     }
 
     private void updateModelConsistency() {
@@ -121,10 +125,14 @@ public class Controller implements ControllerInterface {
         return treeMap.size() == 0 ? 0 : treeMap.lastKey() + 1;
     }
 
-
     @Override
     public void solveSystem() {
-        Model.solveSystem();
+        try {
+            Model.solveSystem();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Events.send(EventType.CONTROLLER_ERROR, new Object[]{e.getMessage()});
+        }
     }
 
     @Override

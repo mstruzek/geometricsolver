@@ -51,17 +51,17 @@ public abstract class GeometricPrimitive {
     /**
      * Funkcja zwraca wartosc sil w sprezynach dla poszczegolnych punkt�w w danym {@link GeometricPrimitive}
      */
-    public abstract void setForce(int r, MatrixDouble dest);
+    public abstract void setForce(int row, MatrixDouble dest);
 
     /**
      * Funkcja zwraca jakobian si� - czyli macierz szytnowsci Fq
      *
-     * @param r row offset
-     * @param c column offset
+     * @param row row offset
+     * @param col column offset
      * @param dest destination matrix
      * @return
      */
-    public abstract void setJacobian(int r, int c, MatrixDouble dest);
+    public abstract void setJacobian(int row, int col, MatrixDouble dest);
 
     /**
      * Pobierz wszystkie punkty powiazane z dana figura

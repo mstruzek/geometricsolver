@@ -31,7 +31,6 @@ public class ConstraintConnect2Points extends Constraint {
      */
     public ConstraintConnect2Points(int constId, Point K, Point L) {
         super(constId, GeometricConstraintType.Connect2Points, true);
-        //pobierz id
         k_id = K.id;
         l_id = L.id;
     }

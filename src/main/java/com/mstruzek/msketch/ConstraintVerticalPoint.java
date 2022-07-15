@@ -31,7 +31,6 @@ public class ConstraintVerticalPoint extends Constraint {
      */
     public ConstraintVerticalPoint(int constId, Point K, Point L) {
         super(constId, GeometricConstraintType.VerticalPoint, true);
-        //pobierz id
         k_id = K.id;
         l_id = L.id;
     }

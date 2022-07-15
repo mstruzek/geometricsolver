@@ -54,6 +54,7 @@ public abstract class Constraint implements ConstraintInterface {
         return nextId;
     }
 
+
     /**
      * Funkcja zwraca WARTOSC WIEZU w postaci skalaru ,przypadek dla Constraint.size=1
      * lub Vectora kolumnowego gdy size=2;
