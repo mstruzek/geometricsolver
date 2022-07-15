@@ -333,6 +333,8 @@ public class GCModelReader implements Closeable {
 
             switch (constraintType) {
                 case FixPoint:
+                case ParametrizedXFix:
+                case ParametrizedYFix:
                 case Connect2Points:
                 case Distance2Points:
                 case DistancePointLine:

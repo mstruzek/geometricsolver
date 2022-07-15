@@ -127,14 +127,14 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 - Date : 2022
 
 
-- [ SetCoordinateX , SetCoordinateY Constraints]
+- [ w strone macierzy do bezposredniego zapisu !]
 - [ Solver - snapshoting , podarzanie za bledem ]
+- [ umiescmy formatke  Solver Space pod console logiem - (error, accTime, solvertTime, iter) ]
 
 - [ 14 dni prepartion GPU ]  - sprawdzic model , zaciagnac bindowanie memory - caly model przenisc pod JNI i wiezy, stiffness.
 - [ JNI ] - otworzyc dzwignie do C++  -- jni.h  - handler do memory , read , write Byte , Integer , Long , Double, Float
 - [ Selector ] Solver Selector - Local Host , GPU Blas H ( handmade ), GPU CGM , 
-- [ Visitator ] -  zapis ByteBuffer free, [ Ax = b ] cudaHostFree, cudaHostMalloc(_) albo lokalnie albo z `cuda.
-                                                                                   
+- [ Visitator ] -  zapis ByteBuffer free, [ Ax = b ] cudaHostFree, cudaHostMalloc(_) albo lokalnie albo z `cuda. 
 
 - @ [!!!!! Error ] - Hessian Evaluation   -  iterable on keySet()  !!!! --   remove/add Primitives ( => Points ) - all constraints 3 wiezy !!!
 - @ [ConstraintTangency, ConstraintLinesParallelism, ConstraintLinesPerpendicular ]
@@ -147,19 +147,15 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 - @ [ ConstrainHorizontalPoint : alignedOnY ]
 - @ [ ConstraintDistancePointLine : extend Tangency ] - przygotowac rownania na kartce. !
 - @ [ ConstraintParametrizedLength] - dlugoscie wzgledne nad wspolczynnik 
+- @ [ ParametrizeXFix , ParametrizedYFix constraints]
 
 ## UNIFIED MATRIX INTERFACE
 /*
-* [  KERNEL Matrix Evaluations ] on-submit unit-of-work ->> model jest  zarzadzany  z  JNISolverGate 
-* 
-* ( Points >> , Primitives >> , Constraints >> )! .
-* 
+* [  KERNEL Matrix Evaluations ] on-submit unit-of-work ->> model jest  zarzadzany  z  JNISolverGate
+* ( Points >> , Primitives >> , Constraints >> )! .* 
 * Gridem ( szykiem Kerneli ) -> uzupelanimy macierze A, b, x
-* 
-* 1 - kernel - single primitive (8,8)
-* 
+* 1 - kernel - single primitive (8,8) 
 * 1 - kernel - single jacobian tuple (1,2) , (2,2)
-* 
 * 1 - kernel - single Hessian ( J,K ) GRID(32,32) == 1024  ~ iterate all constraints
 * 
 */

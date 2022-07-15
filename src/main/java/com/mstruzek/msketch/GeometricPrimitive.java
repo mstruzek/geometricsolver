@@ -120,9 +120,9 @@ public abstract class GeometricPrimitive {
 	 */
     public static void getAllJacobianForces(MatrixDouble mt) {
 		int rowCol = 0;
-        for (Integer i : dbPrimitives.keySet()) {
-			dbPrimitives.get(i).setJacobian(rowCol, rowCol, mt);
-            rowCol += dbPrimitives.get(i).getNumOfPoints() * 2;
+        for (Integer i : GeometricPrimitive.dbPrimitives.keySet()) {
+			GeometricPrimitive.dbPrimitives.get(i).setJacobian(rowCol, rowCol, mt);
+            rowCol += GeometricPrimitive.dbPrimitives.get(i).getNumOfPoints() * 2;
         }
     }
 

@@ -31,21 +31,7 @@ public class ConstraintFixPoint extends Constraint {
         this(constId, K, true);
     }
 
-    /**
-     * Konstruktor wiezu
-     *
-     * @param K - zrzutowany Point na Vector
-     * @param L - Vector w ktorym bedzie zafiksowany K
-     */
-    public ConstraintFixPoint(Point K, Vector L) {
-        super(nextId(), GeometricConstraintType.FixPoint, true);
-        //pobierz id
-        k_id = ((Point) K).id;
-        k0_vec = L;
-        dbConstraint.put(constraintId, this);
-    }
-
-    public ConstraintFixPoint(Integer constId,Point K,boolean persistent){
+    public ConstraintFixPoint(Integer constId, Point K, boolean persistent){
         super(constId, GeometricConstraintType.FixPoint, persistent);
         this.k_id = K.id;
         this.k0_vec = new Vector(K.x, K.y);
@@ -63,7 +49,6 @@ public class ConstraintFixPoint extends Constraint {
     public String toString() {
         MatrixDouble mt = getValue();
         double norm = Matrix.constructWithCopy(mt.getArray()).norm1();
-
         return "Constraint-FixPoint" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  , K0 = " + k0_vec + " } \n";
     }
 

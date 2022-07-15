@@ -40,6 +40,7 @@ public class FrameView extends JFrame {
     public static final Color HELP_PANEL_BACKGROUND_COLOR = new Color(100, 255, 100, 50);
     public static final Color SKETCH_INFO_BORDER_COLOR = Color.darkGray;
     public static final Color SKETCH_INFO_BACKGROUND_COLOR = new Color(250, 200, 200);
+    public static final Color FRAME_BACKGROUND_COLOR = null; /// Default Wash
     public static final String FRAME_TITLE = "M-Sketcher 2009-2022";
 
     private Container pane = getContentPane();
@@ -48,7 +49,6 @@ public class FrameView extends JFrame {
      * zmienna na parametry
      */
     final JTextField parameterField = new JTextField(5);
-
     {
         parameterField.setText("10.0");
     }
@@ -122,6 +122,9 @@ public class FrameView extends JFrame {
         left.setPreferredSize(new Dimension(L_WIDTH, L_HEIGHT));
         right.setPreferredSize(new Dimension(R_WIDTH, R_HEIGHT));
 
+        left.setBackground(FRAME_BACKGROUND_COLOR);
+        right.setBackground(FRAME_BACKGROUND_COLOR);
+
         ///  left.setBorder(BorderFactory.createLineBorder(Color.CYAN));
         /// right.setBorder(BorderFactory.createLineBorder(Color.CYAN));
 
@@ -181,7 +184,7 @@ public class FrameView extends JFrame {
 
         final JComboBox combo = new JComboBox(GeometricConstraintType.values());
         combo.setFocusable(false);
-        combo.setPreferredSize(new Dimension(200, -1));
+        combo.setPreferredSize(new Dimension(240, -1));
         combo.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

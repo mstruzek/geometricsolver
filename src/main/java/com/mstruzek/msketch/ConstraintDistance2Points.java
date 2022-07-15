@@ -47,14 +47,14 @@ public class ConstraintDistance2Points extends Constraint {
     public MatrixDouble getJacobian() {
         /// macierz 1xN
         MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
-        Vector LK = dbPoint.get(l_id).Vector().sub(dbPoint.get(k_id)).unit();
+        Vector LKu = dbPoint.get(l_id).Vector().sub(dbPoint.get(k_id)).unit();
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2, LK.dot(-1.0));
+                mt.setVectorT(0, j * 2, LKu.dot(-1.0));
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2, LK);
+                mt.setVectorT(0, j * 2, LKu);
             }
             j++;
         }

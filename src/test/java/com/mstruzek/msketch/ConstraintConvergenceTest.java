@@ -58,6 +58,41 @@ public class ConstraintConvergenceTest {
         Assert.assertTrue(constraint.getNorm() < 10e-10);
     }
 
+    @Test
+    public void convergenceConstraintParametrizedXFix() {
+        Point p10 = new Point(1, 40.0, 40.0);
+        FreePoint f10 = new FreePoint(p10);
+        f10.setAssociateConstraints(null);
+        Parameter parameter = new Parameter(120.0); // fixed X coordinate
+        Constraint constraint = new ConstraintParametrizedXFix(Constraint.nextId(), p10, parameter);
+
+        geometricSolver.solveSystem(reporter, solverStat);
+
+        Assert.assertEquals(0, solverStat.iterations);
+        Assert.assertTrue(solverStat.convergence);
+        Assert.assertTrue(solverStat.delta < 10e-10);
+        Assert.assertTrue(solverStat.constraintDelta < 10e-10);
+        Assert.assertTrue(constraint.getNorm() < 10e-10);
+        Assert.assertEquals(p10.getX(), parameter.getValue(), 10e-10);
+    }
+
+    @Test
+    public void convergenceConstraintParametrizedYFix() {
+        Point p10 = new Point(1, 40.0, 40.0);
+        FreePoint f10 = new FreePoint(p10);
+        f10.setAssociateConstraints(null);
+        Parameter parameter = new Parameter(120.0); // fixed Y coordinate
+        Constraint constraint = new ConstraintParametrizedYFix(Constraint.nextId(), p10, parameter);
+
+        geometricSolver.solveSystem(reporter, solverStat);
+
+        Assert.assertEquals(0, solverStat.iterations);
+        Assert.assertTrue(solverStat.convergence);
+        Assert.assertTrue(solverStat.delta < 10e-10);
+        Assert.assertTrue(solverStat.constraintDelta < 10e-10);
+        Assert.assertTrue(constraint.getNorm() < 10e-10);
+        Assert.assertEquals(p10.getY(), parameter.getValue(), 10e-10);
+    }
 
     @Test
     public void convergenceConstraintConnect2Points() {

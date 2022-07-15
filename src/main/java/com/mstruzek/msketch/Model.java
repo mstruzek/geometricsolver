@@ -108,6 +108,14 @@ public final class Model {
             case FixPoint:
                 add(new ConstraintFixPoint(constId, K));
                 break;
+            case ParametrizedXFix:
+                add(new ConstraintParametrizedXFix(constId, K, parameter));
+                add(parameter);
+                break;
+            case ParametrizedYFix:
+                add(new ConstraintParametrizedYFix(constId, K, parameter));
+                add(parameter);
+                break;
             case LinesPerpendicular:
                 add(new ConstraintLinesPerpendicular(constId, K, L, M, N));
                 break;

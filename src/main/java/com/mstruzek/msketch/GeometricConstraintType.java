@@ -28,6 +28,50 @@ public enum GeometricConstraintType {
     },
 
     /**
+     * Zamocowanie punktu we wspolrzednej X określonej w parametrze.
+     */
+    ParametrizedXFix {
+        @Override
+        public int size() {
+            return 1;
+        }
+
+        @Override
+        public String getHelp() {
+            return "Funkcja powoduje zamocowanie punktu w polozeniu X okreslonym wartoscia parametru\n" +
+                "K - punkt do zamocowania [ x ] " +
+                "P - sparametryzowane polozenie X";
+        }
+
+        @Override
+        public boolean isParametrized() {
+            return true;
+        }
+    },
+
+    /**
+     * Zamocowanie punktu we wspolrzednej X określonej w parametrze.
+     */
+    ParametrizedYFix {
+        @Override
+        public int size() {
+            return 1;
+        }
+
+        @Override
+        public String getHelp() {
+            return "Funkcja powoduje zamocowanie punktu w polozeniu Y okreslonym wartoscia parametru\n" +
+                "K - punkt do zamocowania [ y ] " +
+                "P - sparametryzowane polozenie Y";
+        }
+
+        @Override
+        public boolean isParametrized() {
+            return true;
+        }
+    },
+
+    /**
      * 2 punkty maja to same polozenie - Coincidence
      */
     Connect2Points {
@@ -166,6 +210,10 @@ public enum GeometricConstraintType {
             return false;
         }
     },
+
+    /**
+     * Wiez opisuje zaleznosc proporcji pomiedzy dlugosciami dwoch wektorów.
+     */
     ParametrizedLength {
         @Override
         public int size() {
