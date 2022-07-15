@@ -28,6 +28,9 @@ public class MySketch extends JPanel implements MouseInputListener {
     public static final int S_WIDTH = 920;
     public static final int S_HEIGHT = 1000;
     public static final Color CONTROL_GUIDES_COLOR = Color.ORANGE;
+    public static final Color COORDINATE_SYSTEM_COLOR = Color.red;
+    public static final Color PANEL_BORDER_COLOR = Color.DARK_GRAY;
+    public static final Color SKETCH_PANE_BACKGROUND_COLOR = new Color(180, 250, 179);
 
     ///tu skladujemy oddzielnie kategorie obiektow do odrysowania
     private final ArrayList<MyLine> lineStore = new ArrayList<>();
@@ -71,10 +74,10 @@ public class MySketch extends JPanel implements MouseInputListener {
         this.controller = controller;
         setLayout(null);
         setPreferredSize(new Dimension(S_WIDTH, S_HEIGHT));
-        setBackground(new Color(180, 250, 179));
+        setBackground(SKETCH_PANE_BACKGROUND_COLOR);
         tx.translate(40, 900);
         tx.scale(1, -1);
-        setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), "Szkicownik"));
+        setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(PANEL_BORDER_COLOR), "Szkicownik"));
         addMouseListener(this);
         addMouseMotionListener(this);
         this.popoup = new MyPopup(-1, mpc);
@@ -223,7 +226,7 @@ public class MySketch extends JPanel implements MouseInputListener {
                 tx.transform(tp3, tp1);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
 
-                g2d.setColor(Color.BLACK);
+                g2d.setColor(PANEL_BORDER_COLOR);
             }
 
         }
@@ -253,7 +256,7 @@ public class MySketch extends JPanel implements MouseInputListener {
                 tx.transform(tp3, tp1);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
 
-                g2d.setColor(Color.BLACK);
+                g2d.setColor(PANEL_BORDER_COLOR);
             }
 
         }
@@ -288,7 +291,7 @@ public class MySketch extends JPanel implements MouseInputListener {
             g2d.draw(ark);
             g2d.setColor(Color.getHSBColor(0.5f, 0.5f, 0.7f)); //pomaranczowym zaznaczam startowy kat
             g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
-            g2d.setColor(Color.BLACK);
+            g2d.setColor(PANEL_BORDER_COLOR);
             g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp3.x, tp3.y));
 
 
@@ -322,7 +325,7 @@ public class MySketch extends JPanel implements MouseInputListener {
                 tx.transform(tp3, tp1);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
 
-                g2d.setColor(Color.BLACK);
+                g2d.setColor(PANEL_BORDER_COLOR);
             }
             ;
 
@@ -347,7 +350,7 @@ public class MySketch extends JPanel implements MouseInputListener {
                 tx.transform(tp3, tp2);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
 
-                g2d.setColor(Color.BLACK);
+                g2d.setColor(PANEL_BORDER_COLOR);
             }
         }
 
@@ -372,7 +375,7 @@ public class MySketch extends JPanel implements MouseInputListener {
         tx.transform(px, px);
         tx.transform(py, py);
         tx.transform(p0, p0);
-        g2d.setColor(Color.BLUE);
+        g2d.setColor(COORDINATE_SYSTEM_COLOR);
         g2d.draw(new Line2D.Double(p0, px)); //X
         g2d.draw(new Line2D.Double(p0, py)); //Y
     }

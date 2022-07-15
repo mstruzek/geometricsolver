@@ -22,7 +22,6 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
-import static com.mstruzek.controller.EventType.CONTROLLER_ERROR;
 import static com.mstruzek.graphic.Property.*;
 
 public class FrameView extends JFrame {
@@ -35,6 +34,13 @@ public class FrameView extends JFrame {
 
     public static final int CONSOLE_WIDTH = 920;
     public static final int CONSOLE_OUTPUT_HEIGHT = 420;
+
+    public static final Color CONSTRAINT_BORDER_COLOR = Color.DARK_GRAY;
+    public static final Color CONSTRAINT_PANEL_BACKGROUND_COLOR = new Color(244, 249, 192);
+    public static final Color HELP_PANEL_BACKGROUND_COLOR = new Color(100, 255, 100, 50);
+    public static final Color SKETCH_INFO_BORDER_COLOR = Color.darkGray;
+    public static final Color SKETCH_INFO_BACKGROUND_COLOR = new Color(250, 200, 200);
+    public static final String FRAME_TITLE = "M-Sketcher 2009-2022";
 
     private Container pane = getContentPane();
 
@@ -75,8 +81,8 @@ public class FrameView extends JFrame {
 
     final MySketch ms;
 
-    public FrameView(String windowTitle, Controller controller) {
-        super(windowTitle);
+    public FrameView(Controller controller) {
+        super(FRAME_TITLE);
         this.controller = controller;
 
         pane.setLayout(new BorderLayout());
@@ -146,9 +152,9 @@ public class FrameView extends JFrame {
 
         JPanel panPoints = new JPanel();
         panPoints.setLayout(new BorderLayout());
-        panPoints.setBackground(new Color(250, 200, 200));
+        panPoints.setBackground(SKETCH_INFO_BACKGROUND_COLOR);
         panPoints.setPreferredSize(new Dimension(920, 60));
-        panPoints.setBorder(BorderFactory.createLineBorder(Color.black));
+        panPoints.setBorder(BorderFactory.createLineBorder(SKETCH_INFO_BORDER_COLOR));
         panPoints.add(klmn, BorderLayout.NORTH);
         panPoints.add(currentPosition, BorderLayout.SOUTH);
         panPoints.add(pickedPoint, BorderLayout.EAST);
@@ -160,18 +166,18 @@ public class FrameView extends JFrame {
         JPanel constraintPanel = new JPanel();
         GroupLayout groupLayout = new GroupLayout(constraintPanel);
         constraintPanel.setLayout(groupLayout);
-        constraintPanel.setBackground(new Color(244, 249, 192));
+        constraintPanel.setBackground(CONSTRAINT_PANEL_BACKGROUND_COLOR);
         constraintPanel.setPreferredSize(new Dimension(680, 250));
-        constraintPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), "Add Constraint"));
+        constraintPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(CONSTRAINT_BORDER_COLOR), "Add Constraint"));
 
 
         final JTextArea consDescr = new JTextArea(7, 40);
-        consDescr.setBorder(BorderFactory.createTitledBorder("HELP"));
+        consDescr.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(30,20,20,20),"HELP"));
         consDescr.setLineWrap(true);
         consDescr.setWrapStyleWord(true);
         consDescr.setEditable(false);
         consDescr.setFocusable(false);
-        consDescr.setBackground(new Color(100, 255, 100, 50));
+        consDescr.setBackground(HELP_PANEL_BACKGROUND_COLOR);
 
         final JComboBox combo = new JComboBox(GeometricConstraintType.values());
         combo.setFocusable(false);

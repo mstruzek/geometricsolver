@@ -149,6 +149,6 @@ public class Controller implements ControllerInterface {
 
         Controller controller = new Controller();
         //TView view  =
-        new FrameView("M-Sketcher", controller);
+        new FrameView(controller);
     }
 }
