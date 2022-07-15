@@ -634,10 +634,10 @@ public class MatrixDouble {
         str.append("\n").append("MatrixDouble.m ").append(this.height()).append("x").append(this.width())
             .append("\n****************************************\n");
         if (args.length != 0) {
-            str.append(Arrays.stream(args).map(s -> String.format("%19s ", s.toString())).collect(Collectors.joining()))
+            str.append(Arrays.stream(args).map(s -> String.format("%23s ", s.toString())).collect(Collectors.joining()))
                 .append("\n");
         }
-        str.append(toString("%9.2f"));
+        str.append(toString("%11.2f"));
         return str.toString();
     }
 

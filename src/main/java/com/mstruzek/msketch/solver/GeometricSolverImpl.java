@@ -69,7 +69,7 @@ public class GeometricSolverImpl implements GeometricSolver {
         BindMatrix dmx = null;
 
         BindMatrix MTQ = new BindMatrix(dimension, 1);
-        MTQ.bind(dbPoint);
+        MTQ.bindDbPoints();
 
         solverStat.accEvaluationTime += clock.millis() - evaluationStart;
 
@@ -112,7 +112,7 @@ public class GeometricSolverImpl implements GeometricSolver {
              *  LU Decomposition  -- Colt Linera Equatio Solver
              *
              */
-            /// rozwiazjemy zadanie A*dx=b
+            /// rozwiazjemy zadanie [ A ] * [ dx ] = [ b ]
             /// Zaproponowac Wspolny interfejs Macierzowy
 
 /// [ TIMED ]

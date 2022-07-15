@@ -76,24 +76,25 @@ public class ConstraintTangency extends Constraint {
         double CRS = LK.cr(MK);
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
-            /// Fi/k
+            // K
             if (k_id == dbPoint.get(i).id) {
                 mt.setVectorT(0, j * 2, ML.cr().dot(2.0 * CRS).add(LK.dot(2.0 * nm)));
             }
-            /// Fi/l
+            // L
             if (l_id == dbPoint.get(i).id) {
                 mt.setVectorT(0, j * 2, MK.cr().dot(-2.0 * CRS).add(LK.dot(-2.0 * nm)));
             }
-            /// Fi/m
+            // M
             if (m_id == dbPoint.get(i).id) {
                 mt.setVectorT(0, j * 2, LK.cr().dot(2.0 * CRS).add(NM.dot(2.0 * lk)));
             }
-            /// Fi/n
+            // N
             if (n_id == dbPoint.get(i).id) {
                 mt.setVectorT(0, j * 2, NM.dot(-2.0 * lk));
             }
             j++;
         }
+        // System.out.println(mt.toString(dbPoint.keySet().toArray(new Integer[0])));
         return mt;
     }
 

@@ -14,7 +14,6 @@ import cern.colt.matrix.impl.SparseDoubleMatrix2D;
  */
 public class ParseToColt {
 	
-	
 	/**
 	 * Konwersja macierzy gestej do macierzy rzadkiej
 	 * @param md
@@ -32,31 +31,21 @@ public class ParseToColt {
 			}
 		}
 		return matrix2D;
-		
 	}
 
 	public static DoubleMatrix1D toDenseVector(MatrixDouble b) {
 		DoubleMatrix1D doubleMatrix1D = new DenseDoubleMatrix1D(b.height());
-		
 		for(int i = 0; i<b.height(); i++){
 			doubleMatrix1D.setQuick(i, b.get(i,0));
 		}
-		
 		return doubleMatrix1D;
 	}
 
 	public static BindMatrix toBindVector(DoubleMatrix1D matrix1Db) {
-		
 		BindMatrix dmx= new BindMatrix(matrix1Db.size(),1);
-		
 		for(int i=0;i<matrix1Db.size();i++){
 			dmx.set(i, 0, matrix1Db.getQuick(i));
 		}
-		
 		return dmx;
-		
 	}
-	
-	
-
 }

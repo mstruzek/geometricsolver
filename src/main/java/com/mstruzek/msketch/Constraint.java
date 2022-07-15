@@ -171,8 +171,7 @@ public abstract class Constraint implements ConstraintInterface {
     }
 
     /**
-     * Funkcja zwraca macierz d(Jak'*a)/dq -czyli tak jakby calkowity hessian juz
-     * przemnozony
+     * Funkcja zwraca macierz hessianu dla wszystkich wiezow d(Jak'*a)/dq * ( gdzie  a -  Lagrange coefficient )
      *
      * @param hs   - Full  HESSIAN
      * @param mtq  - wektor x , z niego wyciagniemy mnozniki lagrange'a

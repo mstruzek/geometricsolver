@@ -13,7 +13,7 @@ public class Controller implements ControllerInterface {
      * model szkicownika
      */
 
-    public Controller() {
+    public  Controller() {
     }
 
     @Override

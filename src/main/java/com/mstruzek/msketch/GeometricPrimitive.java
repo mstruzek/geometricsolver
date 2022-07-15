@@ -133,9 +133,9 @@ public abstract class GeometricPrimitive {
      */
     public static void getAllForce(MatrixDouble dest) {
         int row = 0;
-        for (Integer i : dbPrimitives.keySet()) {
-            dbPrimitives.get(i).setForce(row, dest);
-            row += dbPrimitives.get(i).getNumOfPoints() * 2;
+        for (Integer i : GeometricPrimitive.dbPrimitives.keySet()) {
+            GeometricPrimitive.dbPrimitives.get(i).setForce(row, dest);
+            row += GeometricPrimitive.dbPrimitives.get(i).getNumOfPoints() * 2;
         }
     }
 

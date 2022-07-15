@@ -116,7 +116,6 @@ public class Line extends GeometricPrimitive {
         mt.setVector(r + 6, 0, f34.dot(-1.0));           //F4
     }
 
-
     @Override
     public void setJacobian(int r, int c, MatrixDouble mt) {
 
@@ -191,7 +190,6 @@ public class Line extends GeometricPrimitive {
 
     @Override
     public int getA() {
-
         return a.id;
     }
 

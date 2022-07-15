@@ -59,8 +59,6 @@ public class ConstraintConvergenceTest {
     }
 
 
-
-
     @Test
     public void convergenceConstraintConnect2Points() {
         Point p10 = new Point(1, 0.0, 40.0);
