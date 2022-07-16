@@ -7,6 +7,9 @@ import java.util.stream.Collectors;
 
 public interface MatrixDouble {
 
+    final static String DOUBLE_STR_FORMAT = "%11.2f";
+    final static String WIDEN_DOUBLE_STR_FORMAT = "%23s ";
+
     /**
      * Number of columns
      *
@@ -189,72 +192,51 @@ public interface MatrixDouble {
     }
 
     /**
-     * Dodaje do siebie Macierze w ten sposub ze kazda kolejna macierz
-     * jest pod druga w kolumnie , macierze powinny miec ta sama ilosc kolumn ale nie koniecznie
-     * <p>
-     * M = mergeByColumn(A,B,C);
-     * M= [ A;
-     * B;
-     * C];
+     * Generates a string that holds organized version of a matrix.
      *
-     * @param MD - lista macierzy do polaczenia
-     * @return
-     */
-    static MatrixDouble mergeByColumn(MatrixDouble... MD) {
-        if (Arrays.stream(MD).anyMatch(matrixDouble -> !(matrixDouble instanceof MatrixDouble2D))) {
-            throw new IllegalStateException("invalid state, argument matrix is required to be MatrixDouble2D type");
-        }
-        int maxRows = 0;
-        int maxColumns = 0;
-        for (int i = 0; i < MD.length; i++) {
-            maxRows += MD[i].height();
-            if (MD[i].width() > maxColumns) maxColumns = MD[i].width();
-        }
-        MatrixDouble MT = MatrixDouble.matrix2D(maxRows, maxColumns, 0.0);
-        int currentRow = 0;
-        for (int i = 0; i < MD.length; i++) {
-            for (int j = 0; j < MD[i].height(); j++) { //j - numer wiersza w danej macierzy
-                System.arraycopy(((MatrixDouble2D) MD[i]).m[j], 0, ((MatrixDouble2D) MT).m[currentRow + j], 0, ((MatrixDouble2D) MD[i]).m[j].length);
-            }
-            currentRow += MD[i].height();
-        }
-        return MT;
-    }
-
-
-    /**
-     * Generates a string that holds a nicely organized version of a matrix or array.
-     * Uses format specifier, e.g. "%5.3f", "%11.1E", ...
-     *
-     * @return A string of a nicely organized version of the matrix or array.
+     * @return array string
      */
     default String toString(String format) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuffer str = new StringBuffer();
         for (int i = 0; i < this.height(); i++) {
-            for (int j = 0; j < this.width() - 1; j++) {
-                buffer.append(String.format(format + " ", this.get(i, j)));
+            String first = String.format(format + " ", this.get(i, 0));
+            str.append(first);
+            for (int j = 1; j < this.width(); j++) {
+                String cell = String.format("," + format + " ", this.get(i, j));
+                str.append(cell);
             }
-            buffer.append(String.format(format, this.get(i, this.width() - 1)));
-            if (i < this.height() - 1) {
-                buffer.append("\n");
-            }
+            if (i < this.width() - 1) str.append("\n");
         }
-        return buffer.toString();
+        return str.toString();
     }
 
     /**
      * @return A string of a nicely organized version of the matrix or array.
      */
-    default <T> String toString(T... columnTitles) {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("\n").append("MatrixDouble - ").append(this.height()).append("x").append(this.width())
-            .append("\n****************************************\n");
-        if (columnTitles.length != 0) {
-            buffer.append(Arrays.stream(columnTitles).map(s -> String.format("%23s ", s.toString())).collect(Collectors.joining()))
+    default <T> String toString(T... titles) {
+        StringBuffer str = new StringBuffer();
+        str
+            .append("\n")
+            .append("MatrixDouble - ")
+            .append(this.height())
+            .append("x")
+            .append(this.width())
+            .append("****************************************\n");
+
+        if (titles.length != 0) {
+            str
+                .append(Arrays.stream(titles).map(s -> String.format(WIDEN_DOUBLE_STR_FORMAT, s.toString()))
+                    .collect(Collectors.joining()))
                 .append("\n");
         }
-        buffer.append(toString("%11.2f"));
-        return buffer.toString();
+
+        str.append(toString(DOUBLE_STR_FORMAT));
+        return str.toString();
     }
 
+    default String toStringU() {
+        StringBuffer str = new StringBuffer();
+        str.append(toString(DOUBLE_STR_FORMAT));
+        return str.toString();
+    }
 }

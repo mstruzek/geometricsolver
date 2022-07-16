@@ -28,7 +28,9 @@ public class GeometricSolverImpl implements GeometricSolver {
     public static final double CONVERGENCE_LIMIT = 10e-5;
 
     @Override
-    public SolverStat solveSystem(StateReporter reporter, SolverStat solverStat) {
+    public SolverStat solveSystem(SolverStat solverStat) {
+
+        StateReporter reporter = StateReporter.getInstance();
 
         long start = clock.millis();                  /// start timing
 
@@ -67,7 +69,7 @@ public class GeometricSolverImpl implements GeometricSolver {
         GeometricPrimitive.getAllJacobianForces(Fq);
 
         // Tworzymy wektor prawych stron b
-        MatrixDouble b = null;
+        MatrixDouble b = MatrixDouble.matrix1Dtr(dimension, 0.0);
         BindMatrix dmx = null;
 
         BindMatrix MTQ = new BindMatrix(dimension, 1);
@@ -92,7 +94,8 @@ public class GeometricSolverImpl implements GeometricSolver {
             GeometricPrimitive.getAllForce(Fr);                 /// Sily  - F(q)
             Constraint.getFullConstraintValues(Fi);             /// Wiezy  - Fi(q)
 
-            b = MatrixDouble.mergeByColumn((Fr), (Fi));
+            b.setSubMatrix(0,0, (Fr));
+            b.setSubMatrix(size,0, (Fi));
             b.dot(-1);
 
             /// JACOBIAN

@@ -2,7 +2,15 @@ package com.mstruzek.msketch.solver;
 
 public class StateReporter {
 
-    static final boolean DebugEnabled = true;
+    private static final StateReporter instance = new StateReporter();
+
+    static final boolean DebugEnabled = false;
+
+    private StateReporter() {}
+
+    public static StateReporter getInstance() {
+        return instance;
+    }
 
     public void writelnf(String format, Object... args) {
         System.out.printf(format + "\n", args);

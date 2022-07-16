@@ -30,11 +30,11 @@ public final class Model {
             geometricSolver = new GeometricSolverImpl();
         }
 
-        final StateReporter reporter = new StateReporter();
+        final StateReporter reporter = StateReporter.getInstance();
 
         SolverStat stat = new SolverStat();
 
-        geometricSolver.solveSystem(reporter, stat);
+        geometricSolver.solveSystem(stat);
 
         stat.report(reporter);
     }

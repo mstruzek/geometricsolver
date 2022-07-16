@@ -58,6 +58,7 @@ public class SolverStat {
     public int iterations;
 
     public void report(StateReporter reporter) {
+        reporter.writeln("#=================== Time Space ===================#");
         reporter.writeln("startTime     [ ms ] : " + startTime);
         reporter.writeln("stopTime      [ ms ] : " + stopTime);
         reporter.writeln("time elapsed  [ ms ] : " + (stopTime - startTime));
@@ -65,15 +66,16 @@ public class SolverStat {
 
         reporter.writeln("");
 
-        reporter.writeln("=== Solver space");
+        reporter.writeln("#================== Solver space ==================#");
         reporter.writeln("state vector size     : " + size);
         reporter.writeln("coefficients          : " + coefficientArity);
         reporter.writeln("acc evaluation  [ms]  : " + accEvaluationTime);
         reporter.writeln("matrix A dimension    : " + dimension + " x " + dimension);
-        reporter.writeln("acc solver time [ms]  : " + accSolverTime);
+        reporter.writeln("Acc Solver time [ms]  : " + accSolverTime);
 
         reporter.writeln("");
-        reporter.writeln("converged                 : " + (convergence ? "T" : "F"));
+        reporter.writeln("#================== Error space ==================#");
+        reporter.writeln("convergence               : " + (convergence ? "T" : "F"));
         reporter.writeln("delta (error)             : " + delta);
         reporter.writeln("constraint delta (error)  : " + constraintDelta);
         reporter.writeln("iterations  (n)           : " + iterations);

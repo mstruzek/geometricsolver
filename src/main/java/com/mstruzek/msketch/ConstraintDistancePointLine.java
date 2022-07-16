@@ -169,7 +169,8 @@ public class ConstraintDistancePointLine extends Constraint {
         /// \\\\\\\\\
         /// \\\\\\\\\
         /// \\\\\\\\\
-        return mt;
+        return null;
+//        return mt;
     }
 
     @Override

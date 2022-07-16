@@ -252,6 +252,7 @@ public class FrameView extends JFrame {
 
         right.add(myTables);
 
+        consoleOutput.setFont(new Font("Courier New", Font.PLAIN, 12));
         consoleScrollPane = new JScrollPane(consoleOutput);
         consoleScrollPane.setPreferredSize(new Dimension(CONSOLE_WIDTH, CONSOLE_OUTPUT_HEIGHT));
         consoleScrollPane.scrollRectToVisible(consoleOutput.getVisibleRect());

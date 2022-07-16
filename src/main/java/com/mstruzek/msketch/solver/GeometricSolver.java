@@ -7,6 +7,6 @@ public interface GeometricSolver {
      *
      * @return
      */
-    SolverStat solveSystem(StateReporter reporter, SolverStat solverStat);
+    SolverStat solveSystem(SolverStat solverStat);
 
 }

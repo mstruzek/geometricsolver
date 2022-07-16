@@ -20,7 +20,7 @@ public class ConstraintConvergenceTest {
     @Before
     public void beforeTest() {
         geometricSolver = new GeometricSolverImpl();
-        reporter = new StateReporter();
+        reporter = StateReporter.getInstance();
         solverStat = new SolverStat();
     }
 
@@ -49,7 +49,7 @@ public class ConstraintConvergenceTest {
         Constraint constraint = new ConstraintFixPoint(Constraint.nextId(), p10);
         p10.setLocation(100.0, 100.0);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -66,7 +66,7 @@ public class ConstraintConvergenceTest {
         Parameter parameter = new Parameter(120.0); // fixed X coordinate
         Constraint constraint = new ConstraintParametrizedXFix(Constraint.nextId(), p10, parameter);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -84,7 +84,7 @@ public class ConstraintConvergenceTest {
         Parameter parameter = new Parameter(120.0); // fixed Y coordinate
         Constraint constraint = new ConstraintParametrizedYFix(Constraint.nextId(), p10, parameter);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -106,7 +106,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = new ConstraintConnect2Points(Constraint.nextId(), p10, p20);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -129,7 +129,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = new ConstraintLinesPerpendicular(Constraint.nextId(), p10, p20, p30, p40);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(2, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -148,7 +148,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = new ConstraintHorizontal(Constraint.nextId(), p10, p20);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -167,7 +167,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = new ConstraintVertical(Constraint.nextId(), p10, p20);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -190,7 +190,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = new ConstraintLinesParallelism(Constraint.nextId(), p10, p20, p30, p40); /// FIXME HESSIAN "unstable"
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(4, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -213,7 +213,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = new ConstraintEqualLength(Constraint.nextId(), p10, p20, p30, p40);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -237,7 +237,7 @@ public class ConstraintConvergenceTest {
         Parameter param = new Parameter(2.5);
         Constraint constraint = new ConstraintParametrizedLength(Constraint.nextId(), p10, p20, p30, p40, param);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -256,7 +256,7 @@ public class ConstraintConvergenceTest {
         Parameter param = new Parameter(200.0);
         Constraint constraint = new ConstraintDistance2Points(Constraint.nextId(), p10, p20, param);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -280,7 +280,7 @@ public class ConstraintConvergenceTest {
         Parameter param = new Parameter(30.0);// 30deg
         Constraint constraint = new ConstraintAngle2Lines(Constraint.nextId(), p10, p20, p30, p40, param);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(2, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -305,7 +305,7 @@ public class ConstraintConvergenceTest {
         Constraint fixedArm = new ConstraintVertical(Constraint.nextId(), p10, p20);
         Constraint constraint = new ConstraintAngle2Lines(Constraint.nextId(), p10, p20, p30, p40, param);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(3, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -331,7 +331,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = new ConstraintTangency(Constraint.nextId(), p10, p20, p30, p40);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
         Assert.assertEquals(19, solverStat.iterations);
         Assert.assertTrue(!solverStat.convergence);
@@ -358,7 +358,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = new ConstraintDistancePointLine(Constraint.nextId(), p10, p20, p30, param);
 
-        geometricSolver.solveSystem(reporter, solverStat);
+        geometricSolver.solveSystem(solverStat);
 
 
         /* no Hessian implementations evaluation into closing equation */
