@@ -42,6 +42,8 @@ public class FrameView extends JFrame {
     public static final Color SKETCH_INFO_BACKGROUND_COLOR = new Color(250, 200, 200);
     public static final Color FRAME_BACKGROUND_COLOR = null; /// Default Wash
     public static final String FRAME_TITLE = "M-Sketcher 2009-2022";
+    public static final int SOLVER_PANEL_HEIGHT = 140;
+    public static final int SOLVER_PANEL_WIDTH = 920;
 
     private Container pane = getContentPane();
 
@@ -157,7 +159,7 @@ public class FrameView extends JFrame {
         JPanel panPoints = new JPanel();
         panPoints.setLayout(new BorderLayout());
         panPoints.setBackground(SKETCH_INFO_BACKGROUND_COLOR);
-        panPoints.setPreferredSize(new Dimension(920, 60));
+        panPoints.setPreferredSize(new Dimension(SOLVER_PANEL_WIDTH, 60));
         panPoints.setBorder(BorderFactory.createLineBorder(SKETCH_INFO_BORDER_COLOR));
         panPoints.add(klmn, BorderLayout.NORTH);
         panPoints.add(currentPosition, BorderLayout.SOUTH);
@@ -221,6 +223,13 @@ public class FrameView extends JFrame {
                 requestFocus();
             }
         });
+
+
+
+
+        /*
+         * Constraint View default layout
+         */
         groupLayout.setAutoCreateGaps(true);
         groupLayout.setHorizontalGroup(
             groupLayout.createSequentialGroup()
@@ -258,6 +267,9 @@ public class FrameView extends JFrame {
         consoleScrollPane.scrollRectToVisible(consoleOutput.getVisibleRect());
         redirectStdErrOut();
 
+        SolverStatPanel solverStatPanel  = new SolverStatPanel();
+        solverStatPanel.setPreferredSize(new Dimension(SOLVER_PANEL_WIDTH, SOLVER_PANEL_HEIGHT));
+        right.add(solverStatPanel);
         right.add(consoleScrollPane);
 
         // ToolBar

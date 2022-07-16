@@ -1,5 +1,6 @@
 package com.mstruzek.msketch;
 
+import com.mstruzek.controller.EventType;
 import com.mstruzek.controller.Events;
 import com.mstruzek.msketch.solver.GeometricSolver;
 import com.mstruzek.msketch.solver.GeometricSolverImpl;
@@ -37,6 +38,8 @@ public final class Model {
         geometricSolver.solveSystem(stat);
 
         stat.report(reporter);
+
+        Events.send(EventType.SOLVER_STAT_CHANGE, new Object[]{stat});
     }
 
     public static void addLine(int primitiveId, Vector v1, Vector v2) {

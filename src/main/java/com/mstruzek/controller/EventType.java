@@ -14,5 +14,5 @@ public final class EventType {
 
     public static final String REBUILD_TABLES = "REBUILD_TABLES";
 
-
+    public static final String SOLVER_STAT_CHANGE = "SOLVER_STAT_CHANGE";
 }
