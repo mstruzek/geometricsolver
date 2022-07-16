@@ -19,22 +19,24 @@ public class SolverStatPanel extends JPanel {
     private JTextField f_delta                  = new JTextField(); 
     private JTextField f_constraintDelta        = new JTextField(); 
     private JTextField f_iterations             = new JTextField(); 
+    private JTextField f_accTime                = new JTextField();
 
-    private JLabel l_startTime              = new JLabel("StartTime: ");
-    private JLabel l_stopTime               = new JLabel("StopTime: ");
-    private JLabel l_size                   = new JLabel("size: ");
-    private JLabel l_coefficientArity       = new JLabel("coefficientSize: ");
-    private JLabel l_dimension              = new JLabel("dimension: ");
-    private JLabel l_accEvaluationTime      = new JLabel("AccEvaluationTime: ");
-    private JLabel l_accSolverTime          = new JLabel("AccSolverTime: ");
+    private JLabel l_startTime              = new JLabel("Start Time: ");
+    private JLabel l_stopTime               = new JLabel("Stop Time: ");
+    private JLabel l_size                   = new JLabel("Size: ");
+    private JLabel l_coefficientArity       = new JLabel("Coefficient Size: ");
+    private JLabel l_dimension              = new JLabel("Dimension: ");
+    private JLabel l_accEvaluationTime      = new JLabel("Acc-Evaluation Time: ");
+    private JLabel l_accSolverTime          = new JLabel("Acc-Solver Time: ");
     private JLabel l_convergence            = new JLabel("Convergence: ");
-    private JLabel l_delta                  = new JLabel("delta: ");
+    private JLabel l_delta                  = new JLabel("Delta: ");
     private JLabel l_constraintDelta        = new JLabel("ConstraintDelta: ");
-    private JLabel l_iterations             = new JLabel("iter: ");
+    private JLabel l_iterations             = new JLabel("Itern: ");
+    private JLabel l_accTime                = new JLabel("Acc Time: ");
 
-    private static final String FORMAT_DECIMAL  = "  %d";
-    private static final String FORMAT_STR      = "  %s";
-    private static final String FORMAT_TIME     = "  %d  ms";
+    private static final String FORMAT_DECIMAL  = "  %d ";
+    private static final String FORMAT_STR      = "  %s ";
+    private static final String FORMAT_TIME     = "  %d  ms ";
     private static final String FORMAT_DELTA    = "  %e ";
 
     public SolverStatPanel() {
@@ -75,11 +77,13 @@ public class SolverStatPanel extends JPanel {
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addComponent(l_delta)
                     .addComponent(l_constraintDelta)
-                    .addComponent(l_iterations))
+                    .addComponent(l_iterations)
+                    .addComponent(l_accTime))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addComponent(f_delta)
                     .addComponent(f_constraintDelta)
-                    .addComponent(f_iterations))
+                    .addComponent(f_iterations)
+                    .addComponent(f_accTime))
         );
 
         layout.setVerticalGroup(
@@ -109,7 +113,9 @@ public class SolverStatPanel extends JPanel {
                     .addComponent(l_coefficientArity)
                     .addComponent(f_coefficientArity)
                     .addComponent(l_convergence)
-                    .addComponent(f_convergence))
+                    .addComponent(f_convergence)
+                    .addComponent(l_accTime)
+                    .addComponent(f_accTime))
         );
 
         Events.addListener(EventType.SOLVER_STAT_CHANGE, new Events.EventHandler() {
@@ -127,6 +133,7 @@ public class SolverStatPanel extends JPanel {
                 f_delta.setText(String.format(FORMAT_DELTA, stat.delta));
                 f_constraintDelta.setText(String.format(FORMAT_DELTA, stat.constraintDelta));
                 f_iterations.setText(String.format(FORMAT_DECIMAL, stat.iterations));
+                f_accTime.setText(String.format(FORMAT_TIME, (stat.stopTime - stat.startTime)));
             }
         });
     }

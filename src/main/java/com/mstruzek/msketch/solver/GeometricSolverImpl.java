@@ -32,6 +32,9 @@ public class GeometricSolverImpl implements GeometricSolver {
 
         StateReporter reporter = StateReporter.getInstance();
 
+        reporter.writelnf("##################### Solver Initialized ##################### ");
+        reporter.writelnf("");
+
         long start = clock.millis();                  /// start timing
 
         solverStat.startTime = start;

@@ -20,7 +20,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import static com.mstruzek.graphic.Property.*;
 
@@ -441,7 +444,6 @@ public class FrameView extends JFrame {
         setVisible(true);
     }
 
-
     private void clearTextArea() {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -451,10 +453,35 @@ public class FrameView extends JFrame {
         });
     }
 
+    private final BlockingQueue<String> messageQueue= new LinkedBlockingQueue<>(64);
+
     private void updateTextArea(final String text) {
+
+        try {
+            messageQueue.put(text);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                consoleOutput.append(text);
+
+                if(messageQueue.isEmpty())
+                    return;
+
+                String text = null;
+
+                while (true) {
+                    try {
+                        text = messageQueue.poll(10, TimeUnit.MILLISECONDS);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    if(text == null) {
+                        break;
+                    }
+                    consoleOutput.append(text);
+                }
                 consoleOutput.setCaretPosition(consoleOutput.getDocument().getLength()); /// auto scroll - follow caret position
             }
         });

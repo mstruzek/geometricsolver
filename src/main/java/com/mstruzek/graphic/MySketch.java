@@ -27,10 +27,12 @@ public class MySketch extends JPanel implements MouseInputListener {
     private static final long serialVersionUID = 1L;
     public static final int S_WIDTH = 920;
     public static final int S_HEIGHT = 1000;
-    public static final Color CONTROL_GUIDES_COLOR = Color.ORANGE;
-    public static final Color COORDINATE_SYSTEM_COLOR = Color.red;
+    public static final Color CONTROL_GUIDES_COLOR = new Color(255, 153, 153);
+    public static final Color SYSTEM_COORDINATE_OX_COLOR = Color.RED;
+    public static final Color SYSTEM_COORDINATE_OY_COLOR = Color.GREEN;
     public static final Color PANEL_BORDER_COLOR = Color.DARK_GRAY;
-    public static final Color SKETCH_PANE_BACKGROUND_COLOR = new Color(180, 250, 179);
+    public static final Color SKETCH_PANE_BACKGROUND_COLOR = new Color(177, 205, 205);
+//    public static final Color SKETCH_PANE_BACKGROUND_COLOR = new Color(180, 250, 179);
 
     ///tu skladujemy oddzielnie kategorie obiektow do odrysowania
     private final ArrayList<MyLine> lineStore = new ArrayList<>();
@@ -375,8 +377,9 @@ public class MySketch extends JPanel implements MouseInputListener {
         tx.transform(px, px);
         tx.transform(py, py);
         tx.transform(p0, p0);
-        g2d.setColor(COORDINATE_SYSTEM_COLOR);
+        g2d.setColor(SYSTEM_COORDINATE_OY_COLOR);
         g2d.draw(new Line2D.Double(p0, px)); //X
+        g2d.setColor(SYSTEM_COORDINATE_OX_COLOR);
         g2d.draw(new Line2D.Double(p0, py)); //Y
     }
 
