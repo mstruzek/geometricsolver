@@ -2,7 +2,8 @@ package com.mstruzek.controller;
 
 public final class Reporter {
 
-    private Reporter(){}
+    private Reporter() {
+    }
 
     public static void notify(String message) {
         System.out.println(message);

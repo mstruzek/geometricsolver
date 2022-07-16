@@ -7,8 +7,8 @@ public class AppEntry {
 
     public static void main(String[] args) {
         /*
-        * Glowny kontroller widoku swingowego. <= hUNd
-        */
+         * Glowny kontroller widoku swingowego. <= hUNd
+         */
         Controller controller = new Controller();
 
         new FrameView(controller);

@@ -22,7 +22,9 @@ public class GeometricSolverImpl implements GeometricSolver {
 
     private static final Clock clock = Clock.systemUTC();
 
-    /** convergence limit */
+    /**
+     * convergence limit
+     */
     public static final double CONVERGENCE_LIMIT = 10e-5;
 
     @Override
@@ -50,16 +52,16 @@ public class GeometricSolverImpl implements GeometricSolver {
 
         long evaluationStart = clock.millis();
 
-        MatrixDouble A = MatrixDouble.fill(dimension, dimension, 0.0);
-        MatrixDouble Fq = MatrixDouble.fill(size, size, 0.0);               // CONST
-        MatrixDouble Wq = MatrixDouble.fill(coffSize, size, 0.0);
+        MatrixDouble A = MatrixDouble.matrix2D(dimension, dimension, 0.0);
+        MatrixDouble Fq = MatrixDouble.matrix2D(size, size, 0.0);               // CONST
+        MatrixDouble Wq = MatrixDouble.matrix2D(coffSize, size, 0.0);
 
         /// HESSIAN
-        MatrixDouble Hs = MatrixDouble.fill(size, size, 0.0);
+        MatrixDouble Hs = MatrixDouble.matrix2D(size, size, 0.0);
 
         // right-hand side vector ~ b
-        MatrixDouble Fr = MatrixDouble.fill(size, 1, 0.0);
-        MatrixDouble Fi = MatrixDouble.fill(coffSize, 1, 0.0);
+        MatrixDouble Fr = MatrixDouble.matrix1Dtr(size, 0.0);
+        MatrixDouble Fi = MatrixDouble.matrix1Dtr(coffSize, 0.0);
 
         /// CONST
         GeometricPrimitive.getAllJacobianForces(Fq);
@@ -120,6 +122,8 @@ public class GeometricSolverImpl implements GeometricSolver {
 
             DoubleMatrix2D matrix2DA = ParseToColt.toSparse(A);
             DoubleMatrix1D matrix1Db = ParseToColt.toDenseVector(b);
+            reporter.debug(A.toString(new Integer[0]));
+            reporter.debug(b.toString(new Integer[0]));
 
             {
                 LUDecompositionQuick LU = new LUDecompositionQuick();
@@ -169,10 +173,10 @@ public class GeometricSolverImpl implements GeometricSolver {
             ///
             ///
 
-            if (itr > 1 && errorFluctuation/prevNorm > 0.70) {
+            if (itr > 1 && errorFluctuation / prevNorm > 0.70) {
                 reporter.writeln("CHANGES - STOP ITERATION *******");
                 reporter.writeln(" errorFluctuation          :" + errorFluctuation);
-                reporter.writeln(" relative error            :" + (errorFluctuation/norm1));
+                reporter.writeln(" relative error            :" + (errorFluctuation / norm1));
                 solverStat.constraintDelta = Constraint.getFullNorm();
                 solverStat.convergence = false;
                 solverStat.stopTime = clock.millis();

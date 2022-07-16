@@ -49,6 +49,7 @@ public class FrameView extends JFrame {
      * zmienna na parametry
      */
     final JTextField parameterField = new JTextField(5);
+
     {
         parameterField.setText("10.0");
     }
@@ -139,7 +140,7 @@ public class FrameView extends JFrame {
             public void propertyChange(PropertyChangeEvent evt) {
                 switch (evt.getPropertyName()) {
                     case SELECTED_POINT:
-                        pickedPoint.setText((String)evt.getNewValue());
+                        pickedPoint.setText((String) evt.getNewValue());
                     case KLMN_POINTS:
                         klmn.setText((String) evt.getNewValue());
                         return;
@@ -175,7 +176,7 @@ public class FrameView extends JFrame {
 
 
         final JTextArea consDescr = new JTextArea(7, 40);
-        consDescr.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(30,20,20,20),"HELP"));
+        consDescr.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(30, 20, 20, 20), "HELP"));
         consDescr.setLineWrap(true);
         consDescr.setWrapStyleWord(true);
         consDescr.setEditable(false);
@@ -377,7 +378,7 @@ public class FrameView extends JFrame {
 
         Events.addListener(EventType.CONTROLLER_ERROR, (eventType, arguments) -> {
             SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(this, (String)arguments[0], "Application Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, (String) arguments[0], "Application Error", JOptionPane.ERROR_MESSAGE);
 
             });
         });

@@ -12,28 +12,28 @@ import static java.util.stream.Collectors.toList;
 
 /**
  * Format Read/Write
- *
+ * <p>
  * BEGIN Parameter:
- *      ID: 10;
- *      VALUE: 23.02;
+ * ID: 10;
+ * VALUE: 23.02;
  * END;
- *
+ * <p>
  * BEGIN GeometricPrimitive:
- *      ID: 10;
- *      TYPE: FreePoint;
- *      P1: 10.02;
- *      P2: 192.02;
- *      P3: 232.32;
- *      Param: 1;
+ * ID: 10;
+ * TYPE: FreePoint;
+ * P1: 10.02;
+ * P2: 192.02;
+ * P3: 232.32;
+ * Param: 1;
  * END;
- *
+ * <p>
  * BEGIN Constraint:
- *      ID: 101;
- *      TYPE: HORIZONTAL
- *      K: 1;
- *      L: 2;
- *      M: 3;
- *      N: 4;
+ * ID: 101;
+ * TYPE: HORIZONTAL
+ * K: 1;
+ * L: 2;
+ * M: 3;
+ * N: 4;
  * END;
  */
 
@@ -54,7 +54,7 @@ public class GCModelWriter implements Closeable {
 
     @Override
     public void close() {
-        if(buff != null) {
+        if (buff != null) {
             try {
                 buff.flush();
                 buff.close();
@@ -74,11 +74,11 @@ public class GCModelWriter implements Closeable {
     }
 
     public void writePoints() throws IOException {
-        for(GeometricPrimitive geometricPrimitive : GeometricPrimitive.dbPrimitives.values()) {
+        for (GeometricPrimitive geometricPrimitive : GeometricPrimitive.dbPrimitives.values()) {
             Point P1 = Point.getDbPoint().getOrDefault(geometricPrimitive.getP1(), Point.EMPTY);
             Point P2 = Point.getDbPoint().getOrDefault(geometricPrimitive.getP2(), Point.EMPTY);
             Point P3 = Point.getDbPoint().getOrDefault(geometricPrimitive.getP3(), Point.EMPTY);
-            for(Point point : Stream.of(P1, P2, P3).filter(point -> !Objects.equals(point, Point.EMPTY)).collect(toList())) {
+            for (Point point : Stream.of(P1, P2, P3).filter(point -> !Objects.equals(point, Point.EMPTY)).collect(toList())) {
                 buff.write("BEGIN Point:\n");
                 buff.write("     ID: " + ObjectSerializer.writeToString(point.getId()) + ";\n");
                 buff.write("     PX: " + ObjectSerializer.writeToString(point.getX()) + ";\n");
@@ -91,7 +91,7 @@ public class GCModelWriter implements Closeable {
     }
 
     public void writeParameters() throws IOException {
-        for(Parameter parameter : Parameter.dbParameter.values()) {
+        for (Parameter parameter : Parameter.dbParameter.values()) {
             buff.write("BEGIN Parameter:\n");
             buff.write("     ID: " + ObjectSerializer.writeToString(parameter.getId()) + ";\n");
             buff.write("     VALUE: " + ObjectSerializer.writeToString(parameter.getValue()) + ";\n");
@@ -102,9 +102,9 @@ public class GCModelWriter implements Closeable {
     }
 
     public void writeGeometricPrimitives() throws IOException {
-        for(GeometricPrimitive geometricPrimitive : GeometricPrimitive.dbPrimitives.values()) {
+        for (GeometricPrimitive geometricPrimitive : GeometricPrimitive.dbPrimitives.values()) {
             final int gpID = geometricPrimitive.getPrimitiveId();
-            if(gpID >= 0) {
+            if (gpID >= 0) {
                 GeometricPrimitiveType primitiveType = geometricPrimitive.getType();
                 int P1 = geometricPrimitive.getP1();
                 int P2 = geometricPrimitive.getP2();
@@ -123,7 +123,7 @@ public class GCModelWriter implements Closeable {
     }
 
     public void writeConstraints() throws IOException {
-        for(Constraint constraint : Constraint.dbConstraint.values().stream().filter(Constraint::isPersistent).collect(toList())) {
+        for (Constraint constraint : Constraint.dbConstraint.values().stream().filter(Constraint::isPersistent).collect(toList())) {
             int cID = constraint.getConstraintId();
             GeometricConstraintType constraintType = constraint.getConstraintType();
             int K = constraint.getK();

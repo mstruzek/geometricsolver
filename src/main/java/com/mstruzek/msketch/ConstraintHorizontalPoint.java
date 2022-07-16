@@ -1,6 +1,5 @@
 package com.mstruzek.msketch;
 
-import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 import static com.mstruzek.msketch.Point.dbPoint;
@@ -37,21 +36,20 @@ public class ConstraintHorizontalPoint extends Constraint {
     }
 
     public String toString() {
-        MatrixDouble out = getValue();
-        double norm = Matrix.constructWithCopy(out.getArray()).norm1();
+        double norm = getNorm();
         return "Constraint-Conect2Points" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  , L = " + dbPoint.get(l_id) + " } \n";
     }
 
     @Override
     public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
                 mt.set(0, j * 2, 1.0);         // zero-X
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.set(0, j * 2,  -1.0);       // zero-X
+                mt.set(0, j * 2, -1.0);       // zero-X
             }
             j++;
         }
@@ -65,9 +63,8 @@ public class ConstraintHorizontalPoint extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        MatrixDouble mt =  new MatrixDouble(1,1);
-        mt.set(0,0, dbPoint.get(k_id).getX() - dbPoint.get(l_id).getX());
-        return mt;
+        double value = dbPoint.get(k_id).getX() - dbPoint.get(l_id).getX();
+        return MatrixDouble.scalar(value);
     }
 
     @Override
@@ -108,6 +105,6 @@ public class ConstraintHorizontalPoint extends Constraint {
     @Override
     public double getNorm() {
         MatrixDouble md = getValue();
-        return md.get(0,0);
+        return md.get(0, 0);
     }
 }

@@ -1,6 +1,5 @@
 package com.mstruzek.msketch;
 
-import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 import static com.mstruzek.msketch.Parameter.dbParameter;
@@ -14,11 +13,17 @@ import static com.mstruzek.msketch.Point.dbPoint;
 public class ConstraintDistance2Points extends Constraint {
 
     /** Punkty kontrolne */
-    /** Point K-id */
+    /**
+     * Point K-id
+     */
     int k_id;
-    /** Point L-id */
+    /**
+     * Point L-id
+     */
     int l_id;
-    /** Numer parametru */
+    /**
+     * Numer parametru
+     */
     int param_id;
 
     /**
@@ -37,8 +42,7 @@ public class ConstraintDistance2Points extends Constraint {
     }
 
     public String toString() {
-        MatrixDouble mt = getValue();
-        double norm = Matrix.constructWithCopy(mt.getArray()).norm1();
+        double norm = getNorm();
         return "Constraint-Distance2Points" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " , Parametr-" + dbParameter.get(param_id).getId() + " = " + dbParameter.get(param_id).getValue() + " } \n";
 
     }
@@ -46,15 +50,15 @@ public class ConstraintDistance2Points extends Constraint {
     @Override
     public MatrixDouble getJacobian() {
         /// macierz 1xN
-        MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
         Vector LKu = dbPoint.get(l_id).Vector().sub(dbPoint.get(k_id)).unit();
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2, LKu.dot(-1.0));
+                mt.setVector(0, j * 2, LKu.dot(-1.0));
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2, LKu);
+                mt.setVector(0, j * 2, LKu);
             }
             j++;
         }
@@ -68,9 +72,8 @@ public class ConstraintDistance2Points extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        MatrixDouble mt = new MatrixDouble(1, 1);
-        mt.set(0, 0, dbPoint.get(l_id).sub(dbPoint.get(k_id)).length() - dbParameter.get(param_id).getValue());
-        return mt;
+        double value = dbPoint.get(l_id).sub(dbPoint.get(k_id)).length() - dbParameter.get(param_id).getValue();
+        return MatrixDouble.scalar(value);
     }
 
     @Override

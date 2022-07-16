@@ -1,6 +1,5 @@
 package com.mstruzek.msketch;
 
-import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 import static com.mstruzek.msketch.Point.dbPoint;
@@ -66,8 +65,7 @@ public class ConstraintLinesPerpendicular extends Constraint {
     }
 
     public String toString() {
-        MatrixDouble out = getValue();
-        double norm = Matrix.constructWithCopy(out.getArray()).norm1();
+        double norm = getNorm();
         if (m == null && n == null)
             return "Constraint-LinesPerpendicular" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ",N =" + dbPoint.get(n_id) + "} \n";
         else {
@@ -79,31 +77,31 @@ public class ConstraintLinesPerpendicular extends Constraint {
     @Override
     public MatrixDouble getJacobian() {
         /// macierz 1xN
-        MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
         int j = 0;
         if ((m == null) && (n == null)) {
             for (Integer i : dbPoint.keySet()) {
                 if (k_id == dbPoint.get(i).id) {
-                    mt.setVectorT(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
+                    mt.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
                 }
                 if (l_id == dbPoint.get(i).id) {
-                    mt.setVectorT(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
+                    mt.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
                 }
                 if (m_id == dbPoint.get(i).id) {
-                    mt.setVectorT(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
+                    mt.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
                 }
                 if (n_id == dbPoint.get(i).id) {
-                    mt.setVectorT(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
+                    mt.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
                 }
                 j++;
             }
         } else {
             for (Integer i : dbPoint.keySet()) {
                 if (k_id == dbPoint.get(i).id) {
-                    mt.setVectorT(0, j * 2, m.sub(n));
+                    mt.setVector(0, j * 2, m.sub(n));
                 }
                 if (l_id == dbPoint.get(i).id) {
-                    mt.setVectorT(0, j * 2, m.sub(n).dot(-1.0));
+                    mt.setVector(0, j * 2, m.sub(n).dot(-1.0));
                 }
                 j++;
             }
@@ -124,22 +122,22 @@ public class ConstraintLinesPerpendicular extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        MatrixDouble mt = new MatrixDouble(1, 1);
         if ((m == null) && (n == null)) {
-            mt.set(0, 0, (dbPoint.get(k_id).sub(dbPoint.get(l_id))).dot(dbPoint.get(m_id).sub(dbPoint.get(n_id))));
+            double value = (dbPoint.get(k_id).sub(dbPoint.get(l_id))).dot(dbPoint.get(m_id).sub(dbPoint.get(n_id)));
+            return MatrixDouble.scalar(value);
         } else {
-            mt.set(0, 0, (dbPoint.get(k_id).sub(dbPoint.get(l_id))).dot(m.sub(n)));
+            double value = (dbPoint.get(k_id).sub(dbPoint.get(l_id))).dot(m.sub(n));
+            return MatrixDouble.scalar(value);
         }
-        return mt;
     }
 
     @Override
     public MatrixDouble getHessian(double lagrange) {
         /// macierz NxN
-        MatrixDouble mt = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
         if ((m == null) && (n == null)) {
-            MatrixDouble I = MatrixDouble.identity(2).dot(lagrange);
-            MatrixDouble Im = MatrixDouble.identity(2).dot(lagrange);
+            MatrixDouble I = MatrixDouble.identity(2, 1.0 * lagrange);
+            MatrixDouble Im = MatrixDouble.identity(2, 1.0 * lagrange);
             //same punkty
             int i = 0;
             for (Integer vI : dbPoint.keySet()) { //wiersz

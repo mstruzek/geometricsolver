@@ -110,7 +110,7 @@ public class Circle extends GeometricPrimitive {
         Vector f12 = p1.sub(a).unit().dot(Consts.springStiffnessLow).dot(p1.sub(a).length() - d_a_p1);                      //F12 - sily w sprezynach
         Vector f23 = p2.sub(p1).unit().dot(Consts.springStiffnessHigh * springAlfa).dot(p2.sub(p1).length() - d_p1_p2);     //F23
         Vector f34 = b.sub(p2).unit().dot(Consts.springStiffnessLow).dot(b.sub(p2).length() - d_p2_b);                      //F34
-        
+
         //F1 - silu na poszczegolne punkty
         force.setVector(row + 0, 0, f12);
         //F2
@@ -132,11 +132,11 @@ public class Circle extends GeometricPrimitive {
          *     0  	 0     ks    -ks];
          */
         // K -mala sztywnosci
-        MatrixDouble Ks = MatrixDouble.diag(Consts.springStiffnessLow, Consts.springStiffnessLow);
+        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
         // K - duza szytwnosci
-        MatrixDouble Kb = MatrixDouble.diag(Consts.springStiffnessHigh * springAlfa, Consts.springStiffnessHigh * springAlfa);
+        MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh * springAlfa, Consts.springStiffnessHigh * springAlfa);
         // -Ks-Kb
-        MatrixDouble Ksb = Ks.dotC(-1).addSubMatrix(0, 0, Kb.dotC(-1));
+        MatrixDouble Ksb = Ks.dotC(-1).add(Kb.dotC(-1));
 
         mt.addSubMatrix(row + 0, col + 0, Ks.dotC(-1));
         mt.addSubMatrix(row + 0, col + 2, Ks);

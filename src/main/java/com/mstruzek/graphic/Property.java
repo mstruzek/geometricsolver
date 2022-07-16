@@ -1,6 +1,6 @@
 package com.mstruzek.graphic;
 
-public final  class Property{
+public final class Property {
 
     public static final String SELECTED_POINT = "SELECTED_POINT";
 

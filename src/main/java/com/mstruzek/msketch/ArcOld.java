@@ -168,10 +168,10 @@ public class ArcOld extends GeometricPrimitive {
          */
 
         // K -mala sztywnosci
-        MatrixDouble Ksp = MatrixDouble.diag(Consts.springStiffnessHigh * dS, Consts.springStiffnessHigh * dS);
+        MatrixDouble Ksp = MatrixDouble.diagonal(Consts.springStiffnessHigh * dS, Consts.springStiffnessHigh * dS);
         MatrixDouble Ksm = Ksp.dotC(-1);
-        MatrixDouble Ks = MatrixDouble.diag(Consts.springStiffnessLow, Consts.springStiffnessLow);
-        MatrixDouble Kb = MatrixDouble.diag(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
+        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
+        MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
         // -Ks-Kb
         MatrixDouble Ksb = Ks.dotC(-1).addSubMatrix(0, 0, Kb.dotC(-1));
 

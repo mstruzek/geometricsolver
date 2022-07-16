@@ -66,7 +66,7 @@ public class GCModelReader implements Closeable {
 
     @Override
     public void close() throws IOException {
-        if(buff != null) {
+        if (buff != null) {
             buff.close();
             buff = null;
         }
@@ -109,7 +109,7 @@ public class GCModelReader implements Closeable {
 
         Matcher matcher = STRUCT_FIELD_PATTERN.matcher(input);
         //@@@ - wiazanki
-        if(matcher.matches()) {
+        if (matcher.matches()) {
             String fieldName = matcher.group(1);
             String fieldValue = matcher.group(2);
             switch (fieldName) {
@@ -124,7 +124,7 @@ public class GCModelReader implements Closeable {
             }
         }
 
-        if(PATTERN_END.equals(input)) {
+        if (PATTERN_END.equals(input)) {
             Integer parameterId = (Integer) slots[0];
             Double parameterValue = (Double) slots[12];
             /// store in db
@@ -145,7 +145,7 @@ public class GCModelReader implements Closeable {
          */
         Matcher matcher = STRUCT_FIELD_PATTERN.matcher(input);
         //@@@ - wiazanki
-        if(matcher.matches()) {
+        if (matcher.matches()) {
             String fieldName = matcher.group(1);
             String fieldValue = matcher.group(2);
             switch (fieldName) {
@@ -163,7 +163,7 @@ public class GCModelReader implements Closeable {
             }
         }
 
-        if(PATTERN_END.equals(input)) {
+        if (PATTERN_END.equals(input)) {
             Integer pointId = (Integer) slots[0];
             Double coordinateX = (Double) slots[1];
             Double coordinateY = (Double) slots[2];
@@ -188,7 +188,7 @@ public class GCModelReader implements Closeable {
          *      P3: -1;
          */
         Matcher matcher = STRUCT_FIELD_PATTERN.matcher(input);
-        if(matcher.matches()) {
+        if (matcher.matches()) {
             String fieldName = matcher.group(1);
             String fieldValue = matcher.group(2);
             switch (fieldName) {
@@ -212,7 +212,7 @@ public class GCModelReader implements Closeable {
             }
         }
 
-        if(PATTERN_END.equals(input)) {
+        if (PATTERN_END.equals(input)) {
             /// save point
             int primitiveId;
             GeometricPrimitiveType primitiveType;
@@ -231,9 +231,9 @@ public class GCModelReader implements Closeable {
             p3 = (Integer) slots[6];
 
 
-            if(p1 != -1) P1 = Point.dbPoint.get(p1);
-            if(p2 != -1) P2 = Point.dbPoint.get(p2);
-            if(p3 != -1) P3 = Point.dbPoint.get(p3);
+            if (p1 != -1) P1 = Point.dbPoint.get(p1);
+            if (p2 != -1) P2 = Point.dbPoint.get(p2);
+            if (p3 != -1) P3 = Point.dbPoint.get(p3);
 
             switch (primitiveType) {
                 case FreePoint:
@@ -269,7 +269,7 @@ public class GCModelReader implements Closeable {
          *      PARAM: -1;
          */
         Matcher matcher = STRUCT_FIELD_PATTERN.matcher(input);
-        if(matcher.matches()) {
+        if (matcher.matches()) {
             String fieldName = matcher.group(1);
             String fieldValue = matcher.group(2);
             switch (fieldName) {
@@ -299,7 +299,7 @@ public class GCModelReader implements Closeable {
             }
         }
 
-        if(PATTERN_END.equals(input)) {
+        if (PATTERN_END.equals(input)) {
             /// save point
             int constId;
             GeometricConstraintType constraintType;
@@ -323,11 +323,11 @@ public class GCModelReader implements Closeable {
             vN = (Integer) slots[10];
             paramId = (Integer) slots[11];
 
-            if(vK != -1) K = Point.dbPoint.get(vK);
-            if(vL != -1) L = Point.dbPoint.get(vL);
-            if(vM != -1) M = Point.dbPoint.get(vM);
-            if(vN != -1) N = Point.dbPoint.get(vN);
-            if(paramId != -1 && constraintType.isParametrized()) {
+            if (vK != -1) K = Point.dbPoint.get(vK);
+            if (vL != -1) L = Point.dbPoint.get(vL);
+            if (vM != -1) M = Point.dbPoint.get(vM);
+            if (vN != -1) N = Point.dbPoint.get(vN);
+            if (paramId != -1 && constraintType.isParametrized()) {
                 parameter = Parameter.dbParameter.get(paramId);
             }
 
@@ -384,7 +384,7 @@ public class GCModelReader implements Closeable {
         }
 
         Matcher matcher = HEADER_FIELD_PATTERN.matcher(input);
-        if(matcher.matches()) {
+        if (matcher.matches()) {
             String fieldName = matcher.group(1);
             String fieldValue = matcher.group(2);
             switch (fieldName) {
@@ -398,7 +398,7 @@ public class GCModelReader implements Closeable {
                     break;
                 case HEADER_FILE_FORMAT:
                     Reporter.notify("model descriptor version  : " + fieldValue);
-                    if(!FILE_FORMAT_VERSION.equals(fieldValue))
+                    if (!FILE_FORMAT_VERSION.equals(fieldValue))
                         throw new Error("unsupported format version ! =  " + fieldValue);
                     break;
                 default:

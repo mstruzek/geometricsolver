@@ -1,6 +1,5 @@
 package com.mstruzek.msketch;
 
-import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 import static com.mstruzek.msketch.Point.dbPoint;
@@ -56,29 +55,28 @@ public class ConstraintEqualLength extends Constraint {
     }
 
     public String toString() {
-        MatrixDouble out = getValue();
-        double norm = Matrix.constructWithCopy(out.getArray()).norm1();
+        double norm = getNorm();
         return "Constraint-LinesSameLength" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ",N =" + dbPoint.get(n_id) + "} \n";
     }
 
     @Override
     public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2 , LK.dot(-1.0));
+                mt.setVector(0, j * 2, LK.dot(-1.0));
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2 , LK);
+                mt.setVector(0, j * 2, LK);
             }
             if (m_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2 , NM);
+                mt.setVector(0, j * 2, NM);
             }
             if (n_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2 , NM.dot(-1.0));
+                mt.setVector(0, j * 2, NM.dot(-1.0));
             }
             j++;
         }
@@ -93,11 +91,10 @@ public class ConstraintEqualLength extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        MatrixDouble mt = new MatrixDouble(1, 1);
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
-        mt.set(0, 0 , LK.length() - NM.length());
-        return mt;
+        double value = LK.length() - NM.length();
+        return MatrixDouble.scalar(value);
     }
 
     @Override

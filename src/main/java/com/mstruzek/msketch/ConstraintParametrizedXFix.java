@@ -1,6 +1,5 @@
 package com.mstruzek.msketch;
 
-import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 import static com.mstruzek.msketch.Point.dbPoint;
@@ -42,7 +41,7 @@ public class ConstraintParametrizedXFix extends Constraint {
     @Override
     public MatrixDouble getJacobian() {
         int j = 0;
-        MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
                 /// wspolrzedna [X]
@@ -60,9 +59,8 @@ public class ConstraintParametrizedXFix extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        MatrixDouble mt = new MatrixDouble(1, 1);
-        mt.set(0, 0, dbPoint.get(k_id).getX() - Parameter.dbParameter.get(param_id).getValue());
-        return mt;
+        double value = dbPoint.get(k_id).getX() - Parameter.dbParameter.get(param_id).getValue();
+        return MatrixDouble.scalar(value);
     }
 
     @Override
@@ -97,12 +95,12 @@ public class ConstraintParametrizedXFix extends Constraint {
 
     @Override
     public int getParameter() {
-        return  param_id;
+        return param_id;
     }
 
     @Override
     public double getNorm() {
         MatrixDouble mt = getValue();
-        return  mt.get(0, 0);
+        return mt.get(0, 0);
     }
 }

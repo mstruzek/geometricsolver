@@ -4,7 +4,7 @@ import com.mstruzek.msketch.Parameter;
 
 import javax.swing.table.AbstractTableModel;
 
-public class ParametersTableModel extends AbstractTableModel{
+public class ParametersTableModel extends AbstractTableModel {
 
     private static final String[] PARAMETERS_COLUMN_NAMES = {"id", "value"};
 
@@ -20,7 +20,7 @@ public class ParametersTableModel extends AbstractTableModel{
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        Parameter parameter=Parameter.dbParameter.values().toArray(new Parameter[0])[rowIndex];
+        Parameter parameter = Parameter.dbParameter.values().toArray(new Parameter[0])[rowIndex];
         switch (columnIndex) {
             case 0:
                 return parameter.getId();
@@ -40,13 +40,13 @@ public class ParametersTableModel extends AbstractTableModel{
     }
 
     public boolean isCellEditable(int row, int col) {
-        if(col > 0) return true;
+        if (col > 0) return true;
         return false;
     }
 
     public void setValueAt(Object value, int row, int col) {
         double d = Double.parseDouble(value.toString());
-        if(col > 0) {
+        if (col > 0) {
             Parameter.dbParameter.values().toArray(new Parameter[]{})[row].setValue(d);
         }
         fireTableCellUpdated(row, col);

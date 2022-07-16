@@ -132,11 +132,11 @@ public class Line extends GeometricPrimitive {
          *     0  	 0     ks    -ks];
          */
         // K -mala sztywnosci
-        MatrixDouble Ks = MatrixDouble.diag(Consts.springStiffnessLow, Consts.springStiffnessLow);
+        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
         // K - duza szytwnosci
-        MatrixDouble Kb = MatrixDouble.diag(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
+        MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
         // -Ks-Kb
-        MatrixDouble Ksb = Ks.dotC(-1).addSubMatrix(0, 0, Kb.dotC(-1));
+        MatrixDouble Ksb = Ks.dotC(-1).add(Kb.dotC(-1));
 
         //wiersz pierwszy
         mt.addSubMatrix(row + 0, col + 0, Ks.dotC(-1));

@@ -41,7 +41,7 @@ public class ConstraintParametrizedYFix extends Constraint {
     @Override
     public MatrixDouble getJacobian() {
         int j = 0;
-        MatrixDouble mt = MatrixDouble.fill(1, Point.dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix1D(Point.dbPoint.size() * 2, 0.0);
         for (Integer i : Point.dbPoint.keySet()) {
             if (k_id == Point.dbPoint.get(i).id) {
                 /// wspolrzedna [Y]
@@ -59,9 +59,8 @@ public class ConstraintParametrizedYFix extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        MatrixDouble mt = new MatrixDouble(1, 1);
-        mt.set(0, 0, dbPoint.get(k_id).getY() - Parameter.dbParameter.get(param_id).getValue());
-        return mt;
+        double value = dbPoint.get(k_id).getY() - Parameter.dbParameter.get(param_id).getValue();
+        return MatrixDouble.scalar(value);
     }
 
     @Override

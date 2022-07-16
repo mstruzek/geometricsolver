@@ -166,8 +166,8 @@ public class Arc extends GeometricPrimitive {
     public void setJacobian(int row, int col, MatrixDouble mt) {
 
         // K -mala sztywnosci
-        MatrixDouble Kb = MatrixDouble.diag(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
-        MatrixDouble Ks = MatrixDouble.diag(Consts.springStiffnessLow, Consts.springStiffnessLow);
+        MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
+        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
 
         MatrixDouble mKs = Ks.dotC(-1);
         MatrixDouble mKb = Kb.dotC(-1);

@@ -1,7 +1,7 @@
 package com.mstruzek.msketch;
 
-import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.MatrixDouble2D;
 
 import static com.mstruzek.msketch.Point.dbPoint;
 
@@ -37,21 +37,20 @@ public class ConstraintConnect2Points extends Constraint {
 
 
     public String toString() {
-        MatrixDouble out = getValue();
-        double norm = Matrix.constructWithCopy(out.getArray()).norm1();
+        double norm = getNorm();
         return "Constraint-Conect2Points" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  , L = " + dbPoint.get(l_id) + " } \n";
     }
 
     @Override
     public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.fill(2, dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix2D(2, dbPoint.size() * 2, 0.0);
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setSubMatrix(0, j * 2, MatrixDouble.diag(2, 1.0));        //macierz jednostkowa = I
+                mt.setSubMatrix(0, j * 2, MatrixDouble2D.identity(2, 1.0));        //macierz jednostkowa = I
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setSubMatrix(0, j * 2, MatrixDouble.diag(2, -1.0));       // = -I
+                mt.setSubMatrix(0, j * 2, MatrixDouble2D.identity(2, -1.0));       // = -I
             }
             j++;
         }
@@ -66,7 +65,7 @@ public class ConstraintConnect2Points extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        return new MatrixDouble(dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)), true);
+        return new MatrixDouble2D(dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)), true);
     }
 
     @Override

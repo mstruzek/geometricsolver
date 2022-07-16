@@ -1,6 +1,5 @@
 package com.mstruzek.msketch;
 
-import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 import static com.mstruzek.msketch.Point.dbPoint;
@@ -66,8 +65,7 @@ public class ConstraintLinesParallelism extends Constraint {
     }
 
     public String toString() {
-        MatrixDouble mt = getValue();
-        double norm = Matrix.constructWithCopy(mt.getArray()).norm1();
+        double norm = getNorm();
         if (m == null && n == null)
             return "Constraint-LinesParallelism" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ",N =" + dbPoint.get(n_id) + "} \n";
         else {
@@ -77,19 +75,19 @@ public class ConstraintLinesParallelism extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        MatrixDouble mt = new MatrixDouble(1, 1);
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         if ((m == null) && (n == null)) {
-            mt.set(0, 0, LK.cr(dbPoint.get(n_id).sub(dbPoint.get(m_id))));
+            double value = LK.cr(dbPoint.get(n_id).sub(dbPoint.get(m_id)));
+            return MatrixDouble.scalar(value);
         } else {
-            mt.set(0, 0, LK.cr(n.sub(m)));
+            double value = LK.cr(n.sub(m));
+            return MatrixDouble.scalar(value);
         }
-        return mt;
     }
 
     @Override
     public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
         int j = 0;
         if ((m == null) && (n == null)) {
             for (Integer i : dbPoint.keySet()) {
@@ -145,10 +143,10 @@ public class ConstraintLinesParallelism extends Constraint {
     @Override
     public MatrixDouble getHessian(double lagrange) {  /// FIXME BLAD hesianu - "unstable"
         /// macierz NxN
-        MatrixDouble mt = MatrixDouble.fill(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
 
-        final MatrixDouble R = MatrixDouble.getRotation2x2(90 + 180).dot(lagrange);     /// R
-        final MatrixDouble Rm = MatrixDouble.getRotation2x2(90).dot(lagrange);          /// Rm = -R
+        final MatrixDouble R = MatrixDouble.rotation2d(90 + 180).dot(lagrange);     /// R
+        final MatrixDouble Rm = MatrixDouble.rotation2d(90).dot(lagrange);          /// Rm = -R
         if ((m == null) && (n == null)) {
             int i = 0;
             for (Integer vI : dbPoint.keySet()) { /// wiersz
@@ -233,9 +231,9 @@ public class ConstraintLinesParallelism extends Constraint {
         Vector LK = dbPoint.get(k_id).sub(dbPoint.get(l_id));
         MatrixDouble mt = getValue();
         if ((m == null) && (n == null)) {
-            return mt.get(0,0) / LK.length() / dbPoint.get(m_id).sub(dbPoint.get(n_id)).length();
+            return mt.get(0, 0) / LK.length() / dbPoint.get(m_id).sub(dbPoint.get(n_id)).length();
         } else {
-            return mt.get(0,0) / LK.length() / (m.sub(n)).length();
+            return mt.get(0, 0) / LK.length() / (m.sub(n)).length();
         }
     }
 }

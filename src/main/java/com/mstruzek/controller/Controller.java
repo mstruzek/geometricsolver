@@ -10,11 +10,7 @@ import java.util.TreeMap;
 
 public class Controller implements ControllerInterface {
 
-    /**
-     * model szkicownika
-     */
-
-    public  Controller() {
+    public Controller() {
     }
 
     @Override
@@ -41,9 +37,9 @@ public class Controller implements ControllerInterface {
     public void addConstraint(GeometricConstraintType constraintType, int K, int L, int M, int N, double d) {
         try {
             Model.addConstraint(constraintType, K, L, M, N, d);
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            Events.send(EventType.CONTROLLER_ERROR, new Object[]{ e.getMessage()} );
+            Events.send(EventType.CONTROLLER_ERROR, new Object[]{e.getMessage()});
         }
     }
 
@@ -114,21 +110,27 @@ public class Controller implements ControllerInterface {
         Parameter.parameterCounter = firstAvailableKey(Parameter.dbParameter);
 
         Set<Integer> skipConstrainIds = Constraint.dbConstraint.keySet();
-        for(GeometricPrimitive geometricPrimitive : GeometricPrimitive.dbPrimitives.values()) {
+        for (GeometricPrimitive geometricPrimitive : GeometricPrimitive.dbPrimitives.values()) {
             geometricPrimitive.setAssociateConstraints(skipConstrainIds);
         }
 
         Constraint.constraintCounter = firstAvailableKey(Constraint.dbConstraint);
     }
 
-    private <ModelEntity> int firstAvailableKey(TreeMap<Integer,ModelEntity> treeMap) {
+    private <ModelEntity> int firstAvailableKey(TreeMap<Integer, ModelEntity> treeMap) {
         return treeMap.size() == 0 ? 0 : treeMap.lastKey() + 1;
     }
 
     @Override
     public void solveSystem() {
         try {
+            /**
+             *  *************************************
+             *  |    Solve Linear Equation System   |
+             *  *************************************
+             */
             Model.solveSystem();
+
         } catch (Exception e) {
             e.printStackTrace();
             Events.send(EventType.CONTROLLER_ERROR, new Object[]{e.getMessage()});

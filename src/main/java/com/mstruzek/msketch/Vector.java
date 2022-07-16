@@ -1,7 +1,7 @@
 package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
-import com.mstruzek.msketch.matrix.MatrixDouble.SmallMatrixDouble;
+import com.mstruzek.msketch.matrix.SmallMatrixDouble;
 
 /**
  * Klasa wektora 2D
@@ -145,11 +145,11 @@ public class Vector {
     }
 
     public MatrixDouble cartesian(Vector rhs) {
-        SmallMatrixDouble sm = new SmallMatrixDouble();
-        sm.set(0, 0, this.x * rhs.x);
-        sm.set(0, 1, this.x * rhs.y);
-        sm.set(1, 0, this.y * rhs.x);
-        sm.set(1, 1, this.y * rhs.y);
+        double a00 = this.x * rhs.x;
+        double a01 = this.x * rhs.y;
+        double a10 = this.y * rhs.x;
+        double a11 = this.y * rhs.y;
+        MatrixDouble sm = MatrixDouble.smallMatrix(a00, a01, a10, a11);
         return sm;
     }
 }

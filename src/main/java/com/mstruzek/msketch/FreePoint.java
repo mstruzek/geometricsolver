@@ -114,7 +114,7 @@ public class FreePoint extends GeometricPrimitive {
 
          */
         // K -mala sztywnosci
-        MatrixDouble Ks = MatrixDouble.diag(Consts.springStiffnessLow, Consts.springStiffnessLow);
+        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
         MatrixDouble Km = Ks.dotC(-1);
 
         mt.addSubMatrix(row + 0, col + 0, Km);

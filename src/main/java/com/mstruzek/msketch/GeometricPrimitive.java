@@ -56,8 +56,8 @@ public abstract class GeometricPrimitive {
     /**
      * Funkcja zwraca jakobian si� - czyli macierz szytnowsci Fq
      *
-     * @param row row offset
-     * @param col column offset
+     * @param row  row offset
+     * @param col  column offset
      * @param dest destination matrix
      * @return
      */
@@ -116,12 +116,13 @@ public abstract class GeometricPrimitive {
 
     /**
      * Funkcja zwraca pelny jakobian sil dla wszystkich elementow geometrycznych
-	 * @param mt
-	 */
+     *
+     * @param mt
+     */
     public static void getAllJacobianForces(MatrixDouble mt) {
-		int rowCol = 0;
+        int rowCol = 0;
         for (Integer i : GeometricPrimitive.dbPrimitives.keySet()) {
-			GeometricPrimitive.dbPrimitives.get(i).setJacobian(rowCol, rowCol, mt);
+            GeometricPrimitive.dbPrimitives.get(i).setJacobian(rowCol, rowCol, mt);
             rowCol += GeometricPrimitive.dbPrimitives.get(i).getNumOfPoints() * 2;
         }
     }

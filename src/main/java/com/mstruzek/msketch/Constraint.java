@@ -122,7 +122,7 @@ public abstract class Constraint implements ConstraintInterface {
      */
     public static int allLagrangeCoffSize() {
         int coffSize = 0;
-        for (Constraint constraint: dbConstraint.values()) {
+        for (Constraint constraint : dbConstraint.values()) {
             coffSize += constraint.size();
         }
         return coffSize;

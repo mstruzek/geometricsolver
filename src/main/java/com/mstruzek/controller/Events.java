@@ -7,7 +7,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Swing Event Bus
  */
-public class Events{
+public class Events {
 
 //    private static final Executor executor = Executors.newFixedThreadPool(4);
 
@@ -31,8 +31,8 @@ public class Events{
      * @param arguments additional arguments
      */
     public static void sendWait(String eventType, Object[] arguments) {
-        for(Listener listener : registrations) {
-            if(eventType.startsWith(listener.type)) {
+        for (Listener listener : registrations) {
+            if (eventType.startsWith(listener.type)) {
                 listener.function.call(eventType, arguments);
                 //executor.execute(() -> listener.function.call(eventType, arguments));
             }
@@ -43,10 +43,10 @@ public class Events{
 
         final String currentThreadName = Thread.currentThread().getName();
 
-        for(Listener listener : registrations) {
-            if(eventType.startsWith(listener.type)) {
+        for (Listener listener : registrations) {
+            if (eventType.startsWith(listener.type)) {
 
-                if(currentThreadName.startsWith("AWT-EventQueue")) {
+                if (currentThreadName.startsWith("AWT-EventQueue")) {
 
                     listener.function.call(eventType, arguments);
 

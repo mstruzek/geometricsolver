@@ -4,7 +4,7 @@ import com.mstruzek.msketch.GeometricPrimitive;
 
 import javax.swing.table.AbstractTableModel;
 
-public class PrimitivesTableModel extends AbstractTableModel{
+public class PrimitivesTableModel extends AbstractTableModel {
 
     private static final String[] PRIMITIVES_COLUMN_NAMES = {"id", "Type", "p1", "p2", "p3"};
 

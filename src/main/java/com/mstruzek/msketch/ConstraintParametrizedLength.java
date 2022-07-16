@@ -1,6 +1,5 @@
 package com.mstruzek.msketch;
 
-import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 import static com.mstruzek.msketch.Point.dbPoint;
@@ -51,14 +50,13 @@ public class ConstraintParametrizedLength extends Constraint {
     }
 
     public String toString() {
-        MatrixDouble out = getValue();
-        double norm = Matrix.constructWithCopy(out.getArray()).norm1();
+        double norm = getNorm();
         return "Constraint-EqualLengthG" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ",N =" + dbPoint.get(n_id) + "} \n";
     }
 
     @Override
     public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.fill(1, dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         double lk = LK.length();
@@ -67,16 +65,16 @@ public class ConstraintParametrizedLength extends Constraint {
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2, LK.dot(-1.0 * d / lk));
+                mt.setVector(0, j * 2, LK.dot(-1.0 * d / lk));
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2, LK.dot(1.0 * d / lk));
+                mt.setVector(0, j * 2, LK.dot(1.0 * d / lk));
             }
             if (m_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2, NM.dot(1.0 / nm));
+                mt.setVector(0, j * 2, NM.dot(1.0 / nm));
             }
             if (n_id == dbPoint.get(i).id) {
-                mt.setVectorT(0, j * 2, NM.dot(-1.0 / nm));
+                mt.setVector(0, j * 2, NM.dot(-1.0 / nm));
             }
             j++;
         }
@@ -90,12 +88,11 @@ public class ConstraintParametrizedLength extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        MatrixDouble mt = new MatrixDouble(1, 1);
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         double d = (param_id != -1) ? Parameter.dbParameter.get(param_id).getValue() : 1.0;
-        mt.set(0, 0, d * LK.length() - NM.length());
-        return mt;
+        double value = d * LK.length() - NM.length();
+        return MatrixDouble.scalar(value);
     }
 
     @Override

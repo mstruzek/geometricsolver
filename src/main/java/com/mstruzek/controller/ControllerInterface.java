@@ -23,7 +23,7 @@ public interface ControllerInterface {
     /**
      * Dodaj Luk
      */
-    void addArc(Vector v1, Vector v2,Vector v3);
+    void addArc(Vector v1, Vector v2, Vector v3);
 
     /**
      * Dodaj punkt

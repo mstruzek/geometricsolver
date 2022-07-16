@@ -1,7 +1,7 @@
 package com.mstruzek.msketch;
 
-import Jama.Matrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.MatrixDouble2D;
 
 import static com.mstruzek.msketch.Point.dbPoint;
 
@@ -31,7 +31,7 @@ public class ConstraintFixPoint extends Constraint {
         this(constId, K, true);
     }
 
-    public ConstraintFixPoint(Integer constId, Point K, boolean persistent){
+    public ConstraintFixPoint(Integer constId, Point K, boolean persistent) {
         super(constId, GeometricConstraintType.FixPoint, persistent);
         this.k_id = K.id;
         this.k0_vec = new Vector(K.x, K.y);
@@ -47,19 +47,18 @@ public class ConstraintFixPoint extends Constraint {
     }
 
     public String toString() {
-        MatrixDouble mt = getValue();
-        double norm = Matrix.constructWithCopy(mt.getArray()).norm1();
+        double norm = getNorm();
         return "Constraint-FixPoint" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  , K0 = " + k0_vec + " } \n";
     }
 
     @Override
     public MatrixDouble getJacobian() {
         int j = 0;
-        MatrixDouble mt = MatrixDouble.fill(2, dbPoint.size() * 2, 0.0);
-        for(Integer i : dbPoint.keySet()) {
-            if(k_id == dbPoint.get(i).id) {
+        MatrixDouble mt = MatrixDouble.matrix2D(2, dbPoint.size() * 2, 0.0);
+        for (Integer i : dbPoint.keySet()) {
+            if (k_id == dbPoint.get(i).id) {
                 //macierz jednostkowa
-                mt.setSubMatrix(0, j * 2 , MatrixDouble.identity(2));
+                mt.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));
             }
             j++;
         }
@@ -73,7 +72,7 @@ public class ConstraintFixPoint extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        return new MatrixDouble(dbPoint.get(k_id).sub(k0_vec), true);
+        return new MatrixDouble2D(dbPoint.get(k_id).sub(k0_vec), true);
     }
 
     @Override
@@ -114,7 +113,7 @@ public class ConstraintFixPoint extends Constraint {
     @Override
     public double getNorm() {
         MatrixDouble mt = getValue();
-        double val = Math.sqrt(mt.get(0,0) * mt.get(0,0) + mt.get(1,0) * mt.get(1,0));
+        double val = Math.sqrt(mt.get(0, 0) * mt.get(0, 0) + mt.get(1, 0) * mt.get(1, 0));
         return val;
     }
 }
