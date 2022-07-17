@@ -1,6 +1,5 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.BindMatrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 import java.util.Set;
@@ -174,12 +173,12 @@ public abstract class Constraint implements ConstraintInterface {
     /**
      * Funkcja zwraca macierz hessianu dla wszystkich wiezow d(Jak'*a)/dq * ( gdzie  a -  Lagrange coefficient )
      *
-     * @param hs   - Full  HESSIAN
-     * @param mtq  - wektor x , z niego wyciagniemy mnozniki lagrange'a
-     * @param size - liczebnosc prymitywnych punktow
+     * @param hs   Full  HESSIAN
+     * @param sv   wektor stanu x i w dolnej czesci wektor z  mnoznikami lagrange'a
+     * @param size liczebnosc prymitywnych punktow
      * @return
      */
-    public static MatrixDouble getFullHessian(MatrixDouble hs, BindMatrix mtq, int size) {
+    public static MatrixDouble getFullHessian(MatrixDouble hs, MatrixDouble sv, int size) {
 
         int offset = 0; //licznik mnoznikow lagrange'a
         double lagrange = 0.0;//wartosc aktualnego mnoznika
@@ -188,7 +187,7 @@ public abstract class Constraint implements ConstraintInterface {
         for (Integer id : dbConstraint.keySet()) {
             if (!(Constraint.dbConstraint.get(id).isJacobianConstant())) {
                 /// jest hessian
-                lagrange = mtq.get(size + offset, 0);
+                lagrange = sv.getQuick(size + offset, 0);
 
                 ///
                 ///   Hessian - dla tego wiezu liczony na cala macierz !

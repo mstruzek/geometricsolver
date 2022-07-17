@@ -50,6 +50,16 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         return matrix1D;
     }
 
+    @Override
+    public MatrixDouble matrixDoubleFrom(Object delegate) {
+        if (DenseDoubleMatrix1D.class.isAssignableFrom(delegate.getClass())) {
+            DenseDoubleMatrix1D denseDoubleMatrix1D = (DenseDoubleMatrix1D) delegate;
+            MatrixDouble matrixDouble = new DenseDoubleMatrix1DImpl(denseDoubleMatrix1D);
+            return matrixDouble;
+        }
+        throw new Error("not implemented");
+    }
+
     /*
      *  ##SparseDoubleMatrix2D
      *  public void set(int row, int column, double value) {
@@ -122,6 +132,16 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
 
         @Override
         public MatrixDouble add(MatrixDouble rhs) {
+            DenseDoubleMatrix1D doubleMatrix1D = rhs.unwrap(DenseDoubleMatrix1D.class);
+            if(doubleMatrix1D != null) {
+                this.mt.assign(doubleMatrix1D, new DoubleDoubleFunction() {
+                    @Override
+                    public double apply(double v, double v1) {
+                        return v + v1;
+                    }
+                });
+                return this;
+            }
             throw new Error("not implemented");
         }
 

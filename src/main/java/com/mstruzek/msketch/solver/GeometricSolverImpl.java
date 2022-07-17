@@ -5,9 +5,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
 import com.mstruzek.msketch.Constraint;
 import com.mstruzek.msketch.GeometricPrimitive;
-import com.mstruzek.msketch.ParseToColt;
+import com.mstruzek.msketch.MatrixDoubleUtility;
 import com.mstruzek.msketch.Point;
-import com.mstruzek.msketch.matrix.BindMatrix;
+import com.mstruzek.msketch.matrix.PointUtility;
 import com.mstruzek.msketch.matrix.ColtMatrixCreator;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 import com.mstruzek.msketch.matrix.MatrixDoubleCreator;
@@ -29,12 +29,15 @@ public class GeometricSolverImpl implements GeometricSolver {
      */
     public static final double CONVERGENCE_LIMIT = 10e-5;
 
+    private long startTime;                 /// start timing
+    private long evaluationStart;           /// matrix and vector state evaluation time
+    private long solverStep;                /// single LU solver round  delta
+
+    private long accEvaluationTime = 0;   /// Accumulated Evaluation Time - for each round [ms]
+    private long accSolverTime = 0;       /// Accumulated LU Solver Time - for each round  [ms]
+
     @Override
     public SolverStat solveSystem(SolverStat solverStat) {
-
-        long startTime;                 /// start timing
-        long evaluationStart;           /// matrix and vector state evaluation time
-        long solverStep;                /// single LU solver round  delta
 
         final int size;                 /// wektor stanu
         final int coffSize;             /// wspolczynniki Lagrange
@@ -58,10 +61,10 @@ public class GeometricSolverImpl implements GeometricSolver {
         // skladowa to Fiq - wartosci poszczegolnych wiezow
         final MatrixDouble Fi;
 
-
         double norm1;               /// wartosci bledow na wiezach
         double prevNorm;            /// norma z wczesniejszej iteracji,
         double errorFluctuation;    /// fluktuacja bledu
+
 
         /// Default Matrix Creator for middle matrices !
         MatrixDoubleCreator.setInstance(ColtMatrixCreator.INSTANCE);
@@ -114,13 +117,14 @@ public class GeometricSolverImpl implements GeometricSolver {
         Fr = b.viewSpan(0, 0, size, 1);
         Fi = b.viewSpan(size, 0, coffSize, 1);
 
+        MatrixDouble dmx = null;
 
-        BindMatrix dmx = null;
+        /// State Vector - zmienne stanu
+        MatrixDouble SV = MatrixDouble.matrix1D(dimension, 0.0);
+        PointUtility.copyIntoStateVector(SV);
+        PointUtility.setupLagrangeMultipliers(SV);
 
-        BindMatrix MTQ = new BindMatrix(dimension, 1);
-        MTQ.bindDbPoints();
-
-        solverStat.accEvaluationTime += clock.millis() - evaluationStart;
+        accEvaluationTime += clock.millis() - evaluationStart;
 
         norm1 = 0.0;
         prevNorm = 0.0;
@@ -128,8 +132,6 @@ public class GeometricSolverImpl implements GeometricSolver {
 
         int itr = 0;
         while (itr < MAX_SOLVER_ITERATIONS) {
-
-            solverStat.iterations = itr;
 
             evaluationStart = clock.millis();
 
@@ -150,7 +152,7 @@ public class GeometricSolverImpl implements GeometricSolver {
 
             Hs.reset(0.0);
 
-            Constraint.getFullHessian(Hs, MTQ, size);
+            Constraint.getFullHessian(Hs, SV, size);
 
             A.setSubMatrix(0, 0, Fq);                   /// procedure SET
             A.addSubMatrix(0, 0, Hs);                   /// procedure ADD
@@ -158,36 +160,42 @@ public class GeometricSolverImpl implements GeometricSolver {
             A.setSubMatrix(size, 0, Wq);
             A.setSubMatrix(0, size, Wq.transpose());
 
-            solverStat.accEvaluationTime += (clock.millis() - evaluationStart);
+
 
             /*
              *  LU Decomposition  -- Colt Linera Equatio Solver
              *
              *   rozwiazjemy zadanie [ A ] * [ dx ] = [ b ]
              */
-
 /// Solver LU Single Iteration Step
 
-            DoubleMatrix2D matrix2DA = ParseToColt.toSparse(A);
-            DoubleMatrix1D matrix1Db = ParseToColt.toDenseVector(b);
+            DoubleMatrix2D matrix2DA = MatrixDoubleUtility.toSparse(A);
+            DoubleMatrix1D matrix1Db = MatrixDoubleUtility.toDenseVector(b);
+
+            accEvaluationTime += (clock.millis() - evaluationStart);
+
+
             solverStep = clock.millis();
 
-            reporter.debug(() -> A.toString(new Integer[0]));
-            reporter.debug(() -> b.toString(new Integer[0]));
-
-            {
-                LUDecompositionQuick LU = new LUDecompositionQuick();
-                LU.decompose(matrix2DA);
-                LU.solve(matrix1Db);
+            if(StateReporter.isDebugEnabled()) {
+                reporter.writeln(A.toString(new Integer[0]));
+                reporter.writeln(b.toString(new Integer[0]));
             }
-            solverStat.accSolverTime += (clock.millis() - solverStep);
+
+/// LU Solver
+            LUDecompositionQuick LU = new LUDecompositionQuick();
+            LU.decompose(matrix2DA);
+            LU.solve(matrix1Db);
+
+           accSolverTime += (clock.millis() - solverStep);
 
 /// Bind delta-x into database points
-            dmx = ParseToColt.toBindVector(matrix1Db);
 
-            /// uaktualniamy punkty
-            MTQ.plusEquals(dmx);
-            MTQ.copyToPoints();
+            dmx = MatrixDouble.matrixDoubleFrom(matrix1Db);
+
+            /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ]
+            SV.add(dmx);
+            PointUtility.copyFromStateVector(SV);
 
             norm1 = Constraint.getFullNorm();
 
@@ -220,6 +228,9 @@ public class GeometricSolverImpl implements GeometricSolver {
                 solverStat.constraintDelta = Constraint.getFullNorm();
                 solverStat.convergence = false;
                 solverStat.stopTime = clock.millis();
+                solverStat.iterations = itr;
+                solverStat.accSolverTime = accSolverTime;
+                solverStat.accEvaluationTime = accEvaluationTime;
                 return solverStat;
             }
             itr++;
@@ -232,7 +243,9 @@ public class GeometricSolverImpl implements GeometricSolver {
         solverStat.constraintDelta = Constraint.getFullNorm();
         solverStat.convergence = norm1 < CONVERGENCE_LIMIT;
         solverStat.stopTime = clock.millis();
-
+        solverStat.iterations = itr;
+        solverStat.accSolverTime = accSolverTime;
+        solverStat.accEvaluationTime = accEvaluationTime;
         return solverStat;
     }
 }

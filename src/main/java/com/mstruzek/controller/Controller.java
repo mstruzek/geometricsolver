@@ -131,7 +131,7 @@ public class Controller implements ControllerInterface {
              */
             Model.solveSystem();
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             Events.send(EventType.CONTROLLER_ERROR, new Object[]{e.getMessage()});
         }

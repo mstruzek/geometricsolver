@@ -3,19 +3,17 @@ package com.mstruzek.msketch;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.impl.SparseDoubleMatrix2D;
-import com.mstruzek.msketch.matrix.BindMatrix;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 /**
- * Klasa zawiera same funkcje static
- * do przeformatowania macierzy gestych na macierze rzadkie
+ * Klasa zawiera same funkcje static  do przeformatowania macierzy gestych na macierze rzadkie
  *
  * @author root
  */
-public class ParseToColt {
+public class MatrixDoubleUtility {
 
     /**
-     * Konwersja macierzy gestej do macierzy rzadkiej
+     * jesli mozliwe pomijamy kopiowanie przy konwersja do macierzy rzadkiej.
      *
      * @param md
      * @return
@@ -39,25 +37,23 @@ public class ParseToColt {
         return matrix2D;
     }
 
-    public static DoubleMatrix1D toDenseVector(MatrixDouble b) {
+    /**
+     * Jesli mozliwe pomijamy kopiowanie przy konwersji do DoubleMatrix1D.
+     * @param md matrix double
+     * @return
+     */
+    public static DoubleMatrix1D toDenseVector(MatrixDouble md) {
 
-        DenseDoubleMatrix1D unwrap = b.unwrap(DenseDoubleMatrix1D.class);
+        DenseDoubleMatrix1D unwrap = md.unwrap(DenseDoubleMatrix1D.class);
         if(unwrap != null) {
             return unwrap;
         }
 
-        DoubleMatrix1D doubleMatrix1D = new DenseDoubleMatrix1D(b.height());
-        for (int i = 0; i < b.height(); i++) {
-            doubleMatrix1D.setQuick(i, b.getQuick(i, 0));
+        DoubleMatrix1D doubleMatrix1D = new DenseDoubleMatrix1D(md.height());
+        for (int i = 0; i < md.height(); i++) {
+            doubleMatrix1D.setQuick(i, md.getQuick(i, 0));
         }
         return doubleMatrix1D;
     }
 
-    public static BindMatrix toBindVector(DoubleMatrix1D matrix1Db) {
-        BindMatrix dmx = new BindMatrix(matrix1Db.size(), 1);
-        for (int i = 0; i < matrix1Db.size(); i++) {
-            dmx.set(i, 0, matrix1Db.getQuick(i));
-        }
-        return dmx;
-    }
 }

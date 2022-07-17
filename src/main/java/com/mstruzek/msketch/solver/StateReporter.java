@@ -1,12 +1,10 @@
 package com.mstruzek.msketch.solver;
 
-import java.util.function.Supplier;
-
 public class StateReporter {
 
     private static final StateReporter instance = new StateReporter();
 
-    static final boolean DebugEnabled = false;
+    public static final boolean DebugEnabled = false;
 
     private StateReporter() {}
 
@@ -29,9 +27,8 @@ public class StateReporter {
         }
     }
 
-    public void debug(Supplier<String> message) {
-        if(DebugEnabled) {
-            System.out.println(message.get());
-        }
+    public static boolean isDebugEnabled() {
+        return DebugEnabled;
     }
+
 }

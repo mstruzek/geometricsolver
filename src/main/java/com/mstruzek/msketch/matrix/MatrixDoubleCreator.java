@@ -56,4 +56,12 @@ public abstract class MatrixDoubleCreator {
      */
     public abstract MatrixDouble makeMatrix1D(int rowSize, double initValue);
 
+    /**
+     * Create column oriented one dimensional matrix backed by usually delegate shared DoubleMatrix1D.
+     * Do not copy if possible.
+     * @param delegate matrix
+     * @return adapter
+     */
+    public abstract MatrixDouble matrixDoubleFrom(Object delegate);
+
 }

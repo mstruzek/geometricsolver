@@ -1,5 +1,7 @@
 package com.mstruzek.msketch.matrix;
 
+import cern.colt.matrix.impl.DenseDoubleMatrix1D;
+
 public class DefaultDoubleMatrixCreator extends MatrixDoubleCreator {
 
     public static final DefaultDoubleMatrixCreator INSTANCE = new DefaultDoubleMatrixCreator();
@@ -50,6 +52,20 @@ public class DefaultDoubleMatrixCreator extends MatrixDoubleCreator {
         MatrixDouble2D mt = new MatrixDouble2D(rowSize, 1);
         mt.reset(initValue);
         return mt;
+    }
+
+    @Override
+    public MatrixDouble matrixDoubleFrom(Object delegate) {
+        if (DenseDoubleMatrix1D.class.isAssignableFrom(delegate.getClass())) {
+            DenseDoubleMatrix1D denseVector = (DenseDoubleMatrix1D) delegate;
+            MatrixDouble2D matrixDouble2D = new MatrixDouble2D(denseVector.size(), 1);
+            for (int i = 0; i < denseVector.size(); i++) {
+                matrixDouble2D.setQuick(i, 0, denseVector.getQuick(i));
+            }
+            return matrixDouble2D;
+        }
+
+        throw new Error("not implementation");
     }
 
 }

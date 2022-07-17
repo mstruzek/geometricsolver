@@ -1,5 +1,6 @@
 package com.mstruzek.msketch.matrix;
 
+import cern.colt.matrix.DoubleMatrix1D;
 import com.mstruzek.msketch.Vector;
 
 import java.util.Arrays;
@@ -208,6 +209,17 @@ public interface MatrixDouble {
     static MatrixDouble matrix1D(int rowSize, double initValue) {
         return MatrixDoubleCreator.getInstance().makeMatrix1D(rowSize, initValue);
     }
+
+
+    /**
+     * Wrap usually DenseDoubleMatrix1D into corresponding MatrixDouble adapter.
+     * @param delegate source vector
+     * @return
+     */
+    static MatrixDouble matrixDoubleFrom(DoubleMatrix1D delegate) {
+        return MatrixDoubleCreator.getInstance().matrixDoubleFrom(delegate);
+    }
+
 
     /**
      * Small rotation  matrix around OZ axis.
