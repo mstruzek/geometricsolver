@@ -2,17 +2,15 @@ package com.mstruzek.msketch.matrix;
 
 public abstract class MatrixDoubleCreator {
 
-    private static MatrixDoubleCreator creator;
+    private static MatrixDoubleCreator creator = DefaultDoubleMatrixCreator.INSTANCE;
 
-    public static MatrixDoubleCreator getCreatorInstance() {
-        if (creator == null) {
-            creator = new DefaultDoubleMatrixCreator();
-        }
+    public static MatrixDoubleCreator getInstance() {
         return creator;
     }
 
-
-    public abstract MatrixDouble makeRotation2d(double alfa);
+    public static void setInstance(MatrixDoubleCreator creator) {
+        MatrixDoubleCreator.creator = creator;
+    }
 
     /**
      * Make usually small identity matrix 2x2.
@@ -52,19 +50,10 @@ public abstract class MatrixDoubleCreator {
     /**
      * Column oriented matrix one dimensional - vector.
      *
-     * @param colSize
-     * @param initValue
-     * @return
-     */
-    public abstract MatrixDouble makeMatrix1D(int colSize, double initValue);
-
-    /**
-     * Row oriented matrix one dimensional - transpose vector.
-     *
      * @param rowSize
      * @param initValue
      * @return
      */
-    public abstract MatrixDouble makeMatrix1Dtr(int rowSize, double initValue);
+    public abstract MatrixDouble makeMatrix1D(int rowSize, double initValue);
 
 }

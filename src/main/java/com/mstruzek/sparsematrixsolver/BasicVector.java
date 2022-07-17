@@ -49,7 +49,7 @@ public class BasicVector {
         this.size = md.height();
         d = new double[size];
         for (int i = 0; i < size; i++) {
-            d[i] = md.get(i, 0);
+            d[i] = md.getQuick(i, 0);
         }
     }
 
@@ -223,7 +223,7 @@ public class BasicVector {
         System.out.println(BasicVector.merge(bv, bv3, bv2));
 
 
-        MatrixDouble force = MatrixDouble.matrix1Dtr(8, 2.0);
+        MatrixDouble force = MatrixDouble.matrix1D(8, 2.0);
         BasicVector bs = new BasicVector(force);
         System.out.println(bs + " norm : " + bs.norm());
     }

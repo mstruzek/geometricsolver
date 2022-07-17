@@ -58,7 +58,6 @@ public class MySketch extends JPanel implements MouseInputListener {
 
     private final MyPopup popoup;
 
-
     /// Picked candidates for new geometric primitives !
     private int pId = 0;
     private Point[] picked = new Point[3];

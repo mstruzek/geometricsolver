@@ -77,7 +77,7 @@ public class ConstraintLinesPerpendicular extends Constraint {
     @Override
     public MatrixDouble getJacobian() {
         /// macierz 1xN
-        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
         int j = 0;
         if ((m == null) && (n == null)) {
             for (Integer i : dbPoint.keySet()) {
@@ -223,9 +223,9 @@ public class ConstraintLinesPerpendicular extends Constraint {
         Vector vKL = dbPoint.get(k_id).sub(dbPoint.get(l_id));
         MatrixDouble mt = getValue();
         if ((m == null) && (n == null)) {
-            return mt.get(0, 0) / vKL.length() / dbPoint.get(m_id).sub(dbPoint.get(n_id)).length();
+            return mt.getQuick(0, 0) / vKL.length() / dbPoint.get(m_id).sub(dbPoint.get(n_id)).length();
         } else {
-            return mt.get(0, 0) / vKL.length() / (m.sub(n)).length();
+            return mt.getQuick(0, 0) / vKL.length() / (m.sub(n)).length();
         }
     }
 

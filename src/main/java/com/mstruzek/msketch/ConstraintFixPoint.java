@@ -113,7 +113,7 @@ public class ConstraintFixPoint extends Constraint {
     @Override
     public double getNorm() {
         MatrixDouble mt = getValue();
-        double val = Math.sqrt(mt.get(0, 0) * mt.get(0, 0) + mt.get(1, 0) * mt.get(1, 0));
+        double val = Math.sqrt(mt.getQuick(0, 0) * mt.getQuick(0, 0) + mt.getQuick(1, 0) * mt.getQuick(1, 0));
         return val;
     }
 }

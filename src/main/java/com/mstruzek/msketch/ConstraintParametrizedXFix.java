@@ -41,11 +41,11 @@ public class ConstraintParametrizedXFix extends Constraint {
     @Override
     public MatrixDouble getJacobian() {
         int j = 0;
-        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
                 /// wspolrzedna [X]
-                mt.set(0, j * 2, 1.0);
+                mt.setQuick(0, j * 2, 1.0);
             }
             j++;
         }
@@ -101,6 +101,6 @@ public class ConstraintParametrizedXFix extends Constraint {
     @Override
     public double getNorm() {
         MatrixDouble mt = getValue();
-        return mt.get(0, 0);
+        return mt.getQuick(0, 0);
     }
 }

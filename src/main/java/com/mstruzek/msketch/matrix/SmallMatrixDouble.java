@@ -16,9 +16,8 @@ public class SmallMatrixDouble implements MatrixDouble {
         sm[3] = a11;
     }
 
-
     @Override
-    public double get(int i, int j) {
+    public double getQuick(int i, int j) {
         return sm[i * 2 + j];
     }
 
@@ -89,12 +88,7 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble copy() {
-        return new SmallMatrixDouble(sm[0], sm[1], sm[2], sm[3]);
-    }
-
-    @Override
-    public void set(int r, int c, double value) {
+    public void setQuick(int r, int c, double value) {
         sm[r * 2 + c] = value;
     }
 
@@ -104,12 +98,17 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble setSubMatrix(int firstRow, int firstColumn, MatrixDouble mt) {
+    public MatrixDouble viewSpan(int row, int column, int height, int width) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble addSubMatrix(int firstRow, int firstColumn, MatrixDouble mt) {
+    public MatrixDouble setSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+        throw new IllegalStateException("no implementation");
+    }
+
+    @Override
+    public MatrixDouble addSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
         throw new IllegalStateException("no implementation");
     }
 
@@ -126,5 +125,13 @@ public class SmallMatrixDouble implements MatrixDouble {
     @Override
     public MatrixDouble reset(double value) {
         throw new IllegalStateException("no implementation");
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> clazz) {
+        if(SmallMatrixDouble.class.isAssignableFrom(clazz)) {
+            return (T) this;
+        }
+        return null;
     }
 }

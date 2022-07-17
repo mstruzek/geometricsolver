@@ -50,7 +50,7 @@ public class ConstraintDistance2Points extends Constraint {
     @Override
     public MatrixDouble getJacobian() {
         /// macierz 1xN
-        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
         Vector LKu = dbPoint.get(l_id).Vector().sub(dbPoint.get(k_id)).unit();
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
@@ -114,6 +114,6 @@ public class ConstraintDistance2Points extends Constraint {
     @Override
     public double getNorm() {
         MatrixDouble md = getValue();
-        return md.get(0, 0);
+        return md.getQuick(0, 0);
     }
 }

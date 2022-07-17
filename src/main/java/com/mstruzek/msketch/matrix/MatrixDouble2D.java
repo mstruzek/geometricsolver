@@ -3,10 +3,7 @@ package com.mstruzek.msketch.matrix;
 import com.mstruzek.msketch.Vector;
 
 /**
- * Klasa reprezentuje macierz
- * + dodatkowe operacje
- *
- * @author root
+ * Klasa reprezentuje macierz  dodatkowe operacje , takze w postaci wspoldzielonego widoku !
  */
 public class MatrixDouble2D implements MatrixDouble {
 
@@ -16,6 +13,10 @@ public class MatrixDouble2D implements MatrixDouble {
     int columns;
     /*** wysokosc - ilosc wiersze */
     int rows;
+    /*** base row offset - view concept */
+    int rowOffset;
+    /***  base column offset - view concept */
+    int colOffset;
 
     /**
      * Konstruktor macierzy
@@ -24,19 +25,36 @@ public class MatrixDouble2D implements MatrixDouble {
      * @param rows    wysokosc - ilosc wiersze
      */
     public MatrixDouble2D(int rows, int columns) {
-        super();
+        this.rowOffset = 0;
+        this.colOffset = 0;
         this.columns = columns;
         this.rows = rows;
         this.m = new double[rows][columns];
     }
 
     /**
+     * Shared span with offset into matrix .
+     *
+     * @param rows
+     * @param columns
+     */
+    public MatrixDouble2D(double[][] shared, int rowOffset, int colOffset, int rows, int columns) {
+        this.rowOffset = rowOffset;
+        this.colOffset = colOffset;
+        this.rows = rows;
+        this.columns = columns;
+        this.m = shared;
+    }
+
+    /**
      * Tworzy macierz na podstawie wektora
      *
      * @param vec        wektora
-     * @param columnType true if coumn type [a b c]', false if row type [a b c]
+     * @param columnType true if column type, false otherwise row type
      */
     public MatrixDouble2D(Vector vec, boolean columnType) {
+        this.rowOffset = 0;
+        this.colOffset = 0;
         if (columnType) {
             this.columns = 1;
             this.rows = 2;
@@ -53,13 +71,9 @@ public class MatrixDouble2D implements MatrixDouble {
         }
     }
 
-    public static MatrixDouble identity(int size, double initial) {
-        return MatrixDouble.identity(size, initial);
-    }
-
     @Override
-    public double get(int i, int j) {
-        return this.m[i][j];
+    public double getQuick(int i, int j) {
+        return this.m[rowOffset + i][colOffset + j];
     }
 
     @Override
@@ -75,9 +89,10 @@ public class MatrixDouble2D implements MatrixDouble {
     @Override
     public MatrixDouble add(MatrixDouble rhs) {
         assertEqualDimensions(this, rhs);
-        for (int i = 0; i < this.m.length; i++) {
-            for (int j = 0; j < this.m[i].length; j++) {
-                this.m[i][j] = this.m[i][j] + rhs.get(i, j);
+        double value;
+        for (int i = 0; i < height(); i++) {
+            for (int j = 0; j < width(); j++) {
+                this.m[rowOffset + i][colOffset + j] += rhs.getQuick(i, j);
             }
         }
         return this;
@@ -87,7 +102,7 @@ public class MatrixDouble2D implements MatrixDouble {
     public MatrixDouble dot(double c) {
         for (int i = 0; i < height(); i++) {
             for (int j = 0; j < width(); j++) {
-                this.m[i][j] *= c;
+                this.m[rowOffset + i][colOffset + j] *= c;
             }
         }
         return this;
@@ -95,10 +110,10 @@ public class MatrixDouble2D implements MatrixDouble {
 
     @Override
     public MatrixDouble dotC(double c) {
-        MatrixDouble mt = this.copy();
+        MatrixDouble mt = new MatrixDouble2D(width(), height());
         for (int i = 0; i < height(); i++) {
             for (int j = 0; j < width(); j++) {
-                mt.set(i, j, mt.get(i, j) * c);
+                mt.setQuick(i, j, mt.getQuick(i, j) * c);
             }
         }
         return mt;
@@ -110,11 +125,10 @@ public class MatrixDouble2D implements MatrixDouble {
         if (this.width() != rhs.height()) throw new Error("Illegal dimension of right-hand side operand matrix");
 
         if (rhs instanceof SmallMatrixDouble && height() == rhs.height() && width() == rhs.width()) {
-            SmallMatrixDouble srhs = (SmallMatrixDouble) rhs;
-            double a00 = get(0, 0);
-            double a01 = get(0, 1);
-            double a10 = get(1, 0);
-            double a11 = get(1, 1);
+            double a00 = getQuick(0, 0);
+            double a01 = getQuick(0, 1);
+            double a10 = getQuick(1, 0);
+            double a11 = getQuick(1, 1);
             SmallMatrixDouble mt = new SmallMatrixDouble(a00, a01, a10, a11);
             return mt.mult(rhs);
         } else {
@@ -123,9 +137,9 @@ public class MatrixDouble2D implements MatrixDouble {
                 for (int j = 0; j < rhs.width(); j++) { // other column
                     double acc = 0.0;
                     for (int k = 0; k < width(); k++) {     // other column
-                        acc += this.m[i][k] * rhs.get(k, j);
+                        acc += this.getQuick(i, k) * rhs.getQuick(k, j);
                     }
-                    mt.m[i][j] = acc;
+                    mt.setQuick(i, j, acc);
                 }
             }
             return mt;
@@ -133,68 +147,75 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble copy() {
-        MatrixDouble2D array = new MatrixDouble2D(this.m.length, this.m[0].length);
-        for (int i = 0; i < array.m.length; i++)
-            System.arraycopy(this.m[i], 0, array.m[i], 0, this.m[i].length);
-        return array;
-    }
-
-    @Override
-    public void set(int r, int c, double value) {
-        this.m[r][c] = value;
+    public void setQuick(int r, int c, double value) {
+        this.m[rowOffset + r][colOffset + c] = value;
     }
 
     @Override
     public void add(int r, int c, double value) {
-        this.m[r][c] = this.m[r][c] + value;
+        this.m[rowOffset + r][colOffset + c] += value;
     }
 
     @Override
-    public MatrixDouble setSubMatrix(int firstRow, int firstColumn, MatrixDouble mt) {
+    public MatrixDouble viewSpan(int rowOffset, int colOffset, int height, int width) {
+        /*
+         * first level base tensor sharing policy !
+         */
+        if(rowOffset + height > height()) {
+            throw new Error("out ouf bound offset request");
+        }
+        if(colOffset + width > width()) {
+            throw new Error("out ouf bound offset request");
+        }
+        MatrixDouble2D md = new MatrixDouble2D(this.m, rowOffset, colOffset, height, width );
+        return md;
+    }
+
+    @Override
+    public MatrixDouble setSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
         //sprawdzamy czy macierz wstawiana nie jest za duza
-        if (this.height() < (firstRow + mt.height()) && this.width() < (firstColumn + mt.width())) {
+        if (this.height() < (offsetRow + mt.height()) && this.width() < (offsetCol + mt.width())) {
             throw new IllegalStateException("dimension overflow");
         }
 
         if (mt instanceof ScalarMatrixDouble) {
-            set(firstRow, firstColumn, ((ScalarMatrixDouble) mt).m);
+            setQuick(offsetRow, offsetCol, ((ScalarMatrixDouble) mt).m);
             return this;
         }
         if (mt instanceof SmallMatrixDouble) {
             SmallMatrixDouble smt = (SmallMatrixDouble) mt;
-            set(firstRow + 0, firstColumn + 0, smt.sm[0]);
-            set(firstRow + 0, firstColumn + 1, smt.sm[1]);
-            set(firstRow + 1, firstColumn + 0, smt.sm[2]);
-            set(firstRow + 1, firstColumn + 1, smt.sm[3]);
+            setQuick(offsetRow + 0, offsetCol + 0, smt.sm[0]);
+            setQuick(offsetRow + 0, offsetCol + 1, smt.sm[1]);
+            setQuick(offsetRow + 1, offsetCol + 0, smt.sm[2]);
+            setQuick(offsetRow + 1, offsetCol + 1, smt.sm[3]);
             return this;
         }
 
-        MatrixDouble2D mt2 = (MatrixDouble2D) mt;
+        MatrixDouble2D mtd = (MatrixDouble2D) mt;
         /// mozna wstawic
         for (int k = 0; k < mt.height(); k++) {
-            System.arraycopy(mt2.m[k], 0, this.m[k + firstRow], firstColumn, mt2.m[k].length);
+            System.arraycopy(mtd.m[k], 0, this.m[k + rowOffset + offsetRow], colOffset + offsetCol, mtd.m[k].length);
         }
         return this;
     }
 
     @Override
-    public MatrixDouble addSubMatrix(int firstRow, int firstColumn, MatrixDouble mt) {
-        if (this.height() < (firstRow + mt.height()) || this.width() < (firstColumn + mt.width())) {
+    public MatrixDouble addSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+        if (this.height() < (offsetRow + mt.height()) || this.width() < (offsetCol + mt.width())) {
             throw new Error("matrix dimension out of bounds");
         }
         if (mt instanceof SmallMatrixDouble) {
             SmallMatrixDouble smt = (SmallMatrixDouble) mt;
-            add(firstRow + 0, firstColumn + 0, smt.sm[0]);
-            add(firstRow + 0, firstColumn + 1, smt.sm[1]);
-            add(firstRow + 1, firstColumn + 0, smt.sm[2]);
-            add(firstRow + 1, firstColumn + 1, smt.sm[3]);
+            add(offsetRow + 0, offsetCol + 0, smt.sm[0]);
+            add(offsetRow + 0, offsetCol + 1, smt.sm[1]);
+            add(offsetRow + 1, offsetCol + 0, smt.sm[2]);
+            add(offsetRow + 1, offsetCol + 1, smt.sm[3]);
             return this;
         } else {
             MatrixDouble2D tmh = (MatrixDouble2D) mt;
             for (int i = 0; i < mt.height(); i++) {
                 for (int j = 0; j < mt.width(); j++) {
-                    m[i + firstRow][j + firstColumn] += tmh.m[i][j];
+                    m[i + offsetRow][j + offsetCol] += tmh.m[i][j];
                 }
             }
             return this;
@@ -204,12 +225,12 @@ public class MatrixDouble2D implements MatrixDouble {
     @Override
     public MatrixDouble setVector(int r, int c, Vector vector) {
         if (this.width() == 1) { /// row oriented
-            set(r + 0, c, vector.getX());
-            set(r + 1, c, vector.getY());
+            setQuick(r + 0, c, vector.getX());
+            setQuick(r + 1, c, vector.getY());
             return this;
         } else if (this.height() == 1) { /// column oriented
-            set(r, c + 0, vector.getX());
-            set(r, c + 1, vector.getY());
+            setQuick(r, c + 0, vector.getX());
+            setQuick(r, c + 1, vector.getY());
             return this;
         } else {
             throw new IllegalStateException("no implementation");
@@ -218,10 +239,10 @@ public class MatrixDouble2D implements MatrixDouble {
 
     @Override
     public MatrixDouble2D transpose() {
-        MatrixDouble2D tm = new MatrixDouble2D(columns, rows);
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                tm.m[j][i] = this.m[i][j];
+        MatrixDouble2D tm = new MatrixDouble2D(width(), height());
+        for (int i = 0; i < height(); i++) {
+            for (int j = 0; j < width(); j++) {
+                tm.m[j][i] = this.m[i + rowOffset][j + colOffset];
             }
         }
         return tm;
@@ -229,10 +250,39 @@ public class MatrixDouble2D implements MatrixDouble {
 
     @Override
     public MatrixDouble reset(double value) {
-        for (int i = 0; i < m.length; i++)
-            for (int j = 0; j < m[i].length; j++)
-                m[i][j] = value;
+        for (int i = 0; i < height(); i++)
+            for (int j = 0; j < width(); j++)
+                m[i + rowOffset][j + colOffset] = value;
         return this;
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> clazz) {
+        if (MatrixDouble2D.class.isAssignableFrom(clazz)) {
+            return (T) this;
+        }
+        return null;
+    }
+
+
+    public static void main(String[] args) {
+        double q1;
+        double m1;
+        MatrixDouble2D md;
+        MatrixDouble span;
+
+        md = new MatrixDouble2D(8, 8);
+        md.setSubMatrix(2, 2, MatrixDouble.identity(2, -1.0));
+        md.setSubMatrix(4, 2, MatrixDouble.rotation(45));
+        md.setSubMatrix(6, 2, MatrixDouble.rotation(-30));
+        md.dot(2.0);
+        span = md.viewSpan(3, 3, 2, 2);
+        span.add(MatrixDouble.identity(2, 200));
+
+        q1 = span.getQuick(0, 0);
+        m1 = md.getQuick(3, 3);
+
+        assert m1 == q1;
     }
 
 

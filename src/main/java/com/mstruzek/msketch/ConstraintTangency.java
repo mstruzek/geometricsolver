@@ -55,7 +55,7 @@ public class ConstraintTangency extends Constraint {
 
     @Override
     public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
         Vector MK = (dbPoint.get(m_id)).sub(dbPoint.get(k_id));
         Vector LK = (dbPoint.get(l_id)).sub(dbPoint.get(k_id));
         Vector ML = (dbPoint.get(m_id)).sub(dbPoint.get(l_id));
@@ -93,6 +93,7 @@ public class ConstraintTangency extends Constraint {
     }
 
     @Override
+    @InstabilityBehavior(description = "equations, `or lagrange multiplier")
     public MatrixDouble getHessian(double lagrange) {
         /*
          * wspolczynnik lagrange ?? mat.dot(lagrange) ??
@@ -234,6 +235,6 @@ public class ConstraintTangency extends Constraint {
     @Override
     public double getNorm() {
         MatrixDouble mt = getValue();
-        return mt.get(0, 0);
+        return mt.getQuick(0, 0);
     }
 }

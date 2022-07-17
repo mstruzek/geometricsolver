@@ -10,10 +10,7 @@ import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -91,9 +88,19 @@ public class FrameView extends JFrame {
         super(FRAME_TITLE);
         this.controller = controller;
 
+
         pane.setLayout(new BorderLayout());
 
+        setFocusCycleRoot(true);
         setFocusable(true);
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                FrameView.this.requestFocusInWindow();
+                super.mouseClicked(e);
+            }
+        });
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -114,7 +121,18 @@ public class FrameView extends JFrame {
                         ms.setAck(ActiveKey.None);
                         break;
                 }
+
                 super.keyPressed(e);
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+                if (e.isControlDown() && e.getKeyCode() == 88) { /// key combination :  [ CTRL + X ]
+                    /// run solver round
+                    runSolver(controller);
+                }
+                super.keyReleased(e);
             }
         });
 
@@ -226,9 +244,6 @@ public class FrameView extends JFrame {
                 requestFocus();
             }
         });
-
-
-
 
         /*
          * Constraint View default layout
@@ -344,16 +359,7 @@ public class FrameView extends JFrame {
         dsolve.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                CompletableFuture.runAsync(controller::solveSystem)
-                    .thenRunAsync(() -> {
-                        ms.refreshContainers();
-                        SwingUtilities.invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                ms.repaint();
-                            }
-                        });
-                    });
+                runSolver(controller);
             }
         });
 
@@ -444,6 +450,19 @@ public class FrameView extends JFrame {
         setVisible(true);
     }
 
+    private void runSolver(Controller controller) {
+        CompletableFuture.runAsync(controller::solveSystem)
+            .thenRunAsync(() -> {
+                ms.refreshContainers();
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        ms.repaint();
+                    }
+                });
+            });
+    }
+
     private void clearTextArea() {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -463,6 +482,10 @@ public class FrameView extends JFrame {
             throw new RuntimeException(e);
         }
 
+        if(messageQueue.size() == 0) {
+            return;
+        }
+
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
 
@@ -470,10 +493,9 @@ public class FrameView extends JFrame {
                     return;
 
                 String text = null;
-
                 while (true) {
                     try {
-                        text = messageQueue.poll(10, TimeUnit.MILLISECONDS);
+                        text = messageQueue.poll(90, TimeUnit.MILLISECONDS);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }

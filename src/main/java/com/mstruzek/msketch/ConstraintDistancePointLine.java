@@ -57,7 +57,7 @@ public class ConstraintDistancePointLine extends Constraint {
 
     @Override
     public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
         Vector ML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
@@ -85,7 +85,7 @@ public class ConstraintDistancePointLine extends Constraint {
     @Override
     public double getNorm() {
         MatrixDouble mt = getValue();
-        return mt.get(0, 0);
+        return mt.getQuick(0, 0);
     }
 
     @Override
@@ -94,6 +94,7 @@ public class ConstraintDistancePointLine extends Constraint {
     }
 
     @Override
+    @InstabilityBehavior(description = "equations `or Lagrange multiplier")
     public MatrixDouble getHessian(double lagrange) {
         /// macierz NxN
         MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
@@ -160,17 +161,9 @@ public class ConstraintDistancePointLine extends Constraint {
         }
         /// \\\\\\\\\
         /// \\\\\\\\\
-        /// \\\\\\\\\
-        /// \\\\\\\\\
 
-//        return null;  /// ??? =============  \\\\\\\ \\\\\\ HESSIAN
-
-        /// \\\\\\\\\
-        /// \\\\\\\\\
-        /// \\\\\\\\\
-        /// \\\\\\\\\
-        return null;
-//        return mt;
+        return null;  /// ??? =============  \\\\\\\ \\\\\\ HESSIAN
+//        return mt.dot(lagrange);
     }
 
     @Override

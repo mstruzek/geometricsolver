@@ -11,7 +11,7 @@ public class ScalarMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public double get(int i, int j) {
+    public double getQuick(int i, int j) {
         return m;
     }
 
@@ -46,12 +46,7 @@ public class ScalarMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble copy() {
-        return new ScalarMatrixDouble(this.m);
-    }
-
-    @Override
-    public void set(int r, int c, double value) {
+    public void setQuick(int r, int c, double value) {
         throw new IllegalStateException("not implemented");
     }
 
@@ -61,12 +56,17 @@ public class ScalarMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble setSubMatrix(int firstRow, int firstColumn, MatrixDouble mt) {
+    public MatrixDouble viewSpan(int row, int column, int height, int width) {
+        throw new IllegalStateException("no implementation");
+    }
+
+    @Override
+    public MatrixDouble setSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
         throw new IllegalStateException("not implemented");
     }
 
     @Override
-    public MatrixDouble addSubMatrix(int firstRow, int firstColumn, MatrixDouble mt) {
+    public MatrixDouble addSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
         throw new IllegalStateException("not implemented");
     }
 
@@ -82,6 +82,14 @@ public class ScalarMatrixDouble implements MatrixDouble {
 
     @Override
     public MatrixDouble reset(double value) {
+        return null;
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> clazz) {
+        if (ScalarMatrixDouble.class.isAssignableFrom(clazz)) {
+            return (T) this;
+        }
         return null;
     }
 }

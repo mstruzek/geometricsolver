@@ -6,12 +6,14 @@ import cern.colt.matrix.linalg.LUDecompositionQuick;
 import com.mstruzek.msketch.Constraint;
 import com.mstruzek.msketch.GeometricPrimitive;
 import com.mstruzek.msketch.ParseToColt;
+import com.mstruzek.msketch.Point;
 import com.mstruzek.msketch.matrix.BindMatrix;
+import com.mstruzek.msketch.matrix.ColtMatrixCreator;
 import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.MatrixDoubleCreator;
 
 import java.time.Clock;
 
-import static com.mstruzek.msketch.Constraint.allLagrangeCoffSize;
 import static com.mstruzek.msketch.Point.dbPoint;
 
 public class GeometricSolverImpl implements GeometricSolver {
@@ -30,49 +32,89 @@ public class GeometricSolverImpl implements GeometricSolver {
     @Override
     public SolverStat solveSystem(SolverStat solverStat) {
 
+        long startTime;                 /// start timing
+        long evaluationStart;           /// matrix and vector state evaluation time
+        long solverStep;                /// single LU solver round  delta
+
+        final int size;                 /// wektor stanu
+        final int coffSize;             /// wspolczynniki Lagrange
+        final int dimension;            /// dimension = size + coffSize
+
+        /// Uklad rownan liniowych  [ A * x = b ] powstały z linerazycji ukladu dynamicznego
+
+        final MatrixDouble A;               /// Macierz głowna ukladu rownan liniowych
+        final MatrixDouble Fq;              /// Macierz sztywnosci ukladu obiektow zawieszonych na sprezynach.
+        final MatrixDouble Wq;              /// d(FI)/dq - Jacobian Wiezow
+
+        /// HESSIAN
+        final MatrixDouble Hs;
+
+        // Wektor prawych stron [Fr; Fi]'
+        final MatrixDouble b;
+
+        // skladowe to Fr - oddzialywania pomiedzy obiektami, sily w sprezynach
+        final MatrixDouble Fr;
+
+        // skladowa to Fiq - wartosci poszczegolnych wiezow
+        final MatrixDouble Fi;
+
+
+        double norm1;               /// wartosci bledow na wiezach
+        double prevNorm;            /// norma z wczesniejszej iteracji,
+        double errorFluctuation;    /// fluktuacja bledu
+
+        /// Default Matrix Creator for middle matrices !
+        MatrixDoubleCreator.setInstance(ColtMatrixCreator.INSTANCE);
+
         StateReporter reporter = StateReporter.getInstance();
 
-        reporter.writelnf("##################### Solver Initialized ##################### ");
+        reporter.writelnf("@#=================== Solver Initialized ===================#@ ");
         reporter.writelnf("");
 
-        long start = clock.millis();                  /// start timing
-
-        solverStat.startTime = start;
+        startTime = clock.millis();
+        solverStat.startTime = startTime;
 
         if (dbPoint.size() == 0) {
+            reporter.writelnf("[warning] - empty model");
+            return solverStat;
+        }
+
+        if (Constraint.dbConstraint.isEmpty()) {
+            reporter.writelnf("[warning] - no constraint configuration applied ");
             return solverStat;
         }
 
         /// Tworzymy Macierz "A" - dla tego zadania stala w czasie
 
-        /// TODO  @IniticjalizajaMacierzy
-
-        final int size = dbPoint.size() * 2;
-        final int coffSize = allLagrangeCoffSize();
-        final int dimension = size + coffSize;
+        size = Point.dbPoint.size() * 2;
+        coffSize = Constraint.allLagrangeCoffSize();
+        dimension = size + coffSize;
 
         solverStat.size = size;
         solverStat.coefficientArity = coffSize;
         solverStat.dimension = dimension;
 
-        long evaluationStart = clock.millis();
+        evaluationStart = clock.millis();
 
-        MatrixDouble A = MatrixDouble.matrix2D(dimension, dimension, 0.0);
-        MatrixDouble Fq = MatrixDouble.matrix2D(size, size, 0.0);               // CONST
-        MatrixDouble Wq = MatrixDouble.matrix2D(coffSize, size, 0.0);
+        /// Inicjalizacje bazowych macierzy rzadkich - SparseMatrix
 
-        /// HESSIAN
-        MatrixDouble Hs = MatrixDouble.matrix2D(size, size, 0.0);
+        A = MatrixDouble.matrix2D(dimension, dimension, 0.0);
+        Fq = MatrixDouble.matrix2D(size, size, 0.0);
+        Wq = MatrixDouble.matrix2D(coffSize, size, 0.0);
 
-        // right-hand side vector ~ b
-        MatrixDouble Fr = MatrixDouble.matrix1Dtr(size, 0.0);
-        MatrixDouble Fi = MatrixDouble.matrix1Dtr(coffSize, 0.0);
+        Hs = MatrixDouble.matrix2D(size, size, 0.0);
 
-        /// CONST
+        /// macierz sztywnosci stala w czasie
         GeometricPrimitive.getAllJacobianForces(Fq);
 
-        // Tworzymy wektor prawych stron b
-        MatrixDouble b = MatrixDouble.matrix1Dtr(dimension, 0.0);
+/// Wektor prawych stron b
+
+        b = MatrixDouble.matrix1D(dimension, 0.0);
+    // right-hand side vector ~ b
+        Fr = b.viewSpan(0, 0, size, 1);
+        Fi = b.viewSpan(size, 0, coffSize, 1);
+
+
         BindMatrix dmx = null;
 
         BindMatrix MTQ = new BindMatrix(dimension, 1);
@@ -80,9 +122,9 @@ public class GeometricSolverImpl implements GeometricSolver {
 
         solverStat.accEvaluationTime += clock.millis() - evaluationStart;
 
-        double norm1 = 0.0;
-        double prevNorm = 0.0;
-        double errorFluctuation = 0.0;
+        norm1 = 0.0;
+        prevNorm = 0.0;
+        errorFluctuation = 0.0;
 
         int itr = 0;
         while (itr < MAX_SOLVER_ITERATIONS) {
@@ -90,17 +132,19 @@ public class GeometricSolverImpl implements GeometricSolver {
             solverStat.iterations = itr;
 
             evaluationStart = clock.millis();
+
             /// zerujemy macierz A
             A.reset(0.0);
 
-            /// Tworzymy Macierz vector b
+/// Tworzymy Macierz vector b vector `b
+
             GeometricPrimitive.getAllForce(Fr);                 /// Sily  - F(q)
             Constraint.getFullConstraintValues(Fi);             /// Wiezy  - Fi(q)
-
-            b.setSubMatrix(0,0, (Fr));
-            b.setSubMatrix(size,0, (Fi));
+            // b.setSubMatrix(0,0, (Fr));
+            // b.setSubMatrix(size,0, (Fi));
             b.dot(-1);
 
+/// macierz `A
             /// JACOBIAN
             Constraint.getFullJacobian(Wq);                     /// Jq = d(Fi)/dq
 
@@ -119,43 +163,37 @@ public class GeometricSolverImpl implements GeometricSolver {
             /*
              *  LU Decomposition  -- Colt Linera Equatio Solver
              *
+             *   rozwiazjemy zadanie [ A ] * [ dx ] = [ b ]
              */
-            /// rozwiazjemy zadanie [ A ] * [ dx ] = [ b ]
-            /// Zaproponowac Wspolny interfejs Macierzowy
 
-/// [ TIMED ]
-            long solverStep = clock.millis(); // start timing
+/// Solver LU Single Iteration Step
 
             DoubleMatrix2D matrix2DA = ParseToColt.toSparse(A);
             DoubleMatrix1D matrix1Db = ParseToColt.toDenseVector(b);
-            reporter.debug(A.toString(new Integer[0]));
-            reporter.debug(b.toString(new Integer[0]));
+            solverStep = clock.millis();
+
+            reporter.debug(() -> A.toString(new Integer[0]));
+            reporter.debug(() -> b.toString(new Integer[0]));
 
             {
                 LUDecompositionQuick LU = new LUDecompositionQuick();
                 LU.decompose(matrix2DA);
                 LU.solve(matrix1Db);
-//                System.out.println(LU.toString());
             }
             solverStat.accSolverTime += (clock.millis() - solverStep);
 
-/// [ TIMED ]
+/// Bind delta-x into database points
             dmx = ParseToColt.toBindVector(matrix1Db);
 
             /// uaktualniamy punkty
             MTQ.plusEquals(dmx);
             MTQ.copyToPoints();
 
-            /// AFTER -- copyToPoints  x2
-//            Constraint.getFullConstraintValues(Fi);
-//
-//            norm1 = Fi.norm1();
-
             norm1 = Constraint.getFullNorm();
 
-            reporter.writelnf(" [ step :: %d]  duration [ms] = %d  norm = %e ", itr, (clock.millis() - solverStep), norm1);
+            reporter.writelnf(" [ step :: %d]  duration [ms] = %d  norm = %e ", itr, (clock.millis() - evaluationStart), norm1);
 
-            /// Gdy po 5-6 przejsciach iteracji, normy wiezow kieruja sie w strone minimum energii, to repozycjonowac prowadzacych punktow
+            /// Gdy po 5-6 przejsciach iteracji, normy wiezow kieruja sie w strone minimum energii, to repozycjonowac prowadzace punkty
 
             if (norm1 < CONVERGENCE_LIMIT) {
                 solverStat.delta = norm1;
@@ -168,17 +206,13 @@ public class GeometricSolverImpl implements GeometricSolver {
             /// liczymy zmiane bledu
             errorFluctuation = norm1 - prevNorm;
             prevNorm = norm1;
-
             solverStat.delta = norm1;
 
-            ///
             ///
             ///  ######### 1 . przeprowadzimy snapshot punktow w czasie i przy narastajacym bledzie - revert(Guide Points) i kontynuacja !
             ///
             ///  ######### 2. evaluacja bledow wzgledem dominujecej skladowej wiezu NORM !
             ///
-            ///
-
             if (itr > 1 && errorFluctuation / prevNorm > 0.70) {
                 reporter.writeln("CHANGES - STOP ITERATION *******");
                 reporter.writeln(" errorFluctuation          :" + errorFluctuation);
@@ -188,12 +222,11 @@ public class GeometricSolverImpl implements GeometricSolver {
                 solverStat.stopTime = clock.millis();
                 return solverStat;
             }
-
             itr++;
         }
 
-        long solutionDelta = (clock.millis() - start);
-        reporter.writeln("# solution error : " + solutionDelta); // print execution time
+        long solutionDelta = (clock.millis() - startTime);
+        reporter.writeln("# solution delta : " + solutionDelta); // print execution time
         reporter.writeln(""); // print execution time
 
         solverStat.constraintDelta = Constraint.getFullNorm();

@@ -56,7 +56,7 @@ public class ConstraintParametrizedLength extends Constraint {
 
     @Override
     public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.matrix1D(dbPoint.size() * 2, 0.0);
+        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         double lk = LK.length();
@@ -134,6 +134,6 @@ public class ConstraintParametrizedLength extends Constraint {
     @Override
     public double getNorm() {
         MatrixDouble md = getValue();
-        return md.get(0, 0);
+        return md.getQuick(0, 0);
     }
 }

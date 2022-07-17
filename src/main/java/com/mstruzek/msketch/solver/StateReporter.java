@@ -1,5 +1,7 @@
 package com.mstruzek.msketch.solver;
 
+import java.util.function.Supplier;
+
 public class StateReporter {
 
     private static final StateReporter instance = new StateReporter();
@@ -24,6 +26,12 @@ public class StateReporter {
     public void debug(String message) {
         if(DebugEnabled) {
             System.out.println(message);
+        }
+    }
+
+    public void debug(Supplier<String> message) {
+        if(DebugEnabled) {
+            System.out.println(message.get());
         }
     }
 }

@@ -5,10 +5,18 @@ import com.mstruzek.msketch.Vector;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+/**
+ * [ Concept ]:
+ *
+ * - instrukcje na malych macierzach 2x2 tylko w obrebie lokalnych skladowych - to prawie wszyskie funkcje z wyjatkiem.
+ *
+ * - drukujemy do impl macierzy tylko impl : [ addSubMatrix, setSubMatrix, setVector, transpose ]
+ *
+ */
 public interface MatrixDouble {
 
-    final static String DOUBLE_STR_FORMAT = "%11.2f";
-    final static String WIDEN_DOUBLE_STR_FORMAT = "%23s ";
+    String DOUBLE_STR_FORMAT = "%11.2f";
+    String WIDEN_DOUBLE_STR_FORMAT = "%23s ";
 
     /**
      * Number of columns
@@ -31,7 +39,7 @@ public interface MatrixDouble {
      * @param j - column
      * @return double value
      */
-    double get(int i, int j);
+    double getQuick(int i, int j);
 
     /**
      * Adds a matrix to another matrix, which should be of the same dimension.
@@ -58,19 +66,13 @@ public interface MatrixDouble {
     MatrixDouble dotC(double c);
 
     /**
-     * Mnozezenie kazdego vectora macierzy na odpowiadajacy  vector columnowy.
+     * Mnozezenie kazdego vectora macierzy przez odpowiadajacy  vector columnowy.
      *
+     * !! do usuniecia !
      * @param rhs prawy operand
      * @return
      */
     MatrixDouble mult(MatrixDouble rhs);
-
-    /**
-     * Generate a copy of a matrix
-     *
-     * @return A copy of this matrix
-     */
-    MatrixDouble copy();
 
     /**
      * Set value at corresponding coordinates.
@@ -79,7 +81,7 @@ public interface MatrixDouble {
      * @param c
      * @param value
      */
-    void set(int r, int c, double value);
+    void setQuick(int r, int c, double value);
 
     /**
      * Add value at corresponding coordinates.
@@ -90,15 +92,26 @@ public interface MatrixDouble {
      */
     void add(int r, int c, double value);
 
+
+    /**
+     * Create a sub view that will reference internal matrix implementation.
+     * @param row
+     * @param column
+     * @param height
+     * @param width
+     * @return
+     */
+    MatrixDouble viewSpan(int row, int column, int height, int width);
+
     /**
      * Funkcja wstawia macierz mt na dana pozycje w akutalnej macierzy
      *
-     * @param firstRow    poczatkowy wiersz
-     * @param firstColumn poczatkowa kolumna
-     * @param mt          macierz do wstawienia
+     * @param offsetRow poczatkowy wiersz
+     * @param offsetCol poczatkowa kolumna
+     * @param mt        macierz do wstawienia
      * @return this
      */
-    MatrixDouble setSubMatrix(int firstRow, int firstColumn, MatrixDouble mt);
+    MatrixDouble setSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt);
 
     /**
      * Funkcja dodaje macierz mt do aktualnej macierzy i zwraca kopie , macierz this niezmieniona
@@ -110,12 +123,12 @@ public interface MatrixDouble {
      * [a11 a12+b11 a13+b12;
      * a21 a22+b21 a23+b22]
      *
-     * @param firstRow    poczatkowy wiersz
-     * @param firstColumn poczatkowa kolumna
-     * @param mt          macierz do wstawienia
+     * @param offsetRow poczatkowy wiersz
+     * @param offsetCol poczatkowa kolumna
+     * @param mt        macierz do wstawienia
      * @return this matrix
      */
-    MatrixDouble addSubMatrix(int firstRow, int firstColumn, MatrixDouble mt);
+    MatrixDouble addSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt);
 
 
     /**
@@ -143,6 +156,14 @@ public interface MatrixDouble {
      */
     MatrixDouble reset(double value);
 
+    /**
+     * Internal implementation from Colt, MatrixDouble2D, SmallMatrixDouble, ScalarMatrixDouble.
+     * @param clazz
+     * @return
+     * @param <T>
+     */
+    <T> T unwrap(Class<T> clazz);
+
 
     default void assertEqualDimensions(MatrixDouble left, MatrixDouble right) {
         if (left.width() != right.width() || left.height() != right.height()) {
@@ -160,35 +181,58 @@ public interface MatrixDouble {
     }
 
     static MatrixDouble identity(int size, double diag) {
-        return MatrixDoubleCreator.getCreatorInstance().makeIdentity(size, diag);
+        return DefaultDoubleMatrixCreator.INSTANCE.makeIdentity(size, diag);
+//        return MatrixDoubleCreator.getInstance().makeIdentity(size, diag);
     }
 
     static MatrixDouble diagonal(int size, double c) {
-        return MatrixDoubleCreator.getCreatorInstance().makeDiagonal(size, c);
+        return DefaultDoubleMatrixCreator.INSTANCE.makeDiagonal(size, c);
+//        return MatrixDoubleCreator.getInstance().makeDiagonal(size, c);
     }
 
     static MatrixDouble diagonal(double... diag) {
-        return MatrixDoubleCreator.getCreatorInstance().makeDiagonal(diag);
+        return DefaultDoubleMatrixCreator.INSTANCE.makeDiagonal(diag);
+//        return MatrixDoubleCreator.getInstance().makeDiagonal(diag);
     }
 
     static MatrixDouble matrix2D(int rowSize, int colSize, double initValue) {
-        return MatrixDoubleCreator.getCreatorInstance().makeMatrix2D(rowSize, colSize, initValue);
+        return MatrixDoubleCreator.getInstance().makeMatrix2D(rowSize, colSize, initValue);
     }
 
-    static MatrixDouble matrix1D(int colSize, double initValue) {
-        return MatrixDoubleCreator.getCreatorInstance().makeMatrix1D(colSize, initValue);
+    /**
+     * Column Vector ! used mostly for righ-hand side matrix `b of equation  A*x = b
+     * @param rowSize
+     * @param initValue
+     * @return
+     */
+    static MatrixDouble matrix1D(int rowSize, double initValue) {
+        return MatrixDoubleCreator.getInstance().makeMatrix1D(rowSize, initValue);
     }
 
-    static MatrixDouble matrix1Dtr(int rowSize, double initValue) {
-        return MatrixDoubleCreator.getCreatorInstance().makeMatrix1Dtr(rowSize, initValue);
-    }
-
-    static MatrixDouble rotation2d(double alfa) {
-        return MatrixDoubleCreator.getCreatorInstance().makeRotation2d(alfa);
+    /**
+     * Small rotation  matrix around OZ axis.
+     * [    cos(alfa)       -sin(alfa);
+     *      sin(alfa)        cos(alfa)      ]
+     * @param alfa degrees
+     * @return
+     */
+    static MatrixDouble rotation(double alfa) {
+        double radians = Math.toRadians(alfa);
+        double a00 = Math.cos(radians);
+        double a01 = -1.0 * Math.sin(radians);
+        double a10 = Math.sin(radians);
+        double a11 = Math.cos(radians);
+        SmallMatrixDouble smd = new SmallMatrixDouble(a00, a01, a10, a11);
+        return smd;
     }
 
     static MatrixDouble matrixR() {
-        return MatrixDouble.smallMatrix(0.0, -1.0, 1.0, 0.0);
+        double a00 = 0.0;
+        double a01 = -1.0;
+        double a10 = 1.0;
+        double a11 = 0.0;
+        MatrixDouble smd = MatrixDouble.smallMatrix(a00, a01, a10, a11);
+        return smd;
     }
 
     /**
@@ -199,10 +243,10 @@ public interface MatrixDouble {
     default String toString(String format) {
         StringBuffer str = new StringBuffer();
         for (int i = 0; i < this.height(); i++) {
-            String first = String.format(format + " ", this.get(i, 0));
+            String first = String.format(format + " ", this.getQuick(i, 0));
             str.append(first);
             for (int j = 1; j < this.width(); j++) {
-                String cell = String.format("," + format + " ", this.get(i, j));
+                String cell = String.format("," + format + " ", this.getQuick(i, j));
                 str.append(cell);
             }
             if (i < this.width() - 1) str.append("\n");

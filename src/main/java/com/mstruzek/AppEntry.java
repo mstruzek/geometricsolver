@@ -7,7 +7,7 @@ public class AppEntry {
 
     public static void main(String[] args) {
         /*
-         * Glowny kontroller widoku swingowego. <= hUNd
+         * Glowny kontroller widoku swingowego.
          */
         Controller controller = new Controller();
 

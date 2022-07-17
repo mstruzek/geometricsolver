@@ -43,7 +43,7 @@ public class DenseMatrix implements MatrixData {
 
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
-                d[i][j] = md.get(i, j);
+                d[i][j] = md.getQuick(i, j);
             }
         }
     }

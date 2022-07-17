@@ -22,12 +22,17 @@ public class ParseToColt {
      */
     public static SparseDoubleMatrix2D toSparse(MatrixDouble md) {
 
+        SparseDoubleMatrix2D unwrap = md.unwrap(SparseDoubleMatrix2D.class);
+        if(unwrap != null) {
+            return unwrap;
+        }
+
         SparseDoubleMatrix2D matrix2D = new SparseDoubleMatrix2D(md.height(), md.width());
 
         for (int i = 0; i < md.height(); i++) {
             for (int j = 0; j < md.width(); j++) {
-                if (md.get(i, j) != 0.0) {
-                    matrix2D.setQuick(i, j, md.get(i, j));
+                if (md.getQuick(i, j) != 0.0) {
+                    matrix2D.setQuick(i, j, md.getQuick(i, j));
                 }
             }
         }
@@ -35,9 +40,15 @@ public class ParseToColt {
     }
 
     public static DoubleMatrix1D toDenseVector(MatrixDouble b) {
+
+        DenseDoubleMatrix1D unwrap = b.unwrap(DenseDoubleMatrix1D.class);
+        if(unwrap != null) {
+            return unwrap;
+        }
+
         DoubleMatrix1D doubleMatrix1D = new DenseDoubleMatrix1D(b.height());
         for (int i = 0; i < b.height(); i++) {
-            doubleMatrix1D.setQuick(i, b.get(i, 0));
+            doubleMatrix1D.setQuick(i, b.getQuick(i, 0));
         }
         return doubleMatrix1D;
     }

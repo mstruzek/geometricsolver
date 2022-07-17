@@ -42,7 +42,7 @@ public class SparseMatrix implements MatrixData {
         d = new TreeMap<Index, Double>();
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
-                if (md.get(i, j) != 0.0) d.put(new Index(i, j), md.get(i, j));
+                if (md.getQuick(i, j) != 0.0) d.put(new Index(i, j), md.getQuick(i, j));
             }
         }
     }
@@ -196,9 +196,9 @@ public class SparseMatrix implements MatrixData {
         System.out.println(sm.d);
 
         MatrixDouble force = MatrixDouble.matrix2D(5, 5, 0.0);
-        force.set(0, 0, 1.0);
-        force.set(2, 0, 1.0);
-        force.set(0, 2, 1.0);
+        force.setQuick(0, 0, 1.0);
+        force.setQuick(2, 0, 1.0);
+        force.setQuick(0, 2, 1.0);
         SparseMatrix spm = new SparseMatrix(force);
         System.out.println(spm);
         System.out.println(spm.d.size());

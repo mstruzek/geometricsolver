@@ -47,10 +47,10 @@ public class ConstraintConnect2Points extends Constraint {
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setSubMatrix(0, j * 2, MatrixDouble2D.identity(2, 1.0));        //macierz jednostkowa = I
+                mt.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));        //macierz jednostkowa = I
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setSubMatrix(0, j * 2, MatrixDouble2D.identity(2, -1.0));       // = -I
+                mt.setSubMatrix(0, j * 2, MatrixDouble.identity(2, -1.0));       // = -I
             }
             j++;
         }
@@ -106,7 +106,7 @@ public class ConstraintConnect2Points extends Constraint {
     @Override
     public double getNorm() {
         MatrixDouble md = getValue();
-        return Math.sqrt(md.get(0, 0) * md.get(0, 0) + md.get(1, 0) * md.get(1, 0));
+        return Math.sqrt(md.getQuick(0, 0) * md.getQuick(0, 0) + md.getQuick(1, 0) * md.getQuick(1, 0));
     }
 
 }
