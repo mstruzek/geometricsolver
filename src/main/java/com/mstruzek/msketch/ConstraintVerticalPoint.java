@@ -41,16 +41,13 @@ public class ConstraintVerticalPoint extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
-        int j = 0;
-        for (Integer i : dbPoint.keySet()) {
-            if (k_id == dbPoint.get(i).id) {
-                mts.setQuick(0, j * 2 + 1, 1.0);         // zero-Y
-            }
-            if (l_id == dbPoint.get(i).id) {
-                mts.setQuick(0, j * 2 + 1, -1.0);       // zero-Y
-            }
-            j++;
-        }
+        int j;
+
+        j = space.pointIndex(k_id);
+        mts.setQuick(0, j * 2 + 1, 1.0);         // zero-Y
+
+        j = space.pointIndex(l_id);
+        mts.setQuick(0, j * 2 + 1, -1.0);       // zero-Y
     }
 
     @Override

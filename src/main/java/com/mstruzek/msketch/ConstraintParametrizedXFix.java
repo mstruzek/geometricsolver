@@ -40,14 +40,11 @@ public class ConstraintParametrizedXFix extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
-        int j = 0;
-        for (Integer i : dbPoint.keySet()) {
-            if (k_id == dbPoint.get(i).id) {
-                /// wspolrzedna [X]
-                mts.setQuick(0, j * 2, 1.0);
-            }
-            j++;
-        }
+        int j;
+        //k
+        j = space.pointIndex(k_id);
+        /// wspolrzedna [X]
+        mts.setQuick(0, j * 2, 1.0);
     }
 
     @Override

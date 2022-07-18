@@ -61,22 +61,23 @@ public class ConstraintParametrizedLength extends Constraint {
         double lk = LK.length();
         double nm = NM.length();
         double d = (param_id != -1) ? Parameter.dbParameter.get(param_id).getValue() : 1.0;
-        int j = 0;
-        for (Integer i : dbPoint.keySet()) {
-            if (k_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, LK.dot(-1.0 * d / lk));
-            }
-            if (l_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, LK.dot(1.0 * d / lk));
-            }
-            if (m_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, NM.dot(1.0 / nm));
-            }
-            if (n_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, NM.dot(-1.0 / nm));
-            }
-            j++;
-        }
+        int j;
+
+        //k
+        j = space.pointIndex(k_id);
+        mts.setVector(0, j * 2, LK.dot(-1.0 * d / lk));
+
+        //l
+        j = space.pointIndex(l_id);
+        mts.setVector(0, j * 2, LK.dot(1.0 * d / lk));
+
+        //m
+        j = space.pointIndex(m_id);
+        mts.setVector(0, j * 2, NM.dot(1.0 / nm));
+
+        //n
+        j = space.pointIndex(n_id);
+        mts.setVector(0, j * 2, NM.dot(-1.0 / nm));
     }
 
     @Override

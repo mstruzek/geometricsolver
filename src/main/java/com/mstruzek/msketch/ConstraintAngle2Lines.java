@@ -72,26 +72,27 @@ public class ConstraintAngle2Lines extends Constraint {
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         Vector uLKdNM = LK.unit().dot(NM.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
         Vector uNMdLK = NM.unit().dot(LK.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
-        int j = 0;
-        for (Integer i : dbPoint.keySet()) {
-            if (k_id == dbPoint.get(i).id) {
-                mts.setQuick(0, j * 2, -NM.x + uLKdNM.x);
-                mts.setQuick(0, j * 2 + 1, -NM.y + uLKdNM.y);
-            }
-            if (l_id == dbPoint.get(i).id) {
-                mts.setQuick(0, j * 2, NM.x - uLKdNM.x);
-                mts.setQuick(0, j * 2 + 1, NM.y - uLKdNM.y);
-            }
-            if (m_id == dbPoint.get(i).id) {
-                mts.setQuick(0, j * 2, -LK.x + uNMdLK.x);
-                mts.setQuick(0, j * 2 + 1, -LK.y + uNMdLK.y);
-            }
-            if (n_id == dbPoint.get(i).id) {
-                mts.setQuick(0, j * 2, LK.x - uNMdLK.x);
-                mts.setQuick(0, j * 2 + 1, LK.y - uNMdLK.y);
-            }
-            j++;
-        }
+        int j;
+
+        /// K
+        j = space.pointIndex(k_id);
+        mts.setQuick(0, j * 2, -NM.x + uLKdNM.x);
+        mts.setQuick(0, j * 2 + 1, -NM.y + uLKdNM.y);
+
+        /// L
+        j = space.pointIndex(l_id);
+        mts.setQuick(0, j * 2, NM.x - uLKdNM.x);
+        mts.setQuick(0, j * 2 + 1, NM.y - uLKdNM.y);
+
+        /// M
+        j = space.pointIndex(m_id);
+        mts.setQuick(0, j * 2, -LK.x + uNMdLK.x);
+        mts.setQuick(0, j * 2 + 1, -LK.y + uNMdLK.y);
+
+        /// N
+        j = space.pointIndex(n_id);
+        mts.setQuick(0, j * 2, LK.x - uNMdLK.x);
+        mts.setQuick(0, j * 2 + 1, LK.y - uNMdLK.y);
     }
 
     @Override
@@ -105,78 +106,88 @@ public class ConstraintAngle2Lines extends Constraint {
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
         double g = LK.dot(NM) * Math.cos(dbParameter.get(param_id).getRadians());
-        int i = 0;
-        for (Integer pI : dbPoint.keySet()) { /// wiersz
-            int j = 0;
-            for (Integer pJ : dbPoint.keySet()) { /// kolumna
-                //k,k
-                if (k_id == dbPoint.get(pI).id && k_id == dbPoint.get(pJ).id) {
-                    // 0
-                }
-                //k,l
-                if (k_id == dbPoint.get(pI).id && l_id == dbPoint.get(pJ).id) {
-                    //0
-                }
-                //k,m
-                if (k_id == dbPoint.get(pI).id && m_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
-                }
-                //k,n
-                if (k_id == dbPoint.get(pI).id && n_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
-                }
-                //l,k
-                if (l_id == dbPoint.get(pI).id && k_id == dbPoint.get(pJ).id) {
-                    //0
-                }
-                //l,l
-                if (l_id == dbPoint.get(pI).id && l_id == dbPoint.get(pJ).id) {
-                    // 0
-                }
-                //l,m
-                if (l_id == dbPoint.get(pI).id && m_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
-                }
-                //l,n
-                if (l_id == dbPoint.get(pI).id && n_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
-                }
-                //m,k
-                if (m_id == dbPoint.get(pI).id && k_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
-                }
-                //m,l
-                if (m_id == dbPoint.get(pI).id && l_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
-                }
-                //m,m
-                if (m_id == dbPoint.get(pI).id && m_id == dbPoint.get(pJ).id) {
-                    //0
-                }
-                //m,n
-                if (m_id == dbPoint.get(pI).id && n_id == dbPoint.get(pJ).id) {
-                    // 0
-                }
-                //n,k
-                if (n_id == dbPoint.get(pI).id && k_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
-                }
-                //n,l
-                if (n_id == dbPoint.get(pI).id && l_id == dbPoint.get(pJ).id) {
-                    mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
-                }
-                //n,m
-                if (n_id == dbPoint.get(pI).id && m_id == dbPoint.get(pJ).id) {
-                    // 0
-                }
-                //n,n
-                if (n_id == dbPoint.get(pI).id && n_id == dbPoint.get(pJ).id) {
-                    // 0
-                }
-                j++;
-            }
-            i++;
-        }
+        int i;
+        int j;
+
+        //k,k
+        i = space.pointIndex(k_id);
+        j = space.pointIndex(k_id);
+        // 0
+
+        //k,l
+        i = space.pointIndex(k_id);
+        j = space.pointIndex(l_id);
+        //0
+
+        //k,m
+        i = space.pointIndex(k_id);
+        j = space.pointIndex(m_id);
+        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
+
+        //k,n
+        i = space.pointIndex(k_id);
+        j = space.pointIndex(n_id);
+        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
+
+        //l,k
+        i = space.pointIndex(l_id);
+        j = space.pointIndex(k_id);
+            //0
+
+        //l,l
+        i = space.pointIndex(l_id);
+        j = space.pointIndex(l_id);
+        // 0
+
+        //l,m
+        i = space.pointIndex(l_id);
+        j = space.pointIndex(m_id);
+        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
+
+        //l,n
+        i = space.pointIndex(l_id);
+        j = space.pointIndex(n_id);
+        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
+
+        //m,k
+        i = space.pointIndex(m_id);
+        j = space.pointIndex(k_id);
+        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
+
+        //m,l
+        i = space.pointIndex(m_id);
+        j = space.pointIndex(l_id);
+        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
+
+        //m,m
+        i = space.pointIndex(m_id);
+        j = space.pointIndex(m_id);
+        //0
+
+        //m,n
+        i = space.pointIndex(m_id);
+        j = space.pointIndex(n_id);
+        //0
+
+        //n,k
+        i = space.pointIndex(n_id);
+        j = space.pointIndex(k_id);
+        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
+
+        //n,l
+        i = space.pointIndex(n_id);
+        j = space.pointIndex(l_id);
+        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
+
+        //n,m
+        i = space.pointIndex(n_id);
+        j = space.pointIndex(m_id);
+        //0
+
+        //n,n
+        i = space.pointIndex(n_id);
+        j = space.pointIndex(n_id);
+        //0
 
         return mt;
     }

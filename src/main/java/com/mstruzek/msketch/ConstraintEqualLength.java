@@ -63,28 +63,28 @@ public class ConstraintEqualLength extends Constraint {
     public void getJacobian(MatrixDouble mts) {
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
-        int j = 0;
-        for (Integer i : dbPoint.keySet()) {
-            if (k_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, LK.dot(-1.0));
-            }
-            if (l_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, LK);
-            }
-            if (m_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, NM);
-            }
-            if (n_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, NM.dot(-1.0));
-            }
-            j++;
-        }
+        int j;
+
+        //k
+        j = space.pointIndex(k_id);
+        mts.setVector(0, j * 2, LK.dot(-1.0));
+
+        //l
+        j = space.pointIndex(l_id);
+        mts.setVector(0, j * 2, LK);
+
+        //m
+        j = space.pointIndex(m_id);
+        mts.setVector(0, j * 2, NM);
+
+        //n
+        j = space.pointIndex(n_id);
+        mts.setVector(0, j * 2, NM.dot(-1.0));
     }
 
     @Override
     public boolean isJacobianConstant() {
         return true;
-
     }
 
     @Override

@@ -52,14 +52,11 @@ public class ConstraintFixPoint extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
-        int j = 0;
-        for (Integer i : dbPoint.keySet()) {
-            if (k_id == dbPoint.get(i).id) {
-                //macierz jednostkowa
-                mts.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));
-            }
-            j++;
-        }
+        int j;
+
+        /// K
+        j = space.pointIndex(k_id);
+        mts.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));
     }
 
     @Override

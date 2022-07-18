@@ -87,37 +87,35 @@ public class ConstraintLinesParallelism extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
-        OffsetTable table = OffsetTable.getInstance();
         int i;
         if ((m == null) && (n == null)) {
-
             Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
             Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-
-            i = table.pointOffset(k_id);
+            //k
+            i = space.pointIndex(k_id);
             mts.setQuick(0, i * 2, -NM.y);
             mts.setQuick(0, i * 2 + 1, NM.x);
-
-            i = table.pointOffset(l_id);
+            //l
+            i = space.pointIndex(l_id);
             mts.setQuick(0, i * 2, NM.y);
             mts.setQuick(0, i * 2 + 1, -NM.x);
-
-            i = table.pointOffset(m_id);
+            //m
+            i = space.pointIndex(m_id);
             mts.setQuick(0, i * 2, LK.y);
             mts.setQuick(0, i * 2 + 1, -LK.x);
-
-            i = table.pointOffset(n_id);
+            //n
+            i = space.pointIndex(n_id);
             mts.setQuick(0, i * 2, -LK.y);
             mts.setQuick(0, i * 2 + 1, LK.x);
 
         } else {
             Vector NM = n.sub(m);
-
-            i = table.pointOffset(k_id);
+            //k
+            i = space.pointIndex(k_id);
             mts.setQuick(0, i * 2, -NM.y);
             mts.setQuick(0, i * 2 + 1, NM.x);
-
-            i = table.pointOffset(l_id);
+            //l
+            i = space.pointIndex(l_id);
             mts.setQuick(0, i * 2, NM.y);
             mts.setQuick(0, i * 2 + 1, -NM.x);
         }
@@ -138,53 +136,50 @@ public class ConstraintLinesParallelism extends Constraint {
     public MatrixDouble getHessian(double lagrange) {
         /// macierz NxN
         MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-
         final MatrixDouble R = MatrixDouble.rotation(90 + 180).dot(lagrange);     /// R
         final MatrixDouble Rm = MatrixDouble.rotation(90).dot(lagrange);          /// Rm = -R
-
         int i;
         int j;
         if ((m == null) && (n == null)) {
 
             //k,m
-            OffsetTable offset = OffsetTable.getInstance();
-            i = offset.pointOffset(k_id);
-            j = offset.pointOffset(m_id);
+            i = space.pointIndex(k_id);
+            j = space.pointIndex(m_id);
             mt.addSubMatrix(2 * i, 2 * j, R);
 
             //k,n
-            i = offset.pointOffset(k_id);
-            j = offset.pointOffset(n_id);
+            i = space.pointIndex(k_id);
+            j = space.pointIndex(n_id);
             mt.addSubMatrix(2 * i, 2 * j, Rm);
 
             //l,m
-            i = offset.pointOffset(l_id);
-            j = offset.pointOffset(m_id);
+            i = space.pointIndex(l_id);
+            j = space.pointIndex(m_id);
             mt.addSubMatrix(2 * i, 2 * j, Rm);
 
             //l,n
-            i = offset.pointOffset(l_id);
-            j = offset.pointOffset(n_id);
+            i = space.pointIndex(l_id);
+            j = space.pointIndex(n_id);
             mt.addSubMatrix(2 * i, 2 * j, R);
 
             //m,k
-            i = offset.pointOffset(m_id);
-            j = offset.pointOffset(k_id);
+            i = space.pointIndex(m_id);
+            j = space.pointIndex(k_id);
             mt.addSubMatrix(2 * i, 2 * j, Rm);
 
             //m,l
-            i = offset.pointOffset(m_id);
-            j = offset.pointOffset(l_id);
+            i = space.pointIndex(m_id);
+            j = space.pointIndex(l_id);
             mt.addSubMatrix(2 * i, 2 * j, R);
 
             //n,k
-            i = offset.pointOffset(n_id);
-            j = offset.pointOffset(k_id);
+            i = space.pointIndex(n_id);
+            j = space.pointIndex(k_id);
             mt.addSubMatrix(2 * i, 2 * j, R);
 
             //n,l
-            i = offset.pointOffset(n_id);
-            j = offset.pointOffset(l_id);
+            i = space.pointIndex(n_id);
+            j = space.pointIndex(l_id);
             mt.addSubMatrix(2 * i, 2 * j, Rm);
 
             return mt;

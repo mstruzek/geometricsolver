@@ -32,6 +32,8 @@ public abstract class Constraint implements ConstraintInterface {
      */
     public static TreeMap<Integer, Constraint> dbConstraint = new TreeMap<>();
 
+    /*** przesuniecia absolutne punktow wzgledem ukladuw wspolrzednych vectora stanu */
+    protected VectorSpace space = VectorSpace.getInstance();
 
     public Constraint(Integer constraintId, GeometricConstraintType constraintType, boolean persistent) {
         super();
@@ -137,7 +139,7 @@ public abstract class Constraint implements ConstraintInterface {
     public static void getFullJacobian(MatrixDouble mt) {
         int rowPos = 0;
 
-        OffsetTable.setup();
+        VectorSpace.setup();
 
         for (Integer id : dbConstraint.keySet()) {
             Constraint.dbConstraint.get(id).getJacobian(mt.viewSpan(rowPos, 0, Constraint.dbConstraint.get(id).size(), mt.width()));

@@ -51,15 +51,14 @@ public class ConstraintDistance2Points extends Constraint {
     public void getJacobian(MatrixDouble mts) {
         Vector LKu = dbPoint.get(l_id).Vector().sub(dbPoint.get(k_id)).unit();
         int j = 0;
-        for (Integer i : dbPoint.keySet()) {
-            if (k_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, LKu.dot(-1.0));
-            }
-            if (l_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, LKu);
-            }
-            j++;
-        }
+
+        //k
+        j = space.pointIndex(k_id);
+        mts.setVector(0, j * 2, LKu.dot(-1.0));
+
+        //l
+        j = space.pointIndex(l_id);
+        mts.setVector(0, j * 2, LKu);
     }
 
     @Override

@@ -43,15 +43,13 @@ public class ConstraintConnect2Points extends Constraint {
     @Override
     public void getJacobian(MatrixDouble mts) {
         int j = 0;
-        for (Integer i : dbPoint.keySet()) {
-            if (k_id == dbPoint.get(i).id) {
-                mts.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));        //macierz jednostkowa = I
-            }
-            if (l_id == dbPoint.get(i).id) {
-                mts.setSubMatrix(0, j * 2, MatrixDouble.identity(2, -1.0));       // = -I
-            }
-            j++;
-        }
+        //k
+        j = space.pointIndex(k_id);
+        mts.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));        //macierz jednostkowa = I
+
+        //l
+        j = space.pointIndex(l_id);
+        mts.setSubMatrix(0, j * 2, MatrixDouble.identity(2, -1.0));       // = -I
     }
 
     @Override

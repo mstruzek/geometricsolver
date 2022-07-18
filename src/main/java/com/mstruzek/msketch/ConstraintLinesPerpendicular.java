@@ -13,30 +13,19 @@ import static com.mstruzek.msketch.Point.dbPoint;
  */
 public class ConstraintLinesPerpendicular extends Constraint {
 
-    /** Punkty kontrolne */
-    /**
-     * Point K-id
-     */
+    /*** Punkty kontrolne */
+
+    /*** Point K-id */
     int k_id;
-    /**
-     * Point L-id
-     */
+    /*** Point L-id */
     int l_id;
-    /**
-     * Point M-id
-     */
+    /*** Point M-id */
     int m_id;
-    /**
-     * Vector M - gdy wiez pomiedzy fixline
-     */
+    /*** Vector M - gdy wiez pomiedzy fixline */
     Vector m = null;
-    /**
-     * Point N-id
-     */
+    /*** Point N-id */
     int n_id;
-    /**
-     * Vector N - gdy wiez pomiedzy fixline
-     */
+    /*** Vector N - gdy wiez pomiedzy fixline */
     Vector n = null;
 
     /**
@@ -76,28 +65,27 @@ public class ConstraintLinesPerpendicular extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
-        OffsetTable offset = OffsetTable.getInstance();
         int j = 0;
         if ((m == null) && (n == null)) {
-            // K
-            j = offset.pointOffset(k_id);
+            /// K
+            j = space.pointIndex(k_id);
             mts.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
-            // L
-            j = offset.pointOffset(l_id);
+            /// L
+            j = space.pointIndex(l_id);
             mts.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
-            // M
-            j = offset.pointOffset(m_id);
+            /// M
+            j = space.pointIndex(m_id);
             mts.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
-            // N
-            j = offset.pointOffset(n_id);
+            /// N
+            j = space.pointIndex(n_id);
             mts.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
 
         } else {
-            // K
-            j = offset.pointOffset(k_id);
+            /// K
+            j = space.pointIndex(k_id);
             mts.setVector(0, j * 2, m.sub(n));
-            // L
-            j = offset.pointOffset(l_id);
+            /// L
+            j = space.pointIndex(l_id);
             mts.setVector(0, j * 2, m.sub(n).dot(-1.0));
         }
     }
@@ -130,49 +118,48 @@ public class ConstraintLinesPerpendicular extends Constraint {
         MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
         MatrixDouble I = MatrixDouble.identity(2, 1.0 * lagrange);
         MatrixDouble Im = MatrixDouble.identity(2, 1.0 * lagrange);
-        OffsetTable offset = OffsetTable.getInstance();
         int i;
         int j;
         if ((m == null) && (n == null)) {
             //wstawiamy I,-I w odpowiednie miejsca
-            //k,m
-            i = offset.pointOffset(k_id);
-            j = offset.pointOffset(m_id);
+            /// K,M
+            i = space.pointIndex(k_id);
+            j = space.pointIndex(m_id);
             mt.setSubMatrix(2 * i, 2 * j, I);
 
-            //k,n
-            i = offset.pointOffset(k_id);
-            j = offset.pointOffset(n_id);
+            /// K,N
+            i = space.pointIndex(k_id);
+            j = space.pointIndex(n_id);
             mt.setSubMatrix(2 * i, 2 * j, Im);
 
-            //l,m
-            i = offset.pointOffset(l_id);
-            j = offset.pointOffset(m_id);
+            /// L,M
+            i = space.pointIndex(l_id);
+            j = space.pointIndex(m_id);
             mt.setSubMatrix(2 * i, 2 * j, Im);
 
-            //l,n
-            i = offset.pointOffset(l_id);
-            j = offset.pointOffset(n_id);
+            /// L,N
+            i = space.pointIndex(l_id);
+            j = space.pointIndex(n_id);
             mt.setSubMatrix(2 * i, 2 * j, I);
 
-            //m,k
-            i = offset.pointOffset(m_id);
-            j = offset.pointOffset(k_id);
+            /// M,K
+            i = space.pointIndex(m_id);
+            j = space.pointIndex(k_id);
             mt.setSubMatrix(2 * i, 2 * j, I);
 
-            //m,l
-            i = offset.pointOffset(m_id);
-            j = offset.pointOffset(l_id);
+            /// M,L
+            i = space.pointIndex(m_id);
+            j = space.pointIndex(l_id);
             mt.setSubMatrix(2 * i, 2 * j, Im);
 
-            //n,k
-            i = offset.pointOffset(n_id);
-            j = offset.pointOffset(k_id);
+            /// N,K
+            i = space.pointIndex(n_id);
+            j = space.pointIndex(k_id);
             mt.setSubMatrix(2 * i, 2 * j, Im);
 
-            //n,l
-            i = offset.pointOffset(n_id);
-            j = offset.pointOffset(l_id);
+            /// N,L
+            i = space.pointIndex(n_id);
+            j = space.pointIndex(l_id);
             mt.setSubMatrix(2 * i, 2 * j, I);
 
             return mt;

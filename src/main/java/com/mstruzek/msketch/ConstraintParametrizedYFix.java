@@ -40,14 +40,12 @@ public class ConstraintParametrizedYFix extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
-        int j = 0;
-        for (Integer i : Point.dbPoint.keySet()) {
-            if (k_id == Point.dbPoint.get(i).id) {
-                /// wspolrzedna [Y]
-                mts.setQuick(0, j * 2 + 1, 1.0);
-            }
-            j++;
-        }
+        int j;
+
+        /// K
+        j = space.pointIndex(k_id);
+        /// wspolrzedna [Y]
+        mts.setQuick(0, j * 2 + 1, 1.0);
     }
 
     @Override
