@@ -60,27 +60,25 @@ public class ConstraintEqualLength extends Constraint {
     }
 
     @Override
-    public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
+    public void getJacobian(MatrixDouble mts) {
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, LK.dot(-1.0));
+                mts.setVector(0, j * 2, LK.dot(-1.0));
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, LK);
+                mts.setVector(0, j * 2, LK);
             }
             if (m_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, NM);
+                mts.setVector(0, j * 2, NM);
             }
             if (n_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, NM.dot(-1.0));
+                mts.setVector(0, j * 2, NM.dot(-1.0));
             }
             j++;
         }
-        return mt;
     }
 
     @Override

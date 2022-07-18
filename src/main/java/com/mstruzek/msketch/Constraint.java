@@ -67,9 +67,9 @@ public abstract class Constraint implements ConstraintInterface {
      * Funkcja zwraca Jacobian w postaci wektora wierszowego gdy Constraint.size=1,
      * lub dwa wektory wierszowe gdy size=2;
      *
-     * @return Funkcja zwraca wktor wierszowy o dlugosci proporcjonalnej do ilosci Point'ow
+     * @param mts write computed jacobian into matrix span.
      */
-    public abstract MatrixDouble getJacobian();
+    public abstract void getJacobian(MatrixDouble mts);
 
     /**
      * Funkcja zwraca norme danego wiezu
@@ -136,7 +136,7 @@ public abstract class Constraint implements ConstraintInterface {
     public static void getFullJacobian(MatrixDouble mt) {
         int rowPos = 0;
         for (Integer id : dbConstraint.keySet()) {
-            mt.setSubMatrix(rowPos, 0, Constraint.dbConstraint.get(id).getJacobian());
+            Constraint.dbConstraint.get(id).getJacobian(mt.viewSpan(rowPos, 0, Constraint.dbConstraint.get(id).size(), mt.width()));
             rowPos += Constraint.dbConstraint.get(id).size();
         }
     }
@@ -180,21 +180,20 @@ public abstract class Constraint implements ConstraintInterface {
      */
     public static MatrixDouble getFullHessian(MatrixDouble hs, MatrixDouble sv, int size) {
 
-        int offset = 0; //licznik mnoznikow lagrange'a
-        double lagrange = 0.0;//wartosc aktualnego mnoznika
-        MatrixDouble conHs = null;
+        int offset;             //licznik mnoznikow lagrange'a
+        double lagrange;        //wartosc aktualnego mnoznika
+        MatrixDouble conHs;
 
+        offset = 0;
         for (Integer id : dbConstraint.keySet()) {
-            if (!(Constraint.dbConstraint.get(id).isJacobianConstant())) {
-                /// jest hessian
+            if (!Constraint.dbConstraint.get(id).isJacobianConstant()) {
+                /// pierwsza pochodna po wektorze stanu jest nie const, tak wiec Hessian do przeliczenia
+
                 lagrange = sv.getQuick(size + offset, 0);
 
                 ///
                 ///   Hessian - dla tego wiezu liczony na cala macierz !
-                ///  -- ! add into mem in place AddVisitator
-                ///
-
-                /// FIXME !!!!   langrange = 2.106151810818924E-8
+                ///     TODO  !!!!   langrange ===????
 
                 conHs = Constraint.dbConstraint.get(id).getHessian(lagrange);
 

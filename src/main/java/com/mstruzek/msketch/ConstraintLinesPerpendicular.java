@@ -75,38 +75,35 @@ public class ConstraintLinesPerpendicular extends Constraint {
     }
 
     @Override
-    public MatrixDouble getJacobian() {
-        /// macierz 1xN
-        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
+    public void getJacobian(MatrixDouble mts) {
         int j = 0;
         if ((m == null) && (n == null)) {
             for (Integer i : dbPoint.keySet()) {
                 if (k_id == dbPoint.get(i).id) {
-                    mt.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
+                    mts.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
                 }
                 if (l_id == dbPoint.get(i).id) {
-                    mt.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
+                    mts.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
                 }
                 if (m_id == dbPoint.get(i).id) {
-                    mt.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
+                    mts.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
                 }
                 if (n_id == dbPoint.get(i).id) {
-                    mt.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
+                    mts.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
                 }
                 j++;
             }
         } else {
             for (Integer i : dbPoint.keySet()) {
                 if (k_id == dbPoint.get(i).id) {
-                    mt.setVector(0, j * 2, m.sub(n));
+                    mts.setVector(0, j * 2, m.sub(n));
                 }
                 if (l_id == dbPoint.get(i).id) {
-                    mt.setVector(0, j * 2, m.sub(n).dot(-1.0));
+                    mts.setVector(0, j * 2, m.sub(n).dot(-1.0));
                 }
                 j++;
             }
         }
-        return mt;
     }
 
     @Override

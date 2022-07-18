@@ -54,8 +54,7 @@ public class ConstraintTangency extends Constraint {
     }
 
     @Override
-    public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
+    public void getJacobian(MatrixDouble mts) {
         Vector MK = (dbPoint.get(m_id)).sub(dbPoint.get(k_id));
         Vector LK = (dbPoint.get(l_id)).sub(dbPoint.get(k_id));
         Vector ML = (dbPoint.get(m_id)).sub(dbPoint.get(l_id));
@@ -67,24 +66,23 @@ public class ConstraintTangency extends Constraint {
         for (Integer i : dbPoint.keySet()) {
             // K
             if (k_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, ML.cr().dot(2.0 * CRS).add(LK.dot(2.0 * nm)));
+                mts.setVector(0, j * 2, ML.cr().dot(2.0 * CRS).add(LK.dot(2.0 * nm)));
             }
             // L
             if (l_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, MK.cr().dot(-2.0 * CRS).add(LK.dot(-2.0 * nm)));
+                mts.setVector(0, j * 2, MK.cr().dot(-2.0 * CRS).add(LK.dot(-2.0 * nm)));
             }
             // M
             if (m_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, LK.cr().dot(2.0 * CRS).add(NM.dot(2.0 * lk)));
+                mts.setVector(0, j * 2, LK.cr().dot(2.0 * CRS).add(NM.dot(2.0 * lk)));
             }
             // N
             if (n_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, NM.dot(-2.0 * lk));
+                mts.setVector(0, j * 2, NM.dot(-2.0 * lk));
             }
             j++;
         }
         // System.out.println(mt.toString(dbPoint.keySet().toArray(new Integer[0])));
-        return mt;
     }
 
     @Override
@@ -95,6 +93,8 @@ public class ConstraintTangency extends Constraint {
     @Override
     @InstabilityBehavior(description = "equations, `or lagrange multiplier")
     public MatrixDouble getHessian(double lagrange) {
+        if(true)
+            return null;
         /*
          * wspolczynnik lagrange ?? mat.dot(lagrange) ??
          */
@@ -194,12 +194,13 @@ public class ConstraintTangency extends Constraint {
             }
             i++;
         }
-        /// TODO aktualnie = 1.0   <==      langrange = 2.106151810818924E-8
-//        out.println("langrange = " + lagrange);
-//        out.println(mt.toString(dbPoint.keySet().toArray(new Integer[0])));
+
+        /// TODO aktualnie = 1.0   <==
+
 //        return mt;
-//        return mt.dot(lagrange);      /// ????
-        return null;
+        return mt.dot(lagrange);      /// ????
+//        return null;
+
     }
 
     @Override

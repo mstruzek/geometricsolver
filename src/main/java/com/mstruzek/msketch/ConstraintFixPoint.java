@@ -1,7 +1,6 @@
 package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
-import com.mstruzek.msketch.matrix.MatrixDouble2D;
 
 import static com.mstruzek.msketch.Point.dbPoint;
 
@@ -52,17 +51,15 @@ public class ConstraintFixPoint extends Constraint {
     }
 
     @Override
-    public MatrixDouble getJacobian() {
+    public void getJacobian(MatrixDouble mts) {
         int j = 0;
-        MatrixDouble mt = MatrixDouble.matrix2D(2, dbPoint.size() * 2, 0.0);
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
                 //macierz jednostkowa
-                mt.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));
+                mts.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));
             }
             j++;
         }
-        return mt;
     }
 
     @Override
@@ -72,7 +69,7 @@ public class ConstraintFixPoint extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        return new MatrixDouble2D(dbPoint.get(k_id).sub(k0_vec), true);
+        return MatrixDouble.smallMatrix(dbPoint.get(k_id).sub(k0_vec), true);
     }
 
     @Override

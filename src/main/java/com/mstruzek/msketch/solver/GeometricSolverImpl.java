@@ -8,11 +8,10 @@ import com.mstruzek.msketch.GeometricPrimitive;
 import com.mstruzek.msketch.MatrixDoubleUtility;
 import com.mstruzek.msketch.Point;
 import com.mstruzek.msketch.matrix.PointUtility;
-import com.mstruzek.msketch.matrix.ColtMatrixCreator;
 import com.mstruzek.msketch.matrix.MatrixDouble;
-import com.mstruzek.msketch.matrix.MatrixDoubleCreator;
 
 import java.time.Clock;
+import java.util.function.LongSupplier;
 
 import static com.mstruzek.msketch.Point.dbPoint;
 
@@ -23,21 +22,25 @@ public class GeometricSolverImpl implements GeometricSolver {
     public static final int MAX_SOLVER_ITERATIONS = 20;
 
     private static final Clock clock = Clock.systemUTC();
+    private static final LongSupplier nanoClock = () -> System.nanoTime();
 
-    /**
-     * convergence limit
-     */
+    /*** convergence limit */
     public static final double CONVERGENCE_LIMIT = 10e-5;
 
-    private long startTime;                 /// start timing
-    private long evaluationStart;           /// matrix and vector state evaluation time
-    private long solverStep;                /// single LU solver round  delta
+    private long startTime = 0;                 /// start timing
+    private long evaluationStart = 0;           /// matrix and vector state evaluation time
+    private long solverStep = 0;                /// single LU solver round  delta
 
     private long accEvaluationTime = 0;   /// Accumulated Evaluation Time - for each round [ms]
     private long accSolverTime = 0;       /// Accumulated LU Solver Time - for each round  [ms]
 
     @Override
     public SolverStat solveSystem(SolverStat solverStat) {
+
+//        Default Matrix Creator for middle matrices !
+//        MatrixDoubleCreator.setInstance(ColtMatrixCreator.INSTANCE);  // [ #[ #[ HEAVY ]# ]# ]
+
+        StateReporter.DebugEnabled = false;
 
         final int size;                 /// wektor stanu
         final int coffSize;             /// wspolczynniki Lagrange
@@ -66,24 +69,21 @@ public class GeometricSolverImpl implements GeometricSolver {
         double errorFluctuation;    /// fluktuacja bledu
 
 
-        /// Default Matrix Creator for middle matrices !
-        MatrixDoubleCreator.setInstance(ColtMatrixCreator.INSTANCE);
-
         StateReporter reporter = StateReporter.getInstance();
 
-        reporter.writelnf("@#=================== Solver Initialized ===================#@ ");
-        reporter.writelnf("");
+        reporter.writeln("@#=================== Solver Initialized ===================#@ ");
+        reporter.writeln("");
 
         startTime = clock.millis();
         solverStat.startTime = startTime;
 
         if (dbPoint.size() == 0) {
-            reporter.writelnf("[warning] - empty model");
+            reporter.writeln("[warning] - empty model");
             return solverStat;
         }
 
         if (Constraint.dbConstraint.isEmpty()) {
-            reporter.writelnf("[warning] - no constraint configuration applied ");
+            reporter.writeln("[warning] - no constraint configuration applied ");
             return solverStat;
         }
 
@@ -124,7 +124,7 @@ public class GeometricSolverImpl implements GeometricSolver {
         PointUtility.copyIntoStateVector(SV);
         PointUtility.setupLagrangeMultipliers(SV);
 
-        accEvaluationTime += clock.millis() - evaluationStart;
+        accEvaluationTime += (clock.millis() - evaluationStart);
 
         norm1 = 0.0;
         prevNorm = 0.0;
@@ -150,6 +150,10 @@ public class GeometricSolverImpl implements GeometricSolver {
             /// JACOBIAN
             Constraint.getFullJacobian(Wq);                     /// Jq = d(Fi)/dq
 
+            if(StateReporter.isDebugEnabled()) {
+//                reporter.writeln(MatrixDouble.writeToString(Wq));
+            }
+
             Hs.reset(0.0);
 
             Constraint.getFullHessian(Hs, SV, size);
@@ -159,8 +163,6 @@ public class GeometricSolverImpl implements GeometricSolver {
 
             A.setSubMatrix(size, 0, Wq);
             A.setSubMatrix(0, size, Wq.transpose());
-
-
 
             /*
              *  LU Decomposition  -- Colt Linera Equatio Solver
@@ -174,12 +176,11 @@ public class GeometricSolverImpl implements GeometricSolver {
 
             accEvaluationTime += (clock.millis() - evaluationStart);
 
-
             solverStep = clock.millis();
 
             if(StateReporter.isDebugEnabled()) {
-                reporter.writeln(A.toString(new Integer[0]));
-                reporter.writeln(b.toString(new Integer[0]));
+//                reporter.writeln(A.toString(new Integer[0]));
+                //reporter.writeln(b.toString(new Integer[0]));
             }
 
 /// LU Solver
@@ -196,6 +197,14 @@ public class GeometricSolverImpl implements GeometricSolver {
             /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ]
             SV.add(dmx);
             PointUtility.copyFromStateVector(SV);
+
+
+            // Lagrange Coefficients
+            MatrixDouble LC = SV.viewSpan(size, 0, coffSize, 1);
+            if(StateReporter.isDebugEnabled()) {
+                reporter.writeln(MatrixDouble.writeToString(LC));
+            }
+
 
             norm1 = Constraint.getFullNorm();
 
@@ -237,6 +246,7 @@ public class GeometricSolverImpl implements GeometricSolver {
         }
 
         long solutionDelta = (clock.millis() - startTime);
+
         reporter.writeln("# solution delta : " + solutionDelta); // print execution time
         reporter.writeln(""); // print execution time
 
@@ -247,6 +257,12 @@ public class GeometricSolverImpl implements GeometricSolver {
         solverStat.accSolverTime = accSolverTime;
         solverStat.accEvaluationTime = accEvaluationTime;
         return solverStat;
+    }
+
+    public static void main(String[] args) {
+
+        System.nanoTime();
+
     }
 }
 

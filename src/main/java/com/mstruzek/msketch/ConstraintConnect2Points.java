@@ -35,33 +35,29 @@ public class ConstraintConnect2Points extends Constraint {
         l_id = L.id;
     }
 
-
     public String toString() {
         double norm = getNorm();
         return "Constraint-Conect2Points" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  , L = " + dbPoint.get(l_id) + " } \n";
     }
 
     @Override
-    public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.matrix2D(2, dbPoint.size() * 2, 0.0);
+    public void getJacobian(MatrixDouble mts) {
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));        //macierz jednostkowa = I
+                mts.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));        //macierz jednostkowa = I
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setSubMatrix(0, j * 2, MatrixDouble.identity(2, -1.0));       // = -I
+                mts.setSubMatrix(0, j * 2, MatrixDouble.identity(2, -1.0));       // = -I
             }
             j++;
         }
-        return mt;
     }
 
     @Override
     public boolean isJacobianConstant() {
         return true;
     }
-
 
     @Override
     public MatrixDouble getValue() {

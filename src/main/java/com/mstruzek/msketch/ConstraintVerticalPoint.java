@@ -40,19 +40,17 @@ public class ConstraintVerticalPoint extends Constraint {
     }
 
     @Override
-    public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
+    public void getJacobian(MatrixDouble mts) {
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setQuick(0, j * 2 + 1, 1.0);         // zero-Y
+                mts.setQuick(0, j * 2 + 1, 1.0);         // zero-Y
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setQuick(0, j * 2 + 1, -1.0);       // zero-Y
+                mts.setQuick(0, j * 2 + 1, -1.0);       // zero-Y
             }
             j++;
         }
-        return mt;
     }
 
     @Override

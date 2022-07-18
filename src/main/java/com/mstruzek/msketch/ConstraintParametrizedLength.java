@@ -55,8 +55,7 @@ public class ConstraintParametrizedLength extends Constraint {
     }
 
     @Override
-    public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
+    public void getJacobian(MatrixDouble mts) {
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         double lk = LK.length();
@@ -65,20 +64,19 @@ public class ConstraintParametrizedLength extends Constraint {
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, LK.dot(-1.0 * d / lk));
+                mts.setVector(0, j * 2, LK.dot(-1.0 * d / lk));
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, LK.dot(1.0 * d / lk));
+                mts.setVector(0, j * 2, LK.dot(1.0 * d / lk));
             }
             if (m_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, NM.dot(1.0 / nm));
+                mts.setVector(0, j * 2, NM.dot(1.0 / nm));
             }
             if (n_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, NM.dot(-1.0 / nm));
+                mts.setVector(0, j * 2, NM.dot(-1.0 / nm));
             }
             j++;
         }
-        return mt;
     }
 
     @Override

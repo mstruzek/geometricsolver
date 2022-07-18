@@ -41,19 +41,17 @@ public class ConstraintHorizontalPoint extends Constraint {
     }
 
     @Override
-    public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
+    public void getJacobian(MatrixDouble mts) {
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setQuick(0, j * 2, 1.0);         // zero-X
+                mts.setQuick(0, j * 2, 1.0);         // zero-X
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setQuick(0, j * 2, -1.0);       // zero-X
+                mts.setQuick(0, j * 2, -1.0);       // zero-X
             }
             j++;
         }
-        return mt;
     }
 
     @Override

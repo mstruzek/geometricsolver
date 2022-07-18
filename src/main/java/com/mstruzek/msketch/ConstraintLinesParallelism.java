@@ -86,30 +86,29 @@ public class ConstraintLinesParallelism extends Constraint {
     }
 
     @Override
-    public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
+    public void getJacobian(MatrixDouble mts) {
         int j = 0;
         if ((m == null) && (n == null)) {
             for (Integer i : dbPoint.keySet()) {
                 if (k_id == dbPoint.get(i).id) {
                     Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
-                    mt.setQuick(0, j * 2, -NM.y);
-                    mt.setQuick(0, j * 2 + 1, NM.x);
+                    mts.setQuick(0, j * 2, -NM.y);
+                    mts.setQuick(0, j * 2 + 1, NM.x);
                 }
                 if (l_id == dbPoint.get(i).id) {
                     Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
-                    mt.setQuick(0, j * 2, NM.y);
-                    mt.setQuick(0, j * 2 + 1, -NM.x);
+                    mts.setQuick(0, j * 2, NM.y);
+                    mts.setQuick(0, j * 2 + 1, -NM.x);
                 }
                 if (m_id == dbPoint.get(i).id) {
                     Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-                    mt.setQuick(0, j * 2, LK.y);
-                    mt.setQuick(0, j * 2 + 1, -LK.x);
+                    mts.setQuick(0, j * 2, LK.y);
+                    mts.setQuick(0, j * 2 + 1, -LK.x);
                 }
                 if (n_id == dbPoint.get(i).id) {
                     Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-                    mt.setQuick(0, j * 2, -LK.y);
-                    mt.setQuick(0, j * 2 + 1, LK.x);
+                    mts.setQuick(0, j * 2, -LK.y);
+                    mts.setQuick(0, j * 2 + 1, LK.x);
                 }
                 j++;
             }
@@ -117,17 +116,16 @@ public class ConstraintLinesParallelism extends Constraint {
             Vector NM = n.sub(m);
             for (Integer i : dbPoint.keySet()) {
                 if (k_id == dbPoint.get(i).id) {
-                    mt.setQuick(0, j * 2, -NM.y);
-                    mt.setQuick(0, j * 2 + 1, NM.x);
+                    mts.setQuick(0, j * 2, -NM.y);
+                    mts.setQuick(0, j * 2 + 1, NM.x);
                 }
                 if (l_id == dbPoint.get(i).id) {
-                    mt.setQuick(0, j * 2, NM.y);
-                    mt.setQuick(0, j * 2 + 1, -NM.x);
+                    mts.setQuick(0, j * 2, NM.y);
+                    mts.setQuick(0, j * 2 + 1, -NM.x);
                 }
                 j++;
             }
         }
-        return mt;
     }
 
     @Override

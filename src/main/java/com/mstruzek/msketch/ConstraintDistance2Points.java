@@ -48,21 +48,18 @@ public class ConstraintDistance2Points extends Constraint {
     }
 
     @Override
-    public MatrixDouble getJacobian() {
-        /// macierz 1xN
-        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
+    public void getJacobian(MatrixDouble mts) {
         Vector LKu = dbPoint.get(l_id).Vector().sub(dbPoint.get(k_id)).unit();
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, LKu.dot(-1.0));
+                mts.setVector(0, j * 2, LKu.dot(-1.0));
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, LKu);
+                mts.setVector(0, j * 2, LKu);
             }
             j++;
         }
-        return mt;
     }
 
     @Override

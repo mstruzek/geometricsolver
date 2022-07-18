@@ -3,8 +3,8 @@ package com.mstruzek.msketch.matrix;
 import cern.colt.matrix.DoubleMatrix1D;
 import com.mstruzek.msketch.Vector;
 
-import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * [ Concept ]:
@@ -12,12 +12,12 @@ import java.util.stream.Collectors;
  * - instrukcje na malych macierzach 2x2 tylko w obrebie lokalnych skladowych - to prawie wszyskie funkcje z wyjatkiem.
  *
  * - drukujemy do impl macierzy tylko impl : [ addSubMatrix, setSubMatrix, setVector, transpose ]
- *
  */
 public interface MatrixDouble {
 
-    String DOUBLE_STR_FORMAT = "%11.2f";
-    String WIDEN_DOUBLE_STR_FORMAT = "%23s ";
+    String DOUBLE_STR_FORMAT = " %11.2e";
+//    String DOUBLE_STR_FORMAT = " %11.8f";
+    String WIDEN_DOUBLE_STR_FORMAT = "%26s";
 
     /**
      * Number of columns
@@ -70,6 +70,7 @@ public interface MatrixDouble {
      * Mnozezenie kazdego vectora macierzy przez odpowiadajacy  vector columnowy.
      *
      * !! do usuniecia !
+     *
      * @param rhs prawy operand
      * @return
      */
@@ -96,6 +97,7 @@ public interface MatrixDouble {
 
     /**
      * Create a sub view that will reference internal matrix implementation.
+     *
      * @param row
      * @param column
      * @param height
@@ -159,9 +161,10 @@ public interface MatrixDouble {
 
     /**
      * Internal implementation from Colt, MatrixDouble2D, SmallMatrixDouble, ScalarMatrixDouble.
+     *
      * @param clazz
-     * @return
      * @param <T>
+     * @return
      */
     <T> T unwrap(Class<T> clazz);
 
@@ -174,6 +177,16 @@ public interface MatrixDouble {
 
     static MatrixDouble scalar(double value) {
         return new ScalarMatrixDouble(value);
+    }
+
+    /**
+     * Make small columnar matrix 2x1 or row oriented matrix 1x2 from vector coordinates.
+     * @param vector
+     * @param columnar
+     * @return
+     */
+    static MatrixDouble smallMatrix(Vector vector, boolean columnar) {
+        return new MatrixDouble2D(vector, columnar);
     }
 
     static MatrixDouble smallMatrix(double a00, double a01, double a10, double a11) {
@@ -202,6 +215,7 @@ public interface MatrixDouble {
 
     /**
      * Column Vector ! used mostly for righ-hand side matrix `b of equation  A*x = b
+     *
      * @param rowSize
      * @param initValue
      * @return
@@ -213,6 +227,7 @@ public interface MatrixDouble {
 
     /**
      * Wrap usually DenseDoubleMatrix1D into corresponding MatrixDouble adapter.
+     *
      * @param delegate source vector
      * @return
      */
@@ -224,7 +239,8 @@ public interface MatrixDouble {
     /**
      * Small rotation  matrix around OZ axis.
      * [    cos(alfa)       -sin(alfa);
-     *      sin(alfa)        cos(alfa)      ]
+     * sin(alfa)        cos(alfa)      ]
+     *
      * @param alfa degrees
      * @return
      */
@@ -252,16 +268,16 @@ public interface MatrixDouble {
      *
      * @return array string
      */
-    default String toString(String format) {
+    static String toStringData(String format, MatrixDouble matrixDouble) {
         StringBuffer str = new StringBuffer();
-        for (int i = 0; i < this.height(); i++) {
-            String first = String.format(format + " ", this.getQuick(i, 0));
+        for (int i = 0; i < matrixDouble.height(); i++) {
+            String first = String.format(format, matrixDouble.getQuick(i, 0));
             str.append(first);
-            for (int j = 1; j < this.width(); j++) {
-                String cell = String.format("," + format + " ", this.getQuick(i, j));
+            for (int j = 1; j < matrixDouble.width(); j++) {
+                String cell = String.format("," + format, matrixDouble.getQuick(i, j));
                 str.append(cell);
             }
-            if (i < this.width() - 1) str.append("\n");
+            if (i < matrixDouble.width() - 1) str.append("\n");
         }
         return str.toString();
     }
@@ -269,30 +285,18 @@ public interface MatrixDouble {
     /**
      * @return A string of a nicely organized version of the matrix or array.
      */
-    default <T> String toString(T... titles) {
+    static String writeToString(MatrixDouble matrixDouble) {
         StringBuffer str = new StringBuffer();
-        str
-            .append("\n")
+        str.append("\n")
             .append("MatrixDouble - ")
-            .append(this.height())
+            .append(matrixDouble.height())
             .append("x")
-            .append(this.width())
-            .append("****************************************\n");
-
-        if (titles.length != 0) {
-            str
-                .append(Arrays.stream(titles).map(s -> String.format(WIDEN_DOUBLE_STR_FORMAT, s.toString()))
-                    .collect(Collectors.joining()))
-                .append("\n");
-        }
-
-        str.append(toString(DOUBLE_STR_FORMAT));
-        return str.toString();
-    }
-
-    default String toStringU() {
-        StringBuffer str = new StringBuffer();
-        str.append(toString(DOUBLE_STR_FORMAT));
+            .append(matrixDouble.width())
+            .append("****************************************\n")
+            .append(IntStream.range(0, matrixDouble.width()/2).mapToObj(s -> String.format(WIDEN_DOUBLE_STR_FORMAT, s))
+                .collect(Collectors.joining()))
+            .append("\n")
+            .append(toStringData(DOUBLE_STR_FORMAT, matrixDouble));
         return str.toString();
     }
 }

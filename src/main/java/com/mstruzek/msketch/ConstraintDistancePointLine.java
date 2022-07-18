@@ -56,8 +56,7 @@ public class ConstraintDistancePointLine extends Constraint {
     }
 
     @Override
-    public MatrixDouble getJacobian() {
-        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
+    public void getJacobian(MatrixDouble mts) {
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
         Vector ML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
@@ -67,19 +66,18 @@ public class ConstraintDistancePointLine extends Constraint {
         for (Integer id : dbPoint.keySet()) {
             /// ################################################################## k  /// Explicitly Repeated Accessor
             if (k_id == dbPoint.get(id).id) {
-                mt.setVector(0, 2 * j, ML.cr().dot(z * 2).add(LK.dot(2 * d * d)));
+                mts.setVector(0, 2 * j, ML.cr().dot(z * 2).add(LK.dot(2 * d * d)));
             }
             /// ################################################################## l
             if (l_id == dbPoint.get(id).id) {
-                mt.setVector(0, 2 * j, MK.cr().dot(z * -2.0).add(LK.dot(-2.0 * d * d)));
+                mts.setVector(0, 2 * j, MK.cr().dot(z * -2.0).add(LK.dot(-2.0 * d * d)));
             }
             /// ################################################################## m
             if (m_id == dbPoint.get(id).id) {
-                mt.setVector(0, 2 * j, LK.cr().dot(z * 2.0));
+                mts.setVector(0, 2 * j, LK.cr().dot(z * 2.0));
             }
             j++;
         }
-        return mt;
     }
 
     @Override
@@ -96,6 +94,9 @@ public class ConstraintDistancePointLine extends Constraint {
     @Override
     @InstabilityBehavior(description = "equations `or Lagrange multiplier")
     public MatrixDouble getHessian(double lagrange) {
+        if(true)
+            return null;
+
         /// macierz NxN
         MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
         Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
@@ -161,9 +162,8 @@ public class ConstraintDistancePointLine extends Constraint {
         }
         /// \\\\\\\\\
         /// \\\\\\\\\
-
-        return null;  /// ??? =============  \\\\\\\ \\\\\\ HESSIAN
-//        return mt.dot(lagrange);
+        // \\\\\\\ \\\\\\ HESSIAN
+        return mt.dot(lagrange);
     }
 
     @Override

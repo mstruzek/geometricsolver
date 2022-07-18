@@ -4,7 +4,7 @@ public class StateReporter {
 
     private static final StateReporter instance = new StateReporter();
 
-    public static final boolean DebugEnabled = false;
+    public static boolean DebugEnabled = false;
 
     private StateReporter() {}
 

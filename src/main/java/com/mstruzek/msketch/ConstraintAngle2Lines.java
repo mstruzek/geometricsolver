@@ -67,12 +67,11 @@ public class ConstraintAngle2Lines extends Constraint {
     }
 
     @Override
-    public MatrixDouble getJacobian() {
+    public void getJacobian(MatrixDouble mts) {
         /**
          * - [ Colt ] 1 sparse-vector wierszowo orietnowany - w rzywistosci to bedzie nam potrzebny przynajmnije MatrixView, gdzie Matrix2D(1,size, 0.0) jest preferowany !
          *
          */
-        MatrixDouble mt = MatrixDouble.matrix2D(1, dbPoint.size() * 2, 0.0);
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         Vector uLKdNM = LK.unit().dot(NM.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
@@ -80,24 +79,23 @@ public class ConstraintAngle2Lines extends Constraint {
         int j = 0;
         for (Integer i : dbPoint.keySet()) {
             if (k_id == dbPoint.get(i).id) {
-                mt.setQuick(0, j * 2, -NM.x + uLKdNM.x);
-                mt.setQuick(0, j * 2 + 1, -NM.y + uLKdNM.y);
+                mts.setQuick(0, j * 2, -NM.x + uLKdNM.x);
+                mts.setQuick(0, j * 2 + 1, -NM.y + uLKdNM.y);
             }
             if (l_id == dbPoint.get(i).id) {
-                mt.setQuick(0, j * 2, NM.x - uLKdNM.x);
-                mt.setQuick(0, j * 2 + 1, NM.y - uLKdNM.y);
+                mts.setQuick(0, j * 2, NM.x - uLKdNM.x);
+                mts.setQuick(0, j * 2 + 1, NM.y - uLKdNM.y);
             }
             if (m_id == dbPoint.get(i).id) {
-                mt.setQuick(0, j * 2, -LK.x + uNMdLK.x);
-                mt.setQuick(0, j * 2 + 1, -LK.y + uNMdLK.y);
+                mts.setQuick(0, j * 2, -LK.x + uNMdLK.x);
+                mts.setQuick(0, j * 2 + 1, -LK.y + uNMdLK.y);
             }
             if (n_id == dbPoint.get(i).id) {
-                mt.setQuick(0, j * 2, LK.x - uNMdLK.x);
-                mt.setQuick(0, j * 2 + 1, LK.y - uNMdLK.y);
+                mts.setQuick(0, j * 2, LK.x - uNMdLK.x);
+                mts.setQuick(0, j * 2 + 1, LK.y - uNMdLK.y);
             }
             j++;
         }
-        return mt;
     }
 
     @Override
