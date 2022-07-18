@@ -127,6 +127,7 @@ public abstract class Constraint implements ConstraintInterface {
         return coffSize;
     }
 
+
     /**
      * Funkcja zwraca Jakobian ze wszystkich wiezow
      *
@@ -135,6 +136,9 @@ public abstract class Constraint implements ConstraintInterface {
      */
     public static void getFullJacobian(MatrixDouble mt) {
         int rowPos = 0;
+
+        OffsetTable.setup();
+
         for (Integer id : dbConstraint.keySet()) {
             Constraint.dbConstraint.get(id).getJacobian(mt.viewSpan(rowPos, 0, Constraint.dbConstraint.get(id).size(), mt.width()));
             rowPos += Constraint.dbConstraint.get(id).size();
@@ -219,4 +223,5 @@ public abstract class Constraint implements ConstraintInterface {
     public boolean isPersistent() {
         return persistent;
     }
+
 }

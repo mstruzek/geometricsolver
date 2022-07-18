@@ -87,46 +87,42 @@ public class ConstraintLinesParallelism extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
-        int j = 0;
+        OffsetTable table = OffsetTable.getInstance();
+        int i;
         if ((m == null) && (n == null)) {
-            for (Integer i : dbPoint.keySet()) {
-                if (k_id == dbPoint.get(i).id) {
-                    Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
-                    mts.setQuick(0, j * 2, -NM.y);
-                    mts.setQuick(0, j * 2 + 1, NM.x);
-                }
-                if (l_id == dbPoint.get(i).id) {
-                    Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
-                    mts.setQuick(0, j * 2, NM.y);
-                    mts.setQuick(0, j * 2 + 1, -NM.x);
-                }
-                if (m_id == dbPoint.get(i).id) {
-                    Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-                    mts.setQuick(0, j * 2, LK.y);
-                    mts.setQuick(0, j * 2 + 1, -LK.x);
-                }
-                if (n_id == dbPoint.get(i).id) {
-                    Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-                    mts.setQuick(0, j * 2, -LK.y);
-                    mts.setQuick(0, j * 2 + 1, LK.x);
-                }
-                j++;
-            }
+
+            Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+            Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+
+            i = table.pointOffset(k_id);
+            mts.setQuick(0, i * 2, -NM.y);
+            mts.setQuick(0, i * 2 + 1, NM.x);
+
+            i = table.pointOffset(l_id);
+            mts.setQuick(0, i * 2, NM.y);
+            mts.setQuick(0, i * 2 + 1, -NM.x);
+
+            i = table.pointOffset(m_id);
+            mts.setQuick(0, i * 2, LK.y);
+            mts.setQuick(0, i * 2 + 1, -LK.x);
+
+            i = table.pointOffset(n_id);
+            mts.setQuick(0, i * 2, -LK.y);
+            mts.setQuick(0, i * 2 + 1, LK.x);
+
         } else {
             Vector NM = n.sub(m);
-            for (Integer i : dbPoint.keySet()) {
-                if (k_id == dbPoint.get(i).id) {
-                    mts.setQuick(0, j * 2, -NM.y);
-                    mts.setQuick(0, j * 2 + 1, NM.x);
-                }
-                if (l_id == dbPoint.get(i).id) {
-                    mts.setQuick(0, j * 2, NM.y);
-                    mts.setQuick(0, j * 2 + 1, -NM.x);
-                }
-                j++;
-            }
+
+            i = table.pointOffset(k_id);
+            mts.setQuick(0, i * 2, -NM.y);
+            mts.setQuick(0, i * 2 + 1, NM.x);
+
+            i = table.pointOffset(l_id);
+            mts.setQuick(0, i * 2, NM.y);
+            mts.setQuick(0, i * 2 + 1, -NM.x);
         }
     }
+
 
     @Override
     public boolean isJacobianConstant() {
@@ -139,53 +135,57 @@ public class ConstraintLinesParallelism extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian(double lagrange) {  /// FIXME BLAD hesianu - "unstable"
+    public MatrixDouble getHessian(double lagrange) {
         /// macierz NxN
         MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
 
         final MatrixDouble R = MatrixDouble.rotation(90 + 180).dot(lagrange);     /// R
         final MatrixDouble Rm = MatrixDouble.rotation(90).dot(lagrange);          /// Rm = -R
+
+        int i;
+        int j;
         if ((m == null) && (n == null)) {
-            int i = 0;
-            for (Integer vI : dbPoint.keySet()) { /// wiersz
-                int j = 0;
-                for (Integer vJ : dbPoint.keySet()) { /// kolumna
-                    //k,m
-                    if (k_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
-                        mt.addSubMatrix(2 * i, 2 * j, R);
-                    }
-                    //k,n
-                    if (k_id == dbPoint.get(vI).id && n_id == dbPoint.get(vJ).id) {
-                        mt.addSubMatrix(2 * i, 2 * j, Rm);
-                    }
-                    //l,m
-                    if (l_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
-                        mt.addSubMatrix(2 * i, 2 * j, Rm);
-                    }
-                    //l,n
-                    if (l_id == dbPoint.get(vI).id && n_id == dbPoint.get(vJ).id) {
-                        mt.addSubMatrix(2 * i, 2 * j, R);
-                    }
-                    //m,k
-                    if (m_id == dbPoint.get(vI).id && k_id == dbPoint.get(vJ).id) {
-                        mt.addSubMatrix(2 * i, 2 * j, Rm);
-                    }
-                    //m,l
-                    if (m_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
-                        mt.addSubMatrix(2 * i, 2 * j, R);
-                    }
-                    //n,k
-                    if (n_id == dbPoint.get(vI).id && k_id == dbPoint.get(vJ).id) {
-                        mt.addSubMatrix(2 * i, 2 * j, R);
-                    }
-                    //n,l
-                    if (n_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
-                        mt.addSubMatrix(2 * i, 2 * j, Rm);
-                    }
-                    j++;
-                }
-                i++;
-            }
+
+            //k,m
+            OffsetTable offset = OffsetTable.getInstance();
+            i = offset.pointOffset(k_id);
+            j = offset.pointOffset(m_id);
+            mt.addSubMatrix(2 * i, 2 * j, R);
+
+            //k,n
+            i = offset.pointOffset(k_id);
+            j = offset.pointOffset(n_id);
+            mt.addSubMatrix(2 * i, 2 * j, Rm);
+
+            //l,m
+            i = offset.pointOffset(l_id);
+            j = offset.pointOffset(m_id);
+            mt.addSubMatrix(2 * i, 2 * j, Rm);
+
+            //l,n
+            i = offset.pointOffset(l_id);
+            j = offset.pointOffset(n_id);
+            mt.addSubMatrix(2 * i, 2 * j, R);
+
+            //m,k
+            i = offset.pointOffset(m_id);
+            j = offset.pointOffset(k_id);
+            mt.addSubMatrix(2 * i, 2 * j, Rm);
+
+            //m,l
+            i = offset.pointOffset(m_id);
+            j = offset.pointOffset(l_id);
+            mt.addSubMatrix(2 * i, 2 * j, R);
+
+            //n,k
+            i = offset.pointOffset(n_id);
+            j = offset.pointOffset(k_id);
+            mt.addSubMatrix(2 * i, 2 * j, R);
+
+            //n,l
+            i = offset.pointOffset(n_id);
+            j = offset.pointOffset(l_id);
+            mt.addSubMatrix(2 * i, 2 * j, Rm);
 
             return mt;
         } else {

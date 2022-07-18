@@ -68,10 +68,6 @@ public class ConstraintAngle2Lines extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
-        /**
-         * - [ Colt ] 1 sparse-vector wierszowo orietnowany - w rzywistosci to bedzie nam potrzebny przynajmnije MatrixView, gdzie Matrix2D(1,size, 0.0) jest preferowany !
-         *
-         */
         Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         Vector uLKdNM = LK.unit().dot(NM.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));

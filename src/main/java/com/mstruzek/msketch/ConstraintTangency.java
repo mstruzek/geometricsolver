@@ -55,6 +55,7 @@ public class ConstraintTangency extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
+        OffsetTable offset = OffsetTable.getInstance();
         Vector MK = (dbPoint.get(m_id)).sub(dbPoint.get(k_id));
         Vector LK = (dbPoint.get(l_id)).sub(dbPoint.get(k_id));
         Vector ML = (dbPoint.get(m_id)).sub(dbPoint.get(l_id));
@@ -63,26 +64,22 @@ public class ConstraintTangency extends Constraint {
         double lk = LK.dot(LK);
         double CRS = LK.cr(MK);
         int j = 0;
-        for (Integer i : dbPoint.keySet()) {
-            // K
-            if (k_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, ML.cr().dot(2.0 * CRS).add(LK.dot(2.0 * nm)));
-            }
-            // L
-            if (l_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, MK.cr().dot(-2.0 * CRS).add(LK.dot(-2.0 * nm)));
-            }
-            // M
-            if (m_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, LK.cr().dot(2.0 * CRS).add(NM.dot(2.0 * lk)));
-            }
-            // N
-            if (n_id == dbPoint.get(i).id) {
-                mts.setVector(0, j * 2, NM.dot(-2.0 * lk));
-            }
-            j++;
-        }
-        // System.out.println(mt.toString(dbPoint.keySet().toArray(new Integer[0])));
+
+        // K
+        j = offset.pointOffset(k_id);
+        mts.setVector(0, j * 2, ML.cr().dot(2.0 * CRS).add(LK.dot(2.0 * nm)));
+
+        // L
+        j = offset.pointOffset(l_id);
+        mts.setVector(0, j * 2, MK.cr().dot(-2.0 * CRS).add(LK.dot(-2.0 * nm)));
+
+        // M
+        j = offset.pointOffset(m_id);
+        mts.setVector(0, j * 2, LK.cr().dot(2.0 * CRS).add(NM.dot(2.0 * lk)));
+
+        // N
+        j = offset.pointOffset(n_id);
+        mts.setVector(0, j * 2, NM.dot(-2.0 * lk));
     }
 
     @Override
@@ -93,7 +90,7 @@ public class ConstraintTangency extends Constraint {
     @Override
     @InstabilityBehavior(description = "equations, `or lagrange multiplier")
     public MatrixDouble getHessian(double lagrange) {
-        if(true)
+        if (true)
             return null;
         /*
          * wspolczynnik lagrange ?? mat.dot(lagrange) ??
@@ -105,103 +102,116 @@ public class ConstraintTangency extends Constraint {
         Vector ML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         MatrixDouble R = MatrixDouble.matrixR();
-        int i = 0;
-        /// same punkty
-        for (Integer qI : dbPoint.keySet()) { //wiersz
-            int j = 0;
-            for (Integer qJ : dbPoint.keySet()) { //kolumna
-                //k,k
-                if (k_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
-                    var mat = ML.cr().cartesian(ML.cr()).dot(2.0).add(MatrixDouble.diagonal(2, -2.0 * NM.dot(NM)));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //k,l
-                if (k_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(-2.0 * MK.dot(LK.cr())).add(ML.cr().cartesian(MK.cr()).dot(-2.0)).add(MatrixDouble.diagonal(2, 2.0 * NM.dot(NM)));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //k,m
-                if (k_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(2 * MK.dot(LK.cr())).add(ML.cr().cartesian(LK.cr()).dot(2.0)).add(MatrixDouble.diagonal(2, -4.0 * NM.dot(LK)));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //k,n
-                if (k_id == dbPoint.get(qI).id && n_id == dbPoint.get(qJ).id) {
-                    var mat = MatrixDouble.diagonal(2, 4.0 * NM.dot(LK));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //l,k
-                if (l_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(2.0 * MK.dot(LK.cr())).add(MK.cr().cartesian(MK.cr()).dot(-2.0).add(MatrixDouble.diagonal(2, 2.0 * NM.dot(NM))));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //l,l
-                if (l_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
-                    var mat = MK.cr().cartesian(MK.cr()).dot(2.0).add(MatrixDouble.diagonal(2, -2.0 * NM.dot(NM)));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //l,m
-                if (l_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(MK.dot(LK.cr())).add(MK.cr().cartesian(LK.cr())).dot(-2.0).add(MatrixDouble.diagonal(2, 4.0 * NM.dot(LK)));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //l,n
-                if (l_id == dbPoint.get(qI).id && n_id == dbPoint.get(qJ).id) {
-                    var mat = MatrixDouble.diagonal(2, -4.0 * NM.dot(LK));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //m,k
-                if (m_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(-2.0 * MK.dot(LK.cr())).add(LK.cr().cartesian(ML.cr()).dot(2.0)).add(MatrixDouble.diagonal(2, -4.0 * NM.dot(LK)));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //m,l
-                if (m_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
-                    var mat = R.dotC(MK.dot(LK.cr())).dot(2.0).add(LK.cr().cartesian(MK.cr()).dot(-2.0)).add(MatrixDouble.diagonal(2, 4.0 * NM.dot(LK)));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //m,m
-                if (m_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
-                    var mat = LK.cr().cartesian(LK.cr()).add(MatrixDouble.diagonal(2, -1.0 * LK.dot(LK))).dot(2.0);
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //m,n
-                if (m_id == dbPoint.get(qI).id && n_id == dbPoint.get(qJ).id) {
-                    var mat = MatrixDouble.diagonal(2, 2.0 * LK.dot(LK));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //n,k
-                if (n_id == dbPoint.get(qI).id && k_id == dbPoint.get(qJ).id) {
-                    var mat = MatrixDouble.diagonal(2, 4.0 * LK.dot(NM));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //n,l
-                if (n_id == dbPoint.get(qI).id && l_id == dbPoint.get(qJ).id) {
-                    var mat = MatrixDouble.diagonal(2, -4.0 * LK.dot(NM));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //n,m
-                if (n_id == dbPoint.get(qI).id && m_id == dbPoint.get(qJ).id) {
-                    var mat = MatrixDouble.diagonal(2, 2.0 * LK.dot(LK));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                //n,n
-                if (n_id == dbPoint.get(qI).id && n_id == dbPoint.get(qJ).id) {
-                    var mat = MatrixDouble.diagonal(2, -2.0 * LK.dot(LK));
-                    mt.setSubMatrix(2 * i, 2 * j, mat);
-                }
-                j++;
-            }
-            i++;
-        }
 
-        /// TODO aktualnie = 1.0   <==
+        MatrixDouble mat;
+        int i = 0;
+        int j = 0;
+
+        //k,k
+        OffsetTable offset = OffsetTable.getInstance();
+        i = offset.pointOffset(k_id);
+        j = offset.pointOffset(k_id);
+        mat = ML.cr().cartesian(ML.cr()).dot(2.0).add(MatrixDouble.diagonal(2, -2.0 * NM.dot(NM)));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //k,l
+        i = offset.pointOffset(k_id);
+        j = offset.pointOffset(l_id);
+        mat = R.dotC(-2.0 * MK.dot(LK.cr())).add(ML.cr().cartesian(MK.cr()).dot(-2.0)).add(MatrixDouble.diagonal(2, 2.0 * NM.dot(NM)));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //k,m
+        i = offset.pointOffset(k_id);
+        j = offset.pointOffset(m_id);
+        mat = R.dotC(2 * MK.dot(LK.cr())).add(ML.cr().cartesian(LK.cr()).dot(2.0)).add(MatrixDouble.diagonal(2, -4.0 * NM.dot(LK)));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //k,n
+        i = offset.pointOffset(k_id);
+        j = offset.pointOffset(n_id);
+        mat = MatrixDouble.diagonal(2, 4.0 * NM.dot(LK));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //l,k
+        i = offset.pointOffset(l_id);
+        j = offset.pointOffset(k_id);
+        mat = R.dotC(2.0 * MK.dot(LK.cr())).add(MK.cr().cartesian(MK.cr()).dot(-2.0).add(MatrixDouble.diagonal(2, 2.0 * NM.dot(NM))));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //l,l
+        i = offset.pointOffset(l_id);
+        j = offset.pointOffset(l_id);
+        mat = MK.cr().cartesian(MK.cr()).dot(2.0).add(MatrixDouble.diagonal(2, -2.0 * NM.dot(NM)));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //l,m
+        i = offset.pointOffset(l_id);
+        j = offset.pointOffset(m_id);
+        mat = R.dotC(MK.dot(LK.cr())).add(MK.cr().cartesian(LK.cr())).dot(-2.0).add(MatrixDouble.diagonal(2, 4.0 * NM.dot(LK)));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //l,n
+        i = offset.pointOffset(l_id);
+        j = offset.pointOffset(n_id);
+        mat = MatrixDouble.diagonal(2, -4.0 * NM.dot(LK));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //m,k
+        i = offset.pointOffset(m_id);
+        j = offset.pointOffset(k_id);
+        mat = R.dotC(-2.0 * MK.dot(LK.cr())).add(LK.cr().cartesian(ML.cr()).dot(2.0)).add(MatrixDouble.diagonal(2, -4.0 * NM.dot(LK)));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //m,l
+        i = offset.pointOffset(m_id);
+        j = offset.pointOffset(l_id);
+        mat = R.dotC(MK.dot(LK.cr())).dot(2.0).add(LK.cr().cartesian(MK.cr()).dot(-2.0)).add(MatrixDouble.diagonal(2, 4.0 * NM.dot(LK)));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //m,m
+        i = offset.pointOffset(m_id);
+        j = offset.pointOffset(m_id);
+        mat = LK.cr().cartesian(LK.cr()).add(MatrixDouble.diagonal(2, -1.0 * LK.dot(LK))).dot(2.0);
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //m,n
+        i = offset.pointOffset(m_id);
+        j = offset.pointOffset(n_id);
+        mat = MatrixDouble.diagonal(2, 2.0 * LK.dot(LK));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //n,k
+        i = offset.pointOffset(n_id);
+        j = offset.pointOffset(k_id);
+        mat = MatrixDouble.diagonal(2, 4.0 * LK.dot(NM));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //n,l
+        i = offset.pointOffset(n_id);
+        j = offset.pointOffset(l_id);
+        mat = MatrixDouble.diagonal(2, -4.0 * LK.dot(NM));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //n,m
+        i = offset.pointOffset(n_id);
+        j = offset.pointOffset(m_id);
+        mat = MatrixDouble.diagonal(2, 2.0 * LK.dot(LK));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+        //n,n
+        i = offset.pointOffset(n_id);
+        j = offset.pointOffset(n_id);
+        mat = MatrixDouble.diagonal(2, -2.0 * LK.dot(LK));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
+
+
+    /// TODO aktualnie = 1.0   <==
 
 //        return mt;
         return mt.dot(lagrange);      /// ????
 //        return null;
 
-    }
+}
 
     @Override
     public boolean isHessianConst() {

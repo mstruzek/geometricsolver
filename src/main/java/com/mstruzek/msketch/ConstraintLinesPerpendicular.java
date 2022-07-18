@@ -76,33 +76,29 @@ public class ConstraintLinesPerpendicular extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
+        OffsetTable offset = OffsetTable.getInstance();
         int j = 0;
         if ((m == null) && (n == null)) {
-            for (Integer i : dbPoint.keySet()) {
-                if (k_id == dbPoint.get(i).id) {
-                    mts.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
-                }
-                if (l_id == dbPoint.get(i).id) {
-                    mts.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
-                }
-                if (m_id == dbPoint.get(i).id) {
-                    mts.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
-                }
-                if (n_id == dbPoint.get(i).id) {
-                    mts.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
-                }
-                j++;
-            }
+            // K
+            j = offset.pointOffset(k_id);
+            mts.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
+            // L
+            j = offset.pointOffset(l_id);
+            mts.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
+            // M
+            j = offset.pointOffset(m_id);
+            mts.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
+            // N
+            j = offset.pointOffset(n_id);
+            mts.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
+
         } else {
-            for (Integer i : dbPoint.keySet()) {
-                if (k_id == dbPoint.get(i).id) {
-                    mts.setVector(0, j * 2, m.sub(n));
-                }
-                if (l_id == dbPoint.get(i).id) {
-                    mts.setVector(0, j * 2, m.sub(n).dot(-1.0));
-                }
-                j++;
-            }
+            // K
+            j = offset.pointOffset(k_id);
+            mts.setVector(0, j * 2, m.sub(n));
+            // L
+            j = offset.pointOffset(l_id);
+            mts.setVector(0, j * 2, m.sub(n).dot(-1.0));
         }
     }
 
@@ -132,51 +128,53 @@ public class ConstraintLinesPerpendicular extends Constraint {
     public MatrixDouble getHessian(double lagrange) {
         /// macierz NxN
         MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
+        MatrixDouble I = MatrixDouble.identity(2, 1.0 * lagrange);
+        MatrixDouble Im = MatrixDouble.identity(2, 1.0 * lagrange);
+        OffsetTable offset = OffsetTable.getInstance();
+        int i;
+        int j;
         if ((m == null) && (n == null)) {
-            MatrixDouble I = MatrixDouble.identity(2, 1.0 * lagrange);
-            MatrixDouble Im = MatrixDouble.identity(2, 1.0 * lagrange);
-            //same punkty
-            int i = 0;
-            for (Integer vI : dbPoint.keySet()) { //wiersz
-                int j = 0;
-                for (Integer vJ : dbPoint.keySet()) { //kolumna
-                    //wstawiamy I,-I w odpowiednie miejsca
-                    //k,m
-                    if (k_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
-                        mt.setSubMatrix(2 * i, 2 * j, I);
-                    }
-                    //k,n
-                    if (k_id == dbPoint.get(vI).id && n_id == dbPoint.get(vJ).id) {
-                        mt.setSubMatrix(2 * i, 2 * j, Im);
-                    }
-                    //l,m
-                    if (l_id == dbPoint.get(vI).id && m_id == dbPoint.get(vJ).id) {
-                        mt.setSubMatrix(2 * i, 2 * j, Im);
-                    }
-                    //l,n
-                    if (l_id == dbPoint.get(vI).id && n_id == dbPoint.get(vJ).id) {
-                        mt.setSubMatrix(2 * i, 2 * j, I);
-                    }
-                    //m,k
-                    if (m_id == dbPoint.get(vI).id && k_id == dbPoint.get(vJ).id) {
-                        mt.setSubMatrix(2 * i, 2 * j, I);
-                    }
-                    //m,l
-                    if (m_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
-                        mt.setSubMatrix(2 * i, 2 * j, Im);
-                    }
-                    //n,k
-                    if (n_id == dbPoint.get(vI).id && k_id == dbPoint.get(vJ).id) {
-                        mt.setSubMatrix(2 * i, 2 * j, Im);
-                    }
-                    //n,l
-                    if (n_id == dbPoint.get(vI).id && l_id == dbPoint.get(vJ).id) {
-                        mt.setSubMatrix(2 * i, 2 * j, I);
-                    }
-                    j++;
-                }
-                i++;
-            }
+            //wstawiamy I,-I w odpowiednie miejsca
+            //k,m
+            i = offset.pointOffset(k_id);
+            j = offset.pointOffset(m_id);
+            mt.setSubMatrix(2 * i, 2 * j, I);
+
+            //k,n
+            i = offset.pointOffset(k_id);
+            j = offset.pointOffset(n_id);
+            mt.setSubMatrix(2 * i, 2 * j, Im);
+
+            //l,m
+            i = offset.pointOffset(l_id);
+            j = offset.pointOffset(m_id);
+            mt.setSubMatrix(2 * i, 2 * j, Im);
+
+            //l,n
+            i = offset.pointOffset(l_id);
+            j = offset.pointOffset(n_id);
+            mt.setSubMatrix(2 * i, 2 * j, I);
+
+            //m,k
+            i = offset.pointOffset(m_id);
+            j = offset.pointOffset(k_id);
+            mt.setSubMatrix(2 * i, 2 * j, I);
+
+            //m,l
+            i = offset.pointOffset(m_id);
+            j = offset.pointOffset(l_id);
+            mt.setSubMatrix(2 * i, 2 * j, Im);
+
+            //n,k
+            i = offset.pointOffset(n_id);
+            j = offset.pointOffset(k_id);
+            mt.setSubMatrix(2 * i, 2 * j, Im);
+
+            //n,l
+            i = offset.pointOffset(n_id);
+            j = offset.pointOffset(l_id);
+            mt.setSubMatrix(2 * i, 2 * j, I);
+
             return mt;
         } else {
             /// m,n - vectory
