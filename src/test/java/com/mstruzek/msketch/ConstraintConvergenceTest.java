@@ -54,7 +54,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-10);
+        Assert.assertTrue(solverStat.error < 10e-10);
         Assert.assertTrue(solverStat.constraintDelta < 10e-10);
         Assert.assertTrue(constraint.getNorm() < 10e-10);
     }
@@ -71,7 +71,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-10);
+        Assert.assertTrue(solverStat.error < 10e-10);
         Assert.assertTrue(solverStat.constraintDelta < 10e-10);
         Assert.assertTrue(constraint.getNorm() < 10e-10);
         Assert.assertEquals(p10.getX(), parameter.getValue(), 10e-10);
@@ -89,7 +89,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-10);
+        Assert.assertTrue(solverStat.error < 10e-10);
         Assert.assertTrue(solverStat.constraintDelta < 10e-10);
         Assert.assertTrue(constraint.getNorm() < 10e-10);
         Assert.assertEquals(p10.getY(), parameter.getValue(), 10e-10);
@@ -111,7 +111,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-10);
+        Assert.assertTrue(solverStat.error < 10e-10);
         Assert.assertTrue(solverStat.constraintDelta < 10e-10);
         Assert.assertTrue(constraint.getNorm() < 10e-10);
     }
@@ -134,7 +134,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(2, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-2);
+        Assert.assertTrue(solverStat.error < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
     }
@@ -153,7 +153,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-2);
+        Assert.assertTrue(solverStat.error < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
     }
@@ -172,7 +172,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-2);
+        Assert.assertTrue(solverStat.error < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
     }
@@ -195,7 +195,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(4, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-2);
+        Assert.assertTrue(solverStat.error < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
     }
@@ -218,7 +218,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-2);
+        Assert.assertTrue(solverStat.error < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
     }
@@ -242,7 +242,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-10);
+        Assert.assertTrue(solverStat.error < 10e-10);
         Assert.assertTrue(solverStat.constraintDelta < 10e-10);
         Assert.assertTrue(constraint.getNorm() < 10e-10);
     }
@@ -261,7 +261,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-2);
+        Assert.assertTrue(solverStat.error < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
     }
@@ -285,7 +285,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(2, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-5);
+        Assert.assertTrue(solverStat.error < 10e-5);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
     }
@@ -310,7 +310,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(3, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-2);
+        Assert.assertTrue(solverStat.error < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-5);
         Assert.assertTrue(constraint.getNorm() < 10e-5);
     }
@@ -336,7 +336,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(20, solverStat.iterations);
         Assert.assertTrue(!solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 10e-2);
+        Assert.assertTrue(solverStat.error < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-2);
         Assert.assertTrue(constraint.getNorm() < 1e-2);
     }
@@ -366,7 +366,7 @@ public class ConstraintConvergenceTest {
 
         Assert.assertEquals(19, solverStat.iterations);
 //        Assert.assertTrue(!solverStat.convergence);
-        Assert.assertTrue(solverStat.delta < 1e-2);
+        Assert.assertTrue(solverStat.error < 1e-2);
         Assert.assertTrue(solverStat.constraintDelta < 1.0e-2);
         Assert.assertTrue(constraint.getNorm() < 10e-3);
     }

@@ -129,13 +129,13 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 
 - [ w strone macierzy do bezposredniego zapisu !]
 - [ Solver - snapshoting , podarzanie za bledem ]
-- [ umiescmy formatke  Solver Space pod console logiem - (error, accTime, solvertTime, iter) ]
 
-- [ 14 dni prepartion GPU ]  - sprawdzic model , zaciagnac bindowanie memory - caly model przenisc pod JNI i wiezy, stiffness.
 - [ JNI ] - otworzyc dzwignie do C++  -- jni.h  - handler do memory , read , write Byte , Integer , Long , Double, Float
 - [ Selector ] Solver Selector - Local Host , GPU Blas H ( handmade ), GPU CGM , 
 - [ Visitator ] -  zapis ByteBuffer free, [ Ax = b ] cudaHostFree, cudaHostMalloc(_) albo lokalnie albo z `cuda. 
-
+- [  GPU ]  - sprawdzic model , zaciagnac bindowanie memory - caly model przenisc pod JNI i wiezy, stiffness.
+- [ Constraint: CircleTangency ]
+- 
 - @ [!!!!! Error ] - Hessian Evaluation   -  iterable on keySet()  !!!! --   remove/add Primitives ( => Points ) - all constraints 3 wiezy !!!
 - @ [ConstraintTangency, ConstraintLinesParallelism, ConstraintLinesPerpendicular ]
 - @ [ Save ]   - przycisk :save model -> Writer : FORMAT PLIKU [ WSZYSTKIE OBIEKTY , NUMERY PUNKTOW , WIEZY , PARAMATRY]
@@ -148,6 +148,8 @@ where x evaluates into ^q - delta-q - generalized coordinates.
 - @ [ ConstraintDistancePointLine : extend Tangency ] - przygotowac rownania na kartce. !
 - @ [ ConstraintParametrizedLength] - dlugoscie wzgledne nad wspolczynnik 
 - @ [ ParametrizeXFix , ParametrizedYFix constraints]
+- @ [ umiescmy formatke  Solver Space pod console logiem - (error, accTime, solvertTime, iter) ]
+- 
 
 ## UNIFIED MATRIX INTERFACE
 /*

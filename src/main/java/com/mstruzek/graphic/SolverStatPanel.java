@@ -21,22 +21,22 @@ public class SolverStatPanel extends JPanel {
     private JTextField f_iterations             = new JTextField(); 
     private JTextField f_accTime                = new JTextField();
 
-    private JLabel l_startTime              = new JLabel("Start Time: ");
-    private JLabel l_stopTime               = new JLabel("Stop Time: ");
+    private JLabel l_startTime              = new JLabel("Start Time [ns]: ");
+    private JLabel l_stopTime               = new JLabel("Stop Time [ns]: ");
     private JLabel l_size                   = new JLabel("Size: ");
     private JLabel l_coefficientArity       = new JLabel("Coefficient Size: ");
     private JLabel l_dimension              = new JLabel("Dimension: ");
-    private JLabel l_accEvaluationTime      = new JLabel("Acc-Evaluation Time: ");
-    private JLabel l_accSolverTime          = new JLabel("Acc-Solver Time: ");
+    private JLabel l_accEvaluationTime      = new JLabel("Time AccEvaluation [ns]: ");
+    private JLabel l_accSolverTime          = new JLabel("Time AccSolver [ns]: ");
     private JLabel l_convergence            = new JLabel("Convergence: ");
-    private JLabel l_delta                  = new JLabel("Delta: ");
+    private JLabel l_delta                  = new JLabel("Error: ");
     private JLabel l_constraintDelta        = new JLabel("ConstraintDelta: ");
-    private JLabel l_iterations             = new JLabel("Itern: ");
-    private JLabel l_accTime                = new JLabel("Acc Time: ");
+    private JLabel l_iterations             = new JLabel("iter-n: ");
+    private JLabel l_accTime                = new JLabel("Acc Time [ns]: ");
 
     private static final String FORMAT_DECIMAL  = "  %d ";
     private static final String FORMAT_STR      = "  %s ";
-    private static final String FORMAT_TIME     = "  %d  ms ";
+    private static final String FORMAT_TIME     = "  %,12d  ";
     private static final String FORMAT_DELTA    = "  %e ";
 
     public SolverStatPanel() {
@@ -130,7 +130,7 @@ public class SolverStatPanel extends JPanel {
                 f_accEvaluationTime.setText(String.format(FORMAT_TIME, stat.accEvaluationTime));
                 f_accSolverTime.setText(String.format(FORMAT_TIME, stat.accSolverTime));
                 f_convergence.setText(String.format(FORMAT_STR, stat.convergence));
-                f_delta.setText(String.format(FORMAT_DELTA, stat.delta));
+                f_delta.setText(String.format(FORMAT_DELTA, stat.error));
                 f_constraintDelta.setText(String.format(FORMAT_DELTA, stat.constraintDelta));
                 f_iterations.setText(String.format(FORMAT_DECIMAL, stat.iterations));
                 f_accTime.setText(String.format(FORMAT_TIME, (stat.stopTime - stat.startTime)));

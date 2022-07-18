@@ -45,7 +45,7 @@ public class SolverStat {
     /**
      * Normalized error
      */
-    public double delta;
+    public double error;
 
     /**
      * Constraint normalized delta
@@ -59,26 +59,24 @@ public class SolverStat {
 
     public void report(StateReporter reporter) {
         reporter.writeln("#=================== Time Space ===================#");
-        reporter.writeln("startTime     [ ms ] : " + startTime);
-        reporter.writeln("stopTime      [ ms ] : " + stopTime);
-        reporter.writeln("time elapsed  [ ms ] : " + (stopTime - startTime));
-        reporter.writeln("time elapsed  [ ms ] : " + (stopTime - startTime));
-
+        reporter.writelnf("startTime         [ns]: %,20d ", startTime);
+        reporter.writelnf("stopTime          [ns]: %,20d ", stopTime);
+        reporter.writelnf("time elapsed      [ns]: %,20d ", (stopTime - startTime));
+        reporter.writelnf("Acc Evaluation    [ns]: %,20d ", accEvaluationTime);
+        reporter.writelnf("Acc Solver time   [ns]: %,20d ", accSolverTime);
         reporter.writeln("");
 
         reporter.writeln("#================== Solver space ==================#");
-        reporter.writeln("state vector size     : " + size);
-        reporter.writeln("coefficients          : " + coefficientArity);
-        reporter.writeln("acc evaluation  [ms]  : " + accEvaluationTime);
-        reporter.writeln("matrix A dimension    : " + dimension + " x " + dimension);
-        reporter.writeln("Acc Solver time [ms]  : " + accSolverTime);
+        reporter.writelnf("State vector dimension  : %d ", size);
+        reporter.writelnf("Coefficients            : %d ", coefficientArity);
+        reporter.writelnf("Matrix (A) dimension    : %s ", dimension + " x " + dimension);
 
         reporter.writeln("");
         reporter.writeln("#================== Error space ==================#");
-        reporter.writeln("convergence               : " + (convergence ? "T" : "F"));
-        reporter.writeln("delta (error)             : " + delta);
-        reporter.writeln("constraint delta (error)  : " + constraintDelta);
-        reporter.writeln("iterations  (n)           : " + iterations);
+        reporter.writelnf("convergence               : %s" , (convergence ? "T" : "F"));
+        reporter.writelnf("`error                    : %e" , error);
+        reporter.writelnf("constraint delta (error)  : %e" , constraintDelta);
+        reporter.writelnf("iterations  (n)           : %d" , iterations);
         reporter.writeln("");
     }
 

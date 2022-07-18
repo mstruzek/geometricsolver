@@ -35,6 +35,8 @@ public final class Model {
 
         SolverStat stat = new SolverStat();
 
+        geometricSolver.setup();
+
         geometricSolver.solveSystem(stat);
 
         stat.report(reporter);

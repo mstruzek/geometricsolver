@@ -7,10 +7,11 @@ import com.mstruzek.msketch.Constraint;
 import com.mstruzek.msketch.GeometricPrimitive;
 import com.mstruzek.msketch.MatrixDoubleUtility;
 import com.mstruzek.msketch.Point;
-import com.mstruzek.msketch.matrix.PointUtility;
+import com.mstruzek.msketch.matrix.ColtMatrixCreator;
 import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.MatrixDoubleCreator;
+import com.mstruzek.msketch.matrix.PointUtility;
 
-import java.time.Clock;
 import java.util.function.LongSupplier;
 
 import static com.mstruzek.msketch.Point.dbPoint;
@@ -21,26 +22,58 @@ public class GeometricSolverImpl implements GeometricSolver {
 
     public static final int MAX_SOLVER_ITERATIONS = 20;
 
-    private static final Clock clock = Clock.systemUTC();
-    private static final LongSupplier nanoClock = () -> System.nanoTime();
-
     /*** convergence limit */
     public static final double CONVERGENCE_LIMIT = 10e-5;
 
-    private long startTime = 0;                 /// start timing
-    private long evaluationStart = 0;           /// matrix and vector state evaluation time
-    private long solverStep = 0;                /// single LU solver round  delta
+    private StateReporter reporter;
 
-    private long accEvaluationTime = 0;   /// Accumulated Evaluation Time - for each round [ms]
-    private long accSolverTime = 0;       /// Accumulated LU Solver Time - for each round  [ms]
+    private Timer solverTimer;          /// Solver start/stop                            [ns]
+    private Timer accEvoTimer;          /// Accumulated Evaluation Time - for each round [ns]
+    private Timer accTimer;             /// Accumulated LU Solver Time - for each round  [ns]
+
+    public static class Timer {
+        private static final LongSupplier nanoClock = System::nanoTime;
+        long startTick;
+        long stopTick;
+        long accTime;
+
+        private Timer() {
+        }
+
+        public void startTick() {
+            this.startTick = nanoClock.getAsLong();
+        }
+
+        public void stopTick() {
+            this.stopTick = nanoClock.getAsLong();
+            this.accTime += (stopTick - startTick);
+        }
+
+        public long delta() {
+            return stopTick - startTick;
+        }
+    }
+
 
     @Override
-    public SolverStat solveSystem(SolverStat solverStat) {
+    public void setup() {
+
+        StateReporter.DebugEnabled = false;
+
+        reporter = StateReporter.getInstance();
+
+        solverTimer = new Timer();
+        accEvoTimer = new Timer();
+        accTimer = new Timer();
 
 //        Default Matrix Creator for middle matrices !
 //        MatrixDoubleCreator.setInstance(ColtMatrixCreator.INSTANCE);  // [ #[ #[ HEAVY ]# ]# ]
 
-        StateReporter.DebugEnabled = false;
+    }
+
+
+    @Override
+    public SolverStat solveSystem(SolverStat solverStat) {
 
         final int size;                 /// wektor stanu
         final int coffSize;             /// wspolczynniki Lagrange
@@ -69,13 +102,11 @@ public class GeometricSolverImpl implements GeometricSolver {
         double errorFluctuation;    /// fluktuacja bledu
 
 
-        StateReporter reporter = StateReporter.getInstance();
-
         reporter.writeln("@#=================== Solver Initialized ===================#@ ");
         reporter.writeln("");
 
-        startTime = clock.millis();
-        solverStat.startTime = startTime;
+        solverTimer.startTick();
+
 
         if (dbPoint.size() == 0) {
             reporter.writeln("[warning] - empty model");
@@ -97,12 +128,14 @@ public class GeometricSolverImpl implements GeometricSolver {
         solverStat.coefficientArity = coffSize;
         solverStat.dimension = dimension;
 
-        evaluationStart = clock.millis();
+        accEvoTimer.startTick();
 
         /// Inicjalizacje bazowych macierzy rzadkich - SparseMatrix
 
         A = MatrixDouble.matrix2D(dimension, dimension, 0.0);
         Fq = MatrixDouble.matrix2D(size, size, 0.0);
+
+
         Wq = MatrixDouble.matrix2D(coffSize, size, 0.0);
 
         Hs = MatrixDouble.matrix2D(size, size, 0.0);
@@ -113,7 +146,7 @@ public class GeometricSolverImpl implements GeometricSolver {
 /// Wektor prawych stron b
 
         b = MatrixDouble.matrix1D(dimension, 0.0);
-    // right-hand side vector ~ b
+        // right-hand side vector ~ b
         Fr = b.viewSpan(0, 0, size, 1);
         Fi = b.viewSpan(size, 0, coffSize, 1);
 
@@ -124,7 +157,7 @@ public class GeometricSolverImpl implements GeometricSolver {
         PointUtility.copyIntoStateVector(SV);
         PointUtility.setupLagrangeMultipliers(SV);
 
-        accEvaluationTime += (clock.millis() - evaluationStart);
+        accEvoTimer.stopTick();
 
         norm1 = 0.0;
         prevNorm = 0.0;
@@ -133,7 +166,7 @@ public class GeometricSolverImpl implements GeometricSolver {
         int itr = 0;
         while (itr < MAX_SOLVER_ITERATIONS) {
 
-            evaluationStart = clock.millis();
+            accEvoTimer.startTick();
 
             /// zerujemy macierz A
             A.reset(0.0);
@@ -150,7 +183,7 @@ public class GeometricSolverImpl implements GeometricSolver {
             /// JACOBIAN
             Constraint.getFullJacobian(Wq);                     /// Jq = d(Fi)/dq
 
-            if(StateReporter.isDebugEnabled()) {
+            if (StateReporter.isDebugEnabled()) {
 //                reporter.writeln(MatrixDouble.writeToString(Wq));
             }
 
@@ -174,11 +207,11 @@ public class GeometricSolverImpl implements GeometricSolver {
             DoubleMatrix2D matrix2DA = MatrixDoubleUtility.toSparse(A);
             DoubleMatrix1D matrix1Db = MatrixDoubleUtility.toDenseVector(b);
 
-            accEvaluationTime += (clock.millis() - evaluationStart);
+            accEvoTimer.stopTick();
 
-            solverStep = clock.millis();
+            accTimer.startTick();
 
-            if(StateReporter.isDebugEnabled()) {
+            if (StateReporter.isDebugEnabled()) {
 //                reporter.writeln(A.toString(new Integer[0]));
                 //reporter.writeln(b.toString(new Integer[0]));
             }
@@ -188,7 +221,7 @@ public class GeometricSolverImpl implements GeometricSolver {
             LU.decompose(matrix2DA);
             LU.solve(matrix1Db);
 
-           accSolverTime += (clock.millis() - solverStep);
+            accTimer.stopTick();
 
 /// Bind delta-x into database points
 
@@ -201,19 +234,19 @@ public class GeometricSolverImpl implements GeometricSolver {
 
             // Lagrange Coefficients
             MatrixDouble LC = SV.viewSpan(size, 0, coffSize, 1);
-            if(StateReporter.isDebugEnabled()) {
+            if (StateReporter.isDebugEnabled()) {
                 reporter.writeln(MatrixDouble.writeToString(LC));
             }
 
 
             norm1 = Constraint.getFullNorm();
 
-            reporter.writelnf(" [ step :: %d]  duration [ms] = %d  norm = %e ", itr, (clock.millis() - evaluationStart), norm1);
+            reporter.writelnf(" [ step :: %02d]  duration [ns] = %,12d  norm = %e ", itr, (accTimer.stopTick - accEvoTimer.startTick), norm1);
 
             /// Gdy po 5-6 przejsciach iteracji, normy wiezow kieruja sie w strone minimum energii, to repozycjonowac prowadzace punkty
 
             if (norm1 < CONVERGENCE_LIMIT) {
-                solverStat.delta = norm1;
+                solverStat.error = norm1;
                 reporter.writelnf("fast convergence - norm [ %e ]  ", norm1);
                 reporter.writelnf("constraint error = %e", Constraint.getFullNorm());
                 reporter.writeln("");
@@ -223,7 +256,7 @@ public class GeometricSolverImpl implements GeometricSolver {
             /// liczymy zmiane bledu
             errorFluctuation = norm1 - prevNorm;
             prevNorm = norm1;
-            solverStat.delta = norm1;
+            solverStat.error = norm1;
 
             ///
             ///  ######### 1 . przeprowadzimy snapshot punktow w czasie i przy narastajacym bledzie - revert(Guide Points) i kontynuacja !
@@ -234,28 +267,32 @@ public class GeometricSolverImpl implements GeometricSolver {
                 reporter.writeln("CHANGES - STOP ITERATION *******");
                 reporter.writeln(" errorFluctuation          :" + errorFluctuation);
                 reporter.writeln(" relative error            :" + (errorFluctuation / norm1));
+                solverTimer.stopTick();
                 solverStat.constraintDelta = Constraint.getFullNorm();
                 solverStat.convergence = false;
-                solverStat.stopTime = clock.millis();
+                solverStat.startTime = solverTimer.startTick;
+                solverStat.stopTime = solverTimer.stopTick;
                 solverStat.iterations = itr;
-                solverStat.accSolverTime = accSolverTime;
-                solverStat.accEvaluationTime = accEvaluationTime;
+                solverStat.accSolverTime = accTimer.accTime;
+                solverStat.accEvaluationTime = accEvoTimer.accTime;
                 return solverStat;
             }
             itr++;
         }
 
-        long solutionDelta = (clock.millis() - startTime);
+        solverTimer.stopTick();
+        long solutionDelta = solverTimer.delta();
 
         reporter.writeln("# solution delta : " + solutionDelta); // print execution time
         reporter.writeln(""); // print execution time
 
         solverStat.constraintDelta = Constraint.getFullNorm();
         solverStat.convergence = norm1 < CONVERGENCE_LIMIT;
-        solverStat.stopTime = clock.millis();
+        solverStat.startTime = solverTimer.startTick;
+        solverStat.stopTime = solverTimer.stopTick;
         solverStat.iterations = itr;
-        solverStat.accSolverTime = accSolverTime;
-        solverStat.accEvaluationTime = accEvaluationTime;
+        solverStat.accSolverTime = accTimer.accTime;
+        solverStat.accEvaluationTime = accEvoTimer.accTime;
         return solverStat;
     }
 
