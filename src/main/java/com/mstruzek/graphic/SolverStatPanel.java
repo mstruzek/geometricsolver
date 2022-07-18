@@ -6,38 +6,42 @@ import com.mstruzek.msketch.solver.SolverStat;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZoneId;
 
 public class SolverStatPanel extends JPanel {
-    private JTextField f_startTime              = new JTextField(); 
-    private JTextField f_stopTime               = new JTextField(); 
-    private JTextField f_size                   = new JTextField(); 
-    private JTextField f_coefficientArity       = new JTextField(); 
-    private JTextField f_dimension              = new JTextField(); 
-    private JTextField f_accEvaluationTime      = new JTextField(); 
-    private JTextField f_accSolverTime          = new JTextField(); 
-    private JTextField f_convergence            = new JTextField(); 
-    private JTextField f_delta                  = new JTextField(); 
-    private JTextField f_constraintDelta        = new JTextField(); 
-    private JTextField f_iterations             = new JTextField(); 
-    private JTextField f_accTime                = new JTextField();
+    private JTextField f_startTime = new JTextField();
+    private JTextField f_stopTime = new JTextField();
+    private JTextField f_size = new JTextField();
+    private JTextField f_coefficientArity = new JTextField();
+    private JTextField f_dimension = new JTextField();
+    private JTextField f_accEvaluationTime = new JTextField();
+    private JTextField f_accSolverTime = new JTextField();
+    private JTextField f_convergence = new JTextField();
+    private JTextField f_delta = new JTextField();
+    private JTextField f_constraintDelta = new JTextField();
+    private JTextField f_iterations = new JTextField();
+    private JTextField f_accTime = new JTextField();
 
-    private JLabel l_startTime              = new JLabel("Start Time [ns]: ");
-    private JLabel l_stopTime               = new JLabel("Stop Time [ns]: ");
-    private JLabel l_size                   = new JLabel("Size: ");
-    private JLabel l_coefficientArity       = new JLabel("Coefficient Size: ");
-    private JLabel l_dimension              = new JLabel("Dimension: ");
-    private JLabel l_accEvaluationTime      = new JLabel("Time AccEvaluation [ns]: ");
-    private JLabel l_accSolverTime          = new JLabel("Time AccSolver [ns]: ");
-    private JLabel l_convergence            = new JLabel("Convergence: ");
-    private JLabel l_delta                  = new JLabel("Error: ");
-    private JLabel l_constraintDelta        = new JLabel("ConstraintDelta: ");
-    private JLabel l_iterations             = new JLabel("iter-n: ");
-    private JLabel l_accTime                = new JLabel("Acc Time [ns]: ");
+    private JLabel l_startTime = new JLabel("Start Time [ms]: ");
+    private JLabel l_stopTime = new JLabel("Stop Time [ms]: ");
+    private JLabel l_size = new JLabel("Size: ");
+    private JLabel l_coefficientArity = new JLabel("Coefficient Size: ");
+    private JLabel l_dimension = new JLabel("Dimension: ");
+    private JLabel l_accEvaluationTime = new JLabel("Time AccEvaluation [ns]: ");
+    private JLabel l_accSolverTime = new JLabel("Time AccSolver [ns]: ");
+    private JLabel l_convergence = new JLabel("Convergence: ");
+    private JLabel l_delta = new JLabel("Error: ");
+    private JLabel l_constraintDelta = new JLabel("ConstraintDelta: ");
+    private JLabel l_iterations = new JLabel("iter-n: ");
+    private JLabel l_accTime = new JLabel("Acc Time [ns]: ");
 
-    private static final String FORMAT_DECIMAL  = "  %d ";
-    private static final String FORMAT_STR      = "  %s ";
-    private static final String FORMAT_TIME     = "  %,12d  ";
-    private static final String FORMAT_DELTA    = "  %e ";
+    private static final String FORMAT_DECIMAL = "  %d ";
+    private static final String FORMAT_STR = "  %s ";
+    private static final String FORMAT_HOUR = " %1$tI:%1$tM:%1$tS ";
+    private static final String FORMAT_TIME = "  %,12d  ";
+    private static final String FORMAT_DELTA = "  %e ";
 
     public SolverStatPanel() {
         super();
@@ -122,18 +126,20 @@ public class SolverStatPanel extends JPanel {
             @Override
             public void call(String eventType, Object[] arguments) {
                 SolverStat stat = (SolverStat) arguments[0];
-                f_startTime.setText(String.format(FORMAT_TIME, stat.startTime));
-                f_stopTime.setText(String.format(FORMAT_TIME, stat.stopTime));
+                LocalTime startTime = LocalTime.ofInstant(Instant.ofEpochMilli(stat.startTime), ZoneId.systemDefault());
+                LocalTime stopTime = LocalTime.ofInstant(Instant.ofEpochMilli(stat.stopTime), ZoneId.systemDefault());
+                f_startTime.setText(String.format(FORMAT_HOUR, startTime));
+                f_stopTime.setText(String.format(FORMAT_HOUR, stopTime));
                 f_size.setText(String.format(FORMAT_DECIMAL, stat.size));
                 f_coefficientArity.setText(String.format(FORMAT_DECIMAL, stat.coefficientArity));
                 f_dimension.setText(String.format(FORMAT_DECIMAL, stat.dimension));
                 f_accEvaluationTime.setText(String.format(FORMAT_TIME, stat.accEvaluationTime));
                 f_accSolverTime.setText(String.format(FORMAT_TIME, stat.accSolverTime));
-                f_convergence.setText(String.format(FORMAT_STR, stat.convergence));
+                f_convergence.setText(String.format(FORMAT_STR, stat.convergence ? "Yes" : "No" ));
                 f_delta.setText(String.format(FORMAT_DELTA, stat.error));
                 f_constraintDelta.setText(String.format(FORMAT_DELTA, stat.constraintDelta));
                 f_iterations.setText(String.format(FORMAT_DECIMAL, stat.iterations));
-                f_accTime.setText(String.format(FORMAT_TIME, (stat.stopTime - stat.startTime)));
+                f_accTime.setText(String.format(FORMAT_TIME, (stat.timeDelta)));
             }
         });
     }

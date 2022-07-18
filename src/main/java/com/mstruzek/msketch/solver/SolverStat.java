@@ -3,14 +3,18 @@ package com.mstruzek.msketch.solver;
 public class SolverStat {
 
     /**
-     * submit timestamp
+     * submit timestamp [ms]
      */
     public long startTime;
 
     /**
-     * exit solver
+     * exit solver [ms]
      */
     public long stopTime;
+
+
+    /** Total computation time [ns] */
+    public long timeDelta;
 
     /**
      * solution space size (state vector)- 2x state vectors
