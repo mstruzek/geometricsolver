@@ -42,7 +42,7 @@ public class ConstraintParametrizedXFix extends Constraint {
     public void getJacobian(MatrixDouble mts) {
         int j;
         //k
-        j = space.pointIndex(k_id);
+        j = po.get(k_id);
         /// wspolrzedna [X]
         mts.setQuick(0, j * 2, 1.0);
     }

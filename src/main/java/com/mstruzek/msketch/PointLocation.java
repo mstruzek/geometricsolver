@@ -5,17 +5,17 @@ import static com.mstruzek.msketch.Point.dbPoint;
 /**
  * Absolut point offset from matrix 0,0 coordinates for database point set .
  */
-class VectorSpace {
+class PointLocation {
 
-    private static final VectorSpace INSTANCE = new VectorSpace();
+    private static final PointLocation INSTANCE = new PointLocation();
 
-    public static VectorSpace getInstance() {
+    public static PointLocation getInstance() {
         return INSTANCE;
     }
 
     static int[] table;
 
-    private VectorSpace() {
+    private PointLocation() {
     }
 
     public static void setup() {
@@ -27,7 +27,12 @@ class VectorSpace {
         }
     }
 
-    public int pointIndex(int point) {
+    /**
+     * Get point location in vector space.
+     * @param point id
+     * @return offset location
+     */
+    public int get(int point) {
         return table[point];
     }
 }

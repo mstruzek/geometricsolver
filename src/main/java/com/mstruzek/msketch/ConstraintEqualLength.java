@@ -66,19 +66,19 @@ public class ConstraintEqualLength extends Constraint {
         int j;
 
         //k
-        j = space.pointIndex(k_id);
+        j = po.get(k_id);
         mts.setVector(0, j * 2, LK.dot(-1.0));
 
         //l
-        j = space.pointIndex(l_id);
+        j = po.get(l_id);
         mts.setVector(0, j * 2, LK);
 
         //m
-        j = space.pointIndex(m_id);
+        j = po.get(m_id);
         mts.setVector(0, j * 2, NM);
 
         //n
-        j = space.pointIndex(n_id);
+        j = po.get(n_id);
         mts.setVector(0, j * 2, NM.dot(-1.0));
     }
 

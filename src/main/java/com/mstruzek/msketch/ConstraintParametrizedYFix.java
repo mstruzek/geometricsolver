@@ -43,7 +43,7 @@ public class ConstraintParametrizedYFix extends Constraint {
         int j;
 
         /// K
-        j = space.pointIndex(k_id);
+        j = po.get(k_id);
         /// wspolrzedna [Y]
         mts.setQuick(0, j * 2 + 1, 1.0);
     }

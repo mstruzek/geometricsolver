@@ -65,15 +65,15 @@ public class ConstraintDistancePointLine extends Constraint {
         int j;
 
         //k
-        j = space.pointIndex(k_id);
+        j = po.get(k_id);
         mts.setVector(0, 2 * j, ML.cr().dot(z * 2).add(LK.dot(2 * d * d)));
 
         //l
-        j = space.pointIndex(l_id);
+        j = po.get(l_id);
         mts.setVector(0, 2 * j, MK.cr().dot(z * -2.0).add(LK.dot(-2.0 * d * d)));
 
         //m
-        j = space.pointIndex(m_id);
+        j = po.get(m_id);
         mts.setVector(0, 2 * j, LK.cr().dot(z * 2.0));
     }
 
@@ -106,47 +106,47 @@ public class ConstraintDistancePointLine extends Constraint {
         int j;
 
         //k,k
-        i = space.pointIndex(k_id);j = space.pointIndex(k_id);
+        i = po.get(k_id);j = po.get(k_id);
             mat = ML.cr().cartesian(MK.cr().sub(LK.cr())).dot(2).add(Dm);
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //k,l
-        i = space.pointIndex(k_id);j = space.pointIndex(l_id);
+        i = po.get(k_id);j = po.get(l_id);
             mat = R.dotC(-2.0 * SC).add(ML.cr().cartesian(MK).mult(R).dot(2.0)).add(D);
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //k,m
-        i = space.pointIndex(k_id);j = space.pointIndex(m_id);
+        i = po.get(k_id);j = po.get(m_id);
             mat = R.dotC(2 * SC).add(ML.cr().cartesian(LK.cr()).dot(2.0));
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,k
-        i = space.pointIndex(l_id);j = space.pointIndex(k_id);
+        i = po.get(l_id);j = po.get(k_id);
             mat = R.dotC(2 * SC).add(MK.cr().cartesian(ML.cr()).dot(-2.0)).add(D);
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,l
-        i = space.pointIndex(l_id);j = space.pointIndex(l_id);
+        i = po.get(l_id);j = po.get(l_id);
             mat = MK.cr().cartesian(MK.cr()).dot(2.0).add(Dm);
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,m
-        i = space.pointIndex(l_id);j = space.pointIndex(m_id);
+        i = po.get(l_id);j = po.get(m_id);
             mat = R.dotC(-2.0 * SC).add(MK.cr().cartesian(LK.cr()).dot(-2.0));
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,k
-        i = space.pointIndex(m_id);j = space.pointIndex(k_id);
+        i = po.get(m_id);j = po.get(k_id);
             mat = R.dotC(-2.0 * SC).add(LK.cr().cartesian(MK.cr()).dot(-2.0));
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,l
-        i = space.pointIndex(m_id);j = space.pointIndex(l_id);
+        i = po.get(m_id);j = po.get(l_id);
             mat = R.dotC(2.0 * SC).add(LK.cr().cartesian(MK.cr()).dot(-2.0));
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,m
-        i = space.pointIndex(m_id);j = space.pointIndex(m_id);
+        i = po.get(m_id);j = po.get(m_id);
             mat = LK.cr().cartesian(LK.cr()).dot(2.0);
             mt.setSubMatrix(2 * i, 2 * j, mat);
 

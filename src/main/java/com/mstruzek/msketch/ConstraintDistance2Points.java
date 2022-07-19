@@ -53,11 +53,11 @@ public class ConstraintDistance2Points extends Constraint {
         int j = 0;
 
         //k
-        j = space.pointIndex(k_id);
+        j = po.get(k_id);
         mts.setVector(0, j * 2, LKu.dot(-1.0));
 
         //l
-        j = space.pointIndex(l_id);
+        j = po.get(l_id);
         mts.setVector(0, j * 2, LKu);
     }
 

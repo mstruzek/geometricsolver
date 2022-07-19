@@ -75,22 +75,22 @@ public class ConstraintAngle2Lines extends Constraint {
         int j;
 
         /// K
-        j = space.pointIndex(k_id);
+        j = po.get(k_id);
         mts.setQuick(0, j * 2, -NM.x + uLKdNM.x);
         mts.setQuick(0, j * 2 + 1, -NM.y + uLKdNM.y);
 
         /// L
-        j = space.pointIndex(l_id);
+        j = po.get(l_id);
         mts.setQuick(0, j * 2, NM.x - uLKdNM.x);
         mts.setQuick(0, j * 2 + 1, NM.y - uLKdNM.y);
 
         /// M
-        j = space.pointIndex(m_id);
+        j = po.get(m_id);
         mts.setQuick(0, j * 2, -LK.x + uNMdLK.x);
         mts.setQuick(0, j * 2 + 1, -LK.y + uNMdLK.y);
 
         /// N
-        j = space.pointIndex(n_id);
+        j = po.get(n_id);
         mts.setQuick(0, j * 2, LK.x - uNMdLK.x);
         mts.setQuick(0, j * 2 + 1, LK.y - uNMdLK.y);
     }
@@ -110,83 +110,83 @@ public class ConstraintAngle2Lines extends Constraint {
         int j;
 
         //k,k
-        i = space.pointIndex(k_id);
-        j = space.pointIndex(k_id);
+        i = po.get(k_id);
+        j = po.get(k_id);
         // 0
 
         //k,l
-        i = space.pointIndex(k_id);
-        j = space.pointIndex(l_id);
+        i = po.get(k_id);
+        j = po.get(l_id);
         //0
 
         //k,m
-        i = space.pointIndex(k_id);
-        j = space.pointIndex(m_id);
+        i = po.get(k_id);
+        j = po.get(m_id);
         mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
 
         //k,n
-        i = space.pointIndex(k_id);
-        j = space.pointIndex(n_id);
+        i = po.get(k_id);
+        j = po.get(n_id);
         mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
 
         //l,k
-        i = space.pointIndex(l_id);
-        j = space.pointIndex(k_id);
+        i = po.get(l_id);
+        j = po.get(k_id);
             //0
 
         //l,l
-        i = space.pointIndex(l_id);
-        j = space.pointIndex(l_id);
+        i = po.get(l_id);
+        j = po.get(l_id);
         // 0
 
         //l,m
-        i = space.pointIndex(l_id);
-        j = space.pointIndex(m_id);
+        i = po.get(l_id);
+        j = po.get(m_id);
         mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
 
         //l,n
-        i = space.pointIndex(l_id);
-        j = space.pointIndex(n_id);
+        i = po.get(l_id);
+        j = po.get(n_id);
         mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
 
         //m,k
-        i = space.pointIndex(m_id);
-        j = space.pointIndex(k_id);
+        i = po.get(m_id);
+        j = po.get(k_id);
         mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
 
         //m,l
-        i = space.pointIndex(m_id);
-        j = space.pointIndex(l_id);
+        i = po.get(m_id);
+        j = po.get(l_id);
         mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
 
         //m,m
-        i = space.pointIndex(m_id);
-        j = space.pointIndex(m_id);
+        i = po.get(m_id);
+        j = po.get(m_id);
         //0
 
         //m,n
-        i = space.pointIndex(m_id);
-        j = space.pointIndex(n_id);
+        i = po.get(m_id);
+        j = po.get(n_id);
         //0
 
         //n,k
-        i = space.pointIndex(n_id);
-        j = space.pointIndex(k_id);
+        i = po.get(n_id);
+        j = po.get(k_id);
         mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
 
         //n,l
-        i = space.pointIndex(n_id);
-        j = space.pointIndex(l_id);
+        i = po.get(n_id);
+        j = po.get(l_id);
         mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
 
         //n,m
-        i = space.pointIndex(n_id);
-        j = space.pointIndex(m_id);
+        i = po.get(n_id);
+        j = po.get(m_id);
         //0
 
         //n,n
-        i = space.pointIndex(n_id);
-        j = space.pointIndex(n_id);
+        i = po.get(n_id);
+        j = po.get(n_id);
         //0
 
         return mt;

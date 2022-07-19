@@ -68,24 +68,24 @@ public class ConstraintLinesPerpendicular extends Constraint {
         int j = 0;
         if ((m == null) && (n == null)) {
             /// K
-            j = space.pointIndex(k_id);
+            j = po.get(k_id);
             mts.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
             /// L
-            j = space.pointIndex(l_id);
+            j = po.get(l_id);
             mts.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
             /// M
-            j = space.pointIndex(m_id);
+            j = po.get(m_id);
             mts.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
             /// N
-            j = space.pointIndex(n_id);
+            j = po.get(n_id);
             mts.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
 
         } else {
             /// K
-            j = space.pointIndex(k_id);
+            j = po.get(k_id);
             mts.setVector(0, j * 2, m.sub(n));
             /// L
-            j = space.pointIndex(l_id);
+            j = po.get(l_id);
             mts.setVector(0, j * 2, m.sub(n).dot(-1.0));
         }
     }
@@ -123,43 +123,43 @@ public class ConstraintLinesPerpendicular extends Constraint {
         if ((m == null) && (n == null)) {
             //wstawiamy I,-I w odpowiednie miejsca
             /// K,M
-            i = space.pointIndex(k_id);
-            j = space.pointIndex(m_id);
+            i = po.get(k_id);
+            j = po.get(m_id);
             mt.setSubMatrix(2 * i, 2 * j, I);
 
             /// K,N
-            i = space.pointIndex(k_id);
-            j = space.pointIndex(n_id);
+            i = po.get(k_id);
+            j = po.get(n_id);
             mt.setSubMatrix(2 * i, 2 * j, Im);
 
             /// L,M
-            i = space.pointIndex(l_id);
-            j = space.pointIndex(m_id);
+            i = po.get(l_id);
+            j = po.get(m_id);
             mt.setSubMatrix(2 * i, 2 * j, Im);
 
             /// L,N
-            i = space.pointIndex(l_id);
-            j = space.pointIndex(n_id);
+            i = po.get(l_id);
+            j = po.get(n_id);
             mt.setSubMatrix(2 * i, 2 * j, I);
 
             /// M,K
-            i = space.pointIndex(m_id);
-            j = space.pointIndex(k_id);
+            i = po.get(m_id);
+            j = po.get(k_id);
             mt.setSubMatrix(2 * i, 2 * j, I);
 
             /// M,L
-            i = space.pointIndex(m_id);
-            j = space.pointIndex(l_id);
+            i = po.get(m_id);
+            j = po.get(l_id);
             mt.setSubMatrix(2 * i, 2 * j, Im);
 
             /// N,K
-            i = space.pointIndex(n_id);
-            j = space.pointIndex(k_id);
+            i = po.get(n_id);
+            j = po.get(k_id);
             mt.setSubMatrix(2 * i, 2 * j, Im);
 
             /// N,L
-            i = space.pointIndex(n_id);
-            j = space.pointIndex(l_id);
+            i = po.get(n_id);
+            j = po.get(l_id);
             mt.setSubMatrix(2 * i, 2 * j, I);
 
             return mt;

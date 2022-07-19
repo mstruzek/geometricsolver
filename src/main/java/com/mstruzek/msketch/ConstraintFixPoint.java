@@ -55,7 +55,7 @@ public class ConstraintFixPoint extends Constraint {
         int j;
 
         /// K
-        j = space.pointIndex(k_id);
+        j = po.get(k_id);
         mts.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));
     }
 

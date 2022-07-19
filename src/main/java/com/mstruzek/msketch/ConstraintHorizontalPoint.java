@@ -43,10 +43,10 @@ public class ConstraintHorizontalPoint extends Constraint {
     @Override
     public void getJacobian(MatrixDouble mts) {
         int j;
-        j = space.pointIndex(k_id);
+        j = po.get(k_id);
         mts.setQuick(0, j * 2, 1.0);         // zero-X
 
-        j = space.pointIndex(l_id);
+        j = po.get(l_id);
         mts.setQuick(0, j * 2, -1.0);       // zero-X
     }
 
