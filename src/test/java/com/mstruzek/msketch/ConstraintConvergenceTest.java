@@ -14,15 +14,16 @@ import static java.lang.System.out;
 
 public class ConstraintConvergenceTest {
 
-    GeometricSolver geometricSolver;
     SolverStat solverStat;
     StateReporter reporter;
+    GeometricSolver geometricSolver;
 
     @Before
     public void beforeTest() {
-        geometricSolver = new GeometricSolverImpl();
         reporter = StateReporter.getInstance();
         solverStat = new SolverStat();
+        geometricSolver = new GeometricSolverImpl();
+        geometricSolver.setup();
     }
 
     @After
@@ -317,9 +318,6 @@ public class ConstraintConvergenceTest {
 
     @Test
     public void convergenceConstraintTangency() {
-        /*
-         * Macierz Hessian'a ?
-         */
         Point p10 = new Point(1, 0.0, 00.0);
         Point p20 = new Point(2, 10.0, 80.0);
         Point p30 = new Point(5, 60.0, 60.0);
@@ -330,7 +328,7 @@ public class ConstraintConvergenceTest {
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
 
-        Constraint constraint = new ConstraintTangency(Constraint.nextId(), p10, p20, p30, p40);
+        Constraint constraint = new ConstraintTangency(Constraint.nextId(), p10, p20, p30, p40);        /// Macierz Hessian'a ?!!
 
         geometricSolver.solveSystem(solverStat);
 
@@ -338,6 +336,29 @@ public class ConstraintConvergenceTest {
         Assert.assertTrue(!solverStat.convergence);
         Assert.assertTrue(solverStat.error < 10e-2);
         Assert.assertTrue(solverStat.constraintDelta < 10e-2);
+        Assert.assertTrue(constraint.getNorm() < 1e-2);
+    }
+
+    @Test
+    public void convergenceConstraintCircleTangency() {
+        Point p10 = new Point(1, 0.0, 00.0);
+        Point p20 = new Point(2, 10.0, 80.0);
+        Point p30 = new Point(5, 60.0, 60.0);
+        Point p40 = new Point(6, 120.0, 120.0);
+
+        Circle f10 = new Circle(p10, p20);
+        Circle f20 = new Circle(p30, p40);
+        f10.setAssociateConstraints(null);
+        f20.setAssociateConstraints(null);
+
+        Constraint constraint = new ConstraintCircleTangency(Constraint.nextId(), p10, p20, p30, p40);
+
+        geometricSolver.solveSystem(solverStat);
+
+        Assert.assertEquals(0, solverStat.iterations);
+        Assert.assertTrue(solverStat.convergence);
+        Assert.assertTrue(solverStat.error < 10e-4);
+        Assert.assertTrue(solverStat.constraintDelta < 10e-4);
         Assert.assertTrue(constraint.getNorm() < 1e-2);
     }
 

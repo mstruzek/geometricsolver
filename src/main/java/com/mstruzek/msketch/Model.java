@@ -131,6 +131,9 @@ public final class Model {
 //                add(new ConstraintTangency2(constId, K, L, M, N));
                 add(new ConstraintTangency(constId, K, L, M, N));
                 break;
+            case CircleTangency:
+                add(new ConstraintCircleTangency(constId, K,L,M,N));
+                break;
             case Distance2Points:
                 add(new ConstraintDistance2Points(constId, K, L, parameter));
                 add(parameter);

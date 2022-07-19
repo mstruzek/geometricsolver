@@ -260,6 +260,29 @@ public enum GeometricConstraintType {
         }
 
     },
+    /** Stycznosc dwuch okręgów */
+    CircleTangency {
+        @Override
+        public int size() {
+            return 1;
+        }
+
+        @Override
+        public String getHelp() {
+            return "Stycznosc okregu do okregu \n" +
+                "K - srodek okregu 1 \n" +
+                "L - srodek okregu 1 \n" +
+                "M - srodek okregu 2\n" +
+                "N - promien okregu 2\n";
+        }
+
+        @Override
+        public boolean isParametrized() {
+            return false;
+        }
+
+    },
+
     /** TERAZ WIEZY z PARAMETREM */
 
     /**

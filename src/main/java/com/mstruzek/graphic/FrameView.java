@@ -41,7 +41,7 @@ public class FrameView extends JFrame {
     public static final Color SKETCH_INFO_BORDER_COLOR = Color.darkGray;
     public static final Color SKETCH_INFO_BACKGROUND_COLOR = new Color(250, 200, 200);
     public static final Color FRAME_BACKGROUND_COLOR = null; /// Default Wash
-    public static final String FRAME_TITLE = "M-Sketcher 2009-2022";
+    public static final String FRAME_TITLE = "GCS GeometricSolver 2009-2022";
     public static final int SOLVER_PANEL_HEIGHT = 140;
     public static final int SOLVER_PANEL_WIDTH = 920;
 
