@@ -72,27 +72,20 @@ public class ConstraintAngle2Lines extends Constraint {
         Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
         Vector uLKdNM = LK.unit().dot(NM.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
         Vector uNMdLK = NM.unit().dot(LK.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
+        MatrixDouble mt = mts;
         int j;
-
         //k
         j = po.get(k_id);
-        mts.setQuick(0, j * 2, -NM.x + uLKdNM.x);
-        mts.setQuick(0, j * 2 + 1, -NM.y + uLKdNM.y);
-
+        mt.setVector(0, j * 2, uLKdNM.sub(NM));
         //l
         j = po.get(l_id);
-        mts.setQuick(0, j * 2, NM.x - uLKdNM.x);
-        mts.setQuick(0, j * 2 + 1, NM.y - uLKdNM.y);
-
+        mt.setVector(0, j * 2, NM.sub(uLKdNM));
         //m
         j = po.get(m_id);
-        mts.setQuick(0, j * 2, -LK.x + uNMdLK.x);
-        mts.setQuick(0, j * 2 + 1, -LK.y + uNMdLK.y);
-
+        mt.setVector(0, j * 2, uNMdLK.sub(LK));
         //n
         j = po.get(n_id);
-        mts.setQuick(0, j * 2, LK.x - uNMdLK.x);
-        mts.setQuick(0, j * 2 + 1, LK.y - uNMdLK.y);
+        mt.setVector(0, j * 2, LK.sub(uNMdLK));
     }
 
     @Override

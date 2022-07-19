@@ -22,8 +22,8 @@ public class FixLine extends GeometricPrimitive {
 
     public FixLine(int id, Vector a1, Vector b1) {
         super(id, GeometricPrimitiveType.FixLine);
-        a = new Vector(a1);
-        b = new Vector(b1);
+        a = new Vector(a1.getX(), a1.getY());
+        b = new Vector(b1.getX(), b1.getY());
     }
 
     public String toString() {

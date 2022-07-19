@@ -19,12 +19,6 @@ public class Vector {
         this.y = y;
     }
 
-    public Vector(Vector vec1) {
-        super();
-        this.x = vec1.x;
-        this.y = vec1.y;
-    }
-
     /**
      * Zwraca sume bierzacego i zadanego wektora; C=A+B
      */

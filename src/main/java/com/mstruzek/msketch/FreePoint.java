@@ -46,9 +46,9 @@ public class FreePoint extends GeometricPrimitive {
         } else {
             // Punkty kontrolne wyznaczamy na podstawie distance,agnle : distance- to odleglosc wektora a i b od p1
             // Kolejnosc inicjalizacji ma znaczenie
-            a = new Point(Point.nextId(), v00.sub(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))).x, v00.sub(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))).y);
-            p1 = new Point(Point.nextId(), v00.x, v00.y);
-            b = new Point(Point.nextId(), v00.add(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))).x, v00.add(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))).y);
+            a = new Point(Point.nextId(), v00.sub(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
+            p1 = new Point(Point.nextId(), v00);
+            b = new Point(Point.nextId(), v00.add(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
             // przelicz odleglosci
             setAssociateConstraints(null);
         }
@@ -75,8 +75,8 @@ public class FreePoint extends GeometricPrimitive {
     public void evaluateGuidePoints() {
         Vector va = (p1.sub(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
         Vector vb = (p1.add(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
-        a.setLocation(va.x, va.y);
-        b.setLocation(vb.x, vb.y);
+        a.setLocation(va.getX(), va.getY());
+        b.setLocation(vb.getX(), vb.getY());
         // przelicz odleglosci
         calculateDistance();
 

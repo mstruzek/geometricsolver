@@ -70,10 +70,10 @@ public class Arc extends GeometricPrimitive {
             vc = v20.add(v20.sub(v10).dot(alfa));
             vd = v30.add(v20.sub(v10).Rot(-90).dot(alfa));
 
-            a = new Point(p1.getId() - 4, va.x, va.y);
-            b = new Point(p1.getId() - 3, vb.x, vb.y);
-            c = new Point(p1.getId() - 2, vc.x, vc.y);
-            d = new Point(p1.getId() - 1, vd.x, vd.y);
+            a = new Point(p1.getId() - 4, va);
+            b = new Point(p1.getId() - 3, vb);
+            c = new Point(p1.getId() - 2, vc);
+            d = new Point(p1.getId() - 1, vd);
 
         } else {
             v3 = v10.add(v20.sub(v10).Rot(-90));
@@ -82,14 +82,14 @@ public class Arc extends GeometricPrimitive {
             vc = v20.add(v20.sub(v10).dot(alfa));
             vd = v3.add(v20.sub(v10).Rot(-90).dot(alfa));
 
-            a = new Point(Point.nextId(), va.x, va.y);
-            b = new Point(Point.nextId(), vb.x, vb.y);
-            c = new Point(Point.nextId(), vc.x, vc.y);
-            d = new Point(Point.nextId(), vd.x, vd.y);
+            a = new Point(Point.nextId(), va);
+            b = new Point(Point.nextId(), vb);
+            c = new Point(Point.nextId(), vc);
+            d = new Point(Point.nextId(), vd);
 
-            p1 = new Point(Point.nextId(), v10.x, v10.y);
-            p2 = new Point(Point.nextId(), v20.x, v20.y);
-            p3 = new Point(Point.nextId(), v3.x, v3.y);
+            p1 = new Point(Point.nextId(), v10);
+            p2 = new Point(Point.nextId(), v20);
+            p3 = new Point(Point.nextId(), v3);
             setAssociateConstraints(null);
         }
         calculateDistance();
@@ -128,11 +128,11 @@ public class Arc extends GeometricPrimitive {
         Vector vd = (Vector) p3.add(p3.sub(p1).unit().dot(p2.sub(p1).length()).dot(alfa));
         Vector v3 = (Vector) p1.add(p3.sub(p1).unit().dot(p2.sub(p1).length()));
 
-        a.setLocation(va.x, va.y);
-        b.setLocation(vb.x, vb.y);
-        c.setLocation(vc.x, vc.y);
-        d.setLocation(vd.x, vd.y);
-        p3.setLocation(v3.x, v3.y);
+        a.setLocation(va.getX(), va.getY());
+        b.setLocation(vb.getX(), vb.getY());
+        c.setLocation(vc.getX(), vc.getY());
+        d.setLocation(vd.getX(), vd.getY());
+        p3.setLocation(v3.getX(), v3.getY());
 
         calculateDistance();
 

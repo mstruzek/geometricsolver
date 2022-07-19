@@ -18,7 +18,7 @@ public enum GeometricConstraintType {
         public String getHelp() {
 
             return """
-                Funkcja powoduje zamocowanie danego punktu w obecnym miejscu
+                Zamocowanie punktu w stałym aktualnym położeniu.
                 K - punkt do zamocowania
                 """;
         }

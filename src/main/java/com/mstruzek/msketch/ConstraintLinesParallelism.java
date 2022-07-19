@@ -87,37 +87,32 @@ public class ConstraintLinesParallelism extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
+        MatrixDouble mt = mts;
         int i;
         if ((m == null) && (n == null)) {
             Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
             Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
             //k
             i = po.get(k_id);
-            mts.setQuick(0, i * 2, -NM.y);
-            mts.setQuick(0, i * 2 + 1, NM.x);
+            mt.setVector(0, i * 2, NM.  cr());
             //l
             i = po.get(l_id);
-            mts.setQuick(0, i * 2, NM.y);
-            mts.setQuick(0, i * 2 + 1, -NM.x);
+            mt.setVector(0, i * 2, NM.cr().dot(-1.0));
             //m
             i = po.get(m_id);
-            mts.setQuick(0, i * 2, LK.y);
-            mts.setQuick(0, i * 2 + 1, -LK.x);
+            mt.setVector(0, i * 2, LK.cr().dot(-1.0));
             //n
             i = po.get(n_id);
-            mts.setQuick(0, i * 2, -LK.y);
-            mts.setQuick(0, i * 2 + 1, LK.x);
+            mt.setVector(0, i * 2, LK.cr());
 
         } else {
             Vector NM = n.sub(m);
             //k
             i = po.get(k_id);
-            mts.setQuick(0, i * 2, -NM.y);
-            mts.setQuick(0, i * 2 + 1, NM.x);
+            mt.setVector(0, i * 2, NM.cr());
             //l
             i = po.get(l_id);
-            mts.setQuick(0, i * 2, NM.y);
-            mts.setQuick(0, i * 2 + 1, -NM.x);
+            mt.setVector(0, i * 2, NM.cr().dot(-1.0));
         }
     }
 

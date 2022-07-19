@@ -58,10 +58,10 @@ public class Line extends GeometricPrimitive {
         } else {
             //ustawienie pozycji dla punktow kontrolnych
             //Kolejnosc inicjalizacji ma znaczenie
-            a = new Point(Point.nextId(), v10.sub(v20).dot(alfa).add(v10).x, v10.sub(v20).dot(alfa).add(v10).y);
-            p1 = new Point(Point.nextId(), v10.x, v10.y);//przepisujemy wartosci
-            p2 = new Point(Point.nextId(), v20.x, v20.y);
-            b = new Point(Point.nextId(), v20.sub(v10).dot(alfa).add(v20).x, v20.sub(v10).dot(alfa).add(v20).y);
+            a = new Point(Point.nextId(), v10.sub(v20).dot(alfa).add(v10));
+            p1 = new Point(Point.nextId(), v10);//przepisujemy wartosci
+            p2 = new Point(Point.nextId(), v20);
+            b = new Point(Point.nextId(), v20.sub(v10).dot(alfa).add(v20));
             setAssociateConstraints(null);
         }
         //FIXME  -Trzeba pomyslec o naciagu wstepnym sprezyn
@@ -93,8 +93,8 @@ public class Line extends GeometricPrimitive {
 
         Vector va = (Vector) (p1.sub(p2).dot(alfa).add(p1));
         Vector vb = (Vector) (p2.sub(p1).dot(alfa).add(p2));
-        a.setLocation(va.x, va.y);
-        b.setLocation(vb.x, vb.y);
+        a.setLocation(va.getX(), va.getY());
+        b.setLocation(vb.getX(), vb.getY());
 
         calculateDistance();
 

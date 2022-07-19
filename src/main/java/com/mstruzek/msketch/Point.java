@@ -19,10 +19,9 @@ public class Point extends Vector {
      */
     protected int id;
 
-    public Vector Vector = this;
 
     public Point(int id, Vector v1) {
-        this(id, v1.x, v1.y);
+        this(id, v1.getX(), v1.getY());
     }
 
     public Point(int id, double x, double y) {
@@ -32,7 +31,7 @@ public class Point extends Vector {
     }
 
     public String toString() {
-        return String.format("p%d : [ %7.3f , %7.3f ]", id, x, y);
+        return String.format("p%d : [ %7.3f , %7.3f ]", id, getX(), getY());
     }
 
     public Vector Vector() {

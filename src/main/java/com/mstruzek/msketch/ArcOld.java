@@ -62,16 +62,16 @@ public class ArcOld extends GeometricPrimitive {
     public ArcOld(Vector p10, Vector p20, Vector p30) {
         super(nextId(), GeometricPrimitiveType.Arc);
         // FreePoint(a,p1,b)
-        a = new Point(Point.nextId(), p10.dot(2).sub(p20).x, p10.dot(2).sub(p20).y);
-        p1 = new Point(Point.nextId(), p10.x, p10.y);
-        b = new Point(Point.nextId(), p20.x, p20.y);
+        a = new Point(Point.nextId(), p10.dot(2).sub(p20));
+        p1 = new Point(Point.nextId(), p10);
+        b = new Point(Point.nextId(), p20);
 
         //  Line(c,p2,p3,d)
         Vector a = p20.sub(p10);
-        c = new Point(Point.nextId(), p10.add(a.Rot(-90).dot(3)).x, p10.add(a.Rot(-90).dot(3)).y);
-        p2 = new Point(Point.nextId(), p10.add(a.Rot(-90)).x, p10.add(a.Rot(-90)).y);
-        p3 = new Point(Point.nextId(), p10.add(a.Rot(90)).x, p10.add(a.Rot(90)).y);
-        d = new Point(Point.nextId(), p10.add(a.Rot(90).dot(3)).x, p10.add(a.Rot(90).dot(3)).y);
+        c = new Point(Point.nextId(), p10.add(a.Rot(-90).dot(3)));
+        p2 = new Point(Point.nextId(), p10.add(a.Rot(-90)));
+        p3 = new Point(Point.nextId(), p10.add(a.Rot(90)));
+        d = new Point(Point.nextId(), p10.add(a.Rot(90).dot(3)));
         calculateDistance();
         setAssociateConstraints(null);
     }
@@ -113,10 +113,10 @@ public class ArcOld extends GeometricPrimitive {
         Vector vd = (Vector) p3.add(p3.sub(p2));
 
 
-        a.setLocation(va.x, va.y);
-        b.setLocation(vb.x, vb.y);
-        c.setLocation(vc.x, vc.y);
-        d.setLocation(vd.x, vd.y);
+        a.setLocation(va.getX(), va.getY());
+        b.setLocation(vb.getX(), vb.getY());
+        c.setLocation(vc.getX(), vc.getY());
+        d.setLocation(vd.getX(), vd.getY());
 
         calculateDistance();
 
