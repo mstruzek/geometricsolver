@@ -202,11 +202,14 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
                 throw new Error("columnar vector, out of bound subscript use");
             }
 
-            DoubleMatrix1D doubleMatrix1D = mt.unwrap(DoubleMatrix1D.class);
-            if (doubleMatrix1D != null) {
-                DoubleMatrix1D viewPart = this.mt.viewPart(offsetRow, mt.height());
+            MatrixDouble2D matrix2d = mt.unwrap(MatrixDouble2D.class);
+            if (matrix2d != null) {
 
-                viewPart.assign(doubleMatrix1D);
+                double a00 = matrix2d.m[0][0];
+                double a10 = matrix2d.m[1][0];
+
+                this.mt.setQuick(offsetRow, a00);
+                this.mt.setQuick(offsetRow + 1, a10);
 
                 return this;
             }
@@ -219,14 +222,12 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
                 return this;
             }
 
-            MatrixDouble2D matrix2d = mt.unwrap(MatrixDouble2D.class);
-            if (matrix2d != null) {
 
-                double a00 = matrix2d.m[0][0];
-                double a10 = matrix2d.m[1][0];
+            DoubleMatrix1D doubleMatrix1D = mt.unwrap(DoubleMatrix1D.class);
+            if (doubleMatrix1D != null) {
+                DoubleMatrix1D viewPart = this.mt.viewPart(offsetRow, mt.height());
 
-                this.mt.setQuick(offsetRow, a00);
-                this.mt.setQuick(offsetRow + 1, a10);
+                viewPart.assign(doubleMatrix1D);
 
                 return this;
             }
@@ -289,12 +290,17 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
 
         private DoubleMatrix2D mt;
 
+        // column intention or row intention depends on mt dimension
+        boolean colIntention;
+
         private SparseDoubleMatrix2DImpl(DoubleMatrix2D view) {
             this.mt = view;
+            this.colIntention = this.mt.rows() > this.mt.columns();
         }
 
         public SparseDoubleMatrix2DImpl(int rows, int columns) {
             this.mt = new SparseDoubleMatrix2D(rows, columns);
+            this.colIntention = this.mt.rows() > this.mt.columns();
         }
 
         @Override
@@ -369,13 +375,6 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         @Override
         public MatrixDouble setSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
 
-            SparseDoubleMatrix2D doubleMatrix2D = mt.unwrap(SparseDoubleMatrix2D.class);
-            if (null != doubleMatrix2D) {
-                DoubleMatrix2D viewPart = this.mt.viewPart(offsetRow, offsetCol, doubleMatrix2D.rows(), doubleMatrix2D.columns());
-                viewPart.assign(doubleMatrix2D);
-                return this;
-            }
-
             SmallMatrixDouble smd = mt.unwrap(SmallMatrixDouble.class);
             if (smd != null) {
                 DoubleMatrix2D viewPart = this.mt.viewPart(offsetRow, offsetCol, mt.height(), mt.width());
@@ -390,23 +389,19 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
                 return this;
             }
 
+            SparseDoubleMatrix2D doubleMatrix2D = mt.unwrap(SparseDoubleMatrix2D.class);
+            if (null != doubleMatrix2D) {
+                DoubleMatrix2D viewPart = this.mt.viewPart(offsetRow, offsetCol, doubleMatrix2D.rows(), doubleMatrix2D.columns());
+                viewPart.assign(doubleMatrix2D);
+                return this;
+            }
+
+
             throw new Error("not implemented");
         }
 
         @Override
         public MatrixDouble addSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
-
-            SparseDoubleMatrix2D doubleMatrix2D = mt.unwrap(SparseDoubleMatrix2D.class);
-            if (doubleMatrix2D != null) {
-                DoubleMatrix2D viewPart = this.mt.viewPart(offsetRow, offsetCol, doubleMatrix2D.rows(), doubleMatrix2D.columns());
-                viewPart.assign(doubleMatrix2D, new DoubleDoubleFunction() {
-                    @Override
-                    public double apply(double v, double v1) {
-                        return v + v1;                              /// v = v + v1
-                    }
-                });
-                return this;
-            }
 
             SmallMatrixDouble smd = mt.unwrap(SmallMatrixDouble.class);
             if (smd != null) {
@@ -422,15 +417,23 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
                 return this;
             }
 
+            SparseDoubleMatrix2D doubleMatrix2D = mt.unwrap(SparseDoubleMatrix2D.class);
+            if (doubleMatrix2D != null) {
+                DoubleMatrix2D viewPart = this.mt.viewPart(offsetRow, offsetCol, doubleMatrix2D.rows(), doubleMatrix2D.columns());
+                viewPart.assign(doubleMatrix2D, new DoubleDoubleFunction() {
+                    @Override
+                    public double apply(double v, double v1) {
+                        return v + v1;                              /// v = v + v1
+                    }
+                });
+                return this;
+            }
+
             throw new Error("not implemented");
         }
 
         @Override
         public MatrixDouble setVector(int r, int c, Vector vector) {
-
-            ///  !(this.mt.rows() == 1 || this.mt.rows() == 2 ) &&
-            boolean colIntention = this.mt.rows() > this.mt.columns();
-
             if (colIntention) {
                 this.mt.setQuick(r + 0, c, vector.getX());
                 this.mt.setQuick(r + 1, c, vector.getY());
