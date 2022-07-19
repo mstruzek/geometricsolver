@@ -62,21 +62,20 @@ public class ConstraintTangency extends Constraint {
         double nm = NM.dot(NM);
         double lk = LK.dot(LK);
         double CRS = LK.cr(MK);
-        int j = 0;
-
-        // K
+        int j;
+        //k
         j = po.get(k_id);
         mts.setVector(0, j * 2, ML.cr().dot(2.0 * CRS).add(LK.dot(2.0 * nm)));
 
-        // L
+        //l
         j = po.get(l_id);
         mts.setVector(0, j * 2, MK.cr().dot(-2.0 * CRS).add(LK.dot(-2.0 * nm)));
 
-        // M
+        //m
         j = po.get(m_id);
         mts.setVector(0, j * 2, LK.cr().dot(2.0 * CRS).add(NM.dot(2.0 * lk)));
 
-        // N
+        //n
         j = po.get(n_id);
         mts.setVector(0, j * 2, NM.dot(-2.0 * lk));
     }
@@ -103,8 +102,8 @@ public class ConstraintTangency extends Constraint {
         MatrixDouble R = MatrixDouble.matrixR();
 
         MatrixDouble mat;
-        int i = 0;
-        int j = 0;
+        int i;
+        int j;
 
         //k,k
         i = po.get(k_id);

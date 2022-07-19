@@ -66,26 +66,19 @@ public class ConstraintCircleTangency extends Constraint {
         Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
         Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
         Vector vMK = dbPoint.get(m_id).sub(dbPoint.get(k_id)).unit();
-        int j = 0;
-        for (Integer i : dbPoint.keySet()) {
-            //k
-            if (k_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, vMK.sub(vLK));
-            }
-            //l
-            if (l_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, vLK);
-            }
-            //m
-            if (m_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, vMK.dot(-1.0).sub(vNM));
-            }
-            //n
-            if (n_id == dbPoint.get(i).id) {
-                mt.setVector(0, j * 2, vNM);
-            }
-            j++;
-        }
+        int j;
+        //k
+        j = po.get (k_id);
+        mt.setVector(0, j * 2, vMK.sub(vLK));
+        //l
+        j = po.get (l_id);
+        mt.setVector(0, j * 2, vLK);
+        //m
+        j = po.get (m_id);
+        mt.setVector(0, j * 2, vMK.dot(-1.0).sub(vNM));
+        //n
+        j = po.get (n_id);
+        mt.setVector(0, j * 2, vNM);
     }
 
     @Override

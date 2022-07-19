@@ -41,10 +41,9 @@ public class ConstraintParametrizedYFix extends Constraint {
     @Override
     public void getJacobian(MatrixDouble mts) {
         int j;
-
-        /// K
+        // K
         j = po.get(k_id);
-        /// wspolrzedna [Y]
+        // wspolrzedna [Y]
         mts.setQuick(0, j * 2 + 1, 1.0);
     }
 

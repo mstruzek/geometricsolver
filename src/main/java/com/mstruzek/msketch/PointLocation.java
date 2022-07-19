@@ -4,8 +4,10 @@ import static com.mstruzek.msketch.Point.dbPoint;
 
 /**
  * Absolut point offset from matrix 0,0 coordinates for database point set .
+ *
+ * For performance reason. Even in case of large hols this table should provide performance gain.
  */
-class PointLocation {
+public class PointLocation {
 
     private static final PointLocation INSTANCE = new PointLocation();
 
@@ -13,11 +15,14 @@ class PointLocation {
         return INSTANCE;
     }
 
-    static int[] table;
-
     private PointLocation() {
     }
 
+    private static int[] table;
+
+    /**
+     * Setup just after model is freezed before primary evaluation of Jacobian and Hessian.
+     */
     public static void setup() {
         table = new int[1 + dbPoint.keySet().stream().max(Integer::compare).orElse(0)];
         int j = 0;

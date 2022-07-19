@@ -406,6 +406,8 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = new ConstraintTangency(Constraint.nextId(), p10, p20, p30, p40);
 
+        geometricSolver.solveSystem(solverStat);
+
         MatrixDouble matrixDouble = MatrixDouble.matrix2D(1, Point.dbPoint.size() * 2, 0.0);
         constraint.getJacobian(matrixDouble);
 

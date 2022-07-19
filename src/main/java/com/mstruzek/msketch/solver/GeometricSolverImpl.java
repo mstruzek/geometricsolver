@@ -3,10 +3,7 @@ package com.mstruzek.msketch.solver;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
-import com.mstruzek.msketch.Constraint;
-import com.mstruzek.msketch.GeometricPrimitive;
-import com.mstruzek.msketch.MatrixDoubleUtility;
-import com.mstruzek.msketch.Point;
+import com.mstruzek.msketch.*;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 import com.mstruzek.msketch.matrix.PointUtility;
 
@@ -132,12 +129,15 @@ public class GeometricSolverImpl implements GeometricSolver {
 
         /// Inicjalizacje bazowych macierzy rzadkich - SparseMatrix
 
+        /// --->
+        // instead loop over vector space provide static access to point location in VS.
+        // - reference locations for Jacobian and Hessian evaluation !
+        PointLocation.setup();
+
         A = MatrixDouble.matrix2D(dimension, dimension, 0.0);
         Fq = MatrixDouble.matrix2D(size, size, 0.0);
 
-
         Wq = MatrixDouble.matrix2D(coffSize, size, 0.0);
-
         Hs = MatrixDouble.matrix2D(size, size, 0.0);
 
         /// macierz sztywnosci stala w czasie
@@ -180,6 +180,8 @@ public class GeometricSolverImpl implements GeometricSolver {
             b.dot(-1);
 
 /// macierz `A
+
+
             /// JACOBIAN
             Constraint.getFullJacobian(Wq);                     /// Jq = d(Fi)/dq
 

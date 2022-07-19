@@ -74,22 +74,22 @@ public class ConstraintAngle2Lines extends Constraint {
         Vector uNMdLK = NM.unit().dot(LK.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
         int j;
 
-        /// K
+        //k
         j = po.get(k_id);
         mts.setQuick(0, j * 2, -NM.x + uLKdNM.x);
         mts.setQuick(0, j * 2 + 1, -NM.y + uLKdNM.y);
 
-        /// L
+        //l
         j = po.get(l_id);
         mts.setQuick(0, j * 2, NM.x - uLKdNM.x);
         mts.setQuick(0, j * 2 + 1, NM.y - uLKdNM.y);
 
-        /// M
+        //m
         j = po.get(m_id);
         mts.setQuick(0, j * 2, -LK.x + uNMdLK.x);
         mts.setQuick(0, j * 2 + 1, -LK.y + uNMdLK.y);
 
-        /// N
+        //n
         j = po.get(n_id);
         mts.setQuick(0, j * 2, LK.x - uNMdLK.x);
         mts.setQuick(0, j * 2 + 1, LK.y - uNMdLK.y);
