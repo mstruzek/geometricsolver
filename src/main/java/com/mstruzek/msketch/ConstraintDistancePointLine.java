@@ -62,19 +62,20 @@ public class ConstraintDistancePointLine extends Constraint {
         Vector ML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
         double d = Parameter.dbParameter.get(param_id).getValue(); /// parameter value
         double z = LK.cr(MK);
+        MatrixDouble mt = mts;
         int j;
 
         //k
         j = po.get(k_id);
-        mts.setVector(0, 2 * j, ML.cr().dot(z * 2).add(LK.dot(2 * d * d)));
+        mt.setVector(0, 2 * j, ML.cr().dot(z * 2).add(LK.dot(2 * d * d)));
 
         //l
         j = po.get(l_id);
-        mts.setVector(0, 2 * j, MK.cr().dot(z * -2.0).add(LK.dot(-2.0 * d * d)));
+        mt.setVector(0, 2 * j, MK.cr().dot(z * -2.0).add(LK.dot(-2.0 * d * d)));
 
         //m
         j = po.get(m_id);
-        mts.setVector(0, 2 * j, LK.cr().dot(z * 2.0));
+        mt.setVector(0, 2 * j, LK.cr().dot(z * 2.0));
     }
 
     @Override

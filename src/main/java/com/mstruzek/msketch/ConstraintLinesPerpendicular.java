@@ -65,28 +65,29 @@ public class ConstraintLinesPerpendicular extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
+        MatrixDouble mt = mts;
         int j = 0;
         if ((m == null) && (n == null)) {
             /// K
             j = po.get(k_id);
-            mts.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
+            mt.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
             /// L
             j = po.get(l_id);
-            mts.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
+            mt.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
             /// M
             j = po.get(m_id);
-            mts.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
+            mt.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
             /// N
             j = po.get(n_id);
-            mts.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
+            mt.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
 
         } else {
             /// K
             j = po.get(k_id);
-            mts.setVector(0, j * 2, m.sub(n));
+            mt.setVector(0, j * 2, m.sub(n));
             /// L
             j = po.get(l_id);
-            mts.setVector(0, j * 2, m.sub(n).dot(-1.0));
+            mt.setVector(0, j * 2, m.sub(n).dot(-1.0));
         }
     }
 

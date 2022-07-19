@@ -41,13 +41,14 @@ public class ConstraintVerticalPoint extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
+        MatrixDouble mt = mts;
         int j;
         //k
         j = po.get(k_id);
-        mts.setQuick(0, j * 2 + 1, 1.0);         // zero-Y
+        mt.setQuick(0, j * 2 + 1, 1.0);         // zero-Y
         //l
         j = po.get(l_id);
-        mts.setQuick(0, j * 2 + 1, -1.0);       // zero-Y
+        mt.setQuick(0, j * 2 + 1, -1.0);       // zero-Y
     }
 
     @Override

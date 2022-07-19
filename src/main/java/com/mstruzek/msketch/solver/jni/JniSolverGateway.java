@@ -1,5 +1,15 @@
 package com.mstruzek.msketch.solver.jni;
 
+/**
+ *  nie wygdonie tak malym interfejsem -- albo SWIG !
+ *
+ *  w takim modelu zydkujemy serializacje/deserializacje w javie i w C20  !
+ *
+ *  - mniej rekompilacji tej wersji naglowka !
+ *
+ *  - wspolny kontrakt nierozerwalny , single version !
+ *
+ */
 public class JniSolverGateway {
 
     /**
@@ -10,7 +20,6 @@ public class JniSolverGateway {
     native long registerBuffer(long size);
 
     native long freeBuffer(long address);
-
 
     /**
      * Serialize object into shared buffer in Java, and deserializer on the other side.
@@ -23,7 +32,7 @@ public class JniSolverGateway {
     native void writeObject(long type, int id);
 
     /**
-     * Run single execution function identified by Id.
+     * Run single execution function identified by Id, usually kernel function or cublas api function.
      * @return 0 on success otherwise read error status.
      */
     native int execute(int action);
