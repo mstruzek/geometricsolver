@@ -1,0 +1,42 @@
+#--signature: GeometricConstraintSolver  2009-2022
+#--file-format: V1
+
+#--definition-begin: 
+
+BEGIN Point:
+     ID: 1;
+     PX: 129.2779723849963;
+     PY: 91.64667244153968;
+END;
+
+BEGIN Point:
+     ID: 2;
+     PX: 282.2569314808397;
+     PY: 91.64667244153968;
+END;
+
+
+BEGIN GeometricPrimitive:
+     ID: 0;
+     TYPE: Line;
+     P1: 1;
+     P2: 2;
+     P3: -1;
+END;
+
+
+
+BEGIN Constraint:
+     ID: 2;
+     TYPE: SetHorizontal;
+     K: 1;
+     L: 2;
+     M: 0;
+     N: 0;
+     PARAM: -1;
+END;
+
+
+
+#--definition-end: 
+

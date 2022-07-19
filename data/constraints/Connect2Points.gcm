@@ -1,0 +1,62 @@
+#--signature: GeometricConstraintSolver  2009-2022
+#--file-format: V1
+
+#--definition-begin: 
+
+BEGIN Point:
+     ID: 1;
+     PX: 140.86666666666667;
+     PY: 139.86666666666667;
+END;
+
+BEGIN Point:
+     ID: 2;
+     PX: 249.0;
+     PY: 149.0;
+END;
+
+BEGIN Point:
+     ID: 5;
+     PX: 249.0;
+     PY: 149.0;
+END;
+
+BEGIN Point:
+     ID: 6;
+     PX: 306.1333333333333;
+     PY: 187.13333333333333;
+END;
+
+
+BEGIN GeometricPrimitive:
+     ID: 0;
+     TYPE: Line;
+     P1: 1;
+     P2: 2;
+     P3: -1;
+END;
+
+BEGIN GeometricPrimitive:
+     ID: 1;
+     TYPE: Line;
+     P1: 5;
+     P2: 6;
+     P3: -1;
+END;
+
+
+
+BEGIN Constraint:
+     ID: 4;
+     TYPE: Connect2Points;
+     K: 2;
+     L: 5;
+     M: -1;
+     N: -1;
+     PARAM: -1;
+END;
+
+
+
+#--definition-end: 
+

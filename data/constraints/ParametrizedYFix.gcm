@@ -1,0 +1,47 @@
+#--signature: GeometricConstraintSolver  2009-2022
+#--file-format: V1
+
+#--definition-begin: 
+
+BEGIN Point:
+     ID: 1;
+     PX: 222.69625956303665;
+     PY: 99.99999999999999;
+END;
+
+BEGIN Point:
+     ID: 2;
+     PX: 387.4082134334224;
+     PY: 132.21008342881748;
+END;
+
+
+BEGIN GeometricPrimitive:
+     ID: 0;
+     TYPE: Line;
+     P1: 1;
+     P2: 2;
+     P3: -1;
+END;
+
+
+BEGIN Parameter:
+     ID: 1;
+     VALUE: 200.0;
+END;
+
+
+BEGIN Constraint:
+     ID: 3;
+     TYPE: ParametrizedYFix;
+     K: 1;
+     L: -1;
+     M: -1;
+     N: -1;
+     PARAM: 1;
+END;
+
+
+
+#--definition-end: 
+

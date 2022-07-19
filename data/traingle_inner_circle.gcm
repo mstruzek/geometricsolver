@@ -1,0 +1,187 @@
+#--signature: GeometricConstraintSolver  2009-2022
+#--file-format: V1
+
+#--definition-begin: 
+
+BEGIN Point:
+     ID: 1;
+     PX: 279.5093937809373;
+     PY: 203.30032268859247;
+END;
+
+BEGIN Point:
+     ID: 2;
+     PX: 279.5093937809373;
+     PY: 730.2005028639815;
+END;
+
+BEGIN Point:
+     ID: 5;
+     PX: 401.6824413929454;
+     PY: 608.0274552089326;
+END;
+
+BEGIN Point:
+     ID: 6;
+     PX: 471.4657824184155;
+     PY: 708.3097623307574;
+END;
+
+BEGIN Point:
+     ID: 9;
+     PX: 279.5093937809366;
+     PY: 730.2005028639815;
+END;
+
+BEGIN Point:
+     ID: 10;
+     PX: 629.507753987729;
+     PY: 730.2005028639815;
+END;
+
+BEGIN Point:
+     ID: 13;
+     PX: 279.5093937809372;
+     PY: 203.30032268859222;
+END;
+
+BEGIN Point:
+     ID: 14;
+     PX: 629.507753987729;
+     PY: 730.2005028639813;
+END;
+
+
+BEGIN GeometricPrimitive:
+     ID: 0;
+     TYPE: Line;
+     P1: 1;
+     P2: 2;
+     P3: -1;
+END;
+
+BEGIN GeometricPrimitive:
+     ID: 1;
+     TYPE: Circle;
+     P1: 5;
+     P2: 6;
+     P3: -1;
+END;
+
+BEGIN GeometricPrimitive:
+     ID: 2;
+     TYPE: Line;
+     P1: 9;
+     P2: 10;
+     P3: -1;
+END;
+
+BEGIN GeometricPrimitive:
+     ID: 3;
+     TYPE: Line;
+     P1: 13;
+     P2: 14;
+     P3: -1;
+END;
+
+
+BEGIN Parameter:
+     ID: 0;
+     VALUE: 100.0;
+END;
+
+
+BEGIN Constraint:
+     ID: 4;
+     TYPE: Tangency;
+     K: 1;
+     L: 2;
+     M: 5;
+     N: 6;
+     PARAM: -1;
+END;
+
+BEGIN Constraint:
+     ID: 7;
+     TYPE: LinesPerpendicular;
+     K: 1;
+     L: 2;
+     M: 9;
+     N: 10;
+     PARAM: -1;
+END;
+
+BEGIN Constraint:
+     ID: 8;
+     TYPE: Connect2Points;
+     K: 2;
+     L: 9;
+     M: -1;
+     N: -1;
+     PARAM: -1;
+END;
+
+BEGIN Constraint:
+     ID: 11;
+     TYPE: Connect2Points;
+     K: 13;
+     L: 1;
+     M: -1;
+     N: -1;
+     PARAM: -1;
+END;
+
+BEGIN Constraint:
+     ID: 12;
+     TYPE: Connect2Points;
+     K: 10;
+     L: 14;
+     M: -1;
+     N: -1;
+     PARAM: -1;
+END;
+
+BEGIN Constraint:
+     ID: 13;
+     TYPE: Tangency;
+     K: 13;
+     L: 14;
+     M: 5;
+     N: 6;
+     PARAM: -1;
+END;
+
+BEGIN Constraint:
+     ID: 14;
+     TYPE: Tangency;
+     K: 9;
+     L: 10;
+     M: 5;
+     N: 6;
+     PARAM: -1;
+END;
+
+BEGIN Constraint:
+     ID: 15;
+     TYPE: SetHorizontal;
+     K: 9;
+     L: 10;
+     M: 0;
+     N: 0;
+     PARAM: -1;
+END;
+
+BEGIN Constraint:
+     ID: 16;
+     TYPE: Distance2Points;
+     K: 5;
+     L: 6;
+     M: -1;
+     N: -1;
+     PARAM: 0;
+END;
+
+
+
+#--definition-end: 
+

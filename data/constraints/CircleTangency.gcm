@@ -1,0 +1,62 @@
+#--signature: GeometricConstraintSolver  2009-2022
+#--file-format: V1
+
+#--definition-begin: 
+
+BEGIN Point:
+     ID: 9;
+     PX: 281.4250049563635;
+     PY: 383.82685542663404;
+END;
+
+BEGIN Point:
+     ID: 10;
+     PX: 351.18585831675745;
+     PY: 467.64871692852813;
+END;
+
+BEGIN Point:
+     ID: 13;
+     PX: 102.66163951590443;
+     PY: 460.56332578429056;
+END;
+
+BEGIN Point:
+     ID: 14;
+     PX: 187.7766175761326;
+     PY: 452.6505009871266;
+END;
+
+
+BEGIN GeometricPrimitive:
+     ID: 2;
+     TYPE: Circle;
+     P1: 9;
+     P2: 10;
+     P3: -1;
+END;
+
+BEGIN GeometricPrimitive:
+     ID: 3;
+     TYPE: Circle;
+     P1: 13;
+     P2: 14;
+     P3: -1;
+END;
+
+
+
+BEGIN Constraint:
+     ID: 16;
+     TYPE: CircleTangency;
+     K: 13;
+     L: 14;
+     M: 9;
+     N: 10;
+     PARAM: -1;
+END;
+
+
+
+#--definition-end: 
+

@@ -17,8 +17,10 @@ public enum GeometricConstraintType {
         @Override
         public String getHelp() {
 
-            return "Funkcja powoduje zamocowanie danego punktu w obecnym miejscu\n" +
-                "K - punkt do zamocowania";
+            return """
+                Funkcja powoduje zamocowanie danego punktu w obecnym miejscu
+                K - punkt do zamocowania
+                """;
         }
 
         @Override
@@ -38,9 +40,11 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Funkcja powoduje zamocowanie punktu w polozeniu X okreslonym wartoscia parametru\n" +
-                "K - punkt do zamocowania [ x ] " +
-                "P - sparametryzowane polozenie X";
+            return """
+                Zamocowanie punktu w polozeniu X okreslonym wartoscia parametru P
+                K - punkt ( x )
+                P - sparametryzowane polozenie x
+                """;
         }
 
         @Override
@@ -60,9 +64,11 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Funkcja powoduje zamocowanie punktu w polozeniu Y okreslonym wartoscia parametru\n" +
-                "K - punkt do zamocowania [ y ] " +
-                "P - sparametryzowane polozenie Y";
+            return """
+                Zamocowanie punktu w polozeniu Y okreslonym wartoscia parametru P
+                K - punkt ( y )
+                P - sparametryzowane polozenie y
+                """;
         }
 
         @Override
@@ -82,9 +88,11 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Dwa punkty maja to samo polozenie , czyli tak zwany wiez Coincidence\n" +
-                "K - pierwszy punkt\n" +
-                "L - drugi punkt\n";
+            return """
+                Zamocowanie punktów na te same współrzędne - Coincident Constraint
+                K - pierwszy punkt
+                L - drugi punkt
+                """;
         }
 
         @Override
@@ -104,9 +112,11 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Dwa punkty maja to samo polozenie , czyli tak zwany wiez Coincidence na osi zero-x\n" +
-                "K - pierwszy punkt\n" +
-                "L - drugi punkt\n";
+            return """
+                Zamocowanie punktów na te same współrzędne w osi X - Coincident Constraint
+                K - pierwszy punkt
+                L - drugi punkt
+                """;
         }
 
         @Override
@@ -116,7 +126,7 @@ public enum GeometricConstraintType {
     },
 
     /**
-     * 2 punkty maja to same polozenie zero-Y - Coincidence
+     * 2 punkty maja to same polozenie zero-Y - Coincident
      */
     VerticalPoint {
         @Override
@@ -126,9 +136,11 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Dwa punkty maja to samo polozenie , czyli tak zwany wiez Coincidence na osi zero-y\n" +
-                "K - pierwszy punkt\n" +
-                "L - drugi punkt\n";
+            return """
+                Zamocowanie punktów na te same współrzędne w osi Y - Coincident Constraint
+                K - pierwszy punkt
+                L - drugi punkt
+                """;
         }
 
         @Override
@@ -148,12 +160,13 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Wiez odpowiedzialny za rownoleglosc dwoch linii\n" +
-                "K - punkt 1 linii 1\n" +
-                "L - punkt 2 linii 1\n" +
-                "M - punkt 1 linii 2\n" +
-                "N - punkt 2 linii 2\n" +
-                "punkty M,N -moga byc punktami nalezacymi do FixLine";
+            return """
+                Więz odpowiedzialny za równoległość dwóch lini - Parallel Constraint
+                K - punkt 1 linii 1
+                L - punkt 2 linii 1
+                M - punkt 1 linii 2
+                N - punkt 2 linii 2
+                """;
         }
 
         @Override
@@ -173,12 +186,13 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Wiez odpowiedzialny za prostopadlosc dwoch linii\n" +
-                "K - punkt 1 linii 1\n" +
-                "L - punkt 2 linii 1\n" +
-                "M - punkt 1 linii 2\n" +
-                "N - punkt 2 linii 2\n" +
-                "punkty M,N -moga byc punktami nalezacymi do FixLine";
+            return """
+                Więz odpowiedzialny za prostopadłość dwóch linii - Perpendicular Constraint
+                K - punkt 1 linii 1
+                L - punkt 2 linii 1
+                M - punkt 1 linii 2
+                N - punkt 2 linii 2
+                punkty M,N -moga byc punktami nalezacymi do FixLine""";
         }
 
         @Override
@@ -198,11 +212,13 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Dlugosc 1 linii = Dlugosci 2 linii \n" +
-                "K - punkt 1 linii 1\n" +
-                "L - punkt 2 linii 1\n" +
-                "M - punkt 1 linii 2\n" +
-                "N - punkt 2 linii 2\n";
+            return """
+                Więz zgodnej długośći dwóch lini\s
+                K - punkt 1 linii 1
+                L - punkt 2 linii 1
+                M - punkt 1 linii 2
+                N - punkt 2 linii 2
+                """;
         }
 
         @Override
@@ -222,12 +238,14 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Dlugosc 1 linii * P  = Dlugosci 2 linii \n" +
-                "K - punkt 1 linii 1\n" +
-                "L - punkt 2 linii 1\n" +
-                "M - punkt 1 linii 2\n" +
-                "N - punkt 2 linii 2\n" +
-                "P - parametr proporcji\n";
+            return """
+                Więz opisuje zależność relacji pomiędzy długościami dwóch wektorów opisany parametrem P.              
+                K - punkt 1 linii 1
+                L - punkt 2 linii 1
+                M - punkt 1 linii 2
+                N - punkt 2 linii 2
+                P - parametr relacji względnej
+                """;
         }
 
         @Override
@@ -237,7 +255,7 @@ public enum GeometricConstraintType {
     },
 
     /**
-     * Stycznosc okregu do prostej
+     * Stycznosc okregu do prostej.
      */
     Tangency {
         @Override
@@ -247,11 +265,13 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Stycznosc okregu do linii \n" +
-                "K - punkt 1 linii 1\n" +
-                "L - punkt 2 linii 1\n" +
-                "M - srodek okregu \n" +
-                "N - promien okregu\n";
+            return """
+                Więz opisuje styczność lini do okręgu.
+                K - punkt 1 na linii 1
+                L - punkt 2 na linii 1
+                M - srodek okregu 1
+                N - promien okregu 1
+                """;
         }
 
         @Override
@@ -260,7 +280,7 @@ public enum GeometricConstraintType {
         }
 
     },
-    /** Stycznosc dwuch okręgów */
+    /** Stycznosc dwóch okręgów */
     CircleTangency {
         @Override
         public int size() {
@@ -269,11 +289,13 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Stycznosc okregu do okregu \n" +
-                "K - srodek okregu 1 \n" +
-                "L - srodek okregu 1 \n" +
-                "M - srodek okregu 2\n" +
-                "N - promien okregu 2\n";
+            return """
+                Więz opisuje stycznosc okręgu do okręgu. Także skumulowaną długość odcinków.\s
+                K - srodek okregu 1
+                L - srodek okregu 1
+                M - srodek okregu 2
+                N - promien okregu 2
+                """;
         }
 
         @Override
@@ -283,7 +305,7 @@ public enum GeometricConstraintType {
 
     },
 
-    /** TERAZ WIEZY z PARAMETREM */
+    /* TERAZ WIEZY z PARAMETREM */
 
     /**
      * Odleglosc pomiedzy punktami
@@ -296,10 +318,12 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Odleglosc 2 punktow sparametryzowana \n" +
-                "K - punkt 1 \n" +
-                "L - punkt 2\n" +
-                "P - parametr\n";
+            return """
+                Więz odległości określony dla punktu L od punkt K opisany parametrem P.
+                K - punkt 1
+                L - punkt 2
+                P - parametr - dystans.
+                """;
         }
 
         @Override
@@ -319,11 +343,13 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Odleglosc punktu od prostej sparametryzowana \n" +
-                "K - punkt 1 linii 1 \n" +
-                "L - punkt 2 linii 1\n" +
-                "M - punkt odlegly od prostej o parametr P\n" +
-                "P - parametr\n";
+            return """
+                Więz odległośći punktu M od lini wyrażonej punktem K i punktem L. Dystans opisany parametrem P.
+                K - punkt 1 linii 1
+                L - punkt 2 linii 1
+                M - punkt odlegly o P od prostej
+                P - parametr
+                """;
         }
 
         @Override
@@ -343,12 +369,14 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Kat pomiedzy dwiema prostymi \n" +
-                "K - punkt 1 linii 1\n" +
-                "L - punkt 2 linii 1\n" +
-                "M - punkt 1 linii 2\n" +
-                "N - punkt 2 linii 2\n" +
-                "P - parametr ,wartosc kata\n";
+            return """
+                Więz kątowy pomiedzy wektorami opisany parametrem P.
+                K - punkt 1 linii 1
+                L - punkt 2 linii 1
+                M - punkt 1 linii 2
+                N - punkt 2 linii 2
+                P - parametr ( deg )
+                """;
         }
 
         @Override
@@ -368,9 +396,11 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Ustawia linie rownolegle do osi X \n" +
-                "K - punkt 1 linii 1\n" +
-                "L - punkt 2 linii 1\n";
+            return """
+                Więz opisuje równoległość lini do osi współrzędnych 0-X.
+                K - punkt 1 linii 1
+                L - punkt 2 linii 1
+                """;
 
         }
 
@@ -391,9 +421,11 @@ public enum GeometricConstraintType {
 
         @Override
         public String getHelp() {
-            return "Ustawia linie rownolegle do osi Y \n" +
-                "K - punkt 1 linii 1\n" +
-                "L - punkt 2 linii 1\n";
+            return """
+                Więz opisuje równoległość lini do osi 0-Y.
+                K - punkt 1 linii 1
+                L - punkt 2 linii 1
+                """;
         }
 
         @Override

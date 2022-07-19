@@ -1,0 +1,67 @@
+#--signature: GeometricConstraintSolver  2009-2022
+#--file-format: V1
+
+#--definition-begin: 
+
+BEGIN Point:
+     ID: 17;
+     PX: 196.0352591920528;
+     PY: 402.5101676285995;
+END;
+
+BEGIN Point:
+     ID: 18;
+     PX: 461.98335603504916;
+     PY: 424.39568841442616;
+END;
+
+BEGIN Point:
+     ID: 21;
+     PX: 342.9319374877699;
+     PY: 494.8690802023838;
+END;
+
+BEGIN Point:
+     ID: 22;
+     PX: 495.28228102002186;
+     PY: 402.02447445975906;
+END;
+
+
+BEGIN GeometricPrimitive:
+     ID: 4;
+     TYPE: Line;
+     P1: 17;
+     P2: 18;
+     P3: -1;
+END;
+
+BEGIN GeometricPrimitive:
+     ID: 5;
+     TYPE: Line;
+     P1: 21;
+     P2: 22;
+     P3: -1;
+END;
+
+
+BEGIN Parameter:
+     ID: 2;
+     VALUE: 80.0;
+END;
+
+
+BEGIN Constraint:
+     ID: 22;
+     TYPE: DistancePointLine;
+     K: 17;
+     L: 18;
+     M: 21;
+     N: -1;
+     PARAM: 2;
+END;
+
+
+
+#--definition-end: 
+
