@@ -2,8 +2,7 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
-import static com.mstruzek.msketch.Parameter.dbParameter;
-import static com.mstruzek.msketch.Point.dbPoint;
+import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
 /**
  * Klasa reprezentujaca wiez odleglosci pomiedzy 2 punktami
@@ -43,7 +42,7 @@ public class ConstraintDistance2Points extends Constraint {
 
     public String toString() {
         double norm = getNorm();
-        return "Constraint-Distance2Points" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " , Parametr-" + dbParameter.get(param_id).getId() + " = " + dbParameter.get(param_id).getValue() + " } \n";
+        return "Constraint-Distance2Points" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " , Parametr-" + ModelRegistry.dbParameter.get(param_id).getId() + " = " + ModelRegistry.dbParameter.get(param_id).getValue() + " } \n";
 
     }
 
@@ -67,7 +66,7 @@ public class ConstraintDistance2Points extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        double value = dbPoint.get(l_id).minus(dbPoint.get(k_id)).length() - dbParameter.get(param_id).getValue();
+        double value = dbPoint.get(l_id).minus(dbPoint.get(k_id)).length() - ModelRegistry.dbParameter.get(param_id).getValue();
         return MatrixDouble.scalar(value);
     }
 

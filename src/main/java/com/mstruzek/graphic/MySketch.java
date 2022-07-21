@@ -4,6 +4,7 @@ import com.mstruzek.controller.ActiveKey;
 import com.mstruzek.controller.Controller;
 import com.mstruzek.msketch.Consts;
 import com.mstruzek.msketch.GeometricPrimitive;
+import com.mstruzek.msketch.ModelRegistry;
 import com.mstruzek.msketch.Vector;
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
-import static com.mstruzek.msketch.Point.getDbPoint;
+import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
 
 public class MySketch extends JPanel implements MouseInputListener {
@@ -113,7 +114,7 @@ public class MySketch extends JPanel implements MouseInputListener {
      */
     public void refreshContainers() {
 
-        ArrayList<GeometricPrimitive> primitives = new ArrayList<>(GeometricPrimitive.dbPrimitives.values());
+        ArrayList<GeometricPrimitive> primitives = new ArrayList<>(ModelRegistry.dbPrimitives.values());
 
         MyPoint p1, p2, p3;
         MyLine ml;
@@ -213,16 +214,16 @@ public class MySketch extends JPanel implements MouseInputListener {
             if (controlGuidelines) {
                 g2d.setColor(CONTROL_GUIDES_COLOR);
 
-                int pA = GeometricPrimitive.dbPrimitives.get(ml.getPrimitiveId()).getA();
-                int pB = GeometricPrimitive.dbPrimitives.get(ml.getPrimitiveId()).getB();
+                int pA = ModelRegistry.dbPrimitives.get(ml.getPrimitiveId()).getA();
+                int pB = ModelRegistry.dbPrimitives.get(ml.getPrimitiveId()).getB();
                 //A - p1
-                tp3.setLocation(getDbPoint().get(pA).getX(), getDbPoint().get(pA).getY());
+                tp3.setLocation(dbPoint.get(pA).getX(), dbPoint.get(pA).getY());
                 tx.transform(tp3, tp2);
 
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
                 //B -p2
                 tx.transform(ml.p2.getLocation(), tp2);
-                tp3.setLocation(getDbPoint().get(pB).getX(), getDbPoint().get(pB).getY());
+                tp3.setLocation(dbPoint.get(pB).getX(), dbPoint.get(pB).getY());
                 tx.transform(tp3, tp1);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
 
@@ -243,16 +244,16 @@ public class MySketch extends JPanel implements MouseInputListener {
             if (controlGuidelines) {
                 g2d.setColor(CONTROL_GUIDES_COLOR);
 
-                int pA = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getA();
-                int pB = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getB();
+                int pA = ModelRegistry.dbPrimitives.get(cl.getPrimitiveId()).getA();
+                int pB = ModelRegistry.dbPrimitives.get(cl.getPrimitiveId()).getB();
                 //A - p1
-                tp3.setLocation(getDbPoint().get(pA).getX(), getDbPoint().get(pA).getY());
+                tp3.setLocation(dbPoint.get(pA).getX(), dbPoint.get(pA).getY());
                 tx.transform(tp3, tp2);
 
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
                 //B -p2
                 tx.transform(cl.p2.getLocation(), tp2);
-                tp3.setLocation(getDbPoint().get(pB).getX(), getDbPoint().get(pB).getY());
+                tp3.setLocation(dbPoint.get(pB).getX(), dbPoint.get(pB).getY());
                 tx.transform(tp3, tp1);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
 
@@ -298,30 +299,30 @@ public class MySketch extends JPanel implements MouseInputListener {
             if (controlGuidelines) {
                 g2d.setColor(CONTROL_GUIDES_COLOR);
 
-                int pA = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getA();
-                int pB = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getB();
-                int pC = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getC();
-                int pD = GeometricPrimitive.dbPrimitives.get(cl.getPrimitiveId()).getD();
+                int pA = ModelRegistry.dbPrimitives.get(cl.getPrimitiveId()).getA();
+                int pB = ModelRegistry.dbPrimitives.get(cl.getPrimitiveId()).getB();
+                int pC = ModelRegistry.dbPrimitives.get(cl.getPrimitiveId()).getC();
+                int pD = ModelRegistry.dbPrimitives.get(cl.getPrimitiveId()).getD();
                 //A - p1
                 tx.transform(cl.p1.getLocation(), tp1);
-                tp3.setLocation(getDbPoint().get(pA).getX(), getDbPoint().get(pA).getY());
+                tp3.setLocation(dbPoint.get(pA).getX(), dbPoint.get(pA).getY());
                 tx.transform(tp3, tp2);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
 
                 //B -p1
                 tx.transform(cl.p1.getLocation(), tp1);
-                tp3.setLocation(getDbPoint().get(pB).getX(), getDbPoint().get(pB).getY());
+                tp3.setLocation(dbPoint.get(pB).getX(), dbPoint.get(pB).getY());
                 tx.transform(tp3, tp2);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
 
                 //C - p2
                 tx.transform(cl.p2.getLocation(), tp2);
-                tp3.setLocation(getDbPoint().get(pC).getX(), getDbPoint().get(pC).getY());
+                tp3.setLocation(dbPoint.get(pC).getX(), dbPoint.get(pC).getY());
                 tx.transform(tp3, tp1);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
                 //D - p3
                 tx.transform(cl.p3.getLocation(), tp2);
-                tp3.setLocation(getDbPoint().get(pD).getX(), getDbPoint().get(pD).getY());
+                tp3.setLocation(dbPoint.get(pD).getX(), dbPoint.get(pD).getY());
                 tx.transform(tp3, tp1);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
 
@@ -335,18 +336,18 @@ public class MySketch extends JPanel implements MouseInputListener {
                 g2d.setColor(CONTROL_GUIDES_COLOR);
                 MyFreePoint mfp = freePointStore.get(i);
 
-                int pA = GeometricPrimitive.dbPrimitives.get(mfp.getPrimitiveId()).getA();
-                int pB = GeometricPrimitive.dbPrimitives.get(mfp.getPrimitiveId()).getB();
+                int pA = ModelRegistry.dbPrimitives.get(mfp.getPrimitiveId()).getA();
+                int pB = ModelRegistry.dbPrimitives.get(mfp.getPrimitiveId()).getB();
                 //A - p1
 
                 tx.transform(mfp.p1.getLocation(), tp1);
-                tp3.setLocation(getDbPoint().get(pA).getX(), getDbPoint().get(pA).getY());
+                tp3.setLocation(dbPoint.get(pA).getX(), dbPoint.get(pA).getY());
                 tx.transform(tp3, tp2);
 
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
                 //B -p1
                 tx.transform(mfp.p1.getLocation(), tp1);
-                tp3.setLocation(getDbPoint().get(pB).getX(), getDbPoint().get(pB).getY());
+                tp3.setLocation(dbPoint.get(pB).getX(), dbPoint.get(pB).getY());
                 tx.transform(tp3, tp2);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp2.x, tp2.y));
 
@@ -438,7 +439,7 @@ public class MySketch extends JPanel implements MouseInputListener {
                     int first = viewPoint.id;
 
                     GeometricPrimitive parentPrimitive =
-                        GeometricPrimitive.dbPrimitives.values().stream()
+                        ModelRegistry.dbPrimitives.values().stream()
                             .filter(p -> Arrays.stream(p.getAllPointsId()).boxed().anyMatch(Predicate.isEqual(first)))
                             .findFirst()
                             .orElseThrow(() -> new IndexOutOfBoundsException("point id :" + first));
@@ -467,7 +468,7 @@ public class MySketch extends JPanel implements MouseInputListener {
                             break;
                     }
                 } else {
-                    firePropertyChange(Property.SELECTED_POINT, null, com.mstruzek.msketch.Point.dbPoint.get(viewPoint.id).toString());
+                    firePropertyChange(Property.SELECTED_POINT, null, ModelRegistry.dbPoint.get(viewPoint.id).toString());
                 }
                 firePropertyChange(Property.KLMN_POINTS, null, mpc.toString());
                 found = true;

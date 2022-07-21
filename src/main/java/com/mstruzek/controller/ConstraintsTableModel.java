@@ -1,6 +1,7 @@
 package com.mstruzek.controller;
 
 import com.mstruzek.msketch.Constraint;
+import com.mstruzek.msketch.ModelRegistry;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -15,14 +16,14 @@ public class ConstraintsTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return (int) Constraint.dbConstraint.values().stream().filter(Constraint::isPersistent).count();
+        return (int) ModelRegistry.dbConstraint().values().stream().filter(Constraint::isPersistent).count();
     }
 
     @Override
     public Object getValueAt(int rowId, int colId) {
         int out;
         Constraint constraint =
-            Constraint.dbConstraint.values().stream().filter(Constraint::isPersistent).skip(rowId)
+            ModelRegistry.dbConstraint.values().stream().filter(Constraint::isPersistent).skip(rowId)
                 .findFirst()
                 .orElseThrow(() -> new IndexOutOfBoundsException("constraint: " + rowId));
 

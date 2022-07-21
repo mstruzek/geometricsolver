@@ -5,6 +5,7 @@ import com.mstruzek.controller.Controller;
 import com.mstruzek.controller.EventType;
 import com.mstruzek.controller.Events;
 import com.mstruzek.msketch.GeometricConstraintType;
+import com.mstruzek.msketch.ModelRegistry;
 
 import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
@@ -334,7 +335,7 @@ public class FrameView extends JFrame {
         dclear.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                controller.clearDatabasesModel();
+                ModelRegistry.removeObjectsFromModel();
                 ms.refreshContainers();
                 ms.repaint();
                 clearTextArea();

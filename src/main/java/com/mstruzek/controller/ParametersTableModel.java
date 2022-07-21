@@ -1,5 +1,6 @@
 package com.mstruzek.controller;
 
+import com.mstruzek.msketch.ModelRegistry;
 import com.mstruzek.msketch.Parameter;
 
 import javax.swing.table.AbstractTableModel;
@@ -15,12 +16,12 @@ public class ParametersTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return Parameter.dbParameter.size();
+        return ModelRegistry.dbParameter().size();
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        Parameter parameter = Parameter.dbParameter.values().toArray(new Parameter[0])[rowIndex];
+        Parameter parameter = ModelRegistry.dbParameter().values().toArray(new Parameter[0])[rowIndex];
         switch (columnIndex) {
             case 0:
                 return parameter.getId();
@@ -45,9 +46,10 @@ public class ParametersTableModel extends AbstractTableModel {
     }
 
     public void setValueAt(Object value, int row, int col) {
-        double d = Double.parseDouble(value.toString());
+        double parameterValue = Double.parseDouble(value.toString());
         if (col > 0) {
-            Parameter.dbParameter.values().toArray(new Parameter[]{})[row].setValue(d);
+            Parameter parameter = ModelRegistry.dbParameter().values().toArray(new Parameter[]{})[row];
+            ModelRegistry.setParameterValue(parameter.getId(), parameterValue);
         }
         fireTableCellUpdated(row, col);
     }

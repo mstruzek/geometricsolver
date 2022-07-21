@@ -2,7 +2,7 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
-import static com.mstruzek.msketch.Point.dbPoint;
+import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
 /**
  * Klasa reprezentuje wiez typu Parametrized X coordinate : "PointK[x] - Parameter[x] = 0";
@@ -35,7 +35,7 @@ public class ConstraintParametrizedXFix extends Constraint {
 
     public String toString() {
         double norm = getNorm();
-        return "Constraint-ParametrizedXFix" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  , P = " + Parameter.dbParameter.get(param_id) + " } \n";
+        return "Constraint-ParametrizedXFix" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  , P = " + ModelRegistry.dbParameter.get(param_id) + " } \n";
     }
 
     @Override
@@ -55,7 +55,7 @@ public class ConstraintParametrizedXFix extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        double value = dbPoint.get(k_id).getX() - Parameter.dbParameter.get(param_id).getValue();
+        double value = dbPoint.get(k_id).getX() - ModelRegistry.dbParameter.get(param_id).getValue();
         return MatrixDouble.scalar(value);
     }
 

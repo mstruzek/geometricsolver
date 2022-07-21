@@ -1,18 +1,9 @@
 package com.mstruzek.msketch;
 
-import java.util.TreeMap;
-
 
 public class Point extends Vector {
 
-    public static final TreeMap<Integer, Point> dbPoint = new TreeMap<Integer, Point>();
-
     public static final Point EMPTY = new Point(-1, 0.0, 0.0);
-
-    /**
-     * Licznik punktow
-     */
-    public static int pointCounter = 0;
 
     /**
      * numer kolejno utworzonego punktu
@@ -27,7 +18,6 @@ public class Point extends Vector {
     public Point(int id, double x, double y) {
         super(x, y);
         this.id = id;
-        if (id >= 0) dbPoint.put(id, this);
     }
 
     public String toString() {
@@ -42,14 +32,6 @@ public class Point extends Vector {
         return id;
     }
 
-    public static TreeMap<Integer, Point> getDbPoint() {
-        return dbPoint;
-    }
-
-
-    public static int nextId() {
-        return pointCounter++;
-    }
 
 }
 

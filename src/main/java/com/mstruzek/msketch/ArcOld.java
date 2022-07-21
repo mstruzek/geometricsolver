@@ -60,18 +60,18 @@ public class ArcOld extends GeometricPrimitive {
      * @param p30 drugi koniec luku
      */
     public ArcOld(Vector p10, Vector p20, Vector p30) {
-        super(nextId(), GeometricPrimitiveType.Arc);
+        super(ModelRegistry.nextPrimitiveId(), GeometricPrimitiveType.Arc);
         // FreePoint(a,p1,b)
-        a = new Point(Point.nextId(), p10.product(2).minus(p20));
-        p1 = new Point(Point.nextId(), p10);
-        b = new Point(Point.nextId(), p20);
+        a = new Point(ModelRegistry.nextPointId(), p10.product(2).minus(p20));
+        p1 = new Point(ModelRegistry.nextPointId(), p10);
+        b = new Point(ModelRegistry.nextPointId(), p20);
 
         //  Line(c,p2,p3,d)
         Vector a = p20.minus(p10);
-        c = new Point(Point.nextId(), p10.plus(a.Rot(-90).product(3)));
-        p2 = new Point(Point.nextId(), p10.plus(a.Rot(-90)));
-        p3 = new Point(Point.nextId(), p10.plus(a.Rot(90)));
-        d = new Point(Point.nextId(), p10.plus(a.Rot(90).product(3)));
+        c = new Point(ModelRegistry.nextPointId(), p10.plus(a.Rot(-90).product(3)));
+        p2 = new Point(ModelRegistry.nextPointId(), p10.plus(a.Rot(-90)));
+        p3 = new Point(ModelRegistry.nextPointId(), p10.plus(a.Rot(90)));
+        d = new Point(ModelRegistry.nextPointId(), p10.plus(a.Rot(90).product(3)));
         calculateDistance();
         setAssociateConstraints(null);
     }
@@ -121,15 +121,15 @@ public class ArcOld extends GeometricPrimitive {
         calculateDistance();
 
         //uaktulaniamy wiezy
-        ((ConstraintFixPoint) Constraint.dbConstraint.get(constraintsId[0])).setFixVector(va);
-        ((ConstraintFixPoint) Constraint.dbConstraint.get(constraintsId[1])).setFixVector(vb);
-        ((ConstraintFixPoint) Constraint.dbConstraint.get(constraintsId[2])).setFixVector(vc);
-        ((ConstraintFixPoint) Constraint.dbConstraint.get(constraintsId[3])).setFixVector(vd);
+        ((ConstraintFixPoint) constraints[0]).setFixVector(va);
+        ((ConstraintFixPoint) constraints[1]).setFixVector(vb);
+        ((ConstraintFixPoint) constraints[2]).setFixVector(vc);
+        ((ConstraintFixPoint) constraints[3]).setFixVector(vd);
 
     }
 
     @Override
-    public void setForce(int row, MatrixDouble mt) {
+    public void evaluateForceIntensity(int row, MatrixDouble mt) {
         Vector f12 = p1.minus(a).unit().product(Consts.springStiffnessHigh * dS).product(p1.minus(a).length() - d_a_p1);        //F12 - sily w sprezynach
         Vector f23 = b.minus(p1).unit().product(Consts.springStiffnessHigh * dS).product(b.minus(p1).length() - d_p1_b);        //F23
 
@@ -150,7 +150,7 @@ public class ArcOld extends GeometricPrimitive {
 
 
     @Override
-    public void setJacobian(int row, int col, MatrixDouble mt) {
+    public void setStiffnessMatrix(int row, int col, MatrixDouble mt) {
 
         /** Free Point
          * k= I*k
@@ -201,17 +201,17 @@ public class ArcOld extends GeometricPrimitive {
     @Override
     public void setAssociateConstraints(Set<Integer> skipIds) {
         if (skipIds == null) skipIds = Collections.emptySet();
-        ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(skipIds), a, false);
-        ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(skipIds), b, false);
-        ConstraintFixPoint fixPointc = new ConstraintFixPoint(Constraint.nextId(skipIds), c, false);
-        ConstraintFixPoint fixPointd = new ConstraintFixPoint(Constraint.nextId(skipIds), d, false);
-        ConstraintEqualLength sameLength = new ConstraintEqualLength(Constraint.nextId(skipIds), p1, p2, p1, p3, false);
-        constraints = new int[5];
-        constraints[0] = fixPointa.constraintId;
-        constraints[1] = fixPointb.constraintId;
-        constraints[2] = fixPointc.constraintId;
-        constraints[3] = fixPointd.constraintId;
-        constraints[4] = sameLength.constraintId;
+        ConstraintFixPoint fixPointa = new ConstraintFixPoint(ModelRegistry.nextConstraintId(skipIds), a, false);
+        ConstraintFixPoint fixPointb = new ConstraintFixPoint(ModelRegistry.nextConstraintId(skipIds), b, false);
+        ConstraintFixPoint fixPointc = new ConstraintFixPoint(ModelRegistry.nextConstraintId(skipIds), c, false);
+        ConstraintFixPoint fixPointd = new ConstraintFixPoint(ModelRegistry.nextConstraintId(skipIds), d, false);
+        ConstraintEqualLength sameLength = new ConstraintEqualLength(ModelRegistry.nextConstraintId(skipIds), p1, p2, p1, p3, false);
+        constraints = new Constraint[5];
+        constraints[0] = fixPointa;
+        constraints[1] = fixPointb;
+        constraints[2] = fixPointc;
+        constraints[3] = fixPointd;
+        constraints[4] = sameLength;
     }
 
 
@@ -268,4 +268,8 @@ public class ArcOld extends GeometricPrimitive {
         return out;
     }
 
+    @Override
+    public Point[] getAllPoints() {
+        return new Point[]{ a, p1, b, c, p2, p3, d };
+    }
 }

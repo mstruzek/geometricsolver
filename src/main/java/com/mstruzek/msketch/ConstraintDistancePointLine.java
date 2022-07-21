@@ -2,7 +2,7 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
-import static com.mstruzek.msketch.Point.dbPoint;
+import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
 public class ConstraintDistancePointLine extends Constraint {
 
@@ -43,14 +43,14 @@ public class ConstraintDistancePointLine extends Constraint {
 
     public String toString() {
         double norm = getNorm();
-        return "Constraint-DistancePointLine" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ", Parametr-" + Parameter.dbParameter.get(param_id).getId() + " = " + Parameter.dbParameter.get(param_id).getValue() + "} \n";
+        return "Constraint-DistancePointLine" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ", Parametr-" + ModelRegistry.dbParameter.get(param_id).getId() + " = " + ModelRegistry.dbParameter.get(param_id).getValue() + "} \n";
     }
 
     @Override
     public MatrixDouble getValue() {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
-        double d = Parameter.dbParameter.get(param_id).getValue();
+        double d = ModelRegistry.dbParameter.get(param_id).getValue();
         double value = LK.cross(MK)  -  d * LK.length();
         return MatrixDouble.scalar(value);
     }
@@ -59,7 +59,7 @@ public class ConstraintDistancePointLine extends Constraint {
     public void getJacobian(MatrixDouble mts) {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
-        double d = Parameter.dbParameter.get(param_id).getValue(); /// parameter value
+        double d = ModelRegistry.dbParameter.get(param_id).getValue(); /// parameter value
         MatrixDouble mt = mts;
         int j;
         //k
@@ -97,7 +97,7 @@ public class ConstraintDistancePointLine extends Constraint {
         Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector ML = dbPoint.get(m_id).minus(dbPoint.get(l_id));
-        double d = Parameter.dbParameter.get(param_id).getValue();
+        double d = ModelRegistry.dbParameter.get(param_id).getValue();
         MatrixDouble R = MatrixDouble.matrixR();
         MatrixDouble D = MatrixDouble.diagonal(2, 2 * d * d);
         MatrixDouble Dm = MatrixDouble.diagonal(2, -2 * d * d);

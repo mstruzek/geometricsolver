@@ -1,5 +1,7 @@
 package com.mstruzek.graphic;
 
+import com.mstruzek.msketch.ModelRegistry;
+
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
@@ -14,7 +16,7 @@ public class MyPoint extends Point {
     }
 
     public boolean contains(int ix, int iy, double d) {
-        com.mstruzek.msketch.Point p = com.mstruzek.msketch.Point.getDbPoint().get(this.id);
+        com.mstruzek.msketch.Point p = ModelRegistry.dbPoint.get(this.id);
         Ellipse2D.Double circle = new Ellipse2D.Double(p.getX() - d / 2, p.getY() - d / 2, d, d);
         return circle.contains(ix, iy);
     }
@@ -29,17 +31,17 @@ public class MyPoint extends Point {
 
     @Override
     public double getX() {
-        return com.mstruzek.msketch.Point.getDbPoint().get(this.id).getX();
+        return ModelRegistry.dbPoint.get(this.id).getX();
     }
 
     @Override
     public double getY() {
-        return com.mstruzek.msketch.Point.getDbPoint().get(this.id).getY();
+        return ModelRegistry.dbPoint.get(this.id).getY();
     }
 
     @Override
     public void setLocation(double x, double y) {
-        com.mstruzek.msketch.Point p = com.mstruzek.msketch.Point.getDbPoint().get(this.id);
+        com.mstruzek.msketch.Point p = ModelRegistry.dbPoint.get(this.id);
         p.setX(x);
         p.setY(y);
     }
@@ -47,7 +49,7 @@ public class MyPoint extends Point {
     @Override
     public void setLocation(Point ps) {
         super.setLocation(ps);
-        com.mstruzek.msketch.Point p = com.mstruzek.msketch.Point.getDbPoint().get(this.id);
+        com.mstruzek.msketch.Point p = ModelRegistry.dbPoint.get(this.id);
         p.setX(ps.getX());
         p.setY(ps.getY());
     }

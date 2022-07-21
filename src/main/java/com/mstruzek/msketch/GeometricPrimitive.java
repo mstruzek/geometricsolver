@@ -3,18 +3,12 @@ package com.mstruzek.msketch;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
 import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * Klasa abstrakcyjna dla podstawowych elementow geometrycznych jakie moga zostac
  * narysowane na ekranie : linia, luk, okrag,"wolny" punkt
  */
 public abstract class GeometricPrimitive {
-
-    /**
-     * licznik elementow podstawowych
-     */
-    public static int primitiveCounter = 0;
 
     /**
      * id danego elemntu podstawowego
@@ -25,21 +19,15 @@ public abstract class GeometricPrimitive {
      */
     protected GeometricPrimitiveType type = null;
 
-    /**
-     * tablica wszystkich elemntow
-     */
-    public static TreeMap<Integer, GeometricPrimitive> dbPrimitives = new TreeMap<Integer, GeometricPrimitive>();
-
 
     /**
      * tablica przechowujaca powiazane wiezy dla punktow kontrolnych np : a,b,c
      */
-    int[] constraints = null;
+    protected Constraint[] constraints = new Constraint[0];
 
     public GeometricPrimitive(int primitiveId, GeometricPrimitiveType geometricPrimitiveType) {
         this.primitiveId = primitiveId;
         this.type = geometricPrimitiveType;
-        if (primitiveId >= 0) dbPrimitives.put(primitiveId, this);
     }
 
     /**
@@ -51,22 +39,24 @@ public abstract class GeometricPrimitive {
     /**
      * Funkcja zwraca wartosc sil w sprezynach dla poszczegolnych punkt�w w danym {@link GeometricPrimitive}
      */
-    public abstract void setForce(int row, MatrixDouble dest);
+    public abstract void evaluateForceIntensity(int row, MatrixDouble dest);
 
     /**
-     * Funkcja zwraca jakobian si� - czyli macierz szytnowsci Fq
+     * Funkcja do wyliczenia macierzy sztywnosci elementu - macierz szytnowsci Fq
      *
      * @param row  row offset
      * @param col  column offset
      * @param dest destination matrix
      * @return
      */
-    public abstract void setJacobian(int row, int col, MatrixDouble dest);
+    public abstract void setStiffnessMatrix(int row, int col, MatrixDouble dest);
 
     /**
      * Pobierz wszystkie punkty powiazane z dana figura
      */
     public abstract int[] getAllPointsId();
+
+    public abstract Point[] getAllPoints();
 
     /**
      * Funkcja  ustawia wiezy poczatkowe -czyli rejestruje w bazie wiezow, np : wiez FixPoint na Point[a,b,c]
@@ -119,11 +109,11 @@ public abstract class GeometricPrimitive {
      *
      * @param mt
      */
-    public static void getAllJacobianForces(MatrixDouble mt) {
+    public static void evaluateStiffnessMatrix(MatrixDouble mt) {
         int rowCol = 0;
-        for (Integer i : GeometricPrimitive.dbPrimitives.keySet()) {
-            GeometricPrimitive.dbPrimitives.get(i).setJacobian(rowCol, rowCol, mt);
-            rowCol += GeometricPrimitive.dbPrimitives.get(i).getNumOfPoints() * 2;
+        for (GeometricPrimitive geometricPrimitive : ModelRegistry.dbPrimitives.values()) {
+            geometricPrimitive.setStiffnessMatrix(rowCol, rowCol, mt);
+            rowCol += geometricPrimitive.getNumOfPoints() * 2;
         }
     }
 
@@ -132,32 +122,16 @@ public abstract class GeometricPrimitive {
      *
      * @param dest destination matrix
      */
-    public static void getAllForce(MatrixDouble dest) {
+    public static void evaluateForceVector(MatrixDouble dest) {
         int row = 0;
-        for (Integer i : GeometricPrimitive.dbPrimitives.keySet()) {
-            GeometricPrimitive.dbPrimitives.get(i).setForce(row, dest);
-            row += GeometricPrimitive.dbPrimitives.get(i).getNumOfPoints() * 2;
+        for (GeometricPrimitive geometricPrimitive : ModelRegistry.dbPrimitives().values()) {
+            geometricPrimitive.evaluateForceIntensity(row, dest);
+            row += geometricPrimitive.getNumOfPoints() * 2;
         }
     }
 
-    //FIXME - trzeba jakos kontrolowac rozklad sily (glownie dla punktow kontrolnych a,b,c), jezeli sila jest zbyt duza na nowo poprzeliczac punkty
-    //public abstract void relaxForces();
-
-    /**
-     * Usun primiteve o danym id
-     *
-     * @param id - firgury
-     */
-    public static void remove(int id) {
-        dbPrimitives.remove(id);
-    }
-
-    public int[] associateConstraintsId() {
+    public Constraint[] associatedConstraints() {
         return constraints;
-    }
-
-    public static int nextId() {
-        return primitiveCounter++;
     }
 
 }

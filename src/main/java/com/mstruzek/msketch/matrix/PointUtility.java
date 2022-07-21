@@ -1,6 +1,6 @@
 package com.mstruzek.msketch.matrix;
 
-import com.mstruzek.msketch.Point;
+import com.mstruzek.msketch.ModelRegistry;
 
 /**
  * Utility class bedzie nam wiazala wartosci w danej macierzy z odpowiednimi  wartosciami w punktach
@@ -15,10 +15,10 @@ public class PointUtility {
      */
     public static void copyFromStateVector(MatrixDouble stateVector) {
         int k = 0;
-        for (Integer i : Point.dbPoint.keySet()) {
+        for (Integer pointId : ModelRegistry.dbPoint.keySet()) {
             double x = stateVector.getQuick(k * 2, 0);
             double y = stateVector.getQuick(k * 2 + 1, 0);
-            Point.dbPoint.get(i).setLocation(x, y);
+            ModelRegistry.setLocation(pointId, x, y);
             k++;
         }
     }
@@ -29,9 +29,9 @@ public class PointUtility {
      */
     public static void copyIntoStateVector(MatrixDouble stateVector) {
         int k = 0;
-        for (Integer i : Point.dbPoint.keySet()) {
-            double pointX = Point.dbPoint.get(i).getX();
-            double pointY = Point.dbPoint.get(i).getY();
+        for (Integer i : ModelRegistry.dbPoint.keySet()) {
+            double pointX = ModelRegistry.dbPoint.get(i).getX();
+            double pointY = ModelRegistry.dbPoint.get(i).getY();
             stateVector.setQuick(k * 2, 0, pointX);
             stateVector.setQuick(k * 2 + 1, 0, pointY);
             k++;
@@ -44,7 +44,7 @@ public class PointUtility {
      */
     public static void setupLagrangeMultipliers(MatrixDouble stateVector) {
         double defaultValue = 0.0;
-        int size = Point.dbPoint.size() * 2;
+        int size = ModelRegistry.dbPoint.size() * 2;
         for(int i = size; i < stateVector.height(); i++) {
             stateVector.setQuick(i, 0 , defaultValue);
         }

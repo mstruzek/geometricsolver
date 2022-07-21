@@ -2,7 +2,7 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
-import static com.mstruzek.msketch.Point.dbPoint;
+import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
 /**
  * Klasa reprezentujaca wiez prosopadlosci pomiedzy dwoma wektorami

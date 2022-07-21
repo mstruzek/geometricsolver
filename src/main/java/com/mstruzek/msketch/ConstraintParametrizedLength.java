@@ -2,7 +2,7 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
-import static com.mstruzek.msketch.Point.dbPoint;
+import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
 /**
  * Klasa reprezentujaca wiez wspolczynnika wagi dlugosci pomiedzy
@@ -61,7 +61,7 @@ public class ConstraintParametrizedLength extends Constraint {
         Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
         double lk = LK.length();
         double nm = NM.length();
-        double d = (param_id != -1) ? Parameter.dbParameter.get(param_id).getValue() : 1.0;
+        double d = (param_id != -1) ? ModelRegistry.dbParameter.get(param_id).getValue() : 1.0;
         int j;
 
         //k
@@ -90,7 +90,7 @@ public class ConstraintParametrizedLength extends Constraint {
     public MatrixDouble getValue() {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
-        double d = (param_id != -1) ? Parameter.dbParameter.get(param_id).getValue() : 1.0;
+        double d = (param_id != -1) ? ModelRegistry.dbParameter.get(param_id).getValue() : 1.0;
         double value = d * LK.length() - NM.length();
         return MatrixDouble.scalar(value);
     }

@@ -1,7 +1,5 @@
 package com.mstruzek.msketch;
 
-import java.util.TreeMap;
-
 /**
  * Klasa reprezentuje Parametr - dlugosc lub wartosc kat (w stopniach)
  *
@@ -9,21 +7,10 @@ import java.util.TreeMap;
  */
 public class Parameter {
 
-    /**
-     * parametr
-     */
-    double value;
-
-    /**
-     * Licznik parametrow
-     */
-    public static int parameterCounter = 0;
-
     int id;
-    /**
-     * tablica wszystkich parametrow
-     */
-    public static TreeMap<Integer, Parameter> dbParameter = new TreeMap<Integer, Parameter>();
+
+    /*** parametr */
+    double value;
 
     /**
      * Glowny Konstruktor
@@ -31,18 +18,9 @@ public class Parameter {
      * @param par parametr
      */
     public Parameter(int id, double par) {
-        if (id < parameterCounter) throw new RuntimeException("invalid object id");
         this.id = id;
         this.value = par;
-        dbParameter.put(id, this);
     }
-
-    public Parameter(double par) {
-        this.value = par;
-        this.id = parameterCounter++;
-        dbParameter.put(id, this);
-    }
-
 
     /**
      * Pobierz parametr

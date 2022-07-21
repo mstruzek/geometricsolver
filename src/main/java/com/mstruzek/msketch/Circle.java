@@ -48,7 +48,7 @@ public class Circle extends GeometricPrimitive {
      * @param p20 promien
      */
     public Circle(Vector p10, Vector p20) {
-        this(GeometricPrimitive.nextId(), p10, p20);
+        this(ModelRegistry.nextPrimitiveId(), p10, p20);
     }
 
     public Circle(int id, Vector v10, Vector v20) {
@@ -62,10 +62,10 @@ public class Circle extends GeometricPrimitive {
         } else {
             //ustawienie pozycji dla punktow kontrolnych
             //Kolejnosc inicjalizacji ma znaczenie
-            a = new Point(Point.nextId(), v10.minus(v20).product(alfa).plus(v10));
-            p1 = new Point(Point.nextId(), v10); /// przepisujemy wartosci
-            p2 = new Point(Point.nextId(), v20);
-            b = new Point(Point.nextId(), v20.minus(v10).product(alfa).plus(v20));
+            a = new Point(ModelRegistry.nextPointId(), v10.minus(v20).product(alfa).plus(v10));
+            p1 = new Point(ModelRegistry.nextPointId(), v10); /// przepisujemy wartosci
+            p2 = new Point(ModelRegistry.nextPointId(), v20);
+            b = new Point(ModelRegistry.nextPointId(), v20.minus(v10).product(alfa).plus(v20));
             setAssociateConstraints(null);
         }
         calculateDistance();
@@ -100,12 +100,12 @@ public class Circle extends GeometricPrimitive {
         calculateDistance();
 
         //uaktulaniamy wiezy
-        ((ConstraintFixPoint) Constraint.dbConstraint.get(constraints[0])).setFixVector(va);
-        ((ConstraintFixPoint) Constraint.dbConstraint.get(constraints[1])).setFixVector(vb);
+        ((ConstraintFixPoint) constraints[0]).setFixVector(va);
+        ((ConstraintFixPoint) constraints[1]).setFixVector(vb);
     }
 
     @Override
-    public void setForce(int row, MatrixDouble force) {
+    public void evaluateForceIntensity(int row, MatrixDouble force) {
         // 8 = 4*2 (4 punkty kontrolne)
         Vector f12 = p1.minus(a).unit().product(Consts.springStiffnessLow).product(p1.minus(a).length() - d_a_p1);                      //F12 - sily w sprezynach
         Vector f23 = p2.minus(p1).unit().product(Consts.springStiffnessHigh * springAlfa).product(p2.minus(p1).length() - d_p1_p2);     //F23
@@ -122,7 +122,7 @@ public class Circle extends GeometricPrimitive {
     }
 
     @Override
-    public void setJacobian(int row, int col, MatrixDouble mt) {
+    public void setStiffnessMatrix(int row, int col, MatrixDouble mt) {
         // a ,p1 ,p2 ,b = 4*2 = 8x8
         /**
          * k= I*k
@@ -153,11 +153,11 @@ public class Circle extends GeometricPrimitive {
     @Override
     public void setAssociateConstraints(Set<Integer> skipIds) {
         if (skipIds == null) skipIds = Collections.emptySet();
-        ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(skipIds), a, false);
-        ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(skipIds), b, false);
-        constraints = new int[2];
-        constraints[0] = fixPointa.constraintId;
-        constraints[1] = fixPointb.constraintId;
+        ConstraintFixPoint fixPointa = new ConstraintFixPoint(ModelRegistry.nextConstraintId(skipIds), a, false);
+        ConstraintFixPoint fixPointb = new ConstraintFixPoint(ModelRegistry.nextConstraintId(skipIds), b, false);
+        constraints = new Constraint[2];
+        constraints[0] = fixPointa;
+        constraints[1] = fixPointb;
     }
 
     @Override
@@ -209,6 +209,11 @@ public class Circle extends GeometricPrimitive {
         out[2] = p1.getId();
         out[3] = p2.getId();
         return out;
+    }
+
+    @Override
+    public Point[] getAllPoints() {
+        return new Point[]{a, p1, p2, b};
     }
 
 }

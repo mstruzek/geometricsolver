@@ -10,7 +10,7 @@ import com.mstruzek.msketch.matrix.PointUtility;
 import java.time.Instant;
 import java.util.function.LongSupplier;
 
-import static com.mstruzek.msketch.Point.dbPoint;
+import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
 public class GeometricSolverImpl implements GeometricSolver {
 
@@ -110,14 +110,14 @@ public class GeometricSolverImpl implements GeometricSolver {
             return solverStat;
         }
 
-        if (Constraint.dbConstraint.isEmpty()) {
+        if (ModelRegistry.dbConstraint.isEmpty()) {
             reporter.writeln("[warning] - no constraint configuration applied ");
             return solverStat;
         }
 
         /// Tworzymy Macierz "A" - dla tego zadania stala w czasie
 
-        size = Point.dbPoint.size() * 2;
+        size = ModelRegistry.dbPoint.size() * 2;
         coffSize = Constraint.allLagrangeCoffSize();
         dimension = size + coffSize;
 
@@ -141,7 +141,7 @@ public class GeometricSolverImpl implements GeometricSolver {
         Hs = MatrixDouble.matrix2D(size, size, 0.0);
 
         /// macierz sztywnosci stala w czasie
-        GeometricPrimitive.getAllJacobianForces(Fq);
+        GeometricPrimitive.evaluateStiffnessMatrix(Fq);
 
 /// Wektor prawych stron b
 
@@ -173,8 +173,8 @@ public class GeometricSolverImpl implements GeometricSolver {
 
 /// Tworzymy Macierz vector b vector `b
 
-            GeometricPrimitive.getAllForce(Fr);                 /// Sily  - F(q)
-            Constraint.getFullConstraintValues(Fi);             /// Wiezy  - Fi(q)
+            GeometricPrimitive.evaluateForceVector(Fr);                 /// Sily  - F(q)
+            Constraint.evaluateConstraintVector(Fi);             /// Wiezy  - Fi(q)
             // b.setSubMatrix(0,0, (Fr));
             // b.setSubMatrix(size,0, (Fi));
             b.mulitply(-1);

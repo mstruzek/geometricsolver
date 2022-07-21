@@ -77,8 +77,18 @@ public final class Model {
     }
 
     private static void add(GeometricPrimitive geometricPrimitive) {
-        /// self registrations into GeometricPrimitive.dbPrimitives
-        Events.send(PRIMITIVE_TABLE_INSERT, null);
+        /// self registrations
+        if (geometricPrimitive.primitiveId >= 0) {
+            for (Point point : geometricPrimitive.getAllPoints()) {
+                ModelRegistry.registerPoint(point.id, point);
+            }
+            for (Constraint constraint : geometricPrimitive.associatedConstraints()) {
+                ModelRegistry.registerConstraint(constraint.getConstraintId(), constraint);
+            }
+            ModelRegistry.registerPrimitives(geometricPrimitive.getPrimitiveId(), geometricPrimitive);
+
+            Events.send(PRIMITIVE_TABLE_INSERT, null);
+        }
     }
 
     public static void addConstraint(GeometricConstraintType constraintType, int K, int L, int M, int N, Double paramValue) {
@@ -87,16 +97,16 @@ public final class Model {
         if (K < 0) {
             return;
         }
-        pK = Point.dbPoint.get(K);
-        pL = Point.dbPoint.get(L);
-        pM = Point.dbPoint.get(M);
-        pN = Point.dbPoint.get(N);
+        pK = ModelRegistry.dbPoint.get(K);
+        pL = ModelRegistry.dbPoint.get(L);
+        pM = ModelRegistry.dbPoint.get(M);
+        pN = ModelRegistry.dbPoint.get(N);
 
         if (paramValue != null && constraintType.isParametrized()) {
-            parameter = new Parameter(paramValue);
+            parameter = new Parameter(ModelRegistry.nextParameterId(), paramValue);
         }
 
-        addConstraint(Constraint.nextId(), constraintType, pK, pL, pM, pN, parameter);
+        addConstraint(ModelRegistry.nextConstraintId(), constraintType, pK, pL, pM, pN, parameter);
     }
 
     public static void addConstraint(int constId, GeometricConstraintType constraintType, Point K, Point L, Point M, Point N, Parameter parameter) {
@@ -163,24 +173,22 @@ public final class Model {
     }
 
     public static void add(Constraint constraint) {
-        /// self registration Constraint.dbConstraint
+        ModelRegistry.registerConstraint(constraint.constraintId, constraint);
         Events.send(CONSTRAINT_TABLE_INSERT, new Object[]{});
     }
 
     public static void add(Parameter parameter) {
-        /// self registration Parameter.dbParameter
+        ModelRegistry.registerParameter(parameter.id, parameter);
         Events.send(PARAMETER_TABLE_INSERT, new Object[]{});
     }
 
 
     public static void evaluateGuidePoints() {
-        for (Integer g : GeometricPrimitive.dbPrimitives.keySet()) {
-            GeometricPrimitive.dbPrimitives.get(g).evaluateGuidePoints();
-        }
+        ModelRegistry.dbPrimitives().values().forEach(GeometricPrimitive::evaluateGuidePoints);
     }
 
     public static void relaxControlPoints(double scale) {
-        for (GeometricPrimitive geometricPrimitive : GeometricPrimitive.dbPrimitives.values()) {
+        for (GeometricPrimitive geometricPrimitive : ModelRegistry.dbPrimitives.values()) {
             relaxPoint(geometricPrimitive.getP1(), scale);
             relaxPoint(geometricPrimitive.getP1(), scale);
             relaxPoint(geometricPrimitive.getP1(), scale);
@@ -191,7 +199,7 @@ public final class Model {
 
     private static void relaxPoint(int pID, double scale) {
         if (pID == -1) return;
-        Point point = Point.dbPoint.get(pID);
+        Point point = ModelRegistry.dbPoint.get(pID);
         double untenseX = point.getX() + scale * (random.nextDouble() - 0.5) * point.getX();
         double untenseY = point.getY() + scale * (random.nextDouble() - 0.5) * point.getY();
         point.setLocation(untenseX, untenseY);

@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import static com.mstruzek.msketch.Point.dbPoint;
+import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
 /**
  * Absolut point offset from matrix 0,0 coordinates for database point set .

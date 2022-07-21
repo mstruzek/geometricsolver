@@ -2,8 +2,8 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
-import static com.mstruzek.msketch.Parameter.dbParameter;
-import static com.mstruzek.msketch.Point.dbPoint;
+import static com.mstruzek.msketch.ModelRegistry.dbParameter;
+import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
 /**
  * Wiez odpowiedzialny za kat pomiedzy wektorami
@@ -55,7 +55,9 @@ public class ConstraintAngle2Lines extends Constraint {
 
     public String toString() {
         double norm = getNorm();
-        return "Constraint-Angle2Lines" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ",N =" + dbPoint.get(n_id) + ", Parametr-" + dbParameter.get(param_id).getId() + " = " + dbParameter.get(param_id).getValue() + "} \n";
+        return "Constraint-Angle2Lines" + constraintId + "*s" + size() + " = " + norm +
+            " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ",N =" + dbPoint.get(n_id) +
+            ", Parametr-" + dbParameter.get(param_id).getId() + " = " + dbParameter.get(param_id).getValue() + "} \n";
     }
 
     @Override
@@ -125,7 +127,7 @@ public class ConstraintAngle2Lines extends Constraint {
         //l,k
         i = po.get(l_id);
         j = po.get(k_id);
-            //0
+        //0
 
         //l,l
         i = po.get(l_id);

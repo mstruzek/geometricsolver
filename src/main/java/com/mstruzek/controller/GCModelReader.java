@@ -129,6 +129,9 @@ public class GCModelReader implements Closeable {
             Double parameterValue = (Double) slots[12];
             /// store in db
             Parameter parameter = new Parameter(parameterId, parameterValue);
+
+            ModelRegistry.registerParameter(parameterId, parameter);
+
             Arrays.fill(slots, 0, slots.length, null);
             lstate = STA_END;
         } else {
@@ -169,6 +172,8 @@ public class GCModelReader implements Closeable {
             Double coordinateY = (Double) slots[2];
             /// save point
             Point point = new Point(pointId, coordinateX, coordinateY);
+
+            ModelRegistry.registerPoint(pointId, point);
 
             Arrays.fill(slots, 0, slots.length, null);
             lstate = STA_END;
@@ -231,9 +236,9 @@ public class GCModelReader implements Closeable {
             p3 = (Integer) slots[6];
 
 
-            if (p1 != -1) P1 = Point.dbPoint.get(p1);
-            if (p2 != -1) P2 = Point.dbPoint.get(p2);
-            if (p3 != -1) P3 = Point.dbPoint.get(p3);
+            if (p1 != -1) P1 = ModelRegistry.dbPoint.get(p1);
+            if (p2 != -1) P2 = ModelRegistry.dbPoint.get(p2);
+            if (p3 != -1) P3 = ModelRegistry.dbPoint.get(p3);
 
             switch (primitiveType) {
                 case FreePoint:
@@ -323,12 +328,12 @@ public class GCModelReader implements Closeable {
             vN = (Integer) slots[10];
             paramId = (Integer) slots[11];
 
-            if (vK != -1) K = Point.dbPoint.get(vK);
-            if (vL != -1) L = Point.dbPoint.get(vL);
-            if (vM != -1) M = Point.dbPoint.get(vM);
-            if (vN != -1) N = Point.dbPoint.get(vN);
+            if (vK != -1) K = ModelRegistry.dbPoint.get(vK);
+            if (vL != -1) L = ModelRegistry.dbPoint.get(vL);
+            if (vM != -1) M = ModelRegistry.dbPoint.get(vM);
+            if (vN != -1) N = ModelRegistry.dbPoint.get(vN);
             if (paramId != -1 && constraintType.isParametrized()) {
-                parameter = Parameter.dbParameter.get(paramId);
+                parameter = ModelRegistry.dbParameter.get(paramId);
             }
 
             switch (constraintType) {

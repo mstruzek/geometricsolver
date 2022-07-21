@@ -3,7 +3,7 @@ package com.mstruzek.msketch;
 import com.mstruzek.msketch.matrix.MatrixDouble;
 import com.mstruzek.msketch.matrix.MatrixDouble2D;
 
-import static com.mstruzek.msketch.Point.dbPoint;
+import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
 /**
  * Klasa reprezentujaca wiez typu polaczenie

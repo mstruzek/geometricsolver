@@ -3,8 +3,8 @@ package com.mstruzek.graphic;
 import com.mstruzek.controller.*;
 import com.mstruzek.msketch.Constraint;
 import com.mstruzek.msketch.GeometricPrimitive;
+import com.mstruzek.msketch.ModelRegistry;
 import com.mstruzek.msketch.Parameter;
-import com.mstruzek.msketch.Point;
 
 import javax.swing.*;
 import javax.swing.event.MouseInputAdapter;
@@ -177,7 +177,7 @@ public class MyTables extends JPanel {
         final int i = constTable.getSelectionModel().getMinSelectionIndex();
         if (i < 0) return;
         Constraint constraint =
-            Constraint.dbConstraint.values()
+            ModelRegistry.dbConstraint.values()
                 .stream()
                 .filter(Constraint::isPersistent).skip(i)
                 .findFirst()
@@ -185,15 +185,15 @@ public class MyTables extends JPanel {
 
         int parId = constraint.getParameter();
         if (parId >= 0) {
-            Parameter[] parameters = Parameter.dbParameter.values().toArray(new Parameter[]{});
+            Parameter[] parameters = ModelRegistry.dbParameter().values().toArray(new Parameter[]{});
             for (int k = 0; k < parameters.length; k++) {
                 if (parameters[k].getId() == parId) {
-                    Parameter.dbParameter.remove(parId);
+                    ModelRegistry.removeParameter(parId);
                     vtm.fireTableRowsDeleted(k, k);
                 }
             }
         }
-        Constraint.dbConstraint.remove(constraint.getConstraintId());
+        ModelRegistry.removeConstraint(constraint.getConstraintId());
         mtm.fireTableRowsDeleted(i, i);
     }
 
@@ -204,7 +204,7 @@ public class MyTables extends JPanel {
         }
 
         final GeometricPrimitive primitive =
-            GeometricPrimitive.dbPrimitives.values()
+            ModelRegistry.dbPrimitives.values()
                 .stream()
                 .skip(i)
                 .findFirst()
@@ -212,22 +212,19 @@ public class MyTables extends JPanel {
 
         final int id = primitive.getPrimitiveId();
 
-        //usun wiezy powiazane
-        int[] constraints = primitive.associateConstraintsId();
 
-        for (int j : constraints) {
-            Constraint constraint = Constraint.dbConstraint.get(j);
+        for (Constraint constraint : primitive.associatedConstraints()) {
             int parameterId = constraint.getParameter();
             if (parameterId != -1) {
-                Parameter.dbParameter.remove(parameterId);
+                ModelRegistry.removeParameter(parameterId);
             }
-            Constraint.dbConstraint.remove(j);
+            ModelRegistry.removeConstraint(constraint.getConstraintId());
         }
         //usun punkty
         for (int pi : primitive.getAllPointsId()) {
-            Point.dbPoint.remove(pi);
+            ModelRegistry.removePoint(pi);
         }
-        GeometricPrimitive.dbPrimitives.remove(id);
+        ModelRegistry.removePrimitives(id);
         ptm.fireTableRowsDeleted(i, i);
     }
 

@@ -2,18 +2,10 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
 
-import java.util.Set;
-import java.util.TreeMap;
-
 /*
  * Wiez jedowymairowy,iloczyn skalarny,
  */
 public abstract class Constraint implements ConstraintInterface {
-
-    /**
-     * Licznik wiezow
-     */
-    public static int constraintCounter = 0;
 
     /**
      * numer kolejno utworzonej lini
@@ -27,11 +19,6 @@ public abstract class Constraint implements ConstraintInterface {
      */
     protected boolean persistent;
 
-    /**
-     * tablica wszystkich linii
-     */
-    public static TreeMap<Integer, Constraint> dbConstraint = new TreeMap<>();
-
     /*** przesuniecia absolutne punktow wzgledem ukladuw wspolrzednych vectora stanu */
     protected PointLocation po = PointLocation.getInstance();
 
@@ -40,19 +27,6 @@ public abstract class Constraint implements ConstraintInterface {
         this.constraintId = constraintId;
         this.constraintType = constraintType;
         this.persistent = persistent;
-        dbConstraint.put(constraintId, this);
-    }
-
-    public static Integer nextId() {
-        return constraintCounter++;
-    }
-
-    public static Integer nextId(Set<Integer> skipIdentifiers) {
-        int nextId = constraintCounter++;
-        while (skipIdentifiers.contains(nextId)) {
-            nextId = constraintCounter++;
-        }
-        return nextId;
     }
 
 
@@ -123,7 +97,7 @@ public abstract class Constraint implements ConstraintInterface {
      */
     public static int allLagrangeCoffSize() {
         int coffSize = 0;
-        for (Constraint constraint : dbConstraint.values()) {
+        for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
             coffSize += constraint.size();
         }
         return coffSize;
@@ -139,9 +113,9 @@ public abstract class Constraint implements ConstraintInterface {
     public static void getFullJacobian(MatrixDouble mt) {
         int rowPos = 0;
 
-        for (Integer id : dbConstraint.keySet()) {
-            Constraint.dbConstraint.get(id).getJacobian(mt.viewSpan(rowPos, 0, Constraint.dbConstraint.get(id).size(), mt.width()));
-            rowPos += Constraint.dbConstraint.get(id).size();
+        for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
+            constraint.getJacobian(mt.viewSpan(rowPos, 0, constraint.size(), mt.width()));
+            rowPos += constraint.size();
         }
     }
 
@@ -152,11 +126,11 @@ public abstract class Constraint implements ConstraintInterface {
      * @param mt
      * @return
      */
-    public static void getFullConstraintValues(MatrixDouble mt) {
+    public static void evaluateConstraintVector(MatrixDouble mt) {
         int currentRow = 0;
-        for (Integer id : dbConstraint.keySet()) {
-            mt.setSubMatrix(currentRow, 0, Constraint.dbConstraint.get(id).getValue());
-            currentRow += Constraint.dbConstraint.get(id).size();
+        for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
+            mt.setSubMatrix(currentRow, 0, constraint.getValue());
+            currentRow += constraint.size();
         }
     }
 
@@ -167,8 +141,8 @@ public abstract class Constraint implements ConstraintInterface {
      */
     public static double getFullNorm() {
         double norm = 0;
-        for (Integer id : dbConstraint.keySet()) {
-            double consNorm = Constraint.dbConstraint.get(id).getNorm();
+        for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
+            double consNorm = constraint.getNorm();
             norm += (consNorm * consNorm);
         }
         return Math.sqrt(norm);
@@ -189,24 +163,21 @@ public abstract class Constraint implements ConstraintInterface {
         MatrixDouble conHs;
 
         offset = 0;
-        for (Integer id : dbConstraint.keySet()) {
-            if (!Constraint.dbConstraint.get(id).isJacobianConstant()) {
+        for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
+
+            if (!constraint.isJacobianConstant()) {
                 /// pierwsza pochodna po wektorze stanu jest nie const, tak wiec Hessian do przeliczenia
-
                 lagrange = sv.getQuick(size + offset, 0);
-
                 ///
                 ///   Hessian - dla tego wiezu liczony na cala macierz !
                 ///     TODO  !!!!   langrange ===????
-
-                conHs = Constraint.dbConstraint.get(id).getHessian(lagrange);
-
+                conHs = constraint.getHessian(lagrange);
                 if (conHs != null) {
                     hs.plus((conHs));
                 }
             }
             //zwiekszamy aktualny mnoznik Lagrage'a
-            offset += Constraint.dbConstraint.get(id).size();
+            offset += constraint.size();
         }
         return hs;
     }

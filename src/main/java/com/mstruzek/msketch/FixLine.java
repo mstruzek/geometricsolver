@@ -39,13 +39,13 @@ public class FixLine extends GeometricPrimitive {
     }
 
     @Override
-    public void setForce(int row, MatrixDouble dest) {
+    public void evaluateForceIntensity(int row, MatrixDouble dest) {
 
     }
 
 
     @Override
-    public void setJacobian(int row, int col, MatrixDouble dest) {
+    public void setStiffnessMatrix(int row, int col, MatrixDouble dest) {
         //poniewaz nie ma punktow kontrolnych to brak macierzy
     }
 
@@ -98,5 +98,10 @@ public class FixLine extends GeometricPrimitive {
     @Override
     public int[] getAllPointsId() {
         return null;
+    }
+
+    @Override
+    public Point[] getAllPoints() {
+        return new Point[0];
     }
 }

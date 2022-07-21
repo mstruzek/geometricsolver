@@ -34,7 +34,7 @@ public class FreePoint extends GeometricPrimitive {
     double angle = Math.toRadians(40);
 
     public FreePoint(Vector p) {
-        this(GeometricPrimitive.nextId(), p);
+        this(ModelRegistry.nextPrimitiveId(), p);
     }
 
     public FreePoint(int id, Vector v00) {
@@ -46,9 +46,9 @@ public class FreePoint extends GeometricPrimitive {
         } else {
             // Punkty kontrolne wyznaczamy na podstawie distance,agnle : distance- to odleglosc wektora a i b od p1
             // Kolejnosc inicjalizacji ma znaczenie
-            a = new Point(Point.nextId(), v00.minus(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
-            p1 = new Point(Point.nextId(), v00);
-            b = new Point(Point.nextId(), v00.plus(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
+            a = new Point(ModelRegistry.nextPointId(), v00.minus(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
+            p1 = new Point(ModelRegistry.nextPointId(), v00);
+            b = new Point(ModelRegistry.nextPointId(), v00.plus(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
             // przelicz odleglosci
             setAssociateConstraints(null);
         }
@@ -80,13 +80,13 @@ public class FreePoint extends GeometricPrimitive {
         // przelicz odleglosci
         calculateDistance();
 
-        ((ConstraintFixPoint) Constraint.dbConstraint.get(constraints[0])).setFixVector(va);
-        ((ConstraintFixPoint) Constraint.dbConstraint.get(constraints[1])).setFixVector(vb);
+        ((ConstraintFixPoint) constraints[0]).setFixVector(va);
+        ((ConstraintFixPoint) constraints[1]).setFixVector(vb);
 
     }
 
     @Override
-    public void setForce(int row, MatrixDouble mt) {
+    public void evaluateForceIntensity(int row, MatrixDouble mt) {
 
         // 8 = 4*2 (4 punkty kontrolne)
 
@@ -105,7 +105,7 @@ public class FreePoint extends GeometricPrimitive {
 
 
     @Override
-    public void setJacobian(int row, int col, MatrixDouble mt) {
+    public void setStiffnessMatrix(int row, int col, MatrixDouble mt) {
         /**
          * k= I*k
          * [ -ks    ks     0;
@@ -131,11 +131,11 @@ public class FreePoint extends GeometricPrimitive {
     @Override
     public void setAssociateConstraints(Set<Integer> skipIds) {
         if (skipIds == null) skipIds = Collections.emptySet();
-        ConstraintFixPoint fixPointa = new ConstraintFixPoint(Constraint.nextId(skipIds), a, false);
-        ConstraintFixPoint fixPointb = new ConstraintFixPoint(Constraint.nextId(skipIds), b, false);
-        constraints = new int[2];
-        constraints[0] = fixPointa.constraintId;
-        constraints[1] = fixPointb.constraintId;
+        ConstraintFixPoint fixPointa = new ConstraintFixPoint(ModelRegistry.nextConstraintId(skipIds), a, false);
+        ConstraintFixPoint fixPointb = new ConstraintFixPoint(ModelRegistry.nextConstraintId(skipIds), b, false);
+        constraints = new Constraint[2];
+        constraints[0] = fixPointa;
+        constraints[1] = fixPointb;
     }
 
 
@@ -166,6 +166,11 @@ public class FreePoint extends GeometricPrimitive {
         out[1] = b.getId();
         out[2] = p1.getId();
         return out;
+    }
+
+    @Override
+    public Point[] getAllPoints() {
+        return new Point[]{a, p1, b};
     }
 
     @Override

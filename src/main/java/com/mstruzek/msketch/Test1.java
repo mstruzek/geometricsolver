@@ -16,7 +16,7 @@ public class Test1 {
         System.out.println(ln1);
         System.out.println(c1);
         System.out.println(fp1);
-        System.out.println(GeometricPrimitive.dbPrimitives);
+        System.out.println(ModelRegistry.dbPrimitives());
     }
 
 }

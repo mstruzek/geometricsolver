@@ -1,6 +1,7 @@
 package com.mstruzek.controller;
 
 import com.mstruzek.msketch.GeometricPrimitive;
+import com.mstruzek.msketch.ModelRegistry;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -15,13 +16,13 @@ public class PrimitivesTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return GeometricPrimitive.dbPrimitives.size();
+        return ModelRegistry.dbPrimitives().size();
     }
 
     @Override
     public Object getValueAt(int rowId, int colmId) {
         int out;
-        GeometricPrimitive primitive = GeometricPrimitive.dbPrimitives.values().toArray(new GeometricPrimitive[0])[rowId];
+        GeometricPrimitive primitive = ModelRegistry.dbPrimitives.values().toArray(new GeometricPrimitive[0])[rowId];
         switch (colmId) {
             case 0:
                 return primitive.getPrimitiveId();

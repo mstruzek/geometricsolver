@@ -44,7 +44,7 @@ public class Line extends GeometricPrimitive {
     int[] constraintsId = new int[2];
 
     public Line(Vector p10, Vector p20) {
-        this(GeometricPrimitive.nextId(), p10, p20);
+        this(ModelRegistry.nextPrimitiveId(), p10, p20);
     }
 
     public Line(int id, Vector v10, Vector v20) {
@@ -58,10 +58,10 @@ public class Line extends GeometricPrimitive {
         } else {
             //ustawienie pozycji dla punktow kontrolnych
             //Kolejnosc inicjalizacji ma znaczenie
-            a = new Point(Point.nextId(), v10.minus(v20).product(alfa).plus(v10));
-            p1 = new Point(Point.nextId(), v10);//przepisujemy wartosci
-            p2 = new Point(Point.nextId(), v20);
-            b = new Point(Point.nextId(), v20.minus(v10).product(alfa).plus(v20));
+            a = new Point(ModelRegistry.nextPointId(), v10.minus(v20).product(alfa).plus(v10));
+            p1 = new Point(ModelRegistry.nextPointId(), v10);//przepisujemy wartosci
+            p2 = new Point(ModelRegistry.nextPointId(), v20);
+            b = new Point(ModelRegistry.nextPointId(), v20.minus(v10).product(alfa).plus(v20));
             setAssociateConstraints(null);
         }
         //FIXME  -Trzeba pomyslec o naciagu wstepnym sprezyn
@@ -99,12 +99,12 @@ public class Line extends GeometricPrimitive {
         calculateDistance();
 
         //uaktulaniamy wiezy
-        ((ConstraintFixPoint) Constraint.dbConstraint.get(constraints[0])).setFixVector(va);
-        ((ConstraintFixPoint) Constraint.dbConstraint.get(constraints[1])).setFixVector(vb);
+        ((ConstraintFixPoint) constraints[0]).setFixVector(va);
+        ((ConstraintFixPoint) constraints[1]).setFixVector(vb);
     }
 
     @Override
-    public void setForce(int row, MatrixDouble mt) {
+    public void evaluateForceIntensity(int row, MatrixDouble mt) {
         // 8 = 4*2 (4 punkty kontrolne)
         Vector f12 = p1.minus(a).unit().product(Consts.springStiffnessLow).product(p1.minus(a).length() - d_a_p1);          //F12 - sily w sprezynach
         Vector f23 = p2.minus(p1).unit().product(Consts.springStiffnessHigh).product(p2.minus(p1).length() - d_p1_p2);      //F23
@@ -122,7 +122,7 @@ public class Line extends GeometricPrimitive {
     }
 
     @Override
-    public void setJacobian(int row, int col, MatrixDouble mt) {
+    public void setStiffnessMatrix(int row, int col, MatrixDouble mt) {
 
         /**
          * k= I*k
@@ -154,11 +154,11 @@ public class Line extends GeometricPrimitive {
     @Override
     public void setAssociateConstraints(Set<Integer> skipIds) {
         if (skipIds == null) skipIds = Collections.emptySet();
-        ConstraintFixPoint fixeda = new ConstraintFixPoint(Constraint.nextId(skipIds), a, false);
-        ConstraintFixPoint fixedb = new ConstraintFixPoint(Constraint.nextId(skipIds), b, false);
-        constraints = new int[2];
-        constraints[0] = fixeda.constraintId;
-        constraints[1] = fixedb.constraintId;
+        ConstraintFixPoint fixeda = new ConstraintFixPoint(ModelRegistry.nextConstraintId(skipIds), a, false);
+        ConstraintFixPoint fixedb = new ConstraintFixPoint(ModelRegistry.nextConstraintId(skipIds), b, false);
+        constraints = new Constraint[2];
+        constraints[0] = fixeda;
+        constraints[1] = fixedb;
     }
 
 
@@ -191,6 +191,11 @@ public class Line extends GeometricPrimitive {
         out[2] = p1.getId();
         out[3] = p2.getId();
         return out;
+    }
+
+    @Override
+    public Point[] getAllPoints() {
+        return new Point[]{a, p1, p2, b};
     }
 
     @Override

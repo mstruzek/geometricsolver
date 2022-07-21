@@ -73,7 +73,7 @@ public class Controller implements ControllerInterface {
 
     public void readModelFrom(File selectedFile) {
 
-        clearDatabasesModel();
+        ModelRegistry.removeObjectsFromModel();
 
         try (GCModelReader modelReader = new GCModelReader(selectedFile)) {
 
@@ -87,37 +87,26 @@ public class Controller implements ControllerInterface {
         }
     }
 
-    public void clearDatabasesModel() {
-        Constraint.dbConstraint.clear();
-        Constraint.constraintCounter = 0;
-
-        Parameter.dbParameter.clear();
-        Parameter.parameterCounter = 0;
-
-        GeometricPrimitive.dbPrimitives.clear();
-        GeometricPrimitive.primitiveCounter = 0;
-
-        Point.dbPoint.clear();
-        Point.pointCounter = 0;
-    }
-
     private void updateModelConsistency() {
         // Update State and related variables !
-        Point.pointCounter = firstAvailableKey(Point.dbPoint);
+        ModelRegistry.pointCounter = firstAvailableKey(ModelRegistry.dbPoint());
+        ModelRegistry.primitiveCounter = firstAvailableKey(ModelRegistry.dbPrimitives());
+        ModelRegistry.parameterCounter = firstAvailableKey(ModelRegistry.dbParameter());
 
-        GeometricPrimitive.primitiveCounter = firstAvailableKey(GeometricPrimitive.dbPrimitives);
+        Set<Integer> skipConstrainIds = ModelRegistry.dbConstraint.keySet();
+        for (GeometricPrimitive geometricPrimitive : ModelRegistry.dbPrimitives.values()) {
 
-        Parameter.parameterCounter = firstAvailableKey(Parameter.dbParameter);
-
-        Set<Integer> skipConstrainIds = Constraint.dbConstraint.keySet();
-        for (GeometricPrimitive geometricPrimitive : GeometricPrimitive.dbPrimitives.values()) {
             geometricPrimitive.setAssociateConstraints(skipConstrainIds);
+
+            for (Constraint constraint : geometricPrimitive.associatedConstraints()) {
+                ModelRegistry.registerConstraint(constraint.getConstraintId(), constraint);
+            }
         }
 
-        Constraint.constraintCounter = firstAvailableKey(Constraint.dbConstraint);
+        ModelRegistry.constraintCounter = firstAvailableKey(ModelRegistry.dbConstraint);
     }
 
-    private <ModelEntity> int firstAvailableKey(TreeMap<Integer, ModelEntity> treeMap) {
+    private static <ModelEntity> int firstAvailableKey(TreeMap<Integer, ModelEntity> treeMap) {
         return treeMap.size() == 0 ? 0 : treeMap.lastKey() + 1;
     }
 
