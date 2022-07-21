@@ -61,13 +61,13 @@ public class ConstraintEqualLength extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
-        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id)).unit();
+        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id)).unit();
         MatrixDouble mt = mts;
         int j;
         //k
         j = po.get(k_id);
-        mt.setVector(0, j * 2, LK.dot(-1.0));
+        mt.setVector(0, j * 2, LK.product(-1.0));
         //l
         j = po.get(l_id);
         mt.setVector(0, j * 2, LK);
@@ -76,7 +76,7 @@ public class ConstraintEqualLength extends Constraint {
         mt.setVector(0, j * 2, NM);
         //n
         j = po.get(n_id);
-        mt.setVector(0, j * 2, NM.dot(-1.0));
+        mt.setVector(0, j * 2, NM.product(-1.0));
     }
 
     @Override
@@ -86,8 +86,8 @@ public class ConstraintEqualLength extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
         double value = LK.length() - NM.length();
         return MatrixDouble.scalar(value);
     }

@@ -49,12 +49,12 @@ public class ConstraintDistance2Points extends Constraint {
 
     @Override
     public void getJacobian(MatrixDouble mts) {
-        Vector LKu = dbPoint.get(l_id).Vector().sub(dbPoint.get(k_id)).unit();
+        Vector LKu = dbPoint.get(l_id).Vector().minus(dbPoint.get(k_id)).unit();
         MatrixDouble mt = mts;
         int j = 0;
         //k
         j = po.get(k_id);
-        mt.setVector(0, j * 2, LKu.dot(-1.0));
+        mt.setVector(0, j * 2, LKu.product(-1.0));
         //l
         j = po.get(l_id);
         mt.setVector(0, j * 2, LKu);
@@ -67,7 +67,7 @@ public class ConstraintDistance2Points extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        double value = dbPoint.get(l_id).sub(dbPoint.get(k_id)).length() - dbParameter.get(param_id).getValue();
+        double value = dbPoint.get(l_id).minus(dbPoint.get(k_id)).length() - dbParameter.get(param_id).getValue();
         return MatrixDouble.scalar(value);
     }
 

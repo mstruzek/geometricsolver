@@ -57,8 +57,8 @@ public class ConstraintParametrizedLength extends Constraint {
     @Override
     public void getJacobian(MatrixDouble mts) {
         MatrixDouble mt = mts;
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
         double lk = LK.length();
         double nm = NM.length();
         double d = (param_id != -1) ? Parameter.dbParameter.get(param_id).getValue() : 1.0;
@@ -66,19 +66,19 @@ public class ConstraintParametrizedLength extends Constraint {
 
         //k
         j = po.get(k_id);
-        mt.setVector(0, j * 2, LK.dot(-1.0 * d / lk));
+        mt.setVector(0, j * 2, LK.product(-1.0 * d / lk));
 
         //l
         j = po.get(l_id);
-        mt.setVector(0, j * 2, LK.dot(1.0 * d / lk));
+        mt.setVector(0, j * 2, LK.product(1.0 * d / lk));
 
         //m
         j = po.get(m_id);
-        mt.setVector(0, j * 2, NM.dot(1.0 / nm));
+        mt.setVector(0, j * 2, NM.product(1.0 / nm));
 
         //n
         j = po.get(n_id);
-        mt.setVector(0, j * 2, NM.dot(-1.0 / nm));
+        mt.setVector(0, j * 2, NM.product(-1.0 / nm));
     }
 
     @Override
@@ -88,8 +88,8 @@ public class ConstraintParametrizedLength extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
         double d = (param_id != -1) ? Parameter.dbParameter.get(param_id).getValue() : 1.0;
         double value = d * LK.length() - NM.length();
         return MatrixDouble.scalar(value);

@@ -75,12 +75,12 @@ public class ConstraintLinesParallelism extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         if ((m == null) && (n == null)) {
-            double value = LK.cr(dbPoint.get(n_id).sub(dbPoint.get(m_id)));
+            double value = LK.cross(dbPoint.get(n_id).minus(dbPoint.get(m_id)));
             return MatrixDouble.scalar(value);
         } else {
-            double value = LK.cr(n.sub(m));
+            double value = LK.cross(n.minus(m));
             return MatrixDouble.scalar(value);
         }
     }
@@ -90,29 +90,29 @@ public class ConstraintLinesParallelism extends Constraint {
         MatrixDouble mt = mts;
         int i;
         if ((m == null) && (n == null)) {
-            Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
-            Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
+            Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
+            Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
             //k
             i = po.get(k_id);
-            mt.setVector(0, i * 2, NM.  cr());
+            mt.setVector(0, i * 2, NM.pivot());
             //l
             i = po.get(l_id);
-            mt.setVector(0, i * 2, NM.cr().dot(-1.0));
+            mt.setVector(0, i * 2, NM.pivot().product(-1.0));
             //m
             i = po.get(m_id);
-            mt.setVector(0, i * 2, LK.cr().dot(-1.0));
+            mt.setVector(0, i * 2, LK.pivot().product(-1.0));
             //n
             i = po.get(n_id);
-            mt.setVector(0, i * 2, LK.cr());
+            mt.setVector(0, i * 2, LK.pivot());
 
         } else {
-            Vector NM = n.sub(m);
+            Vector NM = n.minus(m);
             //k
             i = po.get(k_id);
-            mt.setVector(0, i * 2, NM.cr());
+            mt.setVector(0, i * 2, NM.pivot());
             //l
             i = po.get(l_id);
-            mt.setVector(0, i * 2, NM.cr().dot(-1.0));
+            mt.setVector(0, i * 2, NM.pivot().product(-1.0));
         }
     }
 
@@ -131,8 +131,8 @@ public class ConstraintLinesParallelism extends Constraint {
     public MatrixDouble getHessian(double lagrange) {
         /// macierz NxN
         MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-        final MatrixDouble R = MatrixDouble.rotation(90 + 180).dot(lagrange);     /// R
-        final MatrixDouble Rm = MatrixDouble.rotation(90).dot(lagrange);          /// Rm = -R
+        final MatrixDouble R = MatrixDouble.rotation(90 + 180).mulitply(lagrange);     /// R
+        final MatrixDouble Rm = MatrixDouble.rotation(90).mulitply(lagrange);          /// Rm = -R
         int i;
         int j;
         if ((m == null) && (n == null)) {
@@ -140,42 +140,42 @@ public class ConstraintLinesParallelism extends Constraint {
             //k,m
             i = po.get(k_id);
             j = po.get(m_id);
-            mt.addSubMatrix(2 * i, 2 * j, R);
+            mt.plusSubMatrix(2 * i, 2 * j, R);
 
             //k,n
             i = po.get(k_id);
             j = po.get(n_id);
-            mt.addSubMatrix(2 * i, 2 * j, Rm);
+            mt.plusSubMatrix(2 * i, 2 * j, Rm);
 
             //l,m
             i = po.get(l_id);
             j = po.get(m_id);
-            mt.addSubMatrix(2 * i, 2 * j, Rm);
+            mt.plusSubMatrix(2 * i, 2 * j, Rm);
 
             //l,n
             i = po.get(l_id);
             j = po.get(n_id);
-            mt.addSubMatrix(2 * i, 2 * j, R);
+            mt.plusSubMatrix(2 * i, 2 * j, R);
 
             //m,k
             i = po.get(m_id);
             j = po.get(k_id);
-            mt.addSubMatrix(2 * i, 2 * j, Rm);
+            mt.plusSubMatrix(2 * i, 2 * j, Rm);
 
             //m,l
             i = po.get(m_id);
             j = po.get(l_id);
-            mt.addSubMatrix(2 * i, 2 * j, R);
+            mt.plusSubMatrix(2 * i, 2 * j, R);
 
             //n,k
             i = po.get(n_id);
             j = po.get(k_id);
-            mt.addSubMatrix(2 * i, 2 * j, R);
+            mt.plusSubMatrix(2 * i, 2 * j, R);
 
             //n,l
             i = po.get(n_id);
             j = po.get(l_id);
-            mt.addSubMatrix(2 * i, 2 * j, Rm);
+            mt.plusSubMatrix(2 * i, 2 * j, Rm);
 
             return mt;
         } else {
@@ -216,12 +216,12 @@ public class ConstraintLinesParallelism extends Constraint {
 
     @Override
     public double getNorm() {
-        Vector LK = dbPoint.get(k_id).sub(dbPoint.get(l_id));
+        Vector LK = dbPoint.get(k_id).minus(dbPoint.get(l_id));
         MatrixDouble mt = getValue();
         if ((m == null) && (n == null)) {
-            return mt.getQuick(0, 0) / LK.length() / dbPoint.get(m_id).sub(dbPoint.get(n_id)).length();
+            return mt.getQuick(0, 0) / LK.length() / dbPoint.get(m_id).minus(dbPoint.get(n_id)).length();
         } else {
-            return mt.getQuick(0, 0) / LK.length() / (m.sub(n)).length();
+            return mt.getQuick(0, 0) / LK.length() / (m.minus(n)).length();
         }
     }
 }

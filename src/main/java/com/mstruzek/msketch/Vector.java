@@ -1,7 +1,6 @@
 package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.MatrixDouble;
-import com.mstruzek.msketch.matrix.SmallMatrixDouble;
 
 /**
  * Klasa wektora 2D
@@ -22,11 +21,11 @@ public class Vector {
     /**
      * Zwraca sume bierzacego i zadanego wektora; C=A+B
      */
-    public Vector add(Vector vec1) {
+    public Vector plus(Vector vec1) {
         return new Vector(this.x + vec1.x, this.y + vec1.y);
     }
 
-    public Vector add(double d) {
+    public Vector plus(double d) {
         return new Vector(this.x + d, this.y + d);
     }
 
@@ -38,38 +37,40 @@ public class Vector {
     /**
      * Zwraca roznice aktualnego wektora i zadanego ;COPY : C=A-B;
      */
-    public Vector sub(Vector vec1) {
+    public Vector minus(Vector vec1) {
         return new Vector(this.x - vec1.x, this.y - vec1.y);
     }
 
     /**
      * Zwraca mno�enie wektora przez scalar C=alfa*A;
      */
-    public Vector dot(double scalar) {
+    public Vector product(double scalar) {
         return new Vector(this.x * scalar, this.y * scalar);
     }
 
     /**
      * Zwraca iloczyn skalarny aktualnego i zadanego wektora; C=A'*B;
      */
-    public double dot(Vector vec1) {
+    public double product(Vector vec1) {
         return (this.x * vec1.x + this.y * vec1.y);
     }
 
 
     /**
-     * Zwraca iloczyn wektorowy aktualnego i zadanego wektora; C =A x B ;
+     * Zwraca iloczyn wektorowy aktualnego i zadanego wektora; C=A x B ;
      */
-    public double cr(Vector vec1) {
-        return (this.x * vec1.y - this.y * vec1.x);
+    public double cross(Vector vec) {
+        return (this.x * vec.y - this.y * vec.x);
     }
 
     /**
      * Equivalent of rotation vector by MatrixDouble of R*a = ~a , R  = [ 0 -1 , 1  0]
      *
+     *  c = a x b = R*a' * b
+     *
      * @return
      */
-    public Vector cr() {
+    public Vector pivot() {
         return new Vector(-this.y, this.x);
     }
 

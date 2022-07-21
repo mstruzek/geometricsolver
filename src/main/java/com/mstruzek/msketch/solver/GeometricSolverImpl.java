@@ -177,7 +177,7 @@ public class GeometricSolverImpl implements GeometricSolver {
             Constraint.getFullConstraintValues(Fi);             /// Wiezy  - Fi(q)
             // b.setSubMatrix(0,0, (Fr));
             // b.setSubMatrix(size,0, (Fi));
-            b.dot(-1);
+            b.mulitply(-1);
 
 /// macierz `A
 
@@ -194,7 +194,7 @@ public class GeometricSolverImpl implements GeometricSolver {
             Constraint.getFullHessian(Hs, SV, size);
 
             A.setSubMatrix(0, 0, Fq);                   /// procedure SET
-            A.addSubMatrix(0, 0, Hs);                   /// procedure ADD
+            A.plusSubMatrix(0, 0, Hs);                   /// procedure ADD
 
             A.setSubMatrix(size, 0, Wq);
             A.setSubMatrix(0, size, Wq.transpose());
@@ -230,7 +230,7 @@ public class GeometricSolverImpl implements GeometricSolver {
             dmx = MatrixDouble.matrixDoubleFrom(matrix1Db);
 
             /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ]
-            SV.add(dmx);
+            SV.plus(dmx);
             PointUtility.copyFromStateVector(SV);
 
 

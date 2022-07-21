@@ -57,15 +57,15 @@ public class Circle extends GeometricPrimitive {
         if (v10 instanceof Point && v20 instanceof Point) {
             p1 = (Point) v10;
             p2 = (Point) v20;
-            a = new Point(p1.getId() - 1, v10.sub(v20).dot(alfa).add(v10));
-            b = new Point(p2.getId() + 1, v20.sub(v10).dot(alfa).add(v20));
+            a = new Point(p1.getId() - 1, v10.minus(v20).product(alfa).plus(v10));
+            b = new Point(p2.getId() + 1, v20.minus(v10).product(alfa).plus(v20));
         } else {
             //ustawienie pozycji dla punktow kontrolnych
             //Kolejnosc inicjalizacji ma znaczenie
-            a = new Point(Point.nextId(), v10.sub(v20).dot(alfa).add(v10));
+            a = new Point(Point.nextId(), v10.minus(v20).product(alfa).plus(v10));
             p1 = new Point(Point.nextId(), v10); /// przepisujemy wartosci
             p2 = new Point(Point.nextId(), v20);
-            b = new Point(Point.nextId(), v20.sub(v10).dot(alfa).add(v20));
+            b = new Point(Point.nextId(), v20.minus(v10).product(alfa).plus(v20));
             setAssociateConstraints(null);
         }
         calculateDistance();
@@ -85,15 +85,15 @@ public class Circle extends GeometricPrimitive {
      * Funkcja oblicza dlugosci poczatkowe pomiedzy wektorami
      */
     private void calculateDistance() {
-        d_a_p1 = Math.abs(p1.sub(a).length());
-        d_p1_p2 = Math.abs(p2.sub(p1).length());
-        d_p2_b = Math.abs(b.sub(p2).length());
+        d_a_p1 = Math.abs(p1.minus(a).length());
+        d_p1_p2 = Math.abs(p2.minus(p1).length());
+        d_p2_b = Math.abs(b.minus(p2).length());
     }
 
     @Override
     public void evaluateGuidePoints() {
-        Vector va = (Vector) (p1.sub(p2).dot(alfa).add(p1));
-        Vector vb = (Vector) (p2.sub(p1).dot(alfa).add(p2));
+        Vector va = (Vector) (p1.minus(p2).product(alfa).plus(p1));
+        Vector vb = (Vector) (p2.minus(p1).product(alfa).plus(p2));
         a.setLocation(va.getX(), va.getY());
         b.setLocation(vb.getX(), vb.getY());
 
@@ -107,18 +107,18 @@ public class Circle extends GeometricPrimitive {
     @Override
     public void setForce(int row, MatrixDouble force) {
         // 8 = 4*2 (4 punkty kontrolne)
-        Vector f12 = p1.sub(a).unit().dot(Consts.springStiffnessLow).dot(p1.sub(a).length() - d_a_p1);                      //F12 - sily w sprezynach
-        Vector f23 = p2.sub(p1).unit().dot(Consts.springStiffnessHigh * springAlfa).dot(p2.sub(p1).length() - d_p1_p2);     //F23
-        Vector f34 = b.sub(p2).unit().dot(Consts.springStiffnessLow).dot(b.sub(p2).length() - d_p2_b);                      //F34
+        Vector f12 = p1.minus(a).unit().product(Consts.springStiffnessLow).product(p1.minus(a).length() - d_a_p1);                      //F12 - sily w sprezynach
+        Vector f23 = p2.minus(p1).unit().product(Consts.springStiffnessHigh * springAlfa).product(p2.minus(p1).length() - d_p1_p2);     //F23
+        Vector f34 = b.minus(p2).unit().product(Consts.springStiffnessLow).product(b.minus(p2).length() - d_p2_b);                      //F34
 
         //F1 - silu na poszczegolne punkty
         force.setVector(row + 0, 0, f12);
         //F2
-        force.setVector(row + 2, 0, f23.sub(f12));
+        force.setVector(row + 2, 0, f23.minus(f12));
         //F3
-        force.setVector(row + 4, 0, f34.sub(f23));
+        force.setVector(row + 4, 0, f34.minus(f23));
         //F4
-        force.setVector(row + 6, 0, f34.dot(-1.0));
+        force.setVector(row + 6, 0, f34.product(-1.0));
     }
 
     @Override
@@ -136,18 +136,18 @@ public class Circle extends GeometricPrimitive {
         // K - duza szytwnosci
         MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh * springAlfa, Consts.springStiffnessHigh * springAlfa);
         // -Ks-Kb
-        MatrixDouble Ksb = Ks.dotC(-1).add(Kb.dotC(-1));
+        MatrixDouble Ksb = Ks.multiplyC(-1).plus(Kb.multiplyC(-1));
 
-        mt.addSubMatrix(row + 0, col + 0, Ks.dotC(-1));
-        mt.addSubMatrix(row + 0, col + 2, Ks);
-        mt.addSubMatrix(row + 2, col + 0, Ks);
-        mt.addSubMatrix(row + 2, col + 2, Ksb);
-        mt.addSubMatrix(row + 2, col + 4, Kb);
-        mt.addSubMatrix(row + 4, col + 2, Kb);
-        mt.addSubMatrix(row + 4, col + 4, Ksb);
-        mt.addSubMatrix(row + 4, col + 6, Ks);
-        mt.addSubMatrix(row + 6, col + 4, Ks);
-        mt.addSubMatrix(row + 6, col + 6, Ks.dotC(-1));
+        mt.plusSubMatrix(row + 0, col + 0, Ks.multiplyC(-1));
+        mt.plusSubMatrix(row + 0, col + 2, Ks);
+        mt.plusSubMatrix(row + 2, col + 0, Ks);
+        mt.plusSubMatrix(row + 2, col + 2, Ksb);
+        mt.plusSubMatrix(row + 2, col + 4, Kb);
+        mt.plusSubMatrix(row + 4, col + 2, Kb);
+        mt.plusSubMatrix(row + 4, col + 4, Ksb);
+        mt.plusSubMatrix(row + 4, col + 6, Ks);
+        mt.plusSubMatrix(row + 6, col + 4, Ks);
+        mt.plusSubMatrix(row + 6, col + 6, Ks.multiplyC(-1));
     }
 
     @Override

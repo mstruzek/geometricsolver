@@ -26,7 +26,7 @@ public class ConstraintDistancePointLine extends Constraint {
 
     /**
      * Konstruktor pomiedzy 3 punktami i paramtetrem
-     * rownanie tego wiezu to [(R(L-K))'*(M-K)]^2 - d*d*(L-K)'*(L-K) = 0  gdzie R = Rot(PI/2) = [ 0 -1 ; 1 0]
+     * rownanie tego wiezu to (L-K)x(M-K)  -d*sqrt(LK'*LK) = 0  gdzie R = Rot(PI/2) = [ 0 -1 ; 1 0]
      *
      * @param constId
      * @param K       punkt prowadzacy prostej
@@ -48,34 +48,31 @@ public class ConstraintDistancePointLine extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
         double d = Parameter.dbParameter.get(param_id).getValue();
-        double value = LK.cr(MK) * LK.cr(MK) - d * d * LK.length() * LK.length();
+        double value = LK.cross(MK)  -  d * LK.length();
         return MatrixDouble.scalar(value);
     }
 
     @Override
     public void getJacobian(MatrixDouble mts) {
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
-        Vector ML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
         double d = Parameter.dbParameter.get(param_id).getValue(); /// parameter value
-        double z = LK.cr(MK);
         MatrixDouble mt = mts;
         int j;
-
         //k
         j = po.get(k_id);
-        mt.setVector(0, 2 * j, ML.cr().dot(z * 2).add(LK.dot(2 * d * d)));
+        mt.setVector(0, 2 * j, LK.product(d / LK.length()).minus(MK.plus(LK).pivot()));
 
         //l
         j = po.get(l_id);
-        mt.setVector(0, 2 * j, MK.cr().dot(z * -2.0).add(LK.dot(-2.0 * d * d)));
+        mt.setVector(0, 2 * j, LK.product( -1.0 * d / LK.length()));
 
         //m
         j = po.get(m_id);
-        mt.setVector(0, 2 * j, LK.cr().dot(z * 2.0));
+        mt.setVector(0, 2 * j, LK.pivot());
     }
 
     @Override
@@ -90,69 +87,72 @@ public class ConstraintDistancePointLine extends Constraint {
     }
 
     @Override
-    @InstabilityBehavior(description = "equations `or Lagrange multiplier")
+    @InstabilityBehavior(description = "equations `or Lagrange multiplier , update definition from jacobian equations !!")
     public MatrixDouble getHessian(double lagrange) {
+        if(true)
+            return null;
+
         /// macierz NxN
         MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-        Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector ML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
+        Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        Vector ML = dbPoint.get(m_id).minus(dbPoint.get(l_id));
         double d = Parameter.dbParameter.get(param_id).getValue();
         MatrixDouble R = MatrixDouble.matrixR();
         MatrixDouble D = MatrixDouble.diagonal(2, 2 * d * d);
         MatrixDouble Dm = MatrixDouble.diagonal(2, -2 * d * d);
-        double SC = MK.dot(LK.cr()); ///
+        double SC = MK.product(LK.pivot()); ///
         MatrixDouble mat;
         int i;
         int j;
 
         //k,k
         i = po.get(k_id);j = po.get(k_id);
-            mat = ML.cr().cartesian(MK.cr().sub(LK.cr())).dot(2).add(Dm);
+            mat = ML.pivot().cartesian(MK.pivot().minus(LK.pivot())).mulitply(2).plus(Dm);
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //k,l
         i = po.get(k_id);j = po.get(l_id);
-            mat = R.dotC(-2.0 * SC).add(ML.cr().cartesian(MK).mult(R).dot(2.0)).add(D);
+            mat = R.multiplyC(-2.0 * SC).plus(ML.pivot().cartesian(MK).multiply(R).mulitply(2.0)).plus(D);
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //k,m
         i = po.get(k_id);j = po.get(m_id);
-            mat = R.dotC(2 * SC).add(ML.cr().cartesian(LK.cr()).dot(2.0));
+            mat = R.multiplyC(2 * SC).plus(ML.pivot().cartesian(LK.pivot()).mulitply(2.0));
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,k
         i = po.get(l_id);j = po.get(k_id);
-            mat = R.dotC(2 * SC).add(MK.cr().cartesian(ML.cr()).dot(-2.0)).add(D);
+            mat = R.multiplyC(2 * SC).plus(MK.pivot().cartesian(ML.pivot()).mulitply(-2.0)).plus(D);
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,l
         i = po.get(l_id);j = po.get(l_id);
-            mat = MK.cr().cartesian(MK.cr()).dot(2.0).add(Dm);
+            mat = MK.pivot().cartesian(MK.pivot()).mulitply(2.0).plus(Dm);
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,m
         i = po.get(l_id);j = po.get(m_id);
-            mat = R.dotC(-2.0 * SC).add(MK.cr().cartesian(LK.cr()).dot(-2.0));
+            mat = R.multiplyC(-2.0 * SC).plus(MK.pivot().cartesian(LK.pivot()).mulitply(-2.0));
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,k
         i = po.get(m_id);j = po.get(k_id);
-            mat = R.dotC(-2.0 * SC).add(LK.cr().cartesian(MK.cr()).dot(-2.0));
+            mat = R.multiplyC(-2.0 * SC).plus(LK.pivot().cartesian(MK.pivot()).mulitply(-2.0));
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,l
         i = po.get(m_id);j = po.get(l_id);
-            mat = R.dotC(2.0 * SC).add(LK.cr().cartesian(MK.cr()).dot(-2.0));
+            mat = R.multiplyC(2.0 * SC).plus(LK.pivot().cartesian(MK.pivot()).mulitply(-2.0));
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,m
         i = po.get(m_id);j = po.get(m_id);
-            mat = LK.cr().cartesian(LK.cr()).dot(2.0);
+            mat = LK.pivot().cartesian(LK.pivot()).mulitply(2.0);
             mt.setSubMatrix(2 * i, 2 * j, mat);
 
         // \\\\\\\ \\\\\\ HESSIAN
-        return mt.dot(lagrange);
+        return mt.mulitply(lagrange);
     }
 
     @Override

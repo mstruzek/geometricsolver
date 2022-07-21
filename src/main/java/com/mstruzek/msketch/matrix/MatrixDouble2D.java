@@ -87,7 +87,7 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble add(MatrixDouble rhs) {
+    public MatrixDouble plus(MatrixDouble rhs) {
         assertEqualDimensions(this, rhs);
         double value;
         for (int i = 0; i < height(); i++) {
@@ -99,7 +99,7 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble dot(double c) {
+    public MatrixDouble mulitply(double c) {
         for (int i = 0; i < height(); i++) {
             for (int j = 0; j < width(); j++) {
                 this.m[rowOffset + i][colOffset + j] *= c;
@@ -109,7 +109,7 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble dotC(double c) {
+    public MatrixDouble multiplyC(double c) {
         MatrixDouble mt = new MatrixDouble2D(width(), height());
         for (int i = 0; i < height(); i++) {
             for (int j = 0; j < width(); j++) {
@@ -121,7 +121,7 @@ public class MatrixDouble2D implements MatrixDouble {
 
 
     @Override
-    public MatrixDouble mult(MatrixDouble rhs) {
+    public MatrixDouble multiply(MatrixDouble rhs) {
         if (this.width() != rhs.height()) throw new Error("Illegal dimension of right-hand side operand matrix");
 
         if (rhs instanceof SmallMatrixDouble && height() == rhs.height() && width() == rhs.width()) {
@@ -130,7 +130,7 @@ public class MatrixDouble2D implements MatrixDouble {
             double a10 = getQuick(1, 0);
             double a11 = getQuick(1, 1);
             SmallMatrixDouble mt = new SmallMatrixDouble(a00, a01, a10, a11);
-            return mt.mult(rhs);
+            return mt.multiply(rhs);
         } else {
             MatrixDouble2D mt = new MatrixDouble2D(rhs.width(), this.height());
             for (int i = 0; i < height(); i++) { /// this row
@@ -152,7 +152,7 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public void add(int r, int c, double value) {
+    public void plus(int r, int c, double value) {
         this.m[rowOffset + r][colOffset + c] += value;
     }
 
@@ -200,16 +200,16 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble addSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+    public MatrixDouble plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
         if (this.height() < (offsetRow + mt.height()) || this.width() < (offsetCol + mt.width())) {
             throw new Error("matrix dimension out of bounds");
         }
         if (mt instanceof SmallMatrixDouble) {
             SmallMatrixDouble smt = (SmallMatrixDouble) mt;
-            add(offsetRow + 0, offsetCol + 0, smt.sm[0]);
-            add(offsetRow + 0, offsetCol + 1, smt.sm[1]);
-            add(offsetRow + 1, offsetCol + 0, smt.sm[2]);
-            add(offsetRow + 1, offsetCol + 1, smt.sm[3]);
+            plus(offsetRow + 0, offsetCol + 0, smt.sm[0]);
+            plus(offsetRow + 0, offsetCol + 1, smt.sm[1]);
+            plus(offsetRow + 1, offsetCol + 0, smt.sm[2]);
+            plus(offsetRow + 1, offsetCol + 1, smt.sm[3]);
             return this;
         } else {
             MatrixDouble2D tmh = (MatrixDouble2D) mt;
@@ -275,9 +275,9 @@ public class MatrixDouble2D implements MatrixDouble {
         md.setSubMatrix(2, 2, MatrixDouble.identity(2, -1.0));
         md.setSubMatrix(4, 2, MatrixDouble.rotation(45));
         md.setSubMatrix(6, 2, MatrixDouble.rotation(-30));
-        md.dot(2.0);
+        md.mulitply(2.0);
         span = md.viewSpan(3, 3, 2, 2);
-        span.add(MatrixDouble.identity(2, 200));
+        span.plus(MatrixDouble.identity(2, 200));
 
         q1 = span.getQuick(0, 0);
         m1 = md.getQuick(3, 3);

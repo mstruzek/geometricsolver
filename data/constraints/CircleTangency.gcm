@@ -4,55 +4,55 @@
 #--definition-begin: 
 
 BEGIN Point:
-     ID: 9;
-     PX: 281.4250049563635;
-     PY: 383.82685542663404;
+     ID: 1;
+     PX: 203.26232348783407;
+     PY: 277.76339472426656;
 END;
 
 BEGIN Point:
-     ID: 10;
-     PX: 351.18585831675745;
-     PY: 467.64871692852813;
+     ID: 2;
+     PX: 353.6261421441227;
+     PY: 295.78171991867157;
 END;
 
 BEGIN Point:
-     ID: 13;
-     PX: 102.66163951590443;
-     PY: 460.56332578429056;
+     ID: 5;
+     PX: 425.01640353208836;
+     PY: 320.163713327195;
 END;
 
 BEGIN Point:
-     ID: 14;
-     PX: 187.7766175761326;
-     PY: 452.6505009871266;
+     ID: 6;
+     PX: 499.0951308359549;
+     PY: 326.29117202986686;
 END;
 
 
 BEGIN GeometricPrimitive:
-     ID: 2;
+     ID: 0;
      TYPE: Circle;
-     P1: 9;
-     P2: 10;
+     P1: 1;
+     P2: 2;
      P3: -1;
 END;
 
 BEGIN GeometricPrimitive:
-     ID: 3;
+     ID: 1;
      TYPE: Circle;
-     P1: 13;
-     P2: 14;
+     P1: 5;
+     P2: 6;
      P3: -1;
 END;
 
 
 
 BEGIN Constraint:
-     ID: 16;
+     ID: 4;
      TYPE: CircleTangency;
-     K: 13;
-     L: 14;
-     M: 9;
-     N: 10;
+     K: 1;
+     L: 2;
+     M: 5;
+     N: 6;
      PARAM: -1;
 END;
 

@@ -46,39 +46,40 @@ public class ConstraintTangency extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
-        var value = LK.cr(MK) * LK.cr(MK) - LK.dot(LK) * NM.dot(NM);
+        Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
+        var value = LK.cross(MK) * LK.cross(MK) - LK.product(LK) * NM.product(NM);
         return MatrixDouble.scalar(value);
     }
 
     @Override
+    @InstabilityBehavior(description = "rewrite equation into form  [(L-K)x(M-K)] - sqrt[(L-K)'*(L-K)]*sqrt[(N-M)'*(N-M)] = 0")
     public void getJacobian(MatrixDouble mts) {
-        Vector MK = (dbPoint.get(m_id)).sub(dbPoint.get(k_id));
-        Vector LK = (dbPoint.get(l_id)).sub(dbPoint.get(k_id));
-        Vector ML = (dbPoint.get(m_id)).sub(dbPoint.get(l_id));
-        Vector NM = (dbPoint.get(n_id)).sub(dbPoint.get(m_id));
-        double nm = NM.dot(NM);
-        double lk = LK.dot(LK);
-        double CRS = LK.cr(MK);
+        Vector MK = (dbPoint.get(m_id)).minus(dbPoint.get(k_id));
+        Vector LK = (dbPoint.get(l_id)).minus(dbPoint.get(k_id));
+        Vector ML = (dbPoint.get(m_id)).minus(dbPoint.get(l_id));
+        Vector NM = (dbPoint.get(n_id)).minus(dbPoint.get(m_id));
+        double nm = NM.product(NM);
+        double lk = LK.product(LK);
+        double CRS = LK.cross(MK);
         MatrixDouble mt= mts;
         int j;
         //k
         j = po.get(k_id);
-        mt.setVector(0, j * 2, ML.cr().dot(2.0 * CRS).add(LK.dot(2.0 * nm)));
+        mt.setVector(0, j * 2, ML.pivot().product(2.0 * CRS).plus(LK.product(2.0 * nm)));
 
         //l
         j = po.get(l_id);
-        mt.setVector(0, j * 2, MK.cr().dot(-2.0 * CRS).add(LK.dot(-2.0 * nm)));
+        mt.setVector(0, j * 2, MK.pivot().product(-2.0 * CRS).plus(LK.product(-2.0 * nm)));
 
         //m
         j = po.get(m_id);
-        mt.setVector(0, j * 2, LK.cr().dot(2.0 * CRS).add(NM.dot(2.0 * lk)));
+        mt.setVector(0, j * 2, LK.pivot().product(2.0 * CRS).plus(NM.product(2.0 * lk)));
 
         //n
         j = po.get(n_id);
-        mt.setVector(0, j * 2, NM.dot(-2.0 * lk));
+        mt.setVector(0, j * 2, NM.product(-2.0 * lk));
     }
 
     @Override
@@ -96,10 +97,10 @@ public class ConstraintTangency extends Constraint {
          */
         /// macierz NxN
         MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-        Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector ML = dbPoint.get(m_id).sub(dbPoint.get(l_id));
-        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+        Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        Vector ML = dbPoint.get(m_id).minus(dbPoint.get(l_id));
+        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
         MatrixDouble R = MatrixDouble.matrixR();
 
         MatrixDouble mat;
@@ -109,103 +110,103 @@ public class ConstraintTangency extends Constraint {
         //k,k
         i = po.get(k_id);
         j = po.get(k_id);
-        mat = ML.cr().cartesian(ML.cr()).dot(2.0).add(MatrixDouble.diagonal(2, -2.0 * NM.dot(NM)));
+        mat = ML.pivot().cartesian(ML.pivot()).mulitply(2.0).plus(MatrixDouble.diagonal(2, -2.0 * NM.product(NM)));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //k,l
         i = po.get(k_id);
         j = po.get(l_id);
-        mat = R.dotC(-2.0 * MK.dot(LK.cr())).add(ML.cr().cartesian(MK.cr()).dot(-2.0)).add(MatrixDouble.diagonal(2, 2.0 * NM.dot(NM)));
+        mat = R.multiplyC(-2.0 * MK.product(LK.pivot())).plus(ML.pivot().cartesian(MK.pivot()).mulitply(-2.0)).plus(MatrixDouble.diagonal(2, 2.0 * NM.product(NM)));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //k,m
         i = po.get(k_id);
         j = po.get(m_id);
-        mat = R.dotC(2 * MK.dot(LK.cr())).add(ML.cr().cartesian(LK.cr()).dot(2.0)).add(MatrixDouble.diagonal(2, -4.0 * NM.dot(LK)));
+        mat = R.multiplyC(2 * MK.product(LK.pivot())).plus(ML.pivot().cartesian(LK.pivot()).mulitply(2.0)).plus(MatrixDouble.diagonal(2, -4.0 * NM.product(LK)));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //k,n
         i = po.get(k_id);
         j = po.get(n_id);
-        mat = MatrixDouble.diagonal(2, 4.0 * NM.dot(LK));
+        mat = MatrixDouble.diagonal(2, 4.0 * NM.product(LK));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,k
         i = po.get(l_id);
         j = po.get(k_id);
-        mat = R.dotC(2.0 * MK.dot(LK.cr())).add(MK.cr().cartesian(MK.cr()).dot(-2.0).add(MatrixDouble.diagonal(2, 2.0 * NM.dot(NM))));
+        mat = R.multiplyC(2.0 * MK.product(LK.pivot())).plus(MK.pivot().cartesian(MK.pivot()).mulitply(-2.0).plus(MatrixDouble.diagonal(2, 2.0 * NM.product(NM))));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,l
         i = po.get(l_id);
         j = po.get(l_id);
-        mat = MK.cr().cartesian(MK.cr()).dot(2.0).add(MatrixDouble.diagonal(2, -2.0 * NM.dot(NM)));
+        mat = MK.pivot().cartesian(MK.pivot()).mulitply(2.0).plus(MatrixDouble.diagonal(2, -2.0 * NM.product(NM)));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,m
         i = po.get(l_id);
         j = po.get(m_id);
-        mat = R.dotC(MK.dot(LK.cr())).add(MK.cr().cartesian(LK.cr())).dot(-2.0).add(MatrixDouble.diagonal(2, 4.0 * NM.dot(LK)));
+        mat = R.multiplyC(MK.product(LK.pivot())).plus(MK.pivot().cartesian(LK.pivot())).mulitply(-2.0).plus(MatrixDouble.diagonal(2, 4.0 * NM.product(LK)));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,n
         i = po.get(l_id);
         j = po.get(n_id);
-        mat = MatrixDouble.diagonal(2, -4.0 * NM.dot(LK));
+        mat = MatrixDouble.diagonal(2, -4.0 * NM.product(LK));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,k
         i = po.get(m_id);
         j = po.get(k_id);
-        mat = R.dotC(-2.0 * MK.dot(LK.cr())).add(LK.cr().cartesian(ML.cr()).dot(2.0)).add(MatrixDouble.diagonal(2, -4.0 * NM.dot(LK)));
+        mat = R.multiplyC(-2.0 * MK.product(LK.pivot())).plus(LK.pivot().cartesian(ML.pivot()).mulitply(2.0)).plus(MatrixDouble.diagonal(2, -4.0 * NM.product(LK)));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,l
         i = po.get(m_id);
         j = po.get(l_id);
-        mat = R.dotC(MK.dot(LK.cr())).dot(2.0).add(LK.cr().cartesian(MK.cr()).dot(-2.0)).add(MatrixDouble.diagonal(2, 4.0 * NM.dot(LK)));
+        mat = R.multiplyC(MK.product(LK.pivot())).mulitply(2.0).plus(LK.pivot().cartesian(MK.pivot()).mulitply(-2.0)).plus(MatrixDouble.diagonal(2, 4.0 * NM.product(LK)));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,m
         i = po.get(m_id);
         j = po.get(m_id);
-        mat = LK.cr().cartesian(LK.cr()).add(MatrixDouble.diagonal(2, -1.0 * LK.dot(LK))).dot(2.0);
+        mat = LK.pivot().cartesian(LK.pivot()).plus(MatrixDouble.diagonal(2, -1.0 * LK.product(LK))).mulitply(2.0);
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,n
         i = po.get(m_id);
         j = po.get(n_id);
-        mat = MatrixDouble.diagonal(2, 2.0 * LK.dot(LK));
+        mat = MatrixDouble.diagonal(2, 2.0 * LK.product(LK));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //n,k
         i = po.get(n_id);
         j = po.get(k_id);
-        mat = MatrixDouble.diagonal(2, 4.0 * LK.dot(NM));
+        mat = MatrixDouble.diagonal(2, 4.0 * LK.product(NM));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //n,l
         i = po.get(n_id);
         j = po.get(l_id);
-        mat = MatrixDouble.diagonal(2, -4.0 * LK.dot(NM));
+        mat = MatrixDouble.diagonal(2, -4.0 * LK.product(NM));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //n,m
         i = po.get(n_id);
         j = po.get(m_id);
-        mat = MatrixDouble.diagonal(2, 2.0 * LK.dot(LK));
+        mat = MatrixDouble.diagonal(2, 2.0 * LK.product(LK));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //n,n
         i = po.get(n_id);
         j = po.get(n_id);
-        mat = MatrixDouble.diagonal(2, -2.0 * LK.dot(LK));
+        mat = MatrixDouble.diagonal(2, -2.0 * LK.product(LK));
         mt.setSubMatrix(2 * i, 2 * j, mat);
 
     /// TODO aktualnie = 1.0   <==
 
 //        return mt;
-        return mt.dot(lagrange);      /// ????
+        return mt.mulitply(lagrange);      /// ????
 //        return null;
 
 }

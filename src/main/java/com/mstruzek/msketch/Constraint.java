@@ -202,7 +202,7 @@ public abstract class Constraint implements ConstraintInterface {
                 conHs = Constraint.dbConstraint.get(id).getHessian(lagrange);
 
                 if (conHs != null) {
-                    hs.add((conHs));
+                    hs.plus((conHs));
                 }
             }
             //zwiekszamy aktualny mnoznik Lagrage'a

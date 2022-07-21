@@ -65,10 +65,10 @@ public class Arc extends GeometricPrimitive {
             p2 = (Point) v20;
             p3 = (Point) v30;
 
-            va = v10.add(v10.sub(v20).dot(alfa));
-            vb = v10.add(v20.sub(v10).Rot(90).dot(alfa));
-            vc = v20.add(v20.sub(v10).dot(alfa));
-            vd = v30.add(v20.sub(v10).Rot(-90).dot(alfa));
+            va = v10.plus(v10.minus(v20).product(alfa));
+            vb = v10.plus(v20.minus(v10).Rot(90).product(alfa));
+            vc = v20.plus(v20.minus(v10).product(alfa));
+            vd = v30.plus(v20.minus(v10).Rot(-90).product(alfa));
 
             a = new Point(p1.getId() - 4, va);
             b = new Point(p1.getId() - 3, vb);
@@ -76,11 +76,11 @@ public class Arc extends GeometricPrimitive {
             d = new Point(p1.getId() - 1, vd);
 
         } else {
-            v3 = v10.add(v20.sub(v10).Rot(-90));
-            va = v10.add(v10.sub(v20).dot(alfa));
-            vb = v10.add(v20.sub(v10).Rot(90).dot(alfa));
-            vc = v20.add(v20.sub(v10).dot(alfa));
-            vd = v3.add(v20.sub(v10).Rot(-90).dot(alfa));
+            v3 = v10.plus(v20.minus(v10).Rot(-90));
+            va = v10.plus(v10.minus(v20).product(alfa));
+            vb = v10.plus(v20.minus(v10).Rot(90).product(alfa));
+            vc = v20.plus(v20.minus(v10).product(alfa));
+            vd = v3.plus(v20.minus(v10).Rot(-90).product(alfa));
 
             a = new Point(Point.nextId(), va);
             b = new Point(Point.nextId(), vb);
@@ -112,21 +112,21 @@ public class Arc extends GeometricPrimitive {
      */
     private void calculateDistance() {
         //Naciag wstepny lepiej sie zbiegaja
-        d_a_p1 = Math.abs(p1.sub(a).length());
-        d_b_p1 = Math.abs(p1.sub(b).length());
-        d_p1_p2 = Math.abs(p2.sub(p1).length());
-        d_p1_p3 = Math.abs(p3.sub(p1).length());
-        d_p3_d = Math.abs(d.sub(p3).length());
-        d_p2_c = Math.abs(c.sub(p2).length());
+        d_a_p1 = Math.abs(p1.minus(a).length());
+        d_b_p1 = Math.abs(p1.minus(b).length());
+        d_p1_p2 = Math.abs(p2.minus(p1).length());
+        d_p1_p3 = Math.abs(p3.minus(p1).length());
+        d_p3_d = Math.abs(d.minus(p3).length());
+        d_p2_c = Math.abs(c.minus(p2).length());
     }
 
     @Override
     public void evaluateGuidePoints() {
-        Vector va = (Vector) p1.sub(p2.sub(p1).dot(alfa));
-        Vector vb = (Vector) p1.sub(p3.sub(p1).unit().dot(p2.sub(p1).length()).dot(alfa));
-        Vector vc = (Vector) p2.add(p2.sub(p1).dot(alfa));
-        Vector vd = (Vector) p3.add(p3.sub(p1).unit().dot(p2.sub(p1).length()).dot(alfa));
-        Vector v3 = (Vector) p1.add(p3.sub(p1).unit().dot(p2.sub(p1).length()));
+        Vector va = (Vector) p1.minus(p2.minus(p1).product(alfa));
+        Vector vb = (Vector) p1.minus(p3.minus(p1).unit().product(p2.minus(p1).length()).product(alfa));
+        Vector vc = (Vector) p2.plus(p2.minus(p1).product(alfa));
+        Vector vd = (Vector) p3.plus(p3.minus(p1).unit().product(p2.minus(p1).length()).product(alfa));
+        Vector v3 = (Vector) p1.plus(p3.minus(p1).unit().product(p2.minus(p1).length()));
 
         a.setLocation(va.getX(), va.getY());
         b.setLocation(vb.getX(), vb.getY());
@@ -145,20 +145,20 @@ public class Arc extends GeometricPrimitive {
 
     @Override
     public void setForce(int row, MatrixDouble mt) {
-        Vector fap1 = p1.sub(a).unit().dot(Consts.springStiffnessLow).dot(p1.sub(a).length() - d_a_p1);
-        Vector fbp1 = p1.sub(b).unit().dot(Consts.springStiffnessLow).dot(p1.sub(b).length() - d_b_p1);
-        Vector fp1p2 = p2.sub(p1).unit().dot(Consts.springStiffnessHigh).dot(p2.sub(p1).length() - d_p1_p2);
-        Vector fp1p3 = p3.sub(p1).unit().dot(Consts.springStiffnessHigh).dot(p3.sub(p1).length() - d_p1_p3);
-        Vector fp2c = c.sub(p2).unit().dot(Consts.springStiffnessLow).dot(c.sub(p2).length() - d_p2_c);
-        Vector fp3d = d.sub(p3).unit().dot(Consts.springStiffnessLow).dot(d.sub(p3).length() - d_p3_d);
+        Vector fap1 = p1.minus(a).unit().product(Consts.springStiffnessLow).product(p1.minus(a).length() - d_a_p1);
+        Vector fbp1 = p1.minus(b).unit().product(Consts.springStiffnessLow).product(p1.minus(b).length() - d_b_p1);
+        Vector fp1p2 = p2.minus(p1).unit().product(Consts.springStiffnessHigh).product(p2.minus(p1).length() - d_p1_p2);
+        Vector fp1p3 = p3.minus(p1).unit().product(Consts.springStiffnessHigh).product(p3.minus(p1).length() - d_p1_p3);
+        Vector fp2c = c.minus(p2).unit().product(Consts.springStiffnessLow).product(c.minus(p2).length() - d_p2_c);
+        Vector fp3d = d.minus(p3).unit().product(Consts.springStiffnessLow).product(d.minus(p3).length() - d_p3_d);
 
         mt.setVector(row + 0, 0, fap1);
         mt.setVector(row + 2, 0, fbp1);
-        mt.setVector(row + 4, 0, fp2c.dot(-1));
-        mt.setVector(row + 6, 0, fp3d.dot(-1));
-        mt.setVector(row + 8, 0, fp1p2.add(fp1p3).sub(fap1).sub(fbp1));
-        mt.setVector(row + 10, 0, fp2c.sub(fp1p2));
-        mt.setVector(row + 12, 0, fp3d.sub(fp1p3));
+        mt.setVector(row + 4, 0, fp2c.product(-1));
+        mt.setVector(row + 6, 0, fp3d.product(-1));
+        mt.setVector(row + 8, 0, fp1p2.plus(fp1p3).minus(fap1).minus(fbp1));
+        mt.setVector(row + 10, 0, fp2c.minus(fp1p2));
+        mt.setVector(row + 12, 0, fp3d.minus(fp1p3));
     }
 
 
@@ -169,35 +169,35 @@ public class Arc extends GeometricPrimitive {
         MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
         MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
 
-        MatrixDouble mKs = Ks.dotC(-1);
-        MatrixDouble mKb = Kb.dotC(-1);
-        MatrixDouble KsKbm = mKs.add(mKb);
+        MatrixDouble mKs = Ks.multiplyC(-1);
+        MatrixDouble mKb = Kb.multiplyC(-1);
+        MatrixDouble KsKbm = mKs.plus(mKb);
 
-        mt.addSubMatrix(row + 0, col + 0, mKs);
-        mt.addSubMatrix(row + 0, col + 8, Ks);//a
+        mt.plusSubMatrix(row + 0, col + 0, mKs);
+        mt.plusSubMatrix(row + 0, col + 8, Ks);//a
 
-        mt.addSubMatrix(row + 2, col + 2, mKs);
-        mt.addSubMatrix(row + 2, col + 8, Ks);//b
+        mt.plusSubMatrix(row + 2, col + 2, mKs);
+        mt.plusSubMatrix(row + 2, col + 8, Ks);//b
 
-        mt.addSubMatrix(row + 4, col + 4, mKs);
-        mt.addSubMatrix(row + 4, col + 10, Ks);//c
+        mt.plusSubMatrix(row + 4, col + 4, mKs);
+        mt.plusSubMatrix(row + 4, col + 10, Ks);//c
 
-        mt.addSubMatrix(row + 6, col + 6, mKs);
-        mt.addSubMatrix(row + 6, col + 12, Ks);//d
+        mt.plusSubMatrix(row + 6, col + 6, mKs);
+        mt.plusSubMatrix(row + 6, col + 12, Ks);//d
 
-        mt.addSubMatrix(row + 8, col + 0, Ks);
-        mt.addSubMatrix(row + 8, col + 2, Ks);
-        mt.addSubMatrix(row + 8, col + 8, KsKbm.dotC(2.0));
-        mt.addSubMatrix(row + 8, col + 10, Kb);
-        mt.addSubMatrix(row + 8, col + 12, Kb); //p1
+        mt.plusSubMatrix(row + 8, col + 0, Ks);
+        mt.plusSubMatrix(row + 8, col + 2, Ks);
+        mt.plusSubMatrix(row + 8, col + 8, KsKbm.multiplyC(2.0));
+        mt.plusSubMatrix(row + 8, col + 10, Kb);
+        mt.plusSubMatrix(row + 8, col + 12, Kb); //p1
 
-        mt.addSubMatrix(row + 10, col + 4, Ks);
-        mt.addSubMatrix(row + 10, col + 8, Kb);
-        mt.addSubMatrix(row + 10, col + 10, KsKbm); //p2
+        mt.plusSubMatrix(row + 10, col + 4, Ks);
+        mt.plusSubMatrix(row + 10, col + 8, Kb);
+        mt.plusSubMatrix(row + 10, col + 10, KsKbm); //p2
 
-        mt.addSubMatrix(row + 12, col + 6, Ks);
-        mt.addSubMatrix(row + 12, col + 8, Kb);
-        mt.addSubMatrix(row + 12, col + 12, KsKbm); //p3
+        mt.plusSubMatrix(row + 12, col + 6, Ks);
+        mt.plusSubMatrix(row + 12, col + 8, Kb);
+        mt.plusSubMatrix(row + 12, col + 12, KsKbm); //p3
     }
 
     @Override

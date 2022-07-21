@@ -131,7 +131,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble add(MatrixDouble rhs) {
+        public MatrixDouble plus(MatrixDouble rhs) {
             DenseDoubleMatrix1D doubleMatrix1D = rhs.unwrap(DenseDoubleMatrix1D.class);
             if(doubleMatrix1D != null) {
                 this.mt.assign(doubleMatrix1D, new DoubleDoubleFunction() {
@@ -146,7 +146,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble dot(double c) {
+        public MatrixDouble mulitply(double c) {
             this.mt.assign(new DoubleFunction() {
                 @Override
                 public double apply(double value) {
@@ -157,15 +157,15 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble dotC(double c) {
+        public MatrixDouble multiplyC(double c) {
             DoubleMatrix1D denseCopy = this.mt.copy();
             DenseDoubleMatrix1DImpl denseDoubleMatrix1D = new DenseDoubleMatrix1DImpl(denseCopy);
-            denseDoubleMatrix1D.dot(c);
+            denseDoubleMatrix1D.mulitply(c);
             return denseDoubleMatrix1D;
         }
 
         @Override
-        public MatrixDouble mult(MatrixDouble rhs) {
+        public MatrixDouble multiply(MatrixDouble rhs) {
             throw new Error("not implemented");
         }
 
@@ -178,7 +178,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public void add(int r, int c, double value) {
+        public void plus(int r, int c, double value) {
             if (c != 0) {
                 throw new Error("columnar vector, out of bound subscript use");
             }
@@ -236,7 +236,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble addSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+        public MatrixDouble plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
             if (offsetCol != 0) {
                 throw new Error("columnar vector, out of bound subscript use");
             }
@@ -319,7 +319,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble add(MatrixDouble rhs) {
+        public MatrixDouble plus(MatrixDouble rhs) {
             SparseDoubleMatrix2D doubleMatrix2D = rhs.unwrap(SparseDoubleMatrix2D.class);
 
             if (doubleMatrix2D == null) {
@@ -336,7 +336,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble dot(double c) {
+        public MatrixDouble mulitply(double c) {
             this.mt.forEachNonZero(new IntIntDoubleFunction() {
                 @Override
                 public double apply(int i, int j, double value) {
@@ -347,12 +347,12 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble dotC(double c) {
+        public MatrixDouble multiplyC(double c) {
             throw new Error("not implemented");
         }
 
         @Override
-        public MatrixDouble mult(MatrixDouble rhs) {
+        public MatrixDouble multiply(MatrixDouble rhs) {
             throw new Error("not implemented");
         }
 
@@ -362,7 +362,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public void add(int r, int c, double value) {
+        public void plus(int r, int c, double value) {
             this.mt.setQuick(r, c, this.mt.getQuick(r, c) + value);
         }
 
@@ -401,7 +401,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble addSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+        public MatrixDouble plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
 
             SmallMatrixDouble smd = mt.unwrap(SmallMatrixDouble.class);
             if (smd != null) {

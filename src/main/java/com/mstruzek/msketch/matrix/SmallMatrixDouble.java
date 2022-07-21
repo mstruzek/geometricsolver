@@ -32,7 +32,7 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble add(MatrixDouble rhs) {
+    public MatrixDouble plus(MatrixDouble rhs) {
         SmallMatrixDouble mt = new SmallMatrixDouble();
         if (rhs instanceof SmallMatrixDouble) {
             SmallMatrixDouble rh = (SmallMatrixDouble) rhs;
@@ -46,7 +46,7 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble dot(double c) {
+    public MatrixDouble mulitply(double c) {
         this.sm[0] = this.sm[0] * c;
         this.sm[1] = this.sm[1] * c;
         this.sm[2] = this.sm[2] * c;
@@ -55,7 +55,7 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble dotC(double c) {
+    public MatrixDouble multiplyC(double c) {
         SmallMatrixDouble mt = new SmallMatrixDouble();
         mt.sm[0] = this.sm[0] * c;
         mt.sm[1] = this.sm[1] * c;
@@ -65,7 +65,7 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble mult(MatrixDouble rhs) {
+    public MatrixDouble multiply(MatrixDouble rhs) {
         if (rhs instanceof SmallMatrixDouble) {
             SmallMatrixDouble rh = (SmallMatrixDouble) rhs;
             SmallMatrixDouble mt = new SmallMatrixDouble();
@@ -93,7 +93,7 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public void add(int r, int c, double value) {
+    public void plus(int r, int c, double value) {
         sm[r * 2 + c] += value;
     }
 
@@ -108,7 +108,7 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble addSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+    public MatrixDouble plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
         throw new IllegalStateException("no implementation");
     }
 

@@ -54,28 +54,28 @@ public class ConstraintCircleTangency extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
-        Vector MK = dbPoint.get(m_id).sub(dbPoint.get(k_id));
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
+        Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
         return MatrixDouble.scalar(LK.length() + NM.length() - MK.length());
     }
 
     @Override
     public void getJacobian(MatrixDouble mts) {
         MatrixDouble mt = mts;
-        Vector vLK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
-        Vector vNM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
-        Vector vMK = dbPoint.get(m_id).sub(dbPoint.get(k_id)).unit();
+        Vector vLK = dbPoint.get(l_id).minus(dbPoint.get(k_id)).unit();
+        Vector vNM = dbPoint.get(n_id).minus(dbPoint.get(m_id)).unit();
+        Vector vMK = dbPoint.get(m_id).minus(dbPoint.get(k_id)).unit();
         int j;
         //k
         j = po.get (k_id);
-        mt.setVector(0, j * 2, vMK.sub(vLK));
+        mt.setVector(0, j * 2, vMK.minus(vLK));
         //l
         j = po.get (l_id);
         mt.setVector(0, j * 2, vLK);
         //m
         j = po.get (m_id);
-        mt.setVector(0, j * 2, vMK.dot(-1.0).sub(vNM));
+        mt.setVector(0, j * 2, vMK.product(-1.0).minus(vNM));
         //n
         j = po.get (n_id);
         mt.setVector(0, j * 2, vNM);

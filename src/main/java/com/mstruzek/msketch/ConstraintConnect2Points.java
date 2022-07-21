@@ -60,7 +60,7 @@ public class ConstraintConnect2Points extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        return new MatrixDouble2D(dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)), true);
+        return new MatrixDouble2D(dbPoint.get(k_id).Vector().minus(dbPoint.get(l_id)), true);
     }
 
     @Override

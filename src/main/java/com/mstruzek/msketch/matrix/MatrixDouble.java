@@ -47,7 +47,7 @@ public interface MatrixDouble {
      *
      * @returns The resulting matrix , actual matrix this
      */
-    MatrixDouble add(MatrixDouble rhs);
+    MatrixDouble plus(MatrixDouble rhs);
 
     /**
      * Mnozezenie kazdego elementu macierzy przez skalar
@@ -55,7 +55,7 @@ public interface MatrixDouble {
      * @param c skalar
      * @return this
      */
-    MatrixDouble dot(double c);
+    MatrixDouble mulitply(double c);
 
     /**
      * Mnozezenie kazdego elementu macierzy przez skalar
@@ -64,7 +64,7 @@ public interface MatrixDouble {
      * @param c skalar
      * @return kopia macierzy aktualnej
      */
-    MatrixDouble dotC(double c);
+    MatrixDouble multiplyC(double c);
 
     /**
      * Mnozezenie kazdego vectora macierzy przez odpowiadajacy  vector columnowy.
@@ -74,7 +74,7 @@ public interface MatrixDouble {
      * @param rhs prawy operand
      * @return
      */
-    MatrixDouble mult(MatrixDouble rhs);
+    MatrixDouble multiply(MatrixDouble rhs);
 
     /**
      * Set value at corresponding coordinates.
@@ -92,7 +92,7 @@ public interface MatrixDouble {
      * @param c
      * @param value
      */
-    void add(int r, int c, double value);
+    void plus(int r, int c, double value);
 
 
     /**
@@ -131,7 +131,7 @@ public interface MatrixDouble {
      * @param mt        macierz do wstawienia
      * @return this matrix
      */
-    MatrixDouble addSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt);
+    MatrixDouble plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt);
 
 
     /**

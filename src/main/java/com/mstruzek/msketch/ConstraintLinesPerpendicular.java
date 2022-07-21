@@ -70,24 +70,24 @@ public class ConstraintLinesPerpendicular extends Constraint {
         if ((m == null) && (n == null)) {
             /// K
             j = po.get(k_id);
-            mt.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)));
+            mt.setVector(0, j * 2, dbPoint.get(m_id).Vector().minus(dbPoint.get(n_id)));
             /// L
             j = po.get(l_id);
-            mt.setVector(0, j * 2, dbPoint.get(m_id).Vector().sub(dbPoint.get(n_id)).dot(-1.0));
+            mt.setVector(0, j * 2, dbPoint.get(m_id).Vector().minus(dbPoint.get(n_id)).product(-1.0));
             /// M
             j = po.get(m_id);
-            mt.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)));
+            mt.setVector(0, j * 2, dbPoint.get(k_id).Vector().minus(dbPoint.get(l_id)));
             /// N
             j = po.get(n_id);
-            mt.setVector(0, j * 2, dbPoint.get(k_id).Vector().sub(dbPoint.get(l_id)).dot(-1.0));
+            mt.setVector(0, j * 2, dbPoint.get(k_id).Vector().minus(dbPoint.get(l_id)).product(-1.0));
 
         } else {
             /// K
             j = po.get(k_id);
-            mt.setVector(0, j * 2, m.sub(n));
+            mt.setVector(0, j * 2, m.minus(n));
             /// L
             j = po.get(l_id);
-            mt.setVector(0, j * 2, m.sub(n).dot(-1.0));
+            mt.setVector(0, j * 2, m.minus(n).product(-1.0));
         }
     }
 
@@ -105,10 +105,10 @@ public class ConstraintLinesPerpendicular extends Constraint {
     @Override
     public MatrixDouble getValue() {
         if ((m == null) && (n == null)) {
-            double value = (dbPoint.get(k_id).sub(dbPoint.get(l_id))).dot(dbPoint.get(m_id).sub(dbPoint.get(n_id)));
+            double value = (dbPoint.get(k_id).minus(dbPoint.get(l_id))).product(dbPoint.get(m_id).minus(dbPoint.get(n_id)));
             return MatrixDouble.scalar(value);
         } else {
-            double value = (dbPoint.get(k_id).sub(dbPoint.get(l_id))).dot(m.sub(n));
+            double value = (dbPoint.get(k_id).minus(dbPoint.get(l_id))).product(m.minus(n));
             return MatrixDouble.scalar(value);
         }
     }
@@ -203,12 +203,12 @@ public class ConstraintLinesPerpendicular extends Constraint {
 
     @Override
     public double getNorm() {
-        Vector vKL = dbPoint.get(k_id).sub(dbPoint.get(l_id));
+        Vector vKL = dbPoint.get(k_id).minus(dbPoint.get(l_id));
         MatrixDouble mt = getValue();
         if ((m == null) && (n == null)) {
-            return mt.getQuick(0, 0) / vKL.length() / dbPoint.get(m_id).sub(dbPoint.get(n_id)).length();
+            return mt.getQuick(0, 0) / vKL.length() / dbPoint.get(m_id).minus(dbPoint.get(n_id)).length();
         } else {
-            return mt.getQuick(0, 0) / vKL.length() / (m.sub(n)).length();
+            return mt.getQuick(0, 0) / vKL.length() / (m.minus(n)).length();
         }
     }
 

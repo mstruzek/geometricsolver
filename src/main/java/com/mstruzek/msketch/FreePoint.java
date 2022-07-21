@@ -41,14 +41,14 @@ public class FreePoint extends GeometricPrimitive {
         super(id, GeometricPrimitiveType.FreePoint);
         if (v00 instanceof Point) {
             p1 = (Point) v00;
-            a = new Point(p1.getId() - 1, v00.sub(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
-            b = new Point(p1.getId() + 1, v00.add(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
+            a = new Point(p1.getId() - 1, v00.minus(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
+            b = new Point(p1.getId() + 1, v00.plus(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
         } else {
             // Punkty kontrolne wyznaczamy na podstawie distance,agnle : distance- to odleglosc wektora a i b od p1
             // Kolejnosc inicjalizacji ma znaczenie
-            a = new Point(Point.nextId(), v00.sub(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
+            a = new Point(Point.nextId(), v00.minus(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
             p1 = new Point(Point.nextId(), v00);
-            b = new Point(Point.nextId(), v00.add(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
+            b = new Point(Point.nextId(), v00.plus(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
             // przelicz odleglosci
             setAssociateConstraints(null);
         }
@@ -59,8 +59,8 @@ public class FreePoint extends GeometricPrimitive {
      * Funkcja oblicza dlugosci poczatkowe pomiedzy wektorami
      */
     private void calculateDistance() {
-        d_a_p1 = Math.abs(p1.sub(a).length()) * 0.1;
-        d_p1_b = Math.abs(b.sub(p1).length()) * 0.1;
+        d_a_p1 = Math.abs(p1.minus(a).length()) * 0.1;
+        d_p1_b = Math.abs(b.minus(p1).length()) * 0.1;
     }
 
     public String toString() {
@@ -73,8 +73,8 @@ public class FreePoint extends GeometricPrimitive {
 
     @Override
     public void evaluateGuidePoints() {
-        Vector va = (p1.sub(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
-        Vector vb = (p1.add(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
+        Vector va = (p1.minus(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
+        Vector vb = (p1.plus(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));
         a.setLocation(va.getX(), va.getY());
         b.setLocation(vb.getX(), vb.getY());
         // przelicz odleglosci
@@ -91,16 +91,16 @@ public class FreePoint extends GeometricPrimitive {
         // 8 = 4*2 (4 punkty kontrolne)
 
         //F12 - sily w sprezynach
-        Vector f12 = p1.sub(a).unit().dot(Consts.springStiffnessLow).dot(p1.sub(a).length() - d_a_p1);
+        Vector f12 = p1.minus(a).unit().product(Consts.springStiffnessLow).product(p1.minus(a).length() - d_a_p1);
         //F23
-        Vector f23 = b.sub(p1).unit().dot(Consts.springStiffnessLow).dot(b.sub(p1).length() - d_p1_b);
+        Vector f23 = b.minus(p1).unit().product(Consts.springStiffnessLow).product(b.minus(p1).length() - d_p1_b);
 
         //F1 - sily na poszczegolne punkty
         mt.setVector(row + 0, 0, f12);
         //F2
-        mt.setVector(row + 2, 0, f23.sub(f12));
+        mt.setVector(row + 2, 0, f23.minus(f12));
         //F3
-        mt.setVector(row + 4, 0, f23.dot(-1));
+        mt.setVector(row + 4, 0, f23.product(-1));
     }
 
 
@@ -115,17 +115,17 @@ public class FreePoint extends GeometricPrimitive {
          */
         // K -mala sztywnosci
         MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
-        MatrixDouble Km = Ks.dotC(-1);
+        MatrixDouble Km = Ks.multiplyC(-1);
 
-        mt.addSubMatrix(row + 0, col + 0, Km);
-        mt.addSubMatrix(row + 0, col + 2, Ks);
+        mt.plusSubMatrix(row + 0, col + 0, Km);
+        mt.plusSubMatrix(row + 0, col + 2, Ks);
 
-        mt.addSubMatrix(row + 2, col + 0, Ks);
-        mt.addSubMatrix(row + 2, col + 2, Km.dotC(2.0));
-        mt.addSubMatrix(row + 2, col + 4, Ks);
+        mt.plusSubMatrix(row + 2, col + 0, Ks);
+        mt.plusSubMatrix(row + 2, col + 2, Km.multiplyC(2.0));
+        mt.plusSubMatrix(row + 2, col + 4, Ks);
 
-        mt.addSubMatrix(row + 4, col + 2, Ks);
-        mt.addSubMatrix(row + 4, col + 4, Km);
+        mt.plusSubMatrix(row + 4, col + 2, Ks);
+        mt.plusSubMatrix(row + 4, col + 4, Km);
     }
 
     @Override

@@ -348,6 +348,7 @@ public class GCModelReader implements Closeable {
                 case EqualLength:
                 case ParametrizedLength:
                 case Tangency:
+                case CircleTangency:
                     Model.addConstraint(constId, constraintType, K, L, M, N, parameter);
                     break;
                 default:

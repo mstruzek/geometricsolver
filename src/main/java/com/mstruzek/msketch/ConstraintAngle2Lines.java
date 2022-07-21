@@ -60,32 +60,32 @@ public class ConstraintAngle2Lines extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
-        double value = LK.dot(NM) - LK.length() * NM.length() * Math.cos(dbParameter.get(param_id).getRadians());
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
+        double value = LK.product(NM) - LK.length() * NM.length() * Math.cos(dbParameter.get(param_id).getRadians());
         return MatrixDouble.scalar(value);
     }
 
     @Override
     public void getJacobian(MatrixDouble mts) {
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
-        Vector uLKdNM = LK.unit().dot(NM.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
-        Vector uNMdLK = NM.unit().dot(LK.length()).dot(Math.cos(dbParameter.get(param_id).getRadians()));
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
+        Vector uLKdNM = LK.unit().product(NM.length()).product(Math.cos(dbParameter.get(param_id).getRadians()));
+        Vector uNMdLK = NM.unit().product(LK.length()).product(Math.cos(dbParameter.get(param_id).getRadians()));
         MatrixDouble mt = mts;
         int j;
         //k
         j = po.get(k_id);
-        mt.setVector(0, j * 2, uLKdNM.sub(NM));
+        mt.setVector(0, j * 2, uLKdNM.minus(NM));
         //l
         j = po.get(l_id);
-        mt.setVector(0, j * 2, NM.sub(uLKdNM));
+        mt.setVector(0, j * 2, NM.minus(uLKdNM));
         //m
         j = po.get(m_id);
-        mt.setVector(0, j * 2, uNMdLK.sub(LK));
+        mt.setVector(0, j * 2, uNMdLK.minus(LK));
         //n
         j = po.get(n_id);
-        mt.setVector(0, j * 2, LK.sub(uNMdLK));
+        mt.setVector(0, j * 2, LK.minus(uNMdLK));
     }
 
     @Override
@@ -96,9 +96,9 @@ public class ConstraintAngle2Lines extends Constraint {
     @Override
     public MatrixDouble getHessian(double lagrange) {
         MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id)).unit();
-        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id)).unit();
-        double g = LK.dot(NM) * Math.cos(dbParameter.get(param_id).getRadians());
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id)).unit();
+        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id)).unit();
+        double g = LK.product(NM) * Math.cos(dbParameter.get(param_id).getRadians());
         int i;
         int j;
 
@@ -217,8 +217,8 @@ public class ConstraintAngle2Lines extends Constraint {
 
     @Override
     public double getNorm() {
-        Vector LK = dbPoint.get(l_id).sub(dbPoint.get(k_id));
-        Vector NM = dbPoint.get(n_id).sub(dbPoint.get(m_id));
+        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
         MatrixDouble mt = getValue();
         return mt.getQuick(0, 0) / (LK.length() * NM.length());
     }

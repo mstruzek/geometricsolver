@@ -26,22 +26,22 @@ public class ScalarMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble add(MatrixDouble rhs) {
+    public MatrixDouble plus(MatrixDouble rhs) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble dot(double c) {
+    public MatrixDouble mulitply(double c) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble dotC(double c) {
+    public MatrixDouble multiplyC(double c) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble mult(MatrixDouble rhs) {
+    public MatrixDouble multiply(MatrixDouble rhs) {
         throw new IllegalStateException("no implementation");
     }
 
@@ -51,7 +51,7 @@ public class ScalarMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public void add(int r, int c, double value) {
+    public void plus(int r, int c, double value) {
         throw new IllegalStateException("not implemented");
     }
 
@@ -66,7 +66,7 @@ public class ScalarMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble addSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+    public MatrixDouble plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
         throw new IllegalStateException("not implemented");
     }
 

@@ -66,7 +66,7 @@ public class ConstraintFixPoint extends Constraint {
 
     @Override
     public MatrixDouble getValue() {
-        return MatrixDouble.smallMatrix(dbPoint.get(k_id).sub(k0_vec), true);
+        return MatrixDouble.smallMatrix(dbPoint.get(k_id).minus(k0_vec), true);
     }
 
     @Override
