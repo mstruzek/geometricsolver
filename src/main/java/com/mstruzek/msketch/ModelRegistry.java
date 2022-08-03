@@ -83,7 +83,6 @@ public class ModelRegistry {
 
     @JniModel
     public static void registerParameter(int parameterId, Parameter parameter) {
-        if (parameterId < parameterCounter) throw new RuntimeException("invalid object id");
         dbParameter.put(parameterId, parameter);
     }
 
