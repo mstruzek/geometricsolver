@@ -7,7 +7,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Arrays;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,11 +23,12 @@ public class GCModelReader implements Closeable {
     private static final String HEADER_DEFINITION_BEGIN = "--definition-begin";
     private static final String HEADER_DEFINITION_END = "--definition-end";
 
-    private static final int DESCRIPTOR_TYPE_OFFSET = 0;
-    private static final String DESCRIPTOR_POINT = "Descriptor(Point)";
-    private static final String DESCRIPTOR_GEOMETRIC_PRIMITIVE = "Descriptor(GeometricPrimitive)";
-    private static final String DESCRIPTOR_PARAMETER = "Descriptor(Parameter)";
-    private static final String DESCRIPTOR_CONSTRAINT = "Descriptor(Constraint)";
+    private static final String DESCRIPTOR_POINT = "Point";
+    private static final String DESCRIPTOR_GEOMETRIC_PRIMITIVE = "GeometricPrimitive";
+    private static final String DESCRIPTOR_PARAMETER = "Parameter";
+    private static final String DESCRIPTOR_CONSTRAINT = "Constraint";
+
+    private final Pattern STRUCT_FIELD_VALUE = Pattern.compile("([a-zA-Z0-9]+)\\(([a-zA-Z0-9\\.\\-]+)\\)");
 
     private BufferedReader buff;
 
@@ -64,12 +65,14 @@ public class GCModelReader implements Closeable {
                 continue;
             }
 
-            fieldValue = input.split("\\s+");
-            switch (fieldValue[DESCRIPTOR_TYPE_OFFSET]) {
-                case DESCRIPTOR_POINT ->                processDescriptorPoint(fieldValue);
-                case DESCRIPTOR_GEOMETRIC_PRIMITIVE ->  processDescriptorPrimitive(fieldValue);
-                case DESCRIPTOR_PARAMETER ->            processDescriptorParameter(fieldValue);
-                case DESCRIPTOR_CONSTRAINT ->           processDescriptorConstraint(fieldValue);
+            final Matcher m = STRUCT_FIELD_VALUE.matcher(input);
+            final String descriptorType = requiredField(m, "Descriptor");
+
+            switch (descriptorType) {
+                case DESCRIPTOR_POINT ->                processDescriptorPoint(m);
+                case DESCRIPTOR_GEOMETRIC_PRIMITIVE ->  processDescriptorPrimitive(m);
+                case DESCRIPTOR_PARAMETER ->            processDescriptorParameter(m);
+                case DESCRIPTOR_CONSTRAINT ->           processDescriptorConstraint(m);
                 default -> {
                     throw new Error("unrecognized object " + input);
                 }
@@ -77,10 +80,19 @@ public class GCModelReader implements Closeable {
         }
     }
 
-    private static void processDescriptorParameter(String[] fieldValue) {
 
-        final int parameterId = ObjectDeserializer.toInteger(processField(fieldValue[1]));
-        final double parameterValue = ObjectDeserializer.toDouble(processField(fieldValue[2]));
+    private static String requiredField(Matcher iterator, String fieldName) {
+        if(iterator.find() && Objects.equals(iterator.group(1), fieldName)) {
+            return iterator.group(2);
+        } else {
+            throw new Error("required field is " + fieldName);
+        }
+    }
+
+    private static void processDescriptorParameter(Matcher iterator) {
+
+        final int parameterId = ObjectDeserializer.toInteger(requiredField(iterator,"ID"));
+        final double parameterValue = ObjectDeserializer.toDouble(requiredField(iterator,"VALUE"));
 
         /// store in db
         Parameter parameter;
@@ -89,11 +101,11 @@ public class GCModelReader implements Closeable {
         ModelRegistry.registerParameter(parameterId, parameter);
     }
 
-    private static void processDescriptorPoint(String[] fieldValue) {
+    private static void processDescriptorPoint(Matcher iterator) {
 
-        final int pointId = ObjectDeserializer.toInteger(processField(fieldValue[1]));
-        final double coordinateX = ObjectDeserializer.toDouble(processField(fieldValue[2]));
-        final double coordinateY = ObjectDeserializer.toDouble(processField(fieldValue[3]));
+        final int pointId = ObjectDeserializer.toInteger(requiredField(iterator, "ID"));
+        final double coordinateX = ObjectDeserializer.toDouble(requiredField(iterator, "PX"));
+        final double coordinateY = ObjectDeserializer.toDouble(requiredField(iterator, "PY"));
 
         /// save point
         Point point;
@@ -103,13 +115,13 @@ public class GCModelReader implements Closeable {
     }
 
     /// @@ bindings primitive types to domain model !
-    private static void processDescriptorPrimitive(String[] fieldValue) {
+    private static void processDescriptorPrimitive(Matcher iterator) {
 
-        int primitiveId = ObjectDeserializer.toInteger(processField(fieldValue[1]));
-        GeometricPrimitiveType primitiveType = Enum.valueOf(GeometricPrimitiveType.class, processField(fieldValue[2]));
-        int p1 = ObjectDeserializer.toInteger(processField(fieldValue[3]));
-        int p2 = ObjectDeserializer.toInteger(processField(fieldValue[4]));
-        int p3 = ObjectDeserializer.toInteger(processField(fieldValue[5]));
+        int primitiveId = ObjectDeserializer.toInteger(requiredField(iterator, "ID"));
+        GeometricPrimitiveType primitiveType = Enum.valueOf(GeometricPrimitiveType.class, requiredField(iterator, "TYPE"));
+        int p1 = ObjectDeserializer.toInteger(requiredField(iterator, "P1"));
+        int p2 = ObjectDeserializer.toInteger(requiredField(iterator, "P2"));
+        int p3 = ObjectDeserializer.toInteger(requiredField(iterator, "P3"));
 
         Point P1 = null;
         Point P2 = null;
@@ -137,7 +149,7 @@ public class GCModelReader implements Closeable {
                 Model.addArc(primitiveId, (P1), (P2), (P3));
                 break;
             default:
-                throw new Error("invalid input fieldLine : " + Arrays.toString(fieldValue));
+                throw new Error("invalid input fieldLine : " + iterator.group());
         }
 
     }
@@ -153,15 +165,15 @@ public class GCModelReader implements Closeable {
         }
     }
 
-    public static void processDescriptorConstraint(String[] fieldValue) {
+    public static void processDescriptorConstraint(Matcher iterator) {
 
-        int constId = ObjectDeserializer.toInteger(processField(fieldValue[1]));
-        GeometricConstraintType constraintType = Enum.valueOf(GeometricConstraintType.class, processField(fieldValue[2]));
-        int vK = ObjectDeserializer.toInteger(processField(fieldValue[3]));
-        int vL = ObjectDeserializer.toInteger(processField(fieldValue[4]));
-        int vM = ObjectDeserializer.toInteger(processField(fieldValue[5]));
-        int vN = ObjectDeserializer.toInteger(processField(fieldValue[6]));
-        int paramId = ObjectDeserializer.toInteger(processField(fieldValue[7]));
+        int constId = ObjectDeserializer.toInteger(requiredField(iterator, "ID"));
+        GeometricConstraintType constraintType = Enum.valueOf(GeometricConstraintType.class, requiredField(iterator, "TYPE"));
+        int vK = ObjectDeserializer.toInteger(requiredField(iterator, "K"));
+        int vL = ObjectDeserializer.toInteger(requiredField(iterator, "L"));
+        int vM = ObjectDeserializer.toInteger(requiredField(iterator, "M"));
+        int vN = ObjectDeserializer.toInteger(requiredField(iterator, "N"));
+        int paramId = ObjectDeserializer.toInteger(requiredField(iterator, "PARAM"));
 
         /// save point
         Point K = null;
@@ -199,7 +211,7 @@ public class GCModelReader implements Closeable {
                 Model.addConstraint(constId, constraintType, K, L, M, N, parameter);
                 break;
             default:
-                throw new Error("invalid fieldValue fieldLine : " + Arrays.toString(fieldValue));
+                throw new Error("invalid iterator fieldLine : " + iterator.group());
         }
     }
 
