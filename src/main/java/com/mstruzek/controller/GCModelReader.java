@@ -48,13 +48,10 @@ public class GCModelReader implements Closeable {
         }
     }
 
-
     public void readModel() throws IOException {
-        String input = null;
-        String[] fieldValue;
+        String input;
 
         while ((input = buff.readLine()) != null) {
-
             /// skip empty lines
             if (input.isBlank())
                 continue;
@@ -152,17 +149,6 @@ public class GCModelReader implements Closeable {
                 throw new Error("invalid input fieldLine : " + iterator.group());
         }
 
-    }
-
-    private static final Pattern FIELD_VALUE = Pattern.compile("^\\w*?\\((.*?)\\);?$");
-
-    public static String processField(String input) {
-        Matcher m = FIELD_VALUE.matcher(input);
-        if (!m.find()) {
-            throw new Error("failed line matcher " + input);
-        } else {
-            return m.group(1);
-        }
     }
 
     public static void processDescriptorConstraint(Matcher iterator) {
