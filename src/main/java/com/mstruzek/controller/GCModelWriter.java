@@ -8,35 +8,26 @@ import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
 /**
  * Format Read/Write
- * <p>
- * BEGIN Parameter:
- * ID: 10;
- * VALUE: 23.02;
- * END;
- * <p>
- * BEGIN GeometricPrimitive:
- * ID: 10;
- * TYPE: FreePoint;
- * P1: 10.02;
- * P2: 192.02;
- * P3: 232.32;
- * Param: 1;
- * END;
- * <p>
- * BEGIN Constraint:
- * ID: 101;
- * TYPE: HORIZONTAL
- * K: 1;
- * L: 2;
- * M: 3;
- * N: 4;
- * END;
+ * 
+ * Descriptor(Parameter) ID(10) VALUE(23.02);
+ * Descriptor(Parameter) ID(10) VALUE(23.02);
+ * Descriptor(Parameter) ID(10) VALUE(23.02);
+ * Descriptor(Parameter) ID(10) VALUE(23.02);
+ *
+ * Descriptor(GeometricPrimitive) ID(10)  TYPE(FreePoint) P1(10.02) P2(192.02) P3(232.32) Param(1);
+ * Descriptor(GeometricPrimitive) ID(10)  TYPE(FreePoint) P1(10.02) P2(192.02) P3(232.32) Param(1);
+ *
+ * Descriptor(Constraint) ID(101) TYPE(HORIZONTAL) K(1) L(2) M(3) N(4);
+ * Descriptor(Constraint) ID(101) TYPE(HORIZONTAL) K(1) L(2) M(3) N(4);
+ * Descriptor(Constraint) ID(101) TYPE(HORIZONTAL) K(1) L(2) M(3) N(4);
+ * Descriptor(Constraint) ID(101) TYPE(HORIZONTAL) K(1) L(2) M(3) N(4);
+ *
  */
-
 public class GCModelWriter implements Closeable {
 
     private BufferedWriter buff;
@@ -45,8 +36,6 @@ public class GCModelWriter implements Closeable {
         try {
             buff = Files.newBufferedWriter(filePath.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -78,13 +67,12 @@ public class GCModelWriter implements Closeable {
             Point P1 = ModelRegistry.dbPoint.getOrDefault(geometricPrimitive.getP1(), Point.EMPTY);
             Point P2 = ModelRegistry.dbPoint.getOrDefault(geometricPrimitive.getP2(), Point.EMPTY);
             Point P3 = ModelRegistry.dbPoint.getOrDefault(geometricPrimitive.getP3(), Point.EMPTY);
-            for (Point point : Stream.of(P1, P2, P3).filter(point -> !Objects.equals(point, Point.EMPTY)).collect(toList())) {
-                buff.write("BEGIN Point:\n");
-                buff.write("     ID: " + ObjectSerializer.writeToString(point.getId()) + ";\n");
-                buff.write("     PX: " + ObjectSerializer.writeToString(point.getX()) + ";\n");
-                buff.write("     PY: " + ObjectSerializer.writeToString(point.getY()) + ";\n");
-                buff.write("END;\n");
-                buff.write("\n");
+            for (Point point : Stream.of(P1, P2, P3).filter(point -> !Objects.equals(point, Point.EMPTY)).toList()) {
+                buff.write("Descriptor(Point)");
+                buff.write(format("%-9s", " ID(" + ObjectSerializer.writeToString(point.getId()) + ")"));
+                buff.write(" PX(" + ObjectSerializer.writeToString(point.getX()) + ")");
+                buff.write(" PY(" + ObjectSerializer.writeToString(point.getY()) + ")");
+                buff.write(";\n"); /// Descriptor-END
             }
         }
         buff.write("\n");
@@ -92,11 +80,10 @@ public class GCModelWriter implements Closeable {
 
     public void writeParameters() throws IOException {
         for (Parameter parameter : ModelRegistry.dbParameter().values()) {
-            buff.write("BEGIN Parameter:\n");
-            buff.write("     ID: " + ObjectSerializer.writeToString(parameter.getId()) + ";\n");
-            buff.write("     VALUE: " + ObjectSerializer.writeToString(parameter.getValue()) + ";\n");
-            buff.write("END;\n");
-            buff.write("\n");
+            buff.write("Descriptor(Parameter)");
+            buff.write(format("%-9s", " ID(" + ObjectSerializer.writeToString(parameter.getId()) + ")"));
+            buff.write(" VALUE(" + ObjectSerializer.writeToString(parameter.getValue()) + ")");
+            buff.write(";\n"); /// Descriptor-END
         }
         buff.write("\n");
     }
@@ -109,21 +96,20 @@ public class GCModelWriter implements Closeable {
                 int P1 = geometricPrimitive.getP1();
                 int P2 = geometricPrimitive.getP2();
                 int P3 = geometricPrimitive.getP3();
-                buff.write("BEGIN GeometricPrimitive:\n");
-                buff.write("     ID: " + ObjectSerializer.writeToString(gpID) + ";\n");
-                buff.write("     TYPE: " + ObjectSerializer.writeToString(primitiveType) + ";\n");
-                buff.write("     P1: " + ObjectSerializer.writeToString(P1) + ";\n");
-                buff.write("     P2: " + ObjectSerializer.writeToString(P2) + ";\n");
-                buff.write("     P3: " + ObjectSerializer.writeToString(P3) + ";\n");
-                buff.write("END;\n");
+                buff.write("Descriptor(GeometricPrimitive)");
+                buff.write(format("%-9s"," ID(" + ObjectSerializer.writeToString(gpID) + ")"));
+                buff.write(format("%-15s", " TYPE(" + ObjectSerializer.writeToString(primitiveType) + ")"));
+                buff.write(format("%-9s", " P1(" + ObjectSerializer.writeToString(P1) + ")"));
+                buff.write(format("%-9s", " P2(" + ObjectSerializer.writeToString(P2) + ")"));
+                buff.write(" P3(" + ObjectSerializer.writeToString(P3) + ")");
+                buff.write(";\n"); /// Descriptor-END
             }
-            buff.write("\n");
         }
         buff.write("\n");
     }
 
     public void writeConstraints() throws IOException {
-        for (Constraint constraint : ModelRegistry.dbConstraint.values().stream().filter(Constraint::isPersistent).collect(toList())) {
+        for (Constraint constraint : ModelRegistry.dbConstraint.values().stream().filter(Constraint::isPersistent).toList()) {
             int cID = constraint.getConstraintId();
             GeometricConstraintType constraintType = constraint.getConstraintType();
             int K = constraint.getK();
@@ -131,16 +117,15 @@ public class GCModelWriter implements Closeable {
             int M = constraint.getM();
             int N = constraint.getN();
             int PARAM = constraint.getParameter();
-            buff.write("BEGIN Constraint:\n");
-            buff.write("     ID: " + ObjectSerializer.writeToString(cID) + ";\n");
-            buff.write("     TYPE: " + ObjectSerializer.writeToString(constraintType) + ";\n");
-            buff.write("     K: " + ObjectSerializer.writeToString(K) + ";\n");
-            buff.write("     L: " + ObjectSerializer.writeToString(L) + ";\n");
-            buff.write("     M: " + ObjectSerializer.writeToString(M) + ";\n");
-            buff.write("     N: " + ObjectSerializer.writeToString(N) + ";\n");
-            buff.write("     PARAM: " + ObjectSerializer.writeToString(PARAM) + ";\n");
-            buff.write("END;\n");
-            buff.write("\n");
+            buff.write("Descriptor(Constraint)");
+            buff.write(format("%-9s",  " ID(" + ObjectSerializer.writeToString(cID) + ")"));
+            buff.write(format("%-25s",  " TYPE(" + ObjectSerializer.writeToString(constraintType) + ")"));
+            buff.write(format("%-9s", " K(" + ObjectSerializer.writeToString(K) + ")"));
+            buff.write(format("%-9s", " L(" + ObjectSerializer.writeToString(L) + ")"));
+            buff.write(format("%-9s", " M(" + ObjectSerializer.writeToString(M) + ")"));
+            buff.write(format("%-9s", " N(" + ObjectSerializer.writeToString(N) + ")"));
+            buff.write(format("%-9s",  " PARAM(" + ObjectSerializer.writeToString(PARAM) + ")"));
+            buff.write(";\n"); /// Descriptor-END
         }
         buff.write("\n");
     }

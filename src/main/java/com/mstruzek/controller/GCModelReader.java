@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 
 public class GCModelReader implements Closeable {
 
+    private static final String HEADER_PREFIX = "#";
+    private static final int START_PREFIX = 0;
     private static final Pattern HEADER_FIELD_PATTERN = Pattern.compile("^#(--.*): (.*)$");
 
     private static final String FILE_FORMAT_VERSION = "V1";
@@ -21,40 +23,13 @@ public class GCModelReader implements Closeable {
     private static final String HEADER_DEFINITION_BEGIN = "--definition-begin";
     private static final String HEADER_DEFINITION_END = "--definition-end";
 
-    static final Pattern STRUCT_FIELD_PATTERN = Pattern.compile("^\\s{5}(.*): (.*);$");
+    private static final int DESCRIPTOR_TYPE_OFFSET = 0;
+    private static final String DESCRIPTOR_POINT = "Descriptor(Point)";
+    private static final String DESCRIPTOR_GEOMETRIC_PRIMITIVE = "Descriptor(GeometricPrimitive)";
+    private static final String DESCRIPTOR_PARAMETER = "Descriptor(Parameter)";
+    private static final String DESCRIPTOR_CONSTRAINT = "Descriptor(Constraint)";
 
-    private static final String BEGIN_POINT = "BEGIN Point:";
-    private static final String BEGIN_PRIMITIVE = "BEGIN GeometricPrimitive:";
-    private static final String BEGIN_CONSTRAINT = "BEGIN Constraint:";
-    private static final String BEGIN_PARAMETER = "BEGIN Parameter:";
-
-    private static final String PATTERN_END = "END;";
-
-    private static final int STA_END = -1;
-    private static final int STA_POINT = 0;
-    private static final int STA_PRIMITIVE = 1;
-    private static final int STA_CONSTRAINT = 2;
-    private static final int STA_PARAMETER = 3;
-
-    private int lstate = STA_END;
-    private String input = null;
     private BufferedReader buff;
-
-    private Object[] slots = new Object[]{
-        null, //  0: ID
-        null, //  1: PX
-        null, //  2: PY
-        null, //  3: TYPE
-        null, //  4: P1
-        null, //  5: P2
-        null, //  6: P3
-        null, //  7: K
-        null, //  8: L
-        null, //  9: M
-        null, // 10: N
-        null, // 11: PARAM
-        null, // 12: VALUE
-    };
 
     public GCModelReader(File filePath) {
         try {
@@ -74,322 +49,166 @@ public class GCModelReader implements Closeable {
 
 
     public void readModel() throws IOException {
-        input = null;
-        lstate = STA_END;
+        String input = null;
+        String[] fieldValue;
+
         while ((input = buff.readLine()) != null) {
-            switch (lstate) {
-                case STA_END:
-                    processEnd();
-                    break;
-                case STA_POINT:
-                    processPoint();
-                    break;
-                case STA_PRIMITIVE:
-                    processPrimitive();
-                    break;
-                case STA_CONSTRAINT:
-                    processConstraint();
-                    break;
-                case STA_PARAMETER:
-                    processParameter();
-                    break;
-                default:
-                    throw new Error("lexer state not recognized: " + lstate);
+
+            /// skip empty lines
+            if (input.isBlank())
+                continue;
+
+            if (input.indexOf(HEADER_PREFIX) == START_PREFIX) {
+                /// Comments - header data
+                processComments(input);
+                continue;
+            }
+
+            fieldValue = input.split("\\s+");
+            switch (fieldValue[DESCRIPTOR_TYPE_OFFSET]) {
+                case DESCRIPTOR_POINT ->                processDescriptorPoint(fieldValue);
+                case DESCRIPTOR_GEOMETRIC_PRIMITIVE ->  processDescriptorPrimitive(fieldValue);
+                case DESCRIPTOR_PARAMETER ->            processDescriptorParameter(fieldValue);
+                case DESCRIPTOR_CONSTRAINT ->           processDescriptorConstraint(fieldValue);
+                default -> {
+                    throw new Error("unrecognized object " + input);
+                }
             }
         }
     }
 
-    private void processParameter() {
-        /**
-         * BEGIN Parameter:
-         *      ID: 0;
-         *      VALUE: 10000.0;
-         * END;
-         */
+    private static void processDescriptorParameter(String[] fieldValue) {
 
-        Matcher matcher = STRUCT_FIELD_PATTERN.matcher(input);
-        //@@@ - wiazanki
-        if (matcher.matches()) {
-            String fieldName = matcher.group(1);
-            String fieldValue = matcher.group(2);
-            switch (fieldName) {
-                case "ID":
-                    slots[0] = ObjectDeserializer.toInteger(fieldValue);
-                    return;
-                case "VALUE":
-                    slots[12] = ObjectDeserializer.toDouble(fieldValue);
-                    return;
-                default:
-                    throw new Error("invalid input fieldLine : " + input);
-            }
-        }
+        final int parameterId = ObjectDeserializer.toInteger(processField(fieldValue[1]));
+        final double parameterValue = ObjectDeserializer.toDouble(processField(fieldValue[2]));
 
-        if (PATTERN_END.equals(input)) {
-            Integer parameterId = (Integer) slots[0];
-            Double parameterValue = (Double) slots[12];
-            /// store in db
-            Parameter parameter = new Parameter(parameterId, parameterValue);
+        /// store in db
+        Parameter parameter;
 
-            ModelRegistry.registerParameter(parameterId, parameter);
-
-            Arrays.fill(slots, 0, slots.length, null);
-            lstate = STA_END;
-        } else {
-            throw new Error("invalid input fieldLine : " + input);
-        }
-
+        parameter = new Parameter(parameterId, parameterValue);
+        ModelRegistry.registerParameter(parameterId, parameter);
     }
 
-    private void processPoint() {
-        /*
-         *      ID: 1;
-         *      PX: 189.383457013559;
-         *      PY: 138.6485791055082;
-         */
-        Matcher matcher = STRUCT_FIELD_PATTERN.matcher(input);
-        //@@@ - wiazanki
-        if (matcher.matches()) {
-            String fieldName = matcher.group(1);
-            String fieldValue = matcher.group(2);
-            switch (fieldName) {
-                case "ID":
-                    slots[0] = ObjectDeserializer.toInteger(fieldValue);
-                    return;
-                case "PX":
-                    slots[1] = ObjectDeserializer.toDouble(fieldValue);
-                    return;
-                case "PY":
-                    slots[2] = ObjectDeserializer.toDouble(fieldValue);
-                    return;
-                default:
-                    throw new Error("invalid input fieldLine : " + input);
-            }
-        }
+    private static void processDescriptorPoint(String[] fieldValue) {
 
-        if (PATTERN_END.equals(input)) {
-            Integer pointId = (Integer) slots[0];
-            Double coordinateX = (Double) slots[1];
-            Double coordinateY = (Double) slots[2];
-            /// save point
-            Point point = new Point(pointId, coordinateX, coordinateY);
+        final int pointId = ObjectDeserializer.toInteger(processField(fieldValue[1]));
+        final double coordinateX = ObjectDeserializer.toDouble(processField(fieldValue[2]));
+        final double coordinateY = ObjectDeserializer.toDouble(processField(fieldValue[3]));
 
-            ModelRegistry.registerPoint(pointId, point);
+        /// save point
+        Point point;
 
-            Arrays.fill(slots, 0, slots.length, null);
-            lstate = STA_END;
-        } else {
-            throw new Error("invalid input fieldLine : " + input);
-        }
+        point = new Point(pointId, coordinateX, coordinateY);
+        ModelRegistry.registerPoint(pointId, point);
     }
-
 
     /// @@ bindings primitive types to domain model !
-    private void processPrimitive() {
-        /*
-         *      ID: 1;
-         *      TYPE: Line;
-         *      P1: 5;
-         *      P2: 6;
-         *      P3: -1;
-         */
-        Matcher matcher = STRUCT_FIELD_PATTERN.matcher(input);
-        if (matcher.matches()) {
-            String fieldName = matcher.group(1);
-            String fieldValue = matcher.group(2);
-            switch (fieldName) {
-                case "ID":
-                    slots[0] = ObjectDeserializer.toInteger(fieldValue);
-                    return;
-                case "TYPE":
-                    slots[3] = ObjectDeserializer.toString(fieldValue);
-                    return;
-                case "P1":
-                    slots[4] = ObjectDeserializer.toInteger(fieldValue);
-                    return;
-                case "P2":
-                    slots[5] = ObjectDeserializer.toInteger(fieldValue);
-                    return;
-                case "P3":
-                    slots[6] = ObjectDeserializer.toInteger(fieldValue);
-                    return;
-                default:
-                    throw new Error("invalid input fieldLine : " + input);
-            }
+    private static void processDescriptorPrimitive(String[] fieldValue) {
+
+        int primitiveId = ObjectDeserializer.toInteger(processField(fieldValue[1]));
+        GeometricPrimitiveType primitiveType = Enum.valueOf(GeometricPrimitiveType.class, processField(fieldValue[2]));
+        int p1 = ObjectDeserializer.toInteger(processField(fieldValue[3]));
+        int p2 = ObjectDeserializer.toInteger(processField(fieldValue[4]));
+        int p3 = ObjectDeserializer.toInteger(processField(fieldValue[5]));
+
+        Point P1 = null;
+        Point P2 = null;
+        Point P3 = null;
+
+        if (p1 != -1) P1 = ModelRegistry.dbPoint.get(p1);
+        if (p2 != -1) P2 = ModelRegistry.dbPoint.get(p2);
+        if (p3 != -1) P3 = ModelRegistry.dbPoint.get(p3);
+
+        /// save point
+
+        switch (primitiveType) {
+            case FreePoint:
+                Model.addPoint(primitiveId, (P1));
+                break;
+            case FixLine:
+                throw new Error("axis OXY is not serialized");
+            case Line:
+                Model.addLine(primitiveId, (P1), (P2));
+                break;
+            case Circle:
+                Model.addCircle(primitiveId, (P1), (P2));
+                break;
+            case Arc:
+                Model.addArc(primitiveId, (P1), (P2), (P3));
+                break;
+            default:
+                throw new Error("invalid input fieldLine : " + Arrays.toString(fieldValue));
         }
 
-        if (PATTERN_END.equals(input)) {
-            /// save point
-            int primitiveId;
-            GeometricPrimitiveType primitiveType;
-            int p1;
-            int p2;
-            int p3;
+    }
 
-            Point P1 = null;
-            Point P2 = null;
-            Point P3 = null;
+    private static final Pattern FIELD_VALUE = Pattern.compile("^\\w*?\\((.*?)\\);?$");
 
-            primitiveType = Enum.valueOf(GeometricPrimitiveType.class, (String) slots[3]);
-            primitiveId = (Integer) slots[0];
-            p1 = (Integer) slots[4];
-            p2 = (Integer) slots[5];
-            p3 = (Integer) slots[6];
-
-
-            if (p1 != -1) P1 = ModelRegistry.dbPoint.get(p1);
-            if (p2 != -1) P2 = ModelRegistry.dbPoint.get(p2);
-            if (p3 != -1) P3 = ModelRegistry.dbPoint.get(p3);
-
-            switch (primitiveType) {
-                case FreePoint:
-                    Model.addPoint(primitiveId, (P1));
-                    break;
-                case FixLine:
-                    throw new Error("axis OXY is not serialized");
-                case Line:
-                    Model.addLine(primitiveId, (P1), (P2));
-                    break;
-                case Circle:
-                    Model.addCircle(primitiveId, (P1), (P2));
-                    break;
-                case Arc:
-                    Model.addArc(primitiveId, (P1), (P2), (P3));
-                    break;
-            }
-            Arrays.fill(slots, 0, slots.length, null);
-            lstate = STA_END;
+    public static String processField(String input) {
+        Matcher m = FIELD_VALUE.matcher(input);
+        if (!m.find()) {
+            throw new Error("failed line matcher " + input);
         } else {
-            throw new Error("invalid input fieldLine : " + input);
+            return m.group(1);
         }
     }
 
-    private void processConstraint() {
-        /*
-         *      ID: 4;
-         *      TYPE: Connect2Points;
-         *      K: 2;
-         *      L: 5;
-         *      M: -1;
-         *      N: -1;
-         *      PARAM: -1;
-         */
-        Matcher matcher = STRUCT_FIELD_PATTERN.matcher(input);
-        if (matcher.matches()) {
-            String fieldName = matcher.group(1);
-            String fieldValue = matcher.group(2);
-            switch (fieldName) {
-                case "ID":
-                    slots[0] = ObjectDeserializer.toInteger(fieldValue);
-                    return;
-                case "TYPE":
-                    slots[3] = ObjectDeserializer.toString(fieldValue);
-                    return;
-                case "K":
-                    slots[7] = ObjectDeserializer.toInteger(fieldValue);
-                    return;
-                case "L":
-                    slots[8] = ObjectDeserializer.toInteger(fieldValue);
-                    return;
-                case "M":
-                    slots[9] = ObjectDeserializer.toInteger(fieldValue);
-                    return;
-                case "N":
-                    slots[10] = ObjectDeserializer.toInteger(fieldValue);
-                    return;
-                case "PARAM":
-                    slots[11] = ObjectDeserializer.toInteger(fieldValue);
-                    return;
-                default:
-                    throw new Error("invalid input fieldLine : " + input);
-            }
+    public static void processDescriptorConstraint(String[] fieldValue) {
+
+        int constId = ObjectDeserializer.toInteger(processField(fieldValue[1]));
+        GeometricConstraintType constraintType = Enum.valueOf(GeometricConstraintType.class, processField(fieldValue[2]));
+        int vK = ObjectDeserializer.toInteger(processField(fieldValue[3]));
+        int vL = ObjectDeserializer.toInteger(processField(fieldValue[4]));
+        int vM = ObjectDeserializer.toInteger(processField(fieldValue[5]));
+        int vN = ObjectDeserializer.toInteger(processField(fieldValue[6]));
+        int paramId = ObjectDeserializer.toInteger(processField(fieldValue[7]));
+
+        /// save point
+        Point K = null;
+        Point L = null;
+        Point M = null;
+        Point N = null;
+        Parameter parameter = null;
+
+        if (vK != -1) K = ModelRegistry.dbPoint.get(vK);
+        if (vL != -1) L = ModelRegistry.dbPoint.get(vL);
+        if (vM != -1) M = ModelRegistry.dbPoint.get(vM);
+        if (vN != -1) N = ModelRegistry.dbPoint.get(vN);
+        if (paramId != -1 && constraintType.isParametrized()) {
+            parameter = ModelRegistry.dbParameter.get(paramId);
         }
 
-        if (PATTERN_END.equals(input)) {
-            /// save point
-            int constId;
-            GeometricConstraintType constraintType;
-            int vK;
-            int vL;
-            int vM;
-            int vN;
-            int paramId;
-
-            Point K = null;
-            Point L = null;
-            Point M = null;
-            Point N = null;
-            Parameter parameter = null;
-
-            constraintType = Enum.valueOf(GeometricConstraintType.class, (String) slots[3]);
-            constId = (Integer) slots[0];
-            vK = (Integer) slots[7];
-            vL = (Integer) slots[8];
-            vM = (Integer) slots[9];
-            vN = (Integer) slots[10];
-            paramId = (Integer) slots[11];
-
-            if (vK != -1) K = ModelRegistry.dbPoint.get(vK);
-            if (vL != -1) L = ModelRegistry.dbPoint.get(vL);
-            if (vM != -1) M = ModelRegistry.dbPoint.get(vM);
-            if (vN != -1) N = ModelRegistry.dbPoint.get(vN);
-            if (paramId != -1 && constraintType.isParametrized()) {
-                parameter = ModelRegistry.dbParameter.get(paramId);
-            }
-
-            switch (constraintType) {
-                case FixPoint:
-                case ParametrizedXFix:
-                case ParametrizedYFix:
-                case Connect2Points:
-                case Distance2Points:
-                case DistancePointLine:
-                case LinesParallelism:
-                case LinesPerpendicular:
-                case Angle2Lines:
-                case SetHorizontal:
-                case SetVertical:
-                case HorizontalPoint:
-                case VerticalPoint:
-                case EqualLength:
-                case ParametrizedLength:
-                case Tangency:
-                case CircleTangency:
-                    Model.addConstraint(constId, constraintType, K, L, M, N, parameter);
-                    break;
-                default:
-                    throw new Error("invalid input fieldLine : " + input);
-            }
-            Arrays.fill(slots, 0, slots.length, null);
-            lstate = STA_END;
-        } else {
-            throw new Error("invalid input fieldLine : " + input);
+        switch (constraintType) {
+            case FixPoint:
+            case ParametrizedXFix:
+            case ParametrizedYFix:
+            case Connect2Points:
+            case Distance2Points:
+            case DistancePointLine:
+            case LinesParallelism:
+            case LinesPerpendicular:
+            case Angle2Lines:
+            case SetHorizontal:
+            case SetVertical:
+            case HorizontalPoint:
+            case VerticalPoint:
+            case EqualLength:
+            case ParametrizedLength:
+            case Tangency:
+            case CircleTangency:
+                Model.addConstraint(constId, constraintType, K, L, M, N, parameter);
+                break;
+            default:
+                throw new Error("invalid fieldValue fieldLine : " + Arrays.toString(fieldValue));
         }
     }
 
     /**
      * Skip all comments , and other markers but remember to check file format version.
      */
-    private void processEnd() {
+    private void processComments(String inputLine) {
 
-        switch (input) {
-            case "":
-                // continue on empty line
-                return;
-            case BEGIN_POINT:
-                lstate = STA_POINT;
-                return;
-            case BEGIN_PRIMITIVE:
-                lstate = STA_PRIMITIVE;
-                return;
-            case BEGIN_CONSTRAINT:
-                lstate = STA_CONSTRAINT;
-                return;
-            case BEGIN_PARAMETER:
-                lstate = STA_PARAMETER;
-                return;
-        }
-
-        Matcher matcher = HEADER_FIELD_PATTERN.matcher(input);
+        Matcher matcher = HEADER_FIELD_PATTERN.matcher(inputLine);
         if (matcher.matches()) {
             String fieldName = matcher.group(1);
             String fieldValue = matcher.group(2);
@@ -408,10 +227,10 @@ public class GCModelReader implements Closeable {
                         throw new Error("unsupported format version ! =  " + fieldValue);
                     break;
                 default:
-                    throw new Error("unsupported header input  ! =  `" + input + "`");
+                    throw new Error("unsupported header input  ! =  `" + inputLine + "`");
             }
         } else {
-            throw new Error("unrecognized input ! =  `" + input + "`");
+            throw new Error("unrecognized input ! =  `" + inputLine + "`");
         }
     }
 
