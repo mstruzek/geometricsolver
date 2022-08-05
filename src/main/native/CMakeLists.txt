@@ -1,28 +1,86 @@
-cmake_minimum_required(VERSION 3.20.0)
+cmake_minimum_required(VERSION 3.20)
 
+
+# cuda compiler tooling
 set(CMAKE_CUDA_COMPILER /usr/local/cuda-11.7/bin/nvcc)
 
-#set(JAVA_AWT_LIBRARY /usr/lib/jvm/java-17-openjdk-17.0.3.0.5-0.1.ea.el8.x86_64/lib/libawt.so)
-#set(JAVA_JVM_LIBRARY /usr/lib/jvm/java-17-openjdk-17.0.3.0.5-0.1.ea.el8.x86_64/lib/libjava.so)
 
+# JNI binding into cuda solver infrastructure
 
-# Load default CUDA library into project definition
-
-project(msketchjni VERSION 0.0.1
+project(gsketcherjni VERSION 0.0.1
         DESCRIPTION "jni interface into GPU Cuda API"
         LANGUAGES CXX CUDA)
 
-# Local test configurations:
-#   NVIDIA-SMI 515.48.07
-#   Driver Version: 515.48.07
-#   CUDA Version: 11.7
 
 
-add_library(msketchjni SHARED src/libmain.cpp)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+
+set(CMAKE_CUDA_ARCHITECTURES 75)
 
 
 
-target_include_directories(msketchjni PUBLIC AFTER
-        /usr/lib/jvm/java-17-openjdk-17.0.3.0.5-0.1.ea.el8.x86_64/include/
-        /usr/lib/jvm/java-17-openjdk-17.0.3.0.5-0.1.ea.el8.x86_64/include/linux/)
+set(PROJECT_SHARED_LIBRARY gsketcherjni)
+set(PROJECT_TEST_EXECUTABLE gsketcherjnie)
+
+
+
+# Local test configurations:    ://      NVIDIA-SMI 515.48.07    ://      Driver Version: 515.48.07       ://      CUDA Version: 11.7
+
+
+
+##########################################
+
+#       \\\library  runtime image
+
+
+set(JAVA_HOME /usr/lib/jvm/java-17-openjdk-17.0.3.0.5-0.1.ea.el8.x86_64)
+
+
+find_package(JNI)     #  in this cmake-3.20 settings JNI module is not setting the target JNI::JNI (cmake-3.24)
+
+
+add_library(${PROJECT_SHARED_LIBRARY} SHARED
+        src/com_mstruzek_jni_JNISolverGate.cpp)
+
+
+target_include_directories(${PROJECT_SHARED_LIBRARY} PUBLIC
+        ${JAVA_INCLUDE_PATH}
+        ${JAVA_INCLUDE_PATH2})
+
+
+
+##########################################
+
+
+#       \\\entry test executable file
+
+add_executable(${PROJECT_TEST_EXECUTABLE} src/entry.cpp )
+
+
+target_include_directories(${PROJECT_TEST_EXECUTABLE} PUBLIC
+        JNI::JNI)
+target_include_directories(${PROJECT_TEST_EXECUTABLE} PUBLIC
+        ${JAVA_INCLUDE_PATH}
+        ${JAVA_INCLUDE_PATH2})
+
+
+
+
+#       \\\entry CUDA runtime , cusolver , cusparse
+
+find_package(CUDAToolkit 11.7)
+
+target_link_libraries(${PROJECT_TEST_EXECUTABLE} PUBLIC
+        CUDA::cudart
+        CUDA::cublas
+        CUDA::cusolver
+        CUDA::cusparse)
+target_include_directories(${PROJECT_TEST_EXECUTABLE} PRIVATE PUBLIC
+        CUDA::cudart
+        CUDA::cublas
+        CUDA::cusolver
+        CUDA::cusparse)
+
 
