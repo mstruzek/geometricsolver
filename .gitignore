@@ -2,3 +2,4 @@
 out/
 .gradle/
 _backlog.md
+.idea/

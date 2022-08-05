@@ -12,12 +12,11 @@ repositories {
 
 
 
+
 compileJava {
     targetCompatibility = 17
     sourceCompatibility = 17
 }
-
-
 
 dependencies {
 
@@ -27,3 +26,33 @@ dependencies {
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
 
 }
+
+
+/// Native Build with CMake
+def nativeSourcePath = projectDir.absolutePath + "/src/main/native/"
+def nativeBuildPath = buildDir.absolutePath + "/target/cmake-build"
+
+def compileNative = tasks.register("compile-native") {
+    doLast{
+        ant.echo("compile native with cmake infrastructure")
+
+        ant.delete(dir: nativeBuildPath)
+        ant.mkdir(dir: nativeBuildPath)
+
+        ant.exec(dir: nativeBuildPath, failonerror: true, executable: "cmake")  {
+            arg (value: nativeSourcePath)
+        }
+
+        ant.echo("build directory generated")
+
+        ant.exec(dir: nativeBuildPath, failonerror: true, executable: "cmake") {
+            arg(value:"--build")
+            arg(value: ".")
+        }
+
+        ant.echo(message: "shared lib build")
+    }
+}
+
+
+tasks.compileJava.dependsOn(compileNative)
