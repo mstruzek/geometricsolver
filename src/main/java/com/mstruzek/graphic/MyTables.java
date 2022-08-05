@@ -2,7 +2,7 @@ package com.mstruzek.graphic;
 
 import com.mstruzek.controller.*;
 import com.mstruzek.msketch.Constraint;
-import com.mstruzek.msketch.GeometricPrimitive;
+import com.mstruzek.msketch.GeometricObject;
 import com.mstruzek.msketch.ModelRegistry;
 import com.mstruzek.msketch.Parameter;
 
@@ -203,7 +203,7 @@ public class MyTables extends JPanel {
             return;
         }
 
-        final GeometricPrimitive primitive =
+        final GeometricObject primitive =
             ModelRegistry.dbPrimitives.values()
                 .stream()
                 .skip(i)

@@ -5,7 +5,7 @@ import com.mstruzek.msketch.matrix.MatrixDouble;
 import java.util.Collections;
 import java.util.Set;
 
-public class Circle extends GeometricPrimitive {
+public class Circle extends GeometricObject {
 
     /**
      * fix control points -punkty kontrolne zafixowane
@@ -52,7 +52,7 @@ public class Circle extends GeometricPrimitive {
     }
 
     public Circle(int id, Vector v10, Vector v20) {
-        super(id, GeometricPrimitiveType.Circle);
+        super(id, GeometricType.Circle);
 
         if (v10 instanceof Point && v20 instanceof Point) {
             p1 = (Point) v10;

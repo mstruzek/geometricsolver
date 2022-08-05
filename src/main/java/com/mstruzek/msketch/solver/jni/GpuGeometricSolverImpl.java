@@ -65,7 +65,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
         solverStat.startTime = 0; /// z C20 uzupelaniamy caly stan, to odbiorca zapytujee na koniec sesji !.
 
-        // --- nativeMethod -> (`kernel`):  GeometricPrimitive.getAllJacobianForces(Fq);
+        // --- nativeMethod -> (`kernel`):  GeometricObject.getAllJacobianForces(Fq);
 
 /// Wektor prawych stron b
         MatrixDouble dmx = null;
@@ -86,7 +86,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
             A.reset(0.0);
 
             /// `kernel`
-            GeometricPrimitive.getAllForce(Fr);                 /// Sily  - F(q)
+            GeometricObject.getAllForce(Fr);                 /// Sily  - F(q)
             Constraint.getFullConstraintValues(Fi);             /// Wiezy  - Fi(q)
             // `cublas`
             b.dot(-1);

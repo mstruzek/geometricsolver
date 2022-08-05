@@ -12,7 +12,7 @@ import java.util.Set;
  * + FreePoint -srodek okregu + wiez rownej dlugosci pomiedzy punktami a srodkiem
  */
 //FIXME - UWAGA przy wstawianiu LUKU nalezy pamietac aby promien znajdowal sie na symetralnej pomiedzy punktami p2,p3
-public class Arc extends GeometricPrimitive {
+public class Arc extends GeometricObject {
 
     /**
      * fix control points -punkty kontrolne zafixowane
@@ -53,7 +53,7 @@ public class Arc extends GeometricPrimitive {
     }
 
     public Arc(int id, Vector v10, Vector v20, Vector v30) {
-        super(id, GeometricPrimitiveType.Arc);
+        super(id, GeometricType.Arc);
 
         // FreePoint(a,p1,b)
         Vector va, vb, vc, vd, v3;

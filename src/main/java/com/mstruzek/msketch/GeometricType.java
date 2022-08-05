@@ -3,7 +3,7 @@ package com.mstruzek.msketch;
 /**
  * Podstawowe elementy geometryczne ktore mozna narysowac
  */
-public enum GeometricPrimitiveType {
+public enum GeometricType {
     /**
      * Punkt
      */

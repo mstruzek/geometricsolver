@@ -3,7 +3,7 @@ package com.mstruzek.graphic;
 import com.mstruzek.controller.ActiveKey;
 import com.mstruzek.controller.Controller;
 import com.mstruzek.msketch.Consts;
-import com.mstruzek.msketch.GeometricPrimitive;
+import com.mstruzek.msketch.GeometricObject;
 import com.mstruzek.msketch.ModelRegistry;
 import com.mstruzek.msketch.Vector;
 
@@ -114,7 +114,7 @@ public class MySketch extends JPanel implements MouseInputListener {
      */
     public void refreshContainers() {
 
-        ArrayList<GeometricPrimitive> primitives = new ArrayList<>(ModelRegistry.dbPrimitives.values());
+        ArrayList<GeometricObject> primitives = new ArrayList<>(ModelRegistry.dbPrimitives.values());
 
         MyPoint p1, p2, p3;
         MyLine ml;
@@ -129,7 +129,7 @@ public class MySketch extends JPanel implements MouseInputListener {
         pointStore.clear();
 
         for (int i = 0; i < primitives.size(); i++) {
-            GeometricPrimitive gm = primitives.get(i);
+            GeometricObject gm = primitives.get(i);
 
             switch (gm.getType()) {
                 case Line:
@@ -438,7 +438,7 @@ public class MySketch extends JPanel implements MouseInputListener {
 
                     int first = viewPoint.id;
 
-                    GeometricPrimitive parentPrimitive =
+                    GeometricObject parentPrimitive =
                         ModelRegistry.dbPrimitives.values().stream()
                             .filter(p -> Arrays.stream(p.getAllPointsId()).boxed().anyMatch(Predicate.isEqual(first)))
                             .findFirst()

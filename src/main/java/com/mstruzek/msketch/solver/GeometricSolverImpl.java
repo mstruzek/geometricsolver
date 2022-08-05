@@ -141,7 +141,7 @@ public class GeometricSolverImpl implements GeometricSolver {
         Hs = MatrixDouble.matrix2D(size, size, 0.0);
 
         /// macierz sztywnosci stala w czasie
-        GeometricPrimitive.evaluateStiffnessMatrix(Fq);
+        GeometricObject.evaluateStiffnessMatrix(Fq);
 
 /// Wektor prawych stron b
 
@@ -173,7 +173,7 @@ public class GeometricSolverImpl implements GeometricSolver {
 
 /// Tworzymy Macierz vector b vector `b
 
-            GeometricPrimitive.evaluateForceVector(Fr);                 /// Sily  - F(q)
+            GeometricObject.evaluateForceVector(Fr);                 /// Sily  - F(q)
             Constraint.evaluateConstraintVector(Fi);             /// Wiezy  - Fi(q)
             // b.setSubMatrix(0,0, (Fr));
             // b.setSubMatrix(size,0, (Fi));

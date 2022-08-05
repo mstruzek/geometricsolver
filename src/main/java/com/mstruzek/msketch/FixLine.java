@@ -8,7 +8,7 @@ import java.util.Set;
  * Klasa reprezentujaca zafiksowana linie,
  * zawiera wersory osi X,Y;
  */
-public class FixLine extends GeometricPrimitive {
+public class FixLine extends GeometricObject {
 
     /**
      * fix control points
@@ -21,7 +21,7 @@ public class FixLine extends GeometricPrimitive {
     static FixLine Y = new FixLine(-2, new Vector(0.0, 0.0), new Vector(0.0, 100.0));
 
     public FixLine(int id, Vector a1, Vector b1) {
-        super(id, GeometricPrimitiveType.FixLine);
+        super(id, GeometricType.FixLine);
         a = new Vector(a1.getX(), a1.getY());
         b = new Vector(b1.getX(), b1.getY());
     }

@@ -76,16 +76,16 @@ public final class Model {
         add(new FreePoint(v1));
     }
 
-    private static void add(GeometricPrimitive geometricPrimitive) {
+    private static void add(GeometricObject geometricObject) {
         /// self registrations
-        if (geometricPrimitive.primitiveId >= 0) {
-            for (Point point : geometricPrimitive.getAllPoints()) {
+        if (geometricObject.primitiveId >= 0) {
+            for (Point point : geometricObject.getAllPoints()) {
                 ModelRegistry.registerPoint(point.id, point);
             }
-            for (Constraint constraint : geometricPrimitive.associatedConstraints()) {
+            for (Constraint constraint : geometricObject.associatedConstraints()) {
                 ModelRegistry.registerConstraint(constraint.getConstraintId(), constraint);
             }
-            ModelRegistry.registerPrimitives(geometricPrimitive.getPrimitiveId(), geometricPrimitive);
+            ModelRegistry.registerPrimitives(geometricObject.getPrimitiveId(), geometricObject);
 
             Events.send(PRIMITIVE_TABLE_INSERT, null);
         }
@@ -184,14 +184,14 @@ public final class Model {
 
 
     public static void evaluateGuidePoints() {
-        ModelRegistry.dbPrimitives().values().forEach(GeometricPrimitive::evaluateGuidePoints);
+        ModelRegistry.dbPrimitives().values().forEach(GeometricObject::evaluateGuidePoints);
     }
 
     public static void relaxControlPoints(double scale) {
-        for (GeometricPrimitive geometricPrimitive : ModelRegistry.dbPrimitives.values()) {
-            relaxPoint(geometricPrimitive.getP1(), scale);
-            relaxPoint(geometricPrimitive.getP1(), scale);
-            relaxPoint(geometricPrimitive.getP1(), scale);
+        for (GeometricObject geometricObject : ModelRegistry.dbPrimitives.values()) {
+            relaxPoint(geometricObject.getP1(), scale);
+            relaxPoint(geometricObject.getP1(), scale);
+            relaxPoint(geometricObject.getP1(), scale);
         }
     }
 

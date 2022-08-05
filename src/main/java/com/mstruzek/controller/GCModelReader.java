@@ -24,7 +24,7 @@ public class GCModelReader implements Closeable {
     private static final String HEADER_DEFINITION_END = "--definition-end";
 
     private static final String DESCRIPTOR_POINT = "Point";
-    private static final String DESCRIPTOR_GEOMETRIC_PRIMITIVE = "GeometricPrimitive";
+    private static final String DESCRIPTOR_GEOMETRIC_PRIMITIVE = "GeometricObject";
     private static final String DESCRIPTOR_PARAMETER = "Parameter";
     private static final String DESCRIPTOR_CONSTRAINT = "Constraint";
 
@@ -115,7 +115,7 @@ public class GCModelReader implements Closeable {
     private static void processDescriptorPrimitive(Matcher iterator) {
 
         int primitiveId = ObjectDeserializer.toInteger(requiredField(iterator, "ID"));
-        GeometricPrimitiveType primitiveType = Enum.valueOf(GeometricPrimitiveType.class, requiredField(iterator, "TYPE"));
+        GeometricType primitiveType = Enum.valueOf(GeometricType.class, requiredField(iterator, "TYPE"));
         int p1 = ObjectDeserializer.toInteger(requiredField(iterator, "P1"));
         int p2 = ObjectDeserializer.toInteger(requiredField(iterator, "P2"));
         int p3 = ObjectDeserializer.toInteger(requiredField(iterator, "P3"));

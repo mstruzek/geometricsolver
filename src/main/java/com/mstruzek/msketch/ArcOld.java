@@ -12,7 +12,7 @@ import java.util.Set;
  * + FreePoint -srodek okregu + wiez rownej dlugosci pomiedzy punktami a srodkiem
  */
 //FIXME - UWAGA przy wstawianiu LUKU nalezy pamietac aby promien znajdowal sie na symetralnej pomiedzy punktami p2,p3
-public class ArcOld extends GeometricPrimitive {
+public class ArcOld extends GeometricObject {
 
     /**
      * fix control points -punkty kontrolne zafixowane
@@ -60,7 +60,7 @@ public class ArcOld extends GeometricPrimitive {
      * @param p30 drugi koniec luku
      */
     public ArcOld(Vector p10, Vector p20, Vector p30) {
-        super(ModelRegistry.nextPrimitiveId(), GeometricPrimitiveType.Arc);
+        super(ModelRegistry.nextPrimitiveId(), GeometricType.Arc);
         // FreePoint(a,p1,b)
         a = new Point(ModelRegistry.nextPointId(), p10.product(2).minus(p20));
         p1 = new Point(ModelRegistry.nextPointId(), p10);

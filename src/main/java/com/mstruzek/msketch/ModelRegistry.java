@@ -10,7 +10,7 @@ public class ModelRegistry {
 
     public static TreeMap<Integer, Point> dbPoint = new TreeMap<Integer, Point>();
     /*** tablica wszystkich elemntow */
-    public static TreeMap<Integer, GeometricPrimitive> dbPrimitives = new TreeMap<Integer, GeometricPrimitive>();
+    public static TreeMap<Integer, GeometricObject> dbPrimitives = new TreeMap<Integer, GeometricObject>();
     /*** tablica wszystkich parametrow */
     public static TreeMap<Integer, Parameter> dbParameter = new TreeMap<Integer, Parameter>();
     /*** tablica wszystkich linii */
@@ -52,7 +52,7 @@ public class ModelRegistry {
         return dbPoint;
     }
 
-    public static TreeMap<Integer, GeometricPrimitive> dbPrimitives() {
+    public static TreeMap<Integer, GeometricObject> dbPrimitives() {
         return dbPrimitives;
     }
 
@@ -77,8 +77,8 @@ public class ModelRegistry {
     }
 
     @JniModel
-    public static void registerPrimitives(int primitiveId, GeometricPrimitive geometricPrimitive) {
-        dbPrimitives.put(primitiveId, geometricPrimitive);
+    public static void registerPrimitives(int primitiveId, GeometricObject geometricObject) {
+        dbPrimitives.put(primitiveId, geometricObject);
     }
 
     @JniModel

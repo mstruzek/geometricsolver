@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * Klasa FreePoint - czyli wolny Punkt
  */
-public class FreePoint extends GeometricPrimitive {
+public class FreePoint extends GeometricObject {
 
     /**
      * fix control points -punkty kontrolne zafixowane
@@ -38,7 +38,7 @@ public class FreePoint extends GeometricPrimitive {
     }
 
     public FreePoint(int id, Vector v00) {
-        super(id, GeometricPrimitiveType.FreePoint);
+        super(id, GeometricType.FreePoint);
         if (v00 instanceof Point) {
             p1 = (Point) v00;
             a = new Point(p1.getId() - 1, v00.minus(new Vector(distance * Math.cos(angle), distance * Math.sin(angle))));

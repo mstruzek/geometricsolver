@@ -9,7 +9,6 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Format Read/Write
@@ -19,8 +18,8 @@ import static java.util.stream.Collectors.toList;
  * Descriptor(Parameter) ID(10) VALUE(23.02);
  * Descriptor(Parameter) ID(10) VALUE(23.02);
  *
- * Descriptor(GeometricPrimitive) ID(10)  TYPE(FreePoint) P1(10.02) P2(192.02) P3(232.32) Param(1);
- * Descriptor(GeometricPrimitive) ID(10)  TYPE(FreePoint) P1(10.02) P2(192.02) P3(232.32) Param(1);
+ * Descriptor(GeometricObject) ID(10)  TYPE(FreePoint) P1(10.02) P2(192.02) P3(232.32) Param(1);
+ * Descriptor(GeometricObject) ID(10)  TYPE(FreePoint) P1(10.02) P2(192.02) P3(232.32) Param(1);
  *
  * Descriptor(Constraint) ID(101) TYPE(HORIZONTAL) K(1) L(2) M(3) N(4);
  * Descriptor(Constraint) ID(101) TYPE(HORIZONTAL) K(1) L(2) M(3) N(4);
@@ -63,10 +62,10 @@ public class GCModelWriter implements Closeable {
     }
 
     public void writePoints() throws IOException {
-        for (GeometricPrimitive geometricPrimitive : ModelRegistry.dbPrimitives.values()) {
-            Point P1 = ModelRegistry.dbPoint.getOrDefault(geometricPrimitive.getP1(), Point.EMPTY);
-            Point P2 = ModelRegistry.dbPoint.getOrDefault(geometricPrimitive.getP2(), Point.EMPTY);
-            Point P3 = ModelRegistry.dbPoint.getOrDefault(geometricPrimitive.getP3(), Point.EMPTY);
+        for (GeometricObject geometricObject : ModelRegistry.dbPrimitives.values()) {
+            Point P1 = ModelRegistry.dbPoint.getOrDefault(geometricObject.getP1(), Point.EMPTY);
+            Point P2 = ModelRegistry.dbPoint.getOrDefault(geometricObject.getP2(), Point.EMPTY);
+            Point P3 = ModelRegistry.dbPoint.getOrDefault(geometricObject.getP3(), Point.EMPTY);
             for (Point point : Stream.of(P1, P2, P3).filter(point -> !Objects.equals(point, Point.EMPTY)).toList()) {
                 buff.write("Descriptor(Point)");
                 buff.write(format("%-9s", " ID(" + ObjectSerializer.writeToString(point.getId()) + ")"));
@@ -88,15 +87,15 @@ public class GCModelWriter implements Closeable {
         buff.write("\n");
     }
 
-    public void writeGeometricPrimitives() throws IOException {
-        for (GeometricPrimitive geometricPrimitive : ModelRegistry.dbPrimitives.values()) {
-            final int gpID = geometricPrimitive.getPrimitiveId();
+    public void writeGeometricObjects() throws IOException {
+        for (GeometricObject geometricObject : ModelRegistry.dbPrimitives.values()) {
+            final int gpID = geometricObject.getPrimitiveId();
             if (gpID >= 0) {
-                GeometricPrimitiveType primitiveType = geometricPrimitive.getType();
-                int P1 = geometricPrimitive.getP1();
-                int P2 = geometricPrimitive.getP2();
-                int P3 = geometricPrimitive.getP3();
-                buff.write("Descriptor(GeometricPrimitive)");
+                GeometricType primitiveType = geometricObject.getType();
+                int P1 = geometricObject.getP1();
+                int P2 = geometricObject.getP2();
+                int P3 = geometricObject.getP3();
+                buff.write("Descriptor(GeometricObject)");
                 buff.write(format("%-9s"," ID(" + ObjectSerializer.writeToString(gpID) + ")"));
                 buff.write(format("%-15s", " TYPE(" + ObjectSerializer.writeToString(primitiveType) + ")"));
                 buff.write(format("%-9s", " P1(" + ObjectSerializer.writeToString(P1) + ")"));

@@ -8,7 +8,7 @@ import java.util.Set;
  * Klasa abstrakcyjna dla podstawowych elementow geometrycznych jakie moga zostac
  * narysowane na ekranie : linia, luk, okrag,"wolny" punkt
  */
-public abstract class GeometricPrimitive {
+public abstract class GeometricObject {
 
     /**
      * id danego elemntu podstawowego
@@ -17,7 +17,7 @@ public abstract class GeometricPrimitive {
     /**
      * Typ elementu
      */
-    protected GeometricPrimitiveType type = null;
+    protected GeometricType type = null;
 
 
     /**
@@ -25,9 +25,9 @@ public abstract class GeometricPrimitive {
      */
     protected Constraint[] constraints = new Constraint[0];
 
-    public GeometricPrimitive(int primitiveId, GeometricPrimitiveType geometricPrimitiveType) {
+    public GeometricObject(int primitiveId, GeometricType geometricType) {
         this.primitiveId = primitiveId;
-        this.type = geometricPrimitiveType;
+        this.type = geometricType;
     }
 
     /**
@@ -37,7 +37,7 @@ public abstract class GeometricPrimitive {
 
 
     /**
-     * Funkcja zwraca wartosc sil w sprezynach dla poszczegolnych punkt�w w danym {@link GeometricPrimitive}
+     * Funkcja zwraca wartosc sil w sprezynach dla poszczegolnych punkt�w w danym {@link GeometricObject}
      */
     public abstract void evaluateForceIntensity(int row, MatrixDouble dest);
 
@@ -100,7 +100,7 @@ public abstract class GeometricPrimitive {
      *
      * @return
      */
-    public GeometricPrimitiveType getType() {
+    public GeometricType getType() {
         return type;
     }
 
@@ -111,9 +111,9 @@ public abstract class GeometricPrimitive {
      */
     public static void evaluateStiffnessMatrix(MatrixDouble mt) {
         int rowCol = 0;
-        for (GeometricPrimitive geometricPrimitive : ModelRegistry.dbPrimitives.values()) {
-            geometricPrimitive.setStiffnessMatrix(rowCol, rowCol, mt);
-            rowCol += geometricPrimitive.getNumOfPoints() * 2;
+        for (GeometricObject geometricObject : ModelRegistry.dbPrimitives.values()) {
+            geometricObject.setStiffnessMatrix(rowCol, rowCol, mt);
+            rowCol += geometricObject.getNumOfPoints() * 2;
         }
     }
 
@@ -124,9 +124,9 @@ public abstract class GeometricPrimitive {
      */
     public static void evaluateForceVector(MatrixDouble dest) {
         int row = 0;
-        for (GeometricPrimitive geometricPrimitive : ModelRegistry.dbPrimitives().values()) {
-            geometricPrimitive.evaluateForceIntensity(row, dest);
-            row += geometricPrimitive.getNumOfPoints() * 2;
+        for (GeometricObject geometricObject : ModelRegistry.dbPrimitives().values()) {
+            geometricObject.evaluateForceIntensity(row, dest);
+            row += geometricObject.getNumOfPoints() * 2;
         }
     }
 

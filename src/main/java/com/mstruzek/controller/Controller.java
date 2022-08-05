@@ -60,7 +60,7 @@ public class Controller implements ControllerInterface {
 
             modelWriter.writeHeader();
             modelWriter.writePoints();
-            modelWriter.writeGeometricPrimitives();
+            modelWriter.writeGeometricObjects();
             modelWriter.writeParameters();
             modelWriter.writeConstraints();
             modelWriter.writeClose();
@@ -94,11 +94,11 @@ public class Controller implements ControllerInterface {
         ModelRegistry.parameterCounter = firstAvailableKey(ModelRegistry.dbParameter());
 
         Set<Integer> skipConstrainIds = ModelRegistry.dbConstraint.keySet();
-        for (GeometricPrimitive geometricPrimitive : ModelRegistry.dbPrimitives.values()) {
+        for (GeometricObject geometricObject : ModelRegistry.dbPrimitives.values()) {
 
-            geometricPrimitive.setAssociateConstraints(skipConstrainIds);
+            geometricObject.setAssociateConstraints(skipConstrainIds);
 
-            for (Constraint constraint : geometricPrimitive.associatedConstraints()) {
+            for (Constraint constraint : geometricObject.associatedConstraints()) {
                 ModelRegistry.registerConstraint(constraint.getConstraintId(), constraint);
             }
         }

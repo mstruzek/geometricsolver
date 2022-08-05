@@ -15,7 +15,7 @@ import java.util.Set;
  * pomiedzy punktami [a,p1] i [p2,b] -zastosowane sprezyny slabe - springStiffnessLow
  * pomiedzy pynktami [p1,p2] - sprezyny mocne springStiffnessHigh
  */
-public class Line extends GeometricPrimitive {
+public class Line extends GeometricObject {
 
     /**
      * fix control points -punkty kontrolne zafixowane
@@ -48,7 +48,7 @@ public class Line extends GeometricPrimitive {
     }
 
     public Line(int id, Vector v10, Vector v20) {
-        super(id, GeometricPrimitiveType.Line);
+        super(id, GeometricType.Line);
 
         if (v10 instanceof Point && v20 instanceof Point) {
             p1 = (Point) v10;

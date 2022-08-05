@@ -1,7 +1,7 @@
 package com.mstruzek.controller;
 
 import com.mstruzek.msketch.GeometricConstraintType;
-import com.mstruzek.msketch.GeometricPrimitiveType;
+import com.mstruzek.msketch.GeometricType;
 
 public class ObjectSerializer {
 
@@ -17,7 +17,7 @@ public class ObjectSerializer {
         return constraintType.name();
     }
 
-    public static String writeToString(GeometricPrimitiveType primitiveType) {
+    public static String writeToString(GeometricType primitiveType) {
         return primitiveType.name();
     }
 }
