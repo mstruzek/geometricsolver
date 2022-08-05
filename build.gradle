@@ -28,6 +28,11 @@ dependencies {
 }
 
 
+
+task generateCHeader(type:Exec) {
+    commandLine 'javah', '-jni' , '-v','-classpath','src/main/java/','-o','src/main/native/src/com_mstruzek_jni_JNISolverGate.h_','com.mstruzek.jni.JNISolverGate'
+}
+
 /// Native Build with CMake
 def nativeSourcePath = projectDir.absolutePath + "/src/main/native/"
 def nativeBuildPath = buildDir.absolutePath + "/target/cmake-build"
@@ -55,4 +60,6 @@ def compileNative = tasks.register("compile-native") {
 }
 
 
+
 tasks.compileJava.dependsOn(compileNative)
+
