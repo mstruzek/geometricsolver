@@ -35,7 +35,7 @@ public class JNISolverGate {
      * 
      * @return error code
      */
-    public static native int resetDatabase();
+    public static native int resetComputationData();
 
 
     /**
