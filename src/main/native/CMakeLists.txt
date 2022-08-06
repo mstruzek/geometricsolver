@@ -41,45 +41,59 @@ set(JAVA_HOME /usr/lib/jvm/java-17-openjdk-17.0.3.0.5-0.1.ea.el8.x86_64)
 find_package(JNI)     #  in this cmake-3.20 settings JNI module is not setting the target JNI::JNI (cmake-3.24)
 
 
+find_package(CUDAToolkit 11.7)
+
+
 add_library(${PROJECT_SHARED_LIBRARY} SHARED
         src/com_mstruzek_jni_JNISolverGate.cpp)
 
 
-target_include_directories(${PROJECT_SHARED_LIBRARY} PUBLIC
-        ${JAVA_INCLUDE_PATH}
+target_include_directories(${PROJECT_SHARED_LIBRARY} PUBLIC     
+        ${JAVA_INCLUDE_PATH} 
         ${JAVA_INCLUDE_PATH2})
 
+
+target_link_libraries(${PROJECT_SHARED_LIBRARY} PUBLIC
+        CUDA::cudart
+        CUDA::cublas
+        CUDA::cusolver
+        CUDA::cusparse)
+target_include_directories(${PROJECT_SHARED_LIBRARY} PRIVATE PUBLIC
+        CUDA::cudart
+        CUDA::cublas
+        CUDA::cusolver
+        CUDA::cusparse)
 
 
 ##########################################
 
 
-#       \\\entry test executable file
+#       \\\entry test executable file        
 
 add_executable(${PROJECT_TEST_EXECUTABLE} src/entry.cpp )
 
 
-target_include_directories(${PROJECT_TEST_EXECUTABLE} PUBLIC
+target_include_directories(${PROJECT_TEST_EXECUTABLE} PUBLIC 
         JNI::JNI)
-target_include_directories(${PROJECT_TEST_EXECUTABLE} PUBLIC
-        ${JAVA_INCLUDE_PATH}
+target_include_directories(${PROJECT_TEST_EXECUTABLE} PUBLIC 
+        ${JAVA_INCLUDE_PATH} 
         ${JAVA_INCLUDE_PATH2})
 
 
 
 
-#       \\\entry CUDA runtime , cusolver , cusparse
+#       \\\entry CUDA runtime , cusolver , cusparse        
 
-find_package(CUDAToolkit 11.7)
 
-target_link_libraries(${PROJECT_TEST_EXECUTABLE} PUBLIC
-        CUDA::cudart
-        CUDA::cublas
+
+target_link_libraries(${PROJECT_TEST_EXECUTABLE} PUBLIC 
+        CUDA::cudart 
+        CUDA::cublas 
         CUDA::cusolver
         CUDA::cusparse)
-target_include_directories(${PROJECT_TEST_EXECUTABLE} PRIVATE PUBLIC
-        CUDA::cudart
-        CUDA::cublas
+target_include_directories(${PROJECT_TEST_EXECUTABLE} PRIVATE PUBLIC 
+        CUDA::cudart 
+        CUDA::cublas 
         CUDA::cusolver
         CUDA::cusparse)
 

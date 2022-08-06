@@ -19,22 +19,9 @@
 #define jni_getPointCoordinateVector   Java_com_mstruzek_jni_JNISolverGate_getPointCoordinateVector
 
 
-
 int main(int argc, char* args[]) 
 {
-
-    int count;
-    
-    printf("test driver response \n");
-
-
-
-
-    printf("device set properly \n");
-
-
-
-    printf("device reset \n");
+    printf("empty inspector \n");
 
     return 0;
 }
