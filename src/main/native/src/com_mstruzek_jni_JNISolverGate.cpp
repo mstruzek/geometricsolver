@@ -5,59 +5,11 @@
 #include <vector>
 #include <algorithm>
 
+#include "model.h"
+
+/// GPU common variables
 static int deviceId;
 static cudaError_t error_t;
-
-struct Point
-{
-  Point(int id , double px, double py)
-  : id(id), px(px), py(py) {}
-
-  int id;
-  double px;
-  double py;
-};
-
-struct Geometric
-{
-  Geometric(int id, int geometricTypeId, int p1, int p2, int p3, int a, int b, int c, int d) 
-  : id(id), geometricTypeId(geometricTypeId), p1(p1), p2(p2), p3(p3), a(a), b(b), c(c), d(d) {}
-
-  int id;
-  int geometricTypeId;
-  int p1;
-  int p2;
-  int p3;
-  int a;
-  int b;
-  int c;
-  int d;
-};
-
-struct Constraint
-{
-  Constraint(int id, int constrajintTypeId, int k, int l, int m, int n, int paramId, double vecX, double vecY)
-  : id(id), constrajintTypeId(constrajintTypeId), k(k), l(l), m(m), n(n), paramId(paramId), vecX(vecX), vecY(vecY) {}
-
-  int id;
-  int constrajintTypeId;
-  int k;
-  int l;
-  int m;
-  int n;
-  int paramId;
-  double vecX;
-  double vecY;
-};
-
-struct Parameter
-{
-  Parameter(int id, double value) : id(id), value(value)
-   {}
-  
-  int id;
-  double value;
-};
 
 /// points register
 static std::vector<Point> points; /// poLocations id-> point_offset
@@ -77,49 +29,13 @@ static int *poLocations;
 /// Parameter locations [id] -> parameter offset
 static int *paramLocations;
 
-/// corespond to java implementations
-struct SolverStat
-{
-  
-  SolverStat() = default;
-
-  SolverStat(long startTime, long stopTime, long timeDelta, int size, int coefficientArity, int dimension, long accEvaluationTime, long accSolverTime, bool convergence, double error, double constraintDelta, int iterations)
-      : startTime(startTime),
-        stopTime(stopTime),
-        timeDelta(timeDelta),
-        size(size),
-        coefficientArity(coefficientArity),
-        dimension(dimension),
-        accEvaluationTime(accEvaluationTime),
-        accSolverTime(accSolverTime),
-        convergence(convergence),
-        error(error),
-        constraintDelta(constraintDelta),
-        iterations(iterations)
-  {
-  }
-
-  long startTime;
-  long stopTime;
-  long timeDelta;
-  int size;
-  int coefficientArity;
-  int dimension;
-  long accEvaluationTime;
-  long accSolverTime;
-  bool convergence;
-  double error;
-  double constraintDelta;
-  int iterations;
-};
-
 static SolverStat stat;
 
 /**
  * @brief  setup all matricies for computation and prepare kernel stream  intertwined with cusolver
  *
  */
-void solveSystemOnGPU();
+void solveSystemOnGPU(int *error);
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
@@ -155,8 +71,13 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initDriver(JNIEnv *en
  */
 JNIEXPORT jstring JNICALL Java_com_mstruzek_jni_JNISolverGate_getLastError(JNIEnv *env, jclass clazz)
 {
+  /// cuda error
+
   const char *msg = cudaGetErrorString(error_t);
+
   return env->NewStringUTF(msg);
+
+  /// cusolver error
 }
 
 /*
@@ -182,10 +103,14 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_closeDriver(JNIEnv *e
  */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_resetComputationData(JNIEnv *env, jclass clazz)
 {
-  std::remove_if(points.begin(), points.end(), [](auto p) { return true; });
-  std::remove_if(geometrics.begin(), geometrics.end(), [](auto g) { return true; });
-  std::remove_if(constraints.begin(), constraints.end(), [](auto c) { return true; });
-  std::remove_if(parameters.begin(), parameters.end(), [](auto p) { return true; });
+  std::remove_if(points.begin(), points.end(), [](auto _)
+                 { return true; });
+  std::remove_if(geometrics.begin(), geometrics.end(), [](auto _)
+                 { return true; });
+  std::remove_if(constraints.begin(), constraints.end(), [](auto _)
+                 { return true; });
+  std::remove_if(parameters.begin(), parameters.end(), [](auto _)
+                 { return true; });
 
   error_t = cudaFreeHost(poLocations);
   if (error_t != cudaSuccess)
@@ -242,7 +167,63 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initComputationContex
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem(JNIEnv *env, jclass clazz)
 {
 
+  int error;
+
+  error = 0;
+
+  solveSystemOnGPU(&error);
+
+  if (error != 0)
+  {
+    return JNI_ERROR;
+  }
+
   return JNI_SUCCESS;
+}
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    getSolverStatistics
+ * Signature: ()Lcom/mstruzek/msketch/solver/SolverStat;
+ */
+JNIEXPORT jobject JNICALL Java_com_mstruzek_jni_JNISolverGate_getSolverStatistics(JNIEnv *env, jclass)
+{
+  jclass objClazz = env->FindClass("com/mstruzek/msketch/solver/SolverStat");
+  if (objClazz == NULL)
+  {
+    printf("SolverStat is not visible in class loader\n");
+    env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "SolverStat is not visible in class loader");
+    return 0;
+  }
+
+  jmethodID defaultCtor = env->GetMethodID(objClazz, "<init>", "()V");
+  if (defaultCtor == NULL)
+  {
+    printf("constructor not visible\n");
+    env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "SolverStat constructor not visible");
+    return 0;
+  }
+
+  jobject objStat = env->NewObject(objClazz, defaultCtor);
+  if (objStat == NULL)
+  {
+    printf("object statt <init> error\n");
+    env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "construction instance error");
+    return 0;
+  }
+  env->SetLongField(objStat, env->GetFieldID(objClazz, "startTime", "J"), stat.startTime);
+  env->SetLongField(objStat, env->GetFieldID(objClazz, "stopTime", "J"), stat.stopTime);
+  env->SetLongField(objStat, env->GetFieldID(objClazz, "timeDelta", "J"), stat.timeDelta);
+  env->SetIntField(objStat, env->GetFieldID(objClazz, "size", "I"), stat.size);
+  env->SetIntField(objStat, env->GetFieldID(objClazz, "coefficientArity", "I"), stat.coefficientArity);
+  env->SetIntField(objStat, env->GetFieldID(objClazz, "dimension", "I"), stat.dimension);
+  env->SetLongField(objStat, env->GetFieldID(objClazz, "accEvaluationTime", "J"), stat.accEvaluationTime);
+  env->SetLongField(objStat, env->GetFieldID(objClazz, "accSolverTime", "J"), stat.accSolverTime);
+  env->SetBooleanField(objStat, env->GetFieldID(objClazz, "convergence", "Z"), stat.convergence);
+  env->SetDoubleField(objStat, env->GetFieldID(objClazz, "error", "D"), stat.error);
+  env->SetDoubleField(objStat, env->GetFieldID(objClazz, "constraintDelta", "D"), stat.constraintDelta);
+  env->SetIntField(objStat, env->GetFieldID(objClazz, "iterations", "I"), stat.iterations);
+  return objStat;
 }
 
 /*
@@ -261,7 +242,8 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerPointType(JNI
  * Method:    registerGeometricType
  * Signature: (IIIIIIII)I
  */
-JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerGeometricType(JNIEnv *env, jclass clazz, jint id, jint geometricTypeId, jint p1, jint p2, jint p3, jint a, jint b, jint c, jint d)
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerGeometricType(JNIEnv *env, jclass clazz, jint id, jint geometricTypeId,
+                                                                                 jint p1, jint p2, jint p3, jint a, jint b, jint c, jint d)
 {
   geometrics.emplace_back(id, geometricTypeId, p1, p2, p3, a, b, c, d);
   return JNI_SUCCESS;
@@ -283,7 +265,8 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerParameterType
  * Method:    registerConstraintType
  * Signature: (IIIIIIDD)I
  */
-JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerConstraintType(JNIEnv *env, jclass clazz, jint id, jint jconstraintTypeId, jint k, jint l, jint m, jint n, jint paramId, jdouble vecX, jdouble vecY)
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerConstraintType(JNIEnv *env, jclass clazz, jint id, jint jconstraintTypeId,
+                                                                                  jint k, jint l, jint m, jint n, jint paramId, jdouble vecX, jdouble vecY)
 {
   constraints.emplace_back(id, jconstraintTypeId, k, l, m, n, paramId, vecX, vecY);
   return JNI_SUCCESS;
@@ -328,6 +311,12 @@ JNIEXPORT jdoubleArray JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointCoord
  *
  *
  */
-void solveSystemOnGPU()
+void solveSystemOnGPU(int *error)
 {
+
+
+
+  /// (cublasError -> error)
+
+  /// tranzlacja bledow z cudy
 }

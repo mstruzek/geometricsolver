@@ -1,7 +1,7 @@
 package com.mstruzek.jni;
 
-import com.mstruzek.msketch.ConstraintType;
-import com.mstruzek.msketch.GeometricType;
+
+import com.mstruzek.msketch.solver.SolverStat;
 
 public class JNISolverGate {
 
@@ -10,6 +10,10 @@ public class JNISolverGate {
 
     static final int JNI_ERROR = 1;
 
+
+    static {
+        System.load("/home/mstruzek/cworkspace/gsketcherjni/build/target/cmake-build/libgsketcherjni.so");
+    }
 
     /**
      * Initialize Nvidia Cuda driver, return 0 success value when all requirements met.
@@ -65,7 +69,13 @@ public class JNISolverGate {
      */ 
     public static native int solveSystem();
 
-    
+
+    /**
+     * Get last round solver computation statistics.
+     *
+     * @return solver statistics
+     */
+    public static native SolverStat getSolverStatistics();
 
 
     /**

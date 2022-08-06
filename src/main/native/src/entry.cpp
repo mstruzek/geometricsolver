@@ -1,6 +1,5 @@
 #include <iostream>
 #include <stdio.h>
-#include <cuda_runtime_api.h>
 
 #include "com_mstruzek_jni_JNISolverGate.h"
 #define jni_initDriver                 Java_com_mstruzek_jni_JNISolverGate_initDriver

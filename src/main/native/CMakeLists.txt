@@ -30,9 +30,7 @@ set(PROJECT_TEST_EXECUTABLE gsketcherjnie)
 
 
 
-##########################################
-
-#       \\\library  runtime image
+###########################################     \\\library  runtime image
 
 
 set(JAVA_HOME /usr/lib/jvm/java-17-openjdk-17.0.3.0.5-0.1.ea.el8.x86_64)
@@ -65,10 +63,7 @@ target_include_directories(${PROJECT_SHARED_LIBRARY} PRIVATE PUBLIC
         CUDA::cusparse)
 
 
-##########################################
-
-
-#       \\\entry test executable file        
+############################################     \\\entry test executable file        
 
 add_executable(${PROJECT_TEST_EXECUTABLE} src/entry.cpp )
 
@@ -78,13 +73,6 @@ target_include_directories(${PROJECT_TEST_EXECUTABLE} PUBLIC
 target_include_directories(${PROJECT_TEST_EXECUTABLE} PUBLIC 
         ${JAVA_INCLUDE_PATH} 
         ${JAVA_INCLUDE_PATH2})
-
-
-
-
-#       \\\entry CUDA runtime , cusolver , cusparse        
-
-
 
 target_link_libraries(${PROJECT_TEST_EXECUTABLE} PUBLIC 
         CUDA::cudart 

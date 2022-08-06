@@ -13,6 +13,7 @@ extern "C" {
 #define com_mstruzek_jni_JNISolverGate_JNI_ERROR 1L
 
 
+
 #define JNI_SUCCESS com_mstruzek_jni_JNISolverGate_JNI_SUCCESS
 #define JNI_ERROR   com_mstruzek_jni_JNISolverGate_JNI_ERROR
 
@@ -42,7 +43,6 @@ extern "C" {
 #define CONSTRAINT_TYPE_ID_Angle2Lines         14
 #define CONSTRAINT_TYPE_ID_SetHorizontal       15
 #define CONSTRAINT_TYPE_ID_SetVertical         16
-
 
 
 /*
@@ -99,6 +99,14 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initComputationContex
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    getSolverStatistics
+ * Signature: ()Lcom/mstruzek/msketch/solver/SolverStat;
+ */
+JNIEXPORT jobject JNICALL Java_com_mstruzek_jni_JNISolverGate_getSolverStatistics
   (JNIEnv *, jclass);
 
 /*
