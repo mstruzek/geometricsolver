@@ -30,15 +30,18 @@ dependencies {
 
 
 def JAVA_JDK = "/usr/lib/jvm/java-17-openjdk-17.0.3.0.5-0.1.ea.el8.x86_64"
-def JAVA_JDK_JAVAH = "${JAVA_JDK}/bin/javah"
+def JAVA_JDK_JAVAH = "${JAVA_JDK}/bin/javac"
+
 
 task generateCHeader(type:Exec) {    
-    commandLine JAVA_JDK_JAVAH, '-jni' , '-v','-classpath','src/main/java/','-o','src/main/native/src/com_mstruzek_jni_JNISolverGate.h_','com.mstruzek.jni.JNISolverGate'
+    commandLine "${JAVA_JDK_JAVAH}",'-classpath','src/main/java/','-h','src/main/native/src/','src/main/java/com/mstruzek/jni/JNISolverGate.java'
 }
+
 
 /// Native Build with CMake
 def nativeSourcePath = projectDir.absolutePath + "/src/main/native/"
 def nativeBuildPath = buildDir.absolutePath + "/target/cmake-build"
+
 
 def compileNative = tasks.register("compile-native") {
     doLast{
@@ -61,7 +64,6 @@ def compileNative = tasks.register("compile-native") {
         ant.echo(message: "shared lib build")
     }
 }
-
 
 
 tasks.compileJava.dependsOn(compileNative)

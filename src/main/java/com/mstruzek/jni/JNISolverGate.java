@@ -1,11 +1,14 @@
 package com.mstruzek.jni;
 
+import com.mstruzek.msketch.ConstraintType;
+import com.mstruzek.msketch.GeometricType;
+
 public class JNISolverGate {
 
     
-    static final int ERROR_SUCCESS = 0;
+    static final int JNI_SUCCESS = 0;
 
-    static final int ERROR_FAILURE = 1;
+    static final int JNI_ERROR = 1;
 
 
     /**
@@ -63,6 +66,8 @@ public class JNISolverGate {
     public static native int solveSystem();
 
     
+
+
     /**
      * Register point in following computation context.
      * 
@@ -81,7 +86,7 @@ public class JNISolverGate {
      * @param a,b,c,d guide points
      * @return error code
      */
-    public static native int registerGeometricType(int id, int p1, int p2, int p3, int a, int b, int c, int d);
+    public static native int registerGeometricType(int id, int geometricTypeId, int p1, int p2, int p3, int a, int b, int c, int d);
 
 
     /**
@@ -103,7 +108,7 @@ public class JNISolverGate {
      * @param vecX,vecY
      * @return error code
      */
-    public static native int registerConstraintType(int id, int k, int l, int m, int n, int paramId, double vecX, double vecY);
+    public static native int registerConstraintType(int id, int constraintTypeId, int k, int l, int m, int n, int paramId, double vecX, double vecY);
 
 
     /**
