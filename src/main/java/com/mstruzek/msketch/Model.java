@@ -12,8 +12,7 @@ import java.util.Random;
 import static com.mstruzek.controller.EventType.*;
 
 /**
- * Klasa w ktorej przechowujemy caly model
- * matematyczny naszego szkicownika
+ * Model w ktorej przechowujemy caly widok matematyczny naszego szkicownika
  *
  * @author root
  */
@@ -32,14 +31,12 @@ public final class Model {
         }
 
         final StateReporter reporter = StateReporter.getInstance();
-
         SolverStat stat = new SolverStat();
 
         geometricSolver.setup();
-
         geometricSolver.solveSystem(stat);
 
-        stat.report(reporter);
+        reporter.reportSolverStatistics(stat);
 
         Events.send(EventType.SOLVER_STAT_CHANGE, new Object[]{stat});
     }
@@ -76,7 +73,7 @@ public final class Model {
         add(new FreePoint(v1));
     }
 
-    private static void add(GeometricObject geometricObject) {
+    public static void add(GeometricObject geometricObject) {
         /// self registrations
         if (geometricObject.primitiveId >= 0) {
             for (Point point : geometricObject.getAllPoints()) {
@@ -85,7 +82,7 @@ public final class Model {
             for (Constraint constraint : geometricObject.associatedConstraints()) {
                 ModelRegistry.registerConstraint(constraint.getConstraintId(), constraint);
             }
-            ModelRegistry.registerPrimitives(geometricObject.getPrimitiveId(), geometricObject);
+            ModelRegistry.registerGeometric(geometricObject.getPrimitiveId(), geometricObject);
 
             Events.send(PRIMITIVE_TABLE_INSERT, null);
         }

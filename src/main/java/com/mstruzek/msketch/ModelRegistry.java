@@ -77,8 +77,9 @@ public class ModelRegistry {
     }
 
     @JniModel
-    public static void registerPrimitives(int primitiveId, GeometricObject geometricObject) {
+    public static GeometricObject registerGeometric(int primitiveId, GeometricObject geometricObject) {
         dbPrimitives.put(primitiveId, geometricObject);
+        return geometricObject;
     }
 
     @JniModel

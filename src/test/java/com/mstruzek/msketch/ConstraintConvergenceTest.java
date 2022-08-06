@@ -29,19 +29,34 @@ public class ConstraintConvergenceTest {
 
     @After
     public void afterTest() {
-        solverStat.report(reporter);
+        reporter.reportSolverStatistics(solverStat);
 
         ModelRegistry.removeObjectsFromModel();
+    }
+
+    private static <T extends GeometricObject> T registerGeometric(T geometricObject) {
+        Model.add(geometricObject);
+        return geometricObject;
+    }
+
+    private static <C extends Constraint> C registerConstraint(C constraint) {
+        Model.add(constraint);
+        return constraint;
+    }
+
+    private static Parameter registerParameter(Parameter parameter) {
+        Model.add(parameter);
+        return parameter;
     }
 
     @Test
     public void convergenceConstraintFixPoint() {
         Point p10 = new Point(1, 0.0, 40.0);
-
         FreePoint f10 = new FreePoint(p10);
         f10.setAssociateConstraints(null);
+        registerGeometric(f10);
 
-        Constraint constraint = new ConstraintFixPoint(ModelRegistry.nextConstraintId(), p10);
+        Constraint constraint = registerConstraint(new ConstraintFixPoint(ModelRegistry.nextConstraintId(), p10));
         p10.setLocation(100.0, 100.0);
 
         geometricSolver.solveSystem(solverStat);
@@ -58,8 +73,9 @@ public class ConstraintConvergenceTest {
         Point p10 = new Point(1, 40.0, 40.0);
         FreePoint f10 = new FreePoint(p10);
         f10.setAssociateConstraints(null);
-        Parameter parameter = new Parameter(nextParameterId(), 120.0); // fixed X coordinate
-        Constraint constraint = new ConstraintParametrizedXFix(ModelRegistry.nextConstraintId(), p10, parameter);
+        registerGeometric(f10);
+        Parameter parameter = registerParameter(new Parameter(nextParameterId(), 120.0)); // fixed X coordinate
+        Constraint constraint = registerConstraint(new ConstraintParametrizedXFix(ModelRegistry.nextConstraintId(), p10, parameter));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -76,8 +92,9 @@ public class ConstraintConvergenceTest {
         Point p10 = new Point(1, 40.0, 40.0);
         FreePoint f10 = new FreePoint(p10);
         f10.setAssociateConstraints(null);
-        Parameter parameter = new Parameter(nextParameterId(), 120.0); // fixed Y coordinate
-        Constraint constraint = new ConstraintParametrizedYFix(ModelRegistry.nextConstraintId(), p10, parameter);
+        registerGeometric(f10);
+        Parameter parameter = registerParameter(new Parameter(nextParameterId(), 120.0)); // fixed Y coordinate
+        Constraint constraint = registerConstraint(new ConstraintParametrizedYFix(ModelRegistry.nextConstraintId(), p10, parameter));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -98,8 +115,9 @@ public class ConstraintConvergenceTest {
         FreePoint f20 = new FreePoint(p20);
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
-
-        Constraint constraint = new ConstraintConnect2Points(ModelRegistry.nextConstraintId(), p10, p20);
+        registerGeometric(f10);
+        registerGeometric(f20);
+        Constraint constraint = registerConstraint(new ConstraintConnect2Points(ModelRegistry.nextConstraintId(), p10, p20));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -121,8 +139,10 @@ public class ConstraintConvergenceTest {
         Line f20 = new Line(p30, p40);
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
+        registerGeometric(f10);
+        registerGeometric(f20);
 
-        Constraint constraint = new ConstraintLinesPerpendicular(ModelRegistry.nextConstraintId(), p10, p20, p30, p40);
+        Constraint constraint = registerConstraint(new ConstraintLinesPerpendicular(ModelRegistry.nextConstraintId(), p10, p20, p30, p40));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -140,8 +160,9 @@ public class ConstraintConvergenceTest {
 
         Line f10 = new Line(p10, p20);
         f10.setAssociateConstraints(null);
+        registerGeometric(f10);
 
-        Constraint constraint = new ConstraintHorizontal(ModelRegistry.nextConstraintId(), p10, p20);
+        Constraint constraint = registerConstraint(new ConstraintHorizontal(ModelRegistry.nextConstraintId(), p10, p20));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -159,8 +180,9 @@ public class ConstraintConvergenceTest {
 
         Line f10 = new Line(p10, p20);
         f10.setAssociateConstraints(null);
+        registerGeometric(f10);
 
-        Constraint constraint = new ConstraintVertical(ModelRegistry.nextConstraintId(), p10, p20);
+        Constraint constraint = registerConstraint(new ConstraintVertical(ModelRegistry.nextConstraintId(), p10, p20));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -182,8 +204,10 @@ public class ConstraintConvergenceTest {
         Line f20 = new Line(p30, p40);
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
+        registerGeometric(f10);
+        registerGeometric(f20);
 
-        Constraint constraint = new ConstraintLinesParallelism(ModelRegistry.nextConstraintId(), p10, p20, p30, p40); /// FIXME HESSIAN "unstable"
+        Constraint constraint = registerConstraint(new ConstraintLinesParallelism(ModelRegistry.nextConstraintId(), p10, p20, p30, p40)); /// FIXME HESSIAN "unstable"
 
         geometricSolver.solveSystem(solverStat);
 
@@ -205,8 +229,10 @@ public class ConstraintConvergenceTest {
         Line f20 = new Line(p30, p40);
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
+        registerGeometric(f10);
+        registerGeometric(f20);
 
-        Constraint constraint = new ConstraintEqualLength(ModelRegistry.nextConstraintId(), p10, p20, p30, p40);
+        Constraint constraint = registerConstraint(new ConstraintEqualLength(ModelRegistry.nextConstraintId(), p10, p20, p30, p40));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -229,8 +255,11 @@ public class ConstraintConvergenceTest {
         Line f20 = new Line(p30, p40);
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
-        Parameter param = new Parameter(nextParameterId(), 2.5);
-        Constraint constraint = new ConstraintParametrizedLength(ModelRegistry.nextConstraintId(), p10, p20, p30, p40, param);
+        registerGeometric(f10);
+        registerGeometric(f20);
+
+        Parameter param = registerParameter(new Parameter(nextParameterId(), 2.5));
+        Constraint constraint = registerConstraint(new ConstraintParametrizedLength(ModelRegistry.nextConstraintId(), p10, p20, p30, p40, param));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -248,8 +277,10 @@ public class ConstraintConvergenceTest {
 
         Line f10 = new Line(p10, p20);
         f10.setAssociateConstraints(null);
-        Parameter param = new Parameter(nextParameterId(), 200.0);
-        Constraint constraint = new ConstraintDistance2Points(ModelRegistry.nextConstraintId(), p10, p20, param);
+        registerGeometric(f10);
+
+        Parameter param = registerParameter(new Parameter(nextParameterId(), 200.0));
+        Constraint constraint = registerConstraint(new ConstraintDistance2Points(ModelRegistry.nextConstraintId(), p10, p20, param));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -271,9 +302,11 @@ public class ConstraintConvergenceTest {
         Line f20 = new Line(p30, p40);
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
+        registerGeometric(f10);
+        registerGeometric(f20);
 
-        Parameter param = new Parameter(nextParameterId(), 30.0);// 30deg
-        Constraint constraint = new ConstraintAngle2Lines(ModelRegistry.nextConstraintId(), p10, p20, p30, p40, param);
+        Parameter param = registerParameter(new Parameter(nextParameterId(), 30.0));// 30deg
+        Constraint constraint = registerConstraint(new ConstraintAngle2Lines(ModelRegistry.nextConstraintId(), p10, p20, p30, p40, param));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -295,10 +328,12 @@ public class ConstraintConvergenceTest {
         Line f20 = new Line(p30, p40);
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
+        registerGeometric(f10);
+        registerGeometric(f20);
 
-        Parameter param = new Parameter(nextParameterId(), 45.0);// 45deg
-        Constraint fixedArm = new ConstraintVertical(ModelRegistry.nextConstraintId(), p10, p20);
-        Constraint constraint = new ConstraintAngle2Lines(ModelRegistry.nextConstraintId(), p10, p20, p30, p40, param);
+        Parameter param = registerParameter(new Parameter(nextParameterId(), 45.0));// 45deg
+        Constraint fixedArm = registerConstraint(new ConstraintVertical(ModelRegistry.nextConstraintId(), p10, p20));
+        Constraint constraint = registerConstraint(new ConstraintAngle2Lines(ModelRegistry.nextConstraintId(), p10, p20, p30, p40, param));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -320,8 +355,10 @@ public class ConstraintConvergenceTest {
         Circle f20 = new Circle(p30, p40);
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
+        registerGeometric(f10);
+        registerGeometric(f20);
 
-        Constraint constraint = new ConstraintTangency(ModelRegistry.nextConstraintId(), p10, p20, p30, p40);        /// Macierz Hessian'a ?!!
+        Constraint constraint = registerConstraint(new ConstraintTangency(ModelRegistry.nextConstraintId(), p10, p20, p30, p40));        /// Macierz Hessian'a ?!!
 
         geometricSolver.solveSystem(solverStat);
 
@@ -343,8 +380,10 @@ public class ConstraintConvergenceTest {
         Circle f20 = new Circle(p30, p40);
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
+        registerGeometric(f10);
+        registerGeometric(f20);
 
-        Constraint constraint = new ConstraintCircleTangency(ModelRegistry.nextConstraintId(), p10, p20, p30, p40);
+        Constraint constraint = registerConstraint(new ConstraintCircleTangency(ModelRegistry.nextConstraintId(), p10, p20, p30, p40));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -364,14 +403,16 @@ public class ConstraintConvergenceTest {
         Point p20 = new Point(2, 0.0, 80.0);
         Point p30 = new Point(5, 60.0, 60.0);
 
-        Parameter param = new Parameter(nextParameterId(), 30.0);// 30 units of distance
+        Parameter param = registerParameter(new Parameter(nextParameterId(), 30.0));// 30 units of distance
 
         Line f10 = new Line(p10, p20);
         FreePoint f30 = new FreePoint(p30);
         f10.setAssociateConstraints(null);
         f30.setAssociateConstraints(null);
+        registerGeometric(f10);
+        registerGeometric(f30);
 
-        Constraint constraint = new ConstraintDistancePointLine(ModelRegistry.nextConstraintId(), p10, p20, p30, param);
+        Constraint constraint = registerConstraint(new ConstraintDistancePointLine(ModelRegistry.nextConstraintId(), p10, p20, p30, param));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -396,8 +437,10 @@ public class ConstraintConvergenceTest {
         Circle f20 = new Circle(p30, p40);
         f10.setAssociateConstraints(null);
         f20.setAssociateConstraints(null);
+        registerGeometric(f10);
+        registerGeometric(f20);
 
-        Constraint constraint = new ConstraintTangency(ModelRegistry.nextConstraintId(), p10, p20, p30, p40);
+        Constraint constraint = registerConstraint(new ConstraintTangency(ModelRegistry.nextConstraintId(), p10, p20, p30, p40));
 
         geometricSolver.solveSystem(solverStat);
 
@@ -411,5 +454,4 @@ public class ConstraintConvergenceTest {
             out.println(MatrixDouble.writeToString(hessian));
         }
     }
-
 }
