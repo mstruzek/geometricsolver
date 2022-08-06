@@ -115,7 +115,8 @@ public class JNISolverGate {
      * @param id
      * @param k,l,m,n
      * @param paramId
-     * @param vecX,vecY
+     * @param vecNX,vecNY ?? --- refactoryzacja !
+     * @param vecMX,vecMY ?? --- refactoryzacja !
      * @return error code
      */
     public static native int registerConstraintType(int id, int constraintTypeId, int k, int l, int m, int n, int paramId, double vecX, double vecY);

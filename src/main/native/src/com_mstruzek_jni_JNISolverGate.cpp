@@ -3,34 +3,39 @@
 #include <algorithm>
 #include <chrono>
 #include <cuda_runtime_api.h>
+#include <functional>
+#include <memory>
 #include <stdio.h>
 #include <vector>
+#include <type_traits>
 
-#include "model.h"
+#include "model.cuh"
+
+#include "stopWatch.h"
 
 /// GPU common variables
+
 static int deviceId;
-static cudaError_t error_t;
+static cudaError_t error;
 
 /// points register
-static std::vector<Point> points; /// poLocations id-> point_offset
+static std::vector<stage::Point> points; /// poLocations id-> point_offset
 
 /// geometricc register
-static std::vector<Geometric> geometrics; /// ==> Macierz A, accumulative offset for each primitive
+static std::vector<stage::Geometric> geometrics; /// ==> Macierz A, accumulative offset for each primitive
 
 /// constraints register
-static std::vector<Constraint> constraints; /// ===> Wiezy , accumulative offset for each constraint
+static std::vector<stage::Constraint> constraints; /// ===> Wiezy , accumulative offset for each constraint
 
 /// parameters register
-static std::vector<Parameter> parameters; /// paramLocation id-> param_offset
+static std::vector<stage::Parameter> parameters; /// paramLocation id-> param_offset
 
-/// Point Locations in computation matrix [id] -> point offset
-static int *poLocations;
+static stage::SolverStat stat;
 
-/// Parameter locations [id] -> parameter offset
-static int *paramLocations;
-
-static SolverStat stat;
+/// Point  Offset in computation matrix [id] -> point offset   ~~ Gather Vectors
+static std::unique_ptr<int[]> pointOffset;
+static std::unique_ptr<int[]> constraintOffset;
+static std::unique_ptr<int[]> geometricOffset;
 
 /**
  * @brief  setup all matricies for computation and prepare kernel stream  intertwined with cusolver
@@ -46,17 +51,17 @@ void solveSystemOnGPU(int *error);
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initDriver(JNIEnv *env, jclass clazz) {
         int count;
 
-        error_t = cudaGetDeviceCount(&count);
-        if (error_t != cudaSuccess) {
-                printf("driver  error %d  = %s \n", static_cast<int>(error_t), cudaGetErrorString(error_t));
+        error = cudaGetDeviceCount(&count);
+        if (error != cudaSuccess) {
+                printf("driver  error %d  = %s \n", static_cast<int>(error), cudaGetErrorString(error));
                 return JNI_ERROR;
         }
 
         deviceId = 0;
 
-        error_t = cudaSetDevice(deviceId);
-        if (error_t != cudaSuccess) {
-                printf("driver  error %d  = %s \n", static_cast<int>(error_t), cudaGetErrorString(error_t));
+        error = cudaSetDevice(deviceId);
+        if (error != cudaSuccess) {
+                printf("driver  error %d  = %s \n", static_cast<int>(error), cudaGetErrorString(error));
                 return JNI_ERROR;
         }
         return JNI_SUCCESS;
@@ -70,7 +75,7 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initDriver(JNIEnv *en
 JNIEXPORT jstring JNICALL Java_com_mstruzek_jni_JNISolverGate_getLastError(JNIEnv *env, jclass clazz) {
         /// cuda error
 
-        const char *msg = cudaGetErrorString(error_t);
+        const char *msg = cudaGetErrorString(error);
 
         return env->NewStringUTF(msg);
 
@@ -83,9 +88,9 @@ JNIEXPORT jstring JNICALL Java_com_mstruzek_jni_JNISolverGate_getLastError(JNIEn
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_closeDriver(JNIEnv *env, jclass clazz) {
-        error_t = cudaDeviceReset();
-        if (error_t != cudaSuccess) {
-                printf("driver  error %d  = %s \n", static_cast<int>(error_t), cudaGetErrorString(error_t));
+        error = cudaDeviceReset();
+        if (error != cudaSuccess) {
+                printf("driver  error %d  = %s \n", static_cast<int>(error), cudaGetErrorString(error));
                 return JNI_ERROR;
         }
         return JNI_SUCCESS;
@@ -102,20 +107,9 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_resetComputationData(
         std::remove_if(constraints.begin(), constraints.end(), [](auto _) { return true; });
         std::remove_if(parameters.begin(), parameters.end(), [](auto _) { return true; });
 
-        error_t = cudaFreeHost(poLocations);
-        if (error_t != cudaSuccess) {
-                printf("free mem error %d  = %s \n", static_cast<int>(error_t), cudaGetErrorString(error_t));
-                return JNI_ERROR;
-        }
-
-        error_t = cudaFreeHost(paramLocations);
-        if (error_t != cudaSuccess) {
-                printf("free mem error %d  = %s \n", static_cast<int>(error_t), cudaGetErrorString(error_t));
-                return JNI_ERROR;
-        }
-
-        poLocations = NULL;
-        paramLocations = NULL;
+        pointOffset = NULL;
+        constraintOffset = NULL;
+        geometricOffset = NULL;
 
         return JNI_SUCCESS;
 }
@@ -165,45 +159,59 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem(JNIEnv *e
         return JNI_SUCCESS;
 }
 
+template <typename FieldType> void JniSetFieldValue(JNIEnv *env, jclass objClazz, jobject object, const char *fieldName, FieldType &sourceField) {
+        if constexpr (std::is_same<FieldType, double>) {
+                env->SetDoubleField(object, env->GetFieldID(objClazz, fieldName, "D"), sourceField);
+        } else if constexpr (std::is_same<FieldType, long>) {
+                env->SetLongField(object, env->GetFieldID(objClazz, fieldName, "J"), sourceField);
+        } else if constexpr (std::is_same<FieldType, int>) {
+                env->SetIntField(object, env->GetFieldID(objClazz, fieldName, "I"), sourceField);
+        } else if constexpr (std::is_same<FieldType, bool>) {
+                env->SetBooleanField(object, env->GetFieldID(objClazz, fieldName, "Z"), sourceField);
+        }
+}
+
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
  * Method:    getSolverStatistics
  * Signature: ()Lcom/mstruzek/msketch/solver/SolverStat;
  */
 JNIEXPORT jobject JNICALL Java_com_mstruzek_jni_JNISolverGate_getSolverStatistics(JNIEnv *env, jclass) {
-        jclass objClazz = env->FindClass("com/mstruzek/msketch/solver/SolverStat");
-        if (objClazz == NULL) {
+        jclass objectClazz = env->FindClass("com/mstruzek/msketch/solver/SolverStat");
+        if (objectClazz == NULL) {
                 printf("SolverStat is not visible in class loader\n");
                 env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "SolverStat is not visible in class loader");
                 return 0;
         }
 
-        jmethodID defaultCtor = env->GetMethodID(objClazz, "<init>", "()V");
+        jmethodID defaultCtor = env->GetMethodID(objectClazz, "<init>", "()V");
         if (defaultCtor == NULL) {
                 printf("constructor not visible\n");
                 env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "SolverStat constructor not visible");
                 return 0;
         }
 
-        jobject objStat = env->NewObject(objClazz, defaultCtor);
-        if (objStat == NULL) {
+        jobject solverStatObject = env->NewObject(objectClazz, defaultCtor);
+        if (solverStatObject == NULL) {
                 printf("object statt <init> error\n");
                 env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "construction instance error");
                 return 0;
         }
-        env->SetLongField(objStat, env->GetFieldID(objClazz, "startTime", "J"), stat.startTime);
-        env->SetLongField(objStat, env->GetFieldID(objClazz, "stopTime", "J"), stat.stopTime);
-        env->SetLongField(objStat, env->GetFieldID(objClazz, "timeDelta", "J"), stat.timeDelta);
-        env->SetIntField(objStat, env->GetFieldID(objClazz, "size", "I"), stat.size);
-        env->SetIntField(objStat, env->GetFieldID(objClazz, "coefficientArity", "I"), stat.coefficientArity);
-        env->SetIntField(objStat, env->GetFieldID(objClazz, "dimension", "I"), stat.dimension);
-        env->SetLongField(objStat, env->GetFieldID(objClazz, "accEvaluationTime", "J"), stat.accEvaluationTime);
-        env->SetLongField(objStat, env->GetFieldID(objClazz, "accSolverTime", "J"), stat.accSolverTime);
-        env->SetBooleanField(objStat, env->GetFieldID(objClazz, "convergence", "Z"), stat.convergence);
-        env->SetDoubleField(objStat, env->GetFieldID(objClazz, "error", "D"), stat.error);
-        env->SetDoubleField(objStat, env->GetFieldID(objClazz, "constraintDelta", "D"), stat.constraintDelta);
-        env->SetIntField(objStat, env->GetFieldID(objClazz, "iterations", "I"), stat.iterations);
-        return objStat;
+
+        JniSetFieldValue(env, objectClazz, solverStatObject, "startTime", stat.startTime);
+        JniSetFieldValue(env, objectClazz, solverStatObject, "stopTime", stat.stopTime);
+        JniSetFieldValue(env, objectClazz, solverStatObject, "timeDelta", stat.timeDelta);
+        JniSetFieldValue(env, objectClazz, solverStatObject, "size", stat.size);
+        JniSetFieldValue(env, objectClazz, solverStatObject, "coefficientArity", stat.coefficientArity);
+        JniSetFieldValue(env, objectClazz, solverStatObject, "dimension", stat.dimension);
+        JniSetFieldValue(env, objectClazz, solverStatObject, "accEvaluationTime", stat.accEvaluationTime);
+        JniSetFieldValue(env, objectClazz, solverStatObject, "accSolverTime", stat.accSolverTime);
+        JniSetFieldValue(env, objectClazz, solverStatObject, "convergence", stat.convergence);
+        JniSetFieldValue(env, objectClazz, solverStatObject, "error", stat.error);
+        JniSetFieldValue(env, objectClazz, solverStatObject, "constraintDelta", stat.constraintDelta);
+        JniSetFieldValue(env, objectClazz, solverStatObject, "iterations", stat.iterations);
+
+        return solverStatObject;
 }
 
 /*
@@ -254,8 +262,8 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerConstraintTyp
  * Signature: (I)D
  */
 JNIEXPORT jdouble JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointPXCoordinate(JNIEnv *env, jclass clazz, jint id) {
-        int offset = poLocations[id];
-        double px = points[offset].px;
+        int offset = pointOffset[id];
+        double px = points[offset].x;
         return (jdouble)px;
 }
 
@@ -265,8 +273,8 @@ JNIEXPORT jdouble JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointPXCoordina
  * Signature: (I)D
  */
 JNIEXPORT jdouble JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointPYCoordinate(JNIEnv *env, jclass clazz, jint id) {
-        int offset = poLocations[id];
-        double py = points[offset].py;
+        int offset = pointOffset[id];
+        double py = points[offset].y;
         return (jdouble)py;
 }
 
@@ -282,36 +290,9 @@ JNIEXPORT jdoubleArray JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointCoord
 
 struct MatrixDouble {};
 
-long TimeNanosecondsNow() { return std::chrono::duration<long, std::nano>(std::chrono::high_resolution_clock::now().time_since_epoch()).count(); }
-
-class StopWatch {
-      public:
-        StopWatch() { reset(); }
-
-        void setStartTick() { startTick = TimeNanosecondsNow(); }
-
-        void setStopTick() {
-                stopTick = TimeNanosecondsNow();
-                accTime += (stopTick - startTick);
-        }
-
-        long delta() { return stopTick - startTick; }
-
-        void reset() {
-
-                startTick = 0L;
-                stopTick = 0L;
-                accTime = 0L;
-        }
-
-        long startTick;
-        long stopTick;
-        long accTime;
-};
-
-static StopWatch solverWatch;
-static StopWatch accEvoWatch;
-static StopWatch accLUWatch;
+static gsketch::StopWatch solverWatch;
+static gsketch::StopWatch accEvoWatch;
+static gsketch::StopWatch accLUWatch;
 
 /// CPU#
 long AllLagrangeCoffSize() { return 0; }
@@ -344,6 +325,16 @@ void ConstraintEvaluateConstraintVector(){
 
 #define CONVERGENCE_LIMIT 10e-5
 
+template <typename Obj> std::unique_ptr<int[]> accumulateOffset(std::vector<Obj> objects, std::function<int(Obj *)> objectIdFunction) {
+        std::unique_ptr<int[]> offsets(new int[objectIdFunction(objects.rbegin())]);
+        auto iterator = objects.begin();
+        int offset = 0;
+        while (iterator != objects.end()) {
+                offsets[offset++] = objectIdFunction(iterator);
+                iterator++;
+        }
+        return offsets;
+}
 /**
  *  /// wydzielic pliku CU
  *
@@ -362,9 +353,17 @@ void solveSystemOnGPU(int *error) {
         accEvoWatch.reset();
         accLUWatch.reset();
 
+        std::function<int(stage::Point *)> pointIdFunction = [](auto point) { return point->id; };
+        std::function<int(stage::Constraint *)> constraintIdFunction = [](auto constraint) { return constraint->id; };
+        std::function<int(stage::Geometric *)> geometricIdFunction = [](auto geometric) { return geometric->id; };
+
+        pointOffset = accumulateOffset(points, pointIdFunction);
+        constraintOffset = accumulateOffset(constraints, constraintIdFunction);
+        geometricOffset = accumulateOffset(geometrics, geometricIdFunction);
+
         /// Uklad rownan liniowych  [ A * x = b ] powstały z linerazycji ukladu dynamicznego
 
-/// 1# CPU -> GPU inicjalizacja macierzy
+        /// 1# CPU -> GPU inicjalizacja macierzy
 
         MatrixDouble A;  /// Macierz głowna ukladu rownan liniowych
         MatrixDouble Fq; /// Macierz sztywnosci ukladu obiektow zawieszonych na sprezynach.
@@ -386,7 +385,7 @@ void solveSystemOnGPU(int *error) {
         double prevNorm;         /// norma z wczesniejszej iteracji,
         double errorFluctuation; /// fluktuacja bledu
 
-        stat.startTime = TimeNanosecondsNow();
+        stat.startTime = gsketch::TimeNanosecondsNow();
 
         printf("@#=================== Solver Initialized ===================#@ \n");
         printf("");
@@ -431,15 +430,13 @@ void solveSystemOnGPU(int *error) {
 
         /// KERNEL_O
 
-        /// ### macierz sztywnosci stala w czasie - jesli bezkosztowe bliskie zero to zawieramy w KELNER_PRE 
-          /// ( dla uproszczenia tylko w pierwszy przejsciu -- Thread_0_Grid_0 - synchronization Guard )
+        /// ### macierz sztywnosci stala w czasie - jesli bezkosztowe bliskie zero to zawieramy w KELNER_PRE
+        /// ( dla uproszczenia tylko w pierwszy przejsciu -- Thread_0_Grid_0 - synchronization Guard )
 
         /// inicjalizacja i bezposrednio do A
-        ///   w nastepnych przejsciach -> kopiujemy 
-
+        ///   w nastepnych przejsciach -> kopiujemy
 
         KernelEvaluateStiffnessMatrix<<<>>>(Fq)
-
 
             /// cMallloc
 
@@ -459,7 +456,7 @@ void solveSystemOnGPU(int *error) {
 
         /// PointUtility.
 
-        CopyIntoStateVector(NULL);      // SV
+        CopyIntoStateVector(NULL);  // SV
         SetupLagrangeMultipliers(); // SV
 
         accEvoWatch.setStopTick();
@@ -471,16 +468,15 @@ void solveSystemOnGPU(int *error) {
         int itr = 0;
         while (itr < MAX_SOLVER_ITERATIONS) {
 
-
                 accEvoWatch.setStartTick();
 
-/// --- KERNEL_PRE 
+                /// --- KERNEL_PRE
 
                 /// zerujemy macierz A
 
                 /// # KERNEL_PRE
 
-                A.reset(0.0); /// --- ze wzgledu na addytywnosc 
+                A.reset(0.0); /// --- ze wzgledu na addytywnosc
 
                 /// Tworzymy Macierz vector b vector `b
 
@@ -497,9 +493,7 @@ void solveSystemOnGPU(int *error) {
 
                 ConstraintGetFullJacobian(Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix   `A = `A set value
 
-                
                 Hs.reset(0.0); /// ---- niepotrzebnie
-
 
                 /// # KERNEL_PRE
 
@@ -522,8 +516,7 @@ void solveSystemOnGPU(int *error) {
                 DoubleMatrix2D matrix2DA; /// cuSolver
                 DoubleMatrix1D matrix1Db; /// cuSolver
 
-
-/// ---- KERNEL_PRE
+                /// ---- KERNEL_PRE
 
                 accEvoWatch.setStopTick();
 
@@ -547,9 +540,7 @@ void solveSystemOnGPU(int *error) {
                 /// --- KERNEL_POST
                 SV.plus(dmx);
 
-
                 PointUtilityCopyFromStateVector(SV); /// ??????? - niepotrzebnie , NA_KONCU
-               
 
                 /// --- KERNEL_POST( __synchronize__ REDUCTION )
 
@@ -594,8 +585,8 @@ void solveSystemOnGPU(int *error) {
         solverWatch.setStopTick();
         long solutionDelta = solverWatch.delta();
 
-        printf("# solution delta : %d \n", solutionDelta);    // print execution time
-        printf("\n");                                         // print execution time
+        printf("# solution delta : %d \n", solutionDelta); // print execution time
+        printf("\n");                                      // print execution time
 
         stat.constraintDelta = ConstraintGetFullNorm();
         stat.convergence = norm1 < CONVERGENCE_LIMIT;
