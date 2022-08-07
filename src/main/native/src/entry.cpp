@@ -1,6 +1,8 @@
 #include <iostream>
 #include <stdio.h>
 
+#include "stopWatch.h"
+
 #include "com_mstruzek_jni_JNISolverGate.h"
 #define jni_initDriver                 Java_com_mstruzek_jni_JNISolverGate_initDriver
 #define jni_getLastError               Java_com_mstruzek_jni_JNISolverGate_getLastError
@@ -21,6 +23,9 @@
 int main(int argc, char* args[]) 
 {
     printf("empty inspector \n");
+
+    long stopTime = graph::TimeNanosecondsNow();
+    long startTime = graph::TimeNanosecondsNow();    
 
     return 0;
 }

@@ -6,8 +6,8 @@
 #include <functional>
 #include <memory>
 #include <stdio.h>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 #include "model.cuh"
 
@@ -19,23 +19,29 @@ static int deviceId;
 static cudaError_t error;
 
 /// points register
-static std::vector<stage::Point> points; /// poLocations id-> point_offset
+static std::vector<graph::Point> points; /// poLocations id-> point_offset
 
 /// geometricc register
-static std::vector<stage::Geometric> geometrics; /// ==> Macierz A, accumulative offset for each primitive
+static std::vector<graph::Geometric> geometrics; /// ==> Macierz A, accumulative offset for each primitive
 
 /// constraints register
-static std::vector<stage::Constraint> constraints; /// ===> Wiezy , accumulative offset for each constraint
+static std::vector<graph::Constraint> constraints; /// ===> Wiezy , accumulative offset for each constraint
 
 /// parameters register
-static std::vector<stage::Parameter> parameters; /// paramLocation id-> param_offset
+static std::vector<graph::Parameter> parameters; /// paramLocation id-> param_offset
 
-static stage::SolverStat stat;
+static graph::SolverStat stat;
 
 /// Point  Offset in computation matrix [id] -> point offset   ~~ Gather Vectors
 static std::unique_ptr<int[]> pointOffset;
 static std::unique_ptr<int[]> constraintOffset;
 static std::unique_ptr<int[]> geometricOffset;
+
+/// Accumulated Constraint Size
+static std::unique_ptr<int[]> accConstraintSize;
+
+/// Accymylated Geometric Object Size
+static std::unique_ptr<int[]> accGeometricSize; /// 2 * point.size()
 
 /**
  * @brief  setup all matricies for computation and prepare kernel stream  intertwined with cusolver
@@ -160,13 +166,13 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem(JNIEnv *e
 }
 
 template <typename FieldType> void JniSetFieldValue(JNIEnv *env, jclass objClazz, jobject object, const char *fieldName, FieldType &sourceField) {
-        if constexpr (std::is_same<FieldType, double>) {
+        if constexpr (std::is_same_v<FieldType, double>) {
                 env->SetDoubleField(object, env->GetFieldID(objClazz, fieldName, "D"), sourceField);
-        } else if constexpr (std::is_same<FieldType, long>) {
+        } else if constexpr (std::is_same_v<FieldType, long>) {
                 env->SetLongField(object, env->GetFieldID(objClazz, fieldName, "J"), sourceField);
-        } else if constexpr (std::is_same<FieldType, int>) {
+        } else if constexpr (std::is_same_v<FieldType, int>) {
                 env->SetIntField(object, env->GetFieldID(objClazz, fieldName, "I"), sourceField);
-        } else if constexpr (std::is_same<FieldType, bool>) {
+        } else if constexpr (std::is_same_v<FieldType, bool>) {
                 env->SetBooleanField(object, env->GetFieldID(objClazz, fieldName, "Z"), sourceField);
         }
 }
@@ -288,11 +294,10 @@ JNIEXPORT jdoubleArray JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointCoord
         return (jdoubleArray)NULL;
 }
 
-struct MatrixDouble {};
 
-static gsketch::StopWatch solverWatch;
-static gsketch::StopWatch accEvoWatch;
-static gsketch::StopWatch accLUWatch;
+static graph::StopWatch solverWatch;
+static graph::StopWatch accEvoWatch;
+static graph::StopWatch accLUWatch;
 
 /// CPU#
 long AllLagrangeCoffSize() { return 0; }
@@ -315,17 +320,26 @@ void GeometricObjectEvaluateForceVector() { /// Sily  - F(q)
 }
 
 // KERNEL#
-void ConstraintEvaluateConstraintVector(){
-    /// Wiezy  - Fi(q)
+void ConstraintEvaluateConstraintVector() {
+        /// Wiezy  - Fi(q)
 
-    /// b.mulitply(-1);
-};
+        /// b.mulitply(-1);
+}
+
+// KERNEL#
+void ConstraintGetFullJacobian() {}
+
+/// KERNEL# and last step update CPU memory for JNI synchronizationa
+void PointUtilityCopyFromStateVector() {}
+
+/// KERNEL#
+void ConstraintGetFullHessian() {}
 
 #define MAX_SOLVER_ITERATIONS 20
 
 #define CONVERGENCE_LIMIT 10e-5
 
-template <typename Obj> std::unique_ptr<int[]> accumulateOffset(std::vector<Obj> objects, std::function<int(Obj *)> objectIdFunction) {
+template <typename Obj, typename ObjIdFunction> std::unique_ptr<int[]> stateOffset(std::vector<Obj> objects, ObjIdFunction objectIdFunction) {
         std::unique_ptr<int[]> offsets(new int[objectIdFunction(objects.rbegin())]);
         auto iterator = objects.begin();
         int offset = 0;
@@ -335,6 +349,21 @@ template <typename Obj> std::unique_ptr<int[]> accumulateOffset(std::vector<Obj>
         }
         return offsets;
 }
+
+/// #/include <numeric> std::partial_sum
+
+template <typename Obj, typename ValueFunction> std::unique_ptr<int[]> accumalatedValue(std::vector<Obj> vector, ValueFunction valueFunction) {
+        int accValue = 0;
+        std::unique_ptr<int[]> accumulated(new int[vector.size()]);
+        for (int offset = 0; offset < vector.size(); offset++) {
+                accumulated[offset] = accValue;
+                accValue = accValue + valueFunction(vector[offset]);
+        }
+        return accumulated;
+}
+
+#include <numeric>
+
 /**
  *  /// wydzielic pliku CU
  *
@@ -353,39 +382,44 @@ void solveSystemOnGPU(int *error) {
         accEvoWatch.reset();
         accLUWatch.reset();
 
-        std::function<int(stage::Point *)> pointIdFunction = [](auto point) { return point->id; };
-        std::function<int(stage::Constraint *)> constraintIdFunction = [](auto constraint) { return constraint->id; };
-        std::function<int(stage::Geometric *)> geometricIdFunction = [](auto geometric) { return geometric->id; };
+        pointOffset = stateOffset(points, [](auto point) { return point->id; });
 
-        pointOffset = accumulateOffset(points, pointIdFunction);
-        constraintOffset = accumulateOffset(constraints, constraintIdFunction);
-        geometricOffset = accumulateOffset(geometrics, geometricIdFunction);
+        accConstraintSize = accumalatedValue(constraints, graph::constraintSize);
+
+        accGeometricSize = accumalatedValue(geometrics, graph::geometricSetSize);
+
+        size = std::accumulate(geometrics.begin(), geometrics.end(), 0, [](auto acc, auto const& geometric) { return acc + graph::geometricSetSize(geometric); });
+
+        coffSize =
+            std::accumulate(constraints.begin(), constraints.end(), 0, [](auto acc, auto const& constraint) { return acc + graph::constraintSize(constraint); });
+
+        dimension = size + coffSize;
 
         /// Uklad rownan liniowych  [ A * x = b ] powstały z linerazycji ukladu dynamicznego
 
         /// 1# CPU -> GPU inicjalizacja macierzy
 
-        MatrixDouble A;  /// Macierz głowna ukladu rownan liniowych
-        MatrixDouble Fq; /// Macierz sztywnosci ukladu obiektow zawieszonych na sprezynach.
-        MatrixDouble Wq; /// d(FI)/dq - Jacobian Wiezow
+        graph::Tensor A;  /// Macierz głowna ukladu rownan liniowych
+        graph::Tensor Fq; /// Macierz sztywnosci ukladu obiektow zawieszonych na sprezynach.
+        graph::Tensor Wq; /// d(FI)/dq - Jacobian Wiezow
 
         /// HESSIAN
-        MatrixDouble Hs;
+        graph::Tensor Hs;
 
         // Wektor prawych stron [Fr; Fi]'
-        MatrixDouble b;
+        graph::Tensor b;
 
         // skladowe to Fr - oddzialywania pomiedzy obiektami, sily w sprezynach
-        MatrixDouble Fr;
+        graph::Tensor Fr;
 
         // skladowa to Fiq - wartosci poszczegolnych wiezow
-        MatrixDouble Fi;
+        graph::Tensor Fi;
 
         double norm1;            /// wartosci bledow na wiezach
         double prevNorm;         /// norma z wczesniejszej iteracji,
         double errorFluctuation; /// fluktuacja bledu
 
-        stat.startTime = gsketch::TimeNanosecondsNow();
+        stat.startTime = graph::TimeNanosecondsNow();
 
         printf("@#=================== Solver Initialized ===================#@ \n");
         printf("");
@@ -421,12 +455,14 @@ void solveSystemOnGPU(int *error) {
 
         /// cMalloc() --- przepisac na GRID -->wspolrzedne
 
-        A = MatrixDouble.matrix2D(dimension, dimension, 0.0);
+        using graph::Tensor;
 
-        Fq = MatrixDouble.matrix2D(size, size, 0.0);
+        A; //= Tensor.tensor2D(dimension, dimension, 0.0);
 
-        Wq = MatrixDouble.matrix2D(coffSize, size, 0.0);
-        Hs = MatrixDouble.matrix2D(size, size, 0.0);
+        Fq; // = Tensor.tensor2D(size, size, 0.0);
+
+        Wq; // = Tensor.tensor2D(coffSize, size, 0.0);
+        Hs; // = Tensor.tensor2D(size, size, 0.0);
 
         /// KERNEL_O
 
@@ -436,23 +472,23 @@ void solveSystemOnGPU(int *error) {
         /// inicjalizacja i bezposrednio do A
         ///   w nastepnych przejsciach -> kopiujemy
 
-        KernelEvaluateStiffnessMatrix<<<>>>(Fq)
+        // KernelEvaluateStiffnessMatrix<<<>>>(Fq)
 
-            /// cMallloc
+        /// cMallloc
 
-            /// Wektor prawych stron b
+        /// Wektor prawych stron b
 
-            b = MatrixDouble.matrix1D(dimension, 0.0);
+        b; /// ---  = Tensor.matrix1D(dimension, 0.0);
 
         // right-hand side vector ~ b
 
-        Fr = b.viewSpan(0, 0, size, 1);
-        Fi = b.viewSpan(size, 0, coffSize, 1);
+        Fr; // = b.viewSpan(0, 0, size, 1);
+        Fi; // = b.viewSpan(size, 0, coffSize, 1);
 
-        MatrixDouble dmx = null;
+        Tensor dmx;
 
         /// State Vector - zmienne stanu
-        MatrixDouble SV = MatrixDouble.matrix1D(dimension, 0.0);
+        Tensor SV; // = Tensor.matrix1D(dimension, 0.0);
 
         /// PointUtility.
 
@@ -476,34 +512,36 @@ void solveSystemOnGPU(int *error) {
 
                 /// # KERNEL_PRE
 
-                A.reset(0.0); /// --- ze wzgledu na addytywnosc
+                A; // .reset(0.0); /// --- ze wzgledu na addytywnosc
 
                 /// Tworzymy Macierz vector b vector `b
 
                 /// # KERNEL_PRE
-                GeometricObjectEvaluateForceVector(Fr); /// Sily  - F(q)
-                ConstraintEvaluateConstraintVector(Fi); /// Wiezy  - Fi(q)
+                GeometricObjectEvaluateForceVector(); // Fr /// Sily  - F(q)
+                ConstraintEvaluateConstraintVector(); // Fi / Wiezy  - Fi(q)
+
                 // b.setSubMatrix(0,0, (Fr));
                 // b.setSubMatrix(size,0, (Fi));
-                b.mulitply(-1);
+
+                b; // .mulitply(-1);
 
                 /// macierz `A
 
                 /// # KERNEL_PRE (__shared__ JACOBIAN)
 
-                ConstraintGetFullJacobian(Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix   `A = `A set value
+                ConstraintGetFullJacobian(); // --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix   `A = `A set value
 
-                Hs.reset(0.0); /// ---- niepotrzebnie
+                Hs; // --- .reset(0.0); /// ---- niepotrzebnie
 
                 /// # KERNEL_PRE
 
-                ConstraintGetFullHessian(Hs, SV, size); // --- write without intermediate matrix '`A = `A +value
+                ConstraintGetFullHessian(); // --- (Hs, SV, size); // --- write without intermediate matrix '`A = `A +value
 
-                A.setSubMatrix(0, 0, Fq);  /// procedure SET
-                A.plusSubMatrix(0, 0, Hs); /// procedure ADD
+                A.setSubTensor(0, 0, Fq);  /// procedure SET
+                A.plusSubTensor(0, 0, Hs); /// procedure ADD
 
-                A.setSubMatrix(size, 0, Wq);
-                A.setSubMatrix(0, size, Wq.transpose());
+                A.setSubTensor(size, 0, Wq);
+                A.setSubTensor(0, size, Wq.transpose());
 
                 /*
                  *  LU Decomposition  -- Colt Linear Equation Solver
@@ -513,9 +551,6 @@ void solveSystemOnGPU(int *error) {
 
                 /// DENSE MATRIX - pierwsze podejscie !
 
-                DoubleMatrix2D matrix2DA; /// cuSolver
-                DoubleMatrix1D matrix1Db; /// cuSolver
-
                 /// ---- KERNEL_PRE
 
                 accEvoWatch.setStopTick();
@@ -524,23 +559,27 @@ void solveSystemOnGPU(int *error) {
 
                 /// DENSE - CuSolver
                 /// LU Solver
-                LUDecompositionQuick LU = new LUDecompositionQuick();
-                LU.decompose(matrix2DA);
-                LU.solve(matrix1Db);
+
+                /// ---------------- < cuSOLVER >
+                /// ---------------- < cuSOLVER >
+                /// ---------------- < cuSOLVER >
+                // LUDecompositionQuick LU = new LUDecompositionQuick();
+                // LU.decompose(matrix2DA);
+                // LU.solve(matrix1Db);
 
                 accLUWatch.setStopTick();
 
                 /// Bind delta-x into database points
 
                 /// --- KERNEL_POST
-                dmx = MatrixDouble.matrixDoubleFrom(matrix1Db);
+                dmx; // --- = Tensor.matrixDoubleFrom(matrix1Db);
 
                 /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ]
 
                 /// --- KERNEL_POST
                 SV.plus(dmx);
 
-                PointUtilityCopyFromStateVector(SV); /// ??????? - niepotrzebnie , NA_KONCU
+                PointUtilityCopyFromStateVector(); // ---(SV); /// ??????? - niepotrzebnie , NA_KONCU
 
                 /// --- KERNEL_POST( __synchronize__ REDUCTION )
 
@@ -572,7 +611,7 @@ void solveSystemOnGPU(int *error) {
                         solverWatch.setStopTick();
                         stat.constraintDelta = ConstraintGetFullNorm();
                         stat.convergence = false;
-                        stat.stopTime = TimeNanosecondsNow();
+                        stat.stopTime = graph::TimeNanosecondsNow();
                         stat.iterations = itr;
                         stat.accSolverTime = accLUWatch.accTime;
                         stat.accEvaluationTime = accEvoWatch.accTime;
@@ -590,7 +629,7 @@ void solveSystemOnGPU(int *error) {
 
         stat.constraintDelta = ConstraintGetFullNorm();
         stat.convergence = norm1 < CONVERGENCE_LIMIT;
-        stat.stopTime = TimeNanosecondsNow();
+        stat.stopTime = graph::TimeNanosecondsNow();
         stat.iterations = itr;
         stat.accSolverTime = accLUWatch.accTime;
         stat.accEvaluationTime = accEvoWatch.accTime;

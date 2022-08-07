@@ -4,75 +4,87 @@
 #include <cuda_runtime_api.h>
 #include <math.h>
 
-namespace stage {
+namespace graph {
 
 //// odseparowac cuh i cu file
 
-class MatrixDouble {
-      public:
-        __device__ MatrixDouble(bool typeNonReference) : typeNonReference(typeNonReference) {}
 
-        __device__ void setVector(int offsetRow, int offsetCol, Vector const &value) {
+class Vector;
+
+
+class Tensor {
+      public:
+        Tensor() : nonMemOwning(true) {}
+
+        Tensor(bool nonMemOwning) : nonMemOwning(nonMemOwning) {}
+
+        void setVector(int offsetRow, int offsetCol, Vector const &value) {
 
                 /// ALL - dwa przypadki na miejscu
         }
 
-        __device__ void plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble const &mt) {
+        void plusSubTensor(int offsetRow, int offsetCol, Tensor const &mt) {
 
                 /// ALL -  dwa przypadki na miejscu
         }
 
-        __device__ void setSubMatrix(int offsetRow, int offsetCol, MatrixDouble const &mt) {
+        void setSubTensor(int offsetRow, int offsetCol, Tensor const &mt) {
 
                 /// ALL - dwa przypadki na miejscu
         }
 
-        __device__ MatrixDouble multiplyC(double scalar){
+        Tensor multiplyC(double scalar){
 
-            /// SmallMatrixDouble
+            /// SmallTensor
         };
 
-        __device__ MatrixDouble plus(MatrixDouble const &other) {
+        Tensor plus(Tensor const &other) {
 
-                /// SmallMatrixDouble
+                /// SmallTensor
+        }
+
+
+        Tensor transpose() const {
+                
         }
 
         int rows;
         int cols;
-        bool typeNonReference; /// cast_helper if true -> SmallMatrixDouble otherwise RefMatrixDouble
+        bool nonMemOwning; /// cast_helper if true -> SmallTensor otherwise RefMatrixDouble
 };
 
 /// non-ownig reference wrapper
-class RefMatrixDouble : public MatrixDouble {
+class TensorImpl : public Tensor {
       public:
-        RefMatrixDouble() : MatrixDouble(false) {}
+        TensorImpl() : Tensor(false) {}
+
         double *tensor; /// this memory is managed via cpu API into cuda runtime
 };
 
 /// 2x2
-class SmallMatrixDouble : public MatrixDouble {
+class SmallTensor : public Tensor {
       public:
-        __device__ SmallMatrixDouble() : MatrixDouble(true) {}
+        SmallTensor() : Tensor(true) {}
 
-        __device__ SmallMatrixDouble(double a00, double a11) : SmallMatrixDouble() {
+        SmallTensor(double a00, double a11) : SmallTensor() {
                 tensor[0] = a00;
                 tensor[3] = a11;
         }
 
-        __device__ SmallMatrixDouble(double a00, double a01, double a10, double a11): SmallMatrixDouble() {
+        SmallTensor(double a00, double a01, double a10, double a11) : SmallTensor() {
                 tensor[0] = a00;
                 tensor[1] = a01;
                 tensor[2] = a10;
                 tensor[3] = a11;
         }
 
-        __device__ static SmallMatrixDouble diagonal(double diagonal) { return SmallMatrixDouble(diagonal, diagonal); }
-        __device__ static SmallMatrixDouble matrixR() {
+        static SmallTensor diagonal(double diagonal) { return SmallTensor(diagonal, diagonal); }
+        static SmallTensor tensorR() {
                 double a00 = 0.0;
                 double a01 = -1.0;
                 double a10 = 1.0;
                 double a11 = 0.0;
-                return SmallMatrixDouble(a00, a01, a10, a11);
+                return SmallTensor(a00, a01, a10, a11);
         }
 
       public:
@@ -81,48 +93,48 @@ class SmallMatrixDouble : public MatrixDouble {
 
 #define DEGREES_TO_RADIANS 0.017453292519943295;
 
-__device__ double toRadians(double angdeg) { return angdeg * DEGREES_TO_RADIANS; }
+double toRadians(double angdeg) { return angdeg * DEGREES_TO_RADIANS; }
 
 class Vector {
       public:
-        __device__ Vector() = default;
+        Vector() = default;
 
-        __device__ Vector(Vector const &other) = default;
+        Vector(Vector const &other) = default;
 
-        __device__ Vector(double px, double py) : x(px), y(py) {}
+        Vector(double px, double py) : x(px), y(py) {}
 
-        __device__ Vector plus(Vector const &other) const { return Vector(this->x + other.x, this->y + other.y); }
+        Vector plus(Vector const &other) const { return Vector(this->x + other.x, this->y + other.y); }
 
-        __device__ Vector minus(Vector const &other) const { return Vector(this->x - other.x, this->y - other.y); }
+        Vector minus(Vector const &other) const { return Vector(this->x - other.x, this->y - other.y); }
 
-        __device__ double product(Vector const &other) const { return (this->x * other.x + this->y * other.y); }
+        double product(Vector const &other) const { return (this->x * other.x + this->y * other.y); }
 
-        __device__ Vector product(double scalar) const { return Vector(this->x * scalar, this->y * scalar); }
+        Vector product(double scalar) const { return Vector(this->x * scalar, this->y * scalar); }
 
-        __device__ double cross(Vector const &other) const { return (this->x * other.y - this->y * other.x); }
+        double cross(Vector const &other) const { return (this->x * other.y - this->y * other.x); }
 
-        __device__ Vector operator/(double scalar) const { return Vector(this->x / scalar, this->y / scalar); }
+        Vector operator/(double scalar) const { return Vector(this->x / scalar, this->y / scalar); }
 
-        __device__ double length() const { return sqrt(this->x * this->x + this->y * this->y); }
+        double length() const { return sqrt(this->x * this->x + this->y * this->y); }
 
-        __device__ Vector unit() const { return this->operator/(length()); }
+        Vector unit() const { return this->operator/(length()); }
 
-        __device__ Vector pivot() const { return Vector(-this->y, this->x); }
+        Vector pivot() const { return Vector(-this->y, this->x); }
 
-        __device__ Vector Rot(double angle) {
+        Vector Rot(double angle) {
                 double rad = toRadians(angle);
                 return Vector(this->x * cos(rad) - this->y * sin(rad), this->x * sin(rad) + this->y * cos(rad));
         }
 
-        SmallMatrixDouble cartesian(Vector const &rhs) {
+        SmallTensor cartesian(Vector const &rhs) {
                 double a00 = this->x * rhs.x;
                 double a01 = this->x * rhs.y;
                 double a10 = this->y * rhs.x;
                 double a11 = this->y * rhs.y;
-                return SmallMatrixDouble(a00, a01, a10, a11);
+                return SmallTensor(a00, a01, a10, a11);
         }
 
-        __device__ bool operator==(Vector const &other) const { return (this->x == other.x && this->y == other.y); }
+        bool operator==(Vector const &other) const { return (this->x == other.x && this->y == other.y); }
 
       public:
         double x, y;
@@ -134,8 +146,6 @@ class Point : public Vector {
 
         Point(int id, double px, double py) : Vector(px, py), id(id) {}
 
-        Point(Point const &other) = default;
-        Point(Point &&other) = default;
 
       public:
         int id;
@@ -156,12 +166,28 @@ struct Geometric {
         int d;
 };
 
+/**
+ *   Geometric Object size in terms of point set size.
+ */
+int geometricSetSize(graph::Geometric const& geometric) {
+        switch (geometric.geometricTypeId) {
+        case GEOMETRIC_TYPE_ID_FreePoint:
+                return 3 * 2;
+        case GEOMETRIC_TYPE_ID_Line:
+                return 4 * 2;
+        case GEOMETRIC_TYPE_ID_Circle:
+                return 4 * 2;
+        case GEOMETRIC_TYPE_ID_Arc:
+                return 7 * 2;
+        }
+}
+
 struct Constraint {
-        Constraint(int id, int constrajintTypeId, int k, int l, int m, int n, int paramId, double vecX, double vecY)
-            : id(id), constrajintTypeId(constrajintTypeId), k(k), l(l), m(m), n(n), paramId(paramId), vecX(vecX), vecY(vecY) {}
+        Constraint(int id, int constraintTypeId, int k, int l, int m, int n, int paramId, double vecX, double vecY)
+            : id(id), constraintTypeId(constraintTypeId), k(k), l(l), m(m), n(n), paramId(paramId), vecX(vecX), vecY(vecY) {}
 
         int id;
-        int constrajintTypeId;
+        int constraintTypeId;
         int k;
         int l;
         int m;
@@ -170,6 +196,45 @@ struct Constraint {
         double vecX;
         double vecY;
 };
+
+int constraintSize(graph::Constraint const& constraint) {
+        switch (constraint.constraintTypeId) {
+        case CONSTRAINT_TYPE_ID_FixPoint:
+                return 2;
+        case CONSTRAINT_TYPE_ID_ParametrizedXFix:
+                return 1;
+        case CONSTRAINT_TYPE_ID_ParametrizedYFix:
+                return 1;
+        case CONSTRAINT_TYPE_ID_Connect2Points:
+                return 2;
+        case CONSTRAINT_TYPE_ID_HorizontalPoint:
+                return 1;
+        case CONSTRAINT_TYPE_ID_VerticalPoint:
+                return 1;
+        case CONSTRAINT_TYPE_ID_LinesParallelism:
+                return 1;
+        case CONSTRAINT_TYPE_ID_LinesPerpendicular:
+                return 1;
+        case CONSTRAINT_TYPE_ID_EqualLength:
+                return 1;
+        case CONSTRAINT_TYPE_ID_ParametrizedLength:
+                return 1;
+        case CONSTRAINT_TYPE_ID_Tangency:
+                return 1;
+        case CONSTRAINT_TYPE_ID_CircleTangency:
+                return 1;
+        case CONSTRAINT_TYPE_ID_Distance2Points:
+                return 1;
+        case CONSTRAINT_TYPE_ID_DistancePointLine:
+                return 1;
+        case CONSTRAINT_TYPE_ID_Angle2Lines:
+                return 1;
+        case CONSTRAINT_TYPE_ID_SetHorizontal:
+                return 1;
+        case CONSTRAINT_TYPE_ID_SetVertical:
+                return 1;
+        }
+}
 
 struct Parameter {
         Parameter(int id, double value) : id(id), value(value) {}
@@ -203,6 +268,6 @@ struct SolverStat {
         int iterations;
 };
 
-} // namespace stage
+} // namespace graph
 
 #endif // _MODEL_H_

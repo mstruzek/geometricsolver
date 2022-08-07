@@ -3,9 +3,12 @@
 
 #include <chrono>
 
-namespace gsketch {
+namespace graph {
 
-long TimeNanosecondsNow() { return std::chrono::duration<long, std::nano>(std::chrono::high_resolution_clock::now().time_since_epoch()).count(); }
+long TimeNanosecondsNow() {
+        auto fromEpoch = std::chrono::high_resolution_clock::now().time_since_epoch();
+        return std::chrono::duration<long, std::nano>(fromEpoch).count();
+}
 
 class StopWatch {
       public:
@@ -26,12 +29,11 @@ class StopWatch {
                 accTime = 0L;
         }
 
-
         long startTick;
         long stopTick;
         long accTime;
 };
 
-} // namespace gsketch
+} // namespace graph
 
 #endif //_STOP_WATCH_H_
