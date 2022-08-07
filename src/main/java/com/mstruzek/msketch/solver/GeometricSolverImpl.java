@@ -300,8 +300,6 @@ public class GeometricSolverImpl implements GeometricSolver {
 
     public static void main(String[] args) {
 
-        System.nanoTime();
-
     }
 }
 

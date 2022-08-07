@@ -34,21 +34,6 @@ public class ConstraintConvergenceTest {
         ModelRegistry.removeObjectsFromModel();
     }
 
-    private static <T extends GeometricObject> T registerGeometric(T geometricObject) {
-        Model.add(geometricObject);
-        return geometricObject;
-    }
-
-    private static <C extends Constraint> C registerConstraint(C constraint) {
-        Model.add(constraint);
-        return constraint;
-    }
-
-    private static Parameter registerParameter(Parameter parameter) {
-        Model.add(parameter);
-        return parameter;
-    }
-
     @Test
     public void convergenceConstraintFixPoint() {
         Point p10 = new Point(1, 0.0, 40.0);
@@ -454,4 +439,20 @@ public class ConstraintConvergenceTest {
             out.println(MatrixDouble.writeToString(hessian));
         }
     }
+
+    private static <T extends GeometricObject> T registerGeometric(T geometricObject) {
+        Model.add(geometricObject);
+        return geometricObject;
+    }
+
+    private static <C extends Constraint> C registerConstraint(C constraint) {
+        Model.add(constraint);
+        return constraint;
+    }
+
+    private static Parameter registerParameter(Parameter parameter) {
+        Model.add(parameter);
+        return parameter;
+    }
+
 }
