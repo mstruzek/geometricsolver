@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 /**
  * Klasa wektora 2D
@@ -139,12 +139,12 @@ public class Vector {
         return new Vector(this.x / this.length(), this.y / this.length());
     }
 
-    public MatrixDouble cartesian(Vector rhs) {
+    public TensorDouble cartesian(Vector rhs) {
         double a00 = this.x * rhs.x;
         double a01 = this.x * rhs.y;
         double a10 = this.y * rhs.x;
         double a11 = this.y * rhs.y;
-        MatrixDouble sm = MatrixDouble.smallMatrix(a00, a01, a10, a11);
+        TensorDouble sm = TensorDouble.smallMatrix(a00, a01, a10, a11);
         return sm;
     }
 }

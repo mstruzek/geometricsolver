@@ -1,6 +1,6 @@
 package com.mstruzek.sparsematrixsolver;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 
 /**
@@ -45,7 +45,7 @@ public class BasicVector {
      *
      * @param md
      */
-    public BasicVector(MatrixDouble md) {
+    public BasicVector(TensorDouble md) {
         this.size = md.height();
         d = new double[size];
         for (int i = 0; i < size; i++) {
@@ -223,7 +223,7 @@ public class BasicVector {
         System.out.println(BasicVector.merge(bv, bv3, bv2));
 
 
-        MatrixDouble force = MatrixDouble.matrix1D(8, 2.0);
+        TensorDouble force = TensorDouble.matrix1D(8, 2.0);
         BasicVector bs = new BasicVector(force);
         System.out.println(bs + " norm : " + bs.norm());
     }

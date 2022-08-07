@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
@@ -55,8 +55,8 @@ public class ConstraintParametrizedLength extends Constraint {
     }
 
     @Override
-    public void getJacobian(MatrixDouble mts) {
-        MatrixDouble mt = mts;
+    public void getJacobian(TensorDouble mts) {
+        TensorDouble mt = mts;
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
         double lk = LK.length();
@@ -87,16 +87,16 @@ public class ConstraintParametrizedLength extends Constraint {
     }
 
     @Override
-    public MatrixDouble getValue() {
+    public TensorDouble getValue() {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
         double d = (param_id != -1) ? ModelRegistry.dbParameter.get(param_id).getValue() : 1.0;
         double value = d * LK.length() - NM.length();
-        return MatrixDouble.scalar(value);
+        return TensorDouble.scalar(value);
     }
 
     @Override
-    public MatrixDouble getHessian(double lagrange) {
+    public TensorDouble getHessian(double lagrange) {
         /// bez Hessianu zbierznosc ponizje 1e-10 przy pierwszej iteracji
         return null;
     }
@@ -133,7 +133,7 @@ public class ConstraintParametrizedLength extends Constraint {
 
     @Override
     public double getNorm() {
-        MatrixDouble md = getValue();
+        TensorDouble md = getValue();
         return md.getQuick(0, 0);
     }
 }

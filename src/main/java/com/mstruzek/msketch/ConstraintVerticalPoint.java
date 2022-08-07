@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
@@ -40,8 +40,8 @@ public class ConstraintVerticalPoint extends Constraint {
     }
 
     @Override
-    public void getJacobian(MatrixDouble mts) {
-        MatrixDouble mt = mts;
+    public void getJacobian(TensorDouble mts) {
+        TensorDouble mt = mts;
         int j;
         //k
         j = po.get(k_id);
@@ -57,13 +57,13 @@ public class ConstraintVerticalPoint extends Constraint {
     }
 
     @Override
-    public MatrixDouble getValue() {
+    public TensorDouble getValue() {
         double value = dbPoint.get(k_id).getY() - dbPoint.get(l_id).getY();
-        return MatrixDouble.scalar(value);
+        return TensorDouble.scalar(value);
     }
 
     @Override
-    public MatrixDouble getHessian(double lagrange) {
+    public TensorDouble getHessian(double lagrange) {
         return null;
     }
 
@@ -99,7 +99,7 @@ public class ConstraintVerticalPoint extends Constraint {
 
     @Override
     public double getNorm() {
-        MatrixDouble md = getValue();
+        TensorDouble md = getValue();
         return md.getQuick(0, 0);
     }
 }

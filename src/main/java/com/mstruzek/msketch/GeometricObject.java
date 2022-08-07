@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import java.util.Set;
 
@@ -39,7 +39,7 @@ public abstract class GeometricObject {
     /**
      * Funkcja zwraca wartosc sil w sprezynach dla poszczegolnych punkt�w w danym {@link GeometricObject}
      */
-    public abstract void evaluateForceIntensity(int row, MatrixDouble dest);
+    public abstract void evaluateForceIntensity(int row, TensorDouble dest);
 
     /**
      * Funkcja do wyliczenia macierzy sztywnosci elementu - macierz szytnowsci Fq
@@ -49,7 +49,7 @@ public abstract class GeometricObject {
      * @param dest destination matrix
      * @return
      */
-    public abstract void setStiffnessMatrix(int row, int col, MatrixDouble dest);
+    public abstract void setStiffnessMatrix(int row, int col, TensorDouble dest);
 
     /**
      * Pobierz wszystkie punkty powiazane z dana figura
@@ -109,7 +109,7 @@ public abstract class GeometricObject {
      *
      * @param mt
      */
-    public static void evaluateStiffnessMatrix(MatrixDouble mt) {
+    public static void evaluateStiffnessMatrix(TensorDouble mt) {
         int rowCol = 0;
         for (GeometricObject geometricObject : ModelRegistry.dbPrimitives.values()) {
             geometricObject.setStiffnessMatrix(rowCol, rowCol, mt);
@@ -122,7 +122,7 @@ public abstract class GeometricObject {
      *
      * @param dest destination matrix
      */
-    public static void evaluateForceVector(MatrixDouble dest) {
+    public static void evaluateForceVector(TensorDouble dest) {
         int row = 0;
         for (GeometricObject geometricObject : ModelRegistry.dbPrimitives().values()) {
             geometricObject.evaluateForceIntensity(row, dest);

@@ -2,11 +2,11 @@ package com.mstruzek.msketch.matrix;
 
 import com.mstruzek.msketch.Vector;
 
-public class ScalarMatrixDouble implements MatrixDouble {
+public class ScalarTensorDouble implements TensorDouble {
 
     double m;
 
-    public ScalarMatrixDouble(double value) {
+    public ScalarTensorDouble(double value) {
         this.m = value;
     }
 
@@ -26,22 +26,22 @@ public class ScalarMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble plus(MatrixDouble rhs) {
+    public TensorDouble plus(TensorDouble rhs) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble mulitply(double c) {
+    public TensorDouble mulitply(double c) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble multiplyC(double c) {
+    public TensorDouble multiplyC(double c) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble multiply(MatrixDouble rhs) {
+    public TensorDouble multiply(TensorDouble rhs) {
         throw new IllegalStateException("no implementation");
     }
 
@@ -56,38 +56,38 @@ public class ScalarMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble viewSpan(int row, int column, int height, int width) {
+    public TensorDouble viewSpan(int row, int column, int height, int width) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble setSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+    public TensorDouble setSubMatrix(int offsetRow, int offsetCol, TensorDouble mt) {
         throw new IllegalStateException("not implemented");
     }
 
     @Override
-    public MatrixDouble plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+    public TensorDouble plusSubMatrix(int offsetRow, int offsetCol, TensorDouble mt) {
         throw new IllegalStateException("not implemented");
     }
 
     @Override
-    public MatrixDouble setVector(int r, int c, Vector vector) {
+    public TensorDouble setVector(int r, int c, Vector vector) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble transpose() {
+    public TensorDouble transpose() {
         throw new IllegalStateException("not implemented");
     }
 
     @Override
-    public MatrixDouble reset(double value) {
+    public TensorDouble reset(double value) {
         return null;
     }
 
     @Override
     public <T> T unwrap(Class<T> clazz) {
-        if (ScalarMatrixDouble.class.isAssignableFrom(clazz)) {
+        if (ScalarTensorDouble.class.isAssignableFrom(clazz)) {
             return (T) this;
         }
         return null;

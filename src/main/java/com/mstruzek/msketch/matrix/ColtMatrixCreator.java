@@ -18,23 +18,23 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
     public static ColtMatrixCreator INSTANCE = new ColtMatrixCreator();
 
     @Override
-    public MatrixDouble makeIdentity(int size, double diag) {
+    public TensorDouble makeIdentity(int size, double diag) {
         throw new Error("not implemented");
     }
 
     @Override
-    public MatrixDouble makeDiagonal(int size, double diag) {
+    public TensorDouble makeDiagonal(int size, double diag) {
         throw new Error("not implemented");
     }
 
     @Override
-    protected MatrixDouble makeDiagonal(double... values) {
+    protected TensorDouble makeDiagonal(double... values) {
         throw new Error("no implementation found for small tensors");
     }
 
     @Override
-    public MatrixDouble makeMatrix2D(int rowSize, int colSize, double initValue) {
-        SparseDoubleMatrix2DImpl matrix2D = new SparseDoubleMatrix2DImpl(rowSize, colSize);
+    public TensorDouble makeMatrix2D(int rowSize, int colSize, double initValue) {
+        SparseDoubleTensor2DImpl matrix2D = new SparseDoubleTensor2DImpl(rowSize, colSize);
         if (initValue != 0.0) {
             matrix2D.reset(initValue);
         }
@@ -42,8 +42,8 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
     }
 
     @Override
-    public MatrixDouble makeMatrix1D(int rows, double initValue) {
-        DenseDoubleMatrix1DImpl matrix1D = new DenseDoubleMatrix1DImpl(rows);
+    public TensorDouble makeMatrix1D(int rows, double initValue) {
+        DenseDoubleTensor1DImpl matrix1D = new DenseDoubleTensor1DImpl(rows);
         if (initValue != 0.0) {
             matrix1D.reset(initValue);
         }
@@ -51,63 +51,28 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
     }
 
     @Override
-    public MatrixDouble matrixDoubleFrom(Object delegate) {
+    public TensorDouble matrixDoubleFrom(Object delegate) {
         if (DenseDoubleMatrix1D.class.isAssignableFrom(delegate.getClass())) {
             DenseDoubleMatrix1D denseDoubleMatrix1D = (DenseDoubleMatrix1D) delegate;
-            MatrixDouble matrixDouble = new DenseDoubleMatrix1DImpl(denseDoubleMatrix1D);
-            return matrixDouble;
+            TensorDouble tensorDouble = new DenseDoubleTensor1DImpl(denseDoubleMatrix1D);
+            return tensorDouble;
         }
         throw new Error("not implemented");
     }
-
-    /*
-     *  ##SparseDoubleMatrix2D
-     *  public void set(int row, int column, double value) {
-     *
-     *  public abstract void setQuick(int row, int column, double value);
-     *
-     *  public double get(int row, int column)
-     *
-     *  public abstract double getQuick(int row, int column);
-     *  public DoubleMatrix2D assign(double[][] values) {       Function.Add. Function.Multiply
-     *
-     *  public DoubleMatrix1D viewColumn(int column) {
-     *
-     *  public DoubleMatrix1D viewRow(int row) {
-     *
-     *  public DoubleMatrix2D viewDice() {                                                  TRANSPOSE
-     *
-     *  public DoubleMatrix2D viewSelection(int[] rowIndexes, int[] columnIndexes) {
-     *
-     *  public DoubleMatrix2D viewPart(int row, int column, int height, int width) {        SUB-MATRIX
-     *
-     *  public DoubleMatrix2D copy() {
-     *
-     *
-     *
-     * Conversion from vector:  Matrix1D  =>  Matrix2D
-     *
-     *              # Jacobian evaluation !
-     *
-     *              [ Matrix2D ] .viewColumn ( int column ). assign( [ Matrix1D ] )
-     *
-     *  public SparseDoubleMatrix2D(double[][] var1) {
-     *
-     */
 
 
     /**
      * Dominantly used for Columnar Storage - Column Vector.
      */
-    public static class DenseDoubleMatrix1DImpl implements MatrixDouble {
+    public static class DenseDoubleTensor1DImpl implements TensorDouble {
 
         private final DoubleMatrix1D mt;
 
-        private DenseDoubleMatrix1DImpl(DoubleMatrix1D copyOrView) {
+        private DenseDoubleTensor1DImpl(DoubleMatrix1D copyOrView) {
             this.mt = copyOrView;
         }
 
-        public DenseDoubleMatrix1DImpl(int size) {
+        public DenseDoubleTensor1DImpl(int size) {
             this.mt = new DenseDoubleMatrix1D(size);
         }
 
@@ -131,7 +96,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble plus(MatrixDouble rhs) {
+        public TensorDouble plus(TensorDouble rhs) {
             DenseDoubleMatrix1D doubleMatrix1D = rhs.unwrap(DenseDoubleMatrix1D.class);
             if(doubleMatrix1D != null) {
                 this.mt.assign(doubleMatrix1D, new DoubleDoubleFunction() {
@@ -146,7 +111,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble mulitply(double c) {
+        public TensorDouble mulitply(double c) {
             this.mt.assign(new DoubleFunction() {
                 @Override
                 public double apply(double value) {
@@ -157,15 +122,15 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble multiplyC(double c) {
+        public TensorDouble multiplyC(double c) {
             DoubleMatrix1D denseCopy = this.mt.copy();
-            DenseDoubleMatrix1DImpl denseDoubleMatrix1D = new DenseDoubleMatrix1DImpl(denseCopy);
+            DenseDoubleTensor1DImpl denseDoubleMatrix1D = new DenseDoubleTensor1DImpl(denseCopy);
             denseDoubleMatrix1D.mulitply(c);
             return denseDoubleMatrix1D;
         }
 
         @Override
-        public MatrixDouble multiply(MatrixDouble rhs) {
+        public TensorDouble multiply(TensorDouble rhs) {
             throw new Error("not implemented");
         }
 
@@ -186,23 +151,23 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble viewSpan(int row, int column, int height, int width) {
+        public TensorDouble viewSpan(int row, int column, int height, int width) {
             if (column != 0) {
                 throw new Error("columnar vector, out of bound subscript use");
             }
             if (width != 1) {
                 throw new Error("columnar vector, out of bound subscript use");
             }
-            return new DenseDoubleMatrix1DImpl(this.mt.viewPart(row, height));
+            return new DenseDoubleTensor1DImpl(this.mt.viewPart(row, height));
         }
 
         @Override
-        public MatrixDouble setSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+        public TensorDouble setSubMatrix(int offsetRow, int offsetCol, TensorDouble mt) {
             if (offsetCol != 0) {
                 throw new Error("columnar vector, out of bound subscript use");
             }
 
-            MatrixDouble2D matrix2d = mt.unwrap(MatrixDouble2D.class);
+            TensorDouble2D matrix2d = mt.unwrap(TensorDouble2D.class);
             if (matrix2d != null) {
 
                 double a00 = matrix2d.m[0][0];
@@ -214,7 +179,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
                 return this;
             }
 
-            ScalarMatrixDouble scalar = mt.unwrap(ScalarMatrixDouble.class);
+            ScalarTensorDouble scalar = mt.unwrap(ScalarTensorDouble.class);
             if (scalar != null) {
 
                 this.mt.setQuick(offsetRow, scalar.m);
@@ -236,7 +201,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+        public TensorDouble plusSubMatrix(int offsetRow, int offsetCol, TensorDouble mt) {
             if (offsetCol != 0) {
                 throw new Error("columnar vector, out of bound subscript use");
             }
@@ -257,7 +222,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble setVector(int r, int c, Vector vector) {
+        public TensorDouble setVector(int r, int c, Vector vector) {
             if (c != 0) {
                 throw new Error("columnar vector, out of bound subscript use");
             }
@@ -267,12 +232,12 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble transpose() {
+        public TensorDouble transpose() {
             throw new Error("not implemented");
         }
 
         @Override
-        public MatrixDouble reset(double value) {
+        public TensorDouble reset(double value) {
             this.mt.assign(value);
             return this;
         }
@@ -286,19 +251,19 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
     }
 
-    public static class SparseDoubleMatrix2DImpl implements MatrixDouble {
+    public static class SparseDoubleTensor2DImpl implements TensorDouble {
 
         private DoubleMatrix2D mt;
 
         // column intention or row intention depends on mt dimension
         boolean colIntention;
 
-        private SparseDoubleMatrix2DImpl(DoubleMatrix2D view) {
+        private SparseDoubleTensor2DImpl(DoubleMatrix2D view) {
             this.mt = view;
             this.colIntention = this.mt.rows() > this.mt.columns();
         }
 
-        public SparseDoubleMatrix2DImpl(int rows, int columns) {
+        public SparseDoubleTensor2DImpl(int rows, int columns) {
             this.mt = new SparseDoubleMatrix2D(rows, columns);
             this.colIntention = this.mt.rows() > this.mt.columns();
         }
@@ -319,7 +284,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble plus(MatrixDouble rhs) {
+        public TensorDouble plus(TensorDouble rhs) {
             SparseDoubleMatrix2D doubleMatrix2D = rhs.unwrap(SparseDoubleMatrix2D.class);
 
             if (doubleMatrix2D == null) {
@@ -336,7 +301,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble mulitply(double c) {
+        public TensorDouble mulitply(double c) {
             this.mt.forEachNonZero(new IntIntDoubleFunction() {
                 @Override
                 public double apply(int i, int j, double value) {
@@ -347,12 +312,12 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble multiplyC(double c) {
+        public TensorDouble multiplyC(double c) {
             throw new Error("not implemented");
         }
 
         @Override
-        public MatrixDouble multiply(MatrixDouble rhs) {
+        public TensorDouble multiply(TensorDouble rhs) {
             throw new Error("not implemented");
         }
 
@@ -367,15 +332,15 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble viewSpan(int row, int column, int height, int width) {
+        public TensorDouble viewSpan(int row, int column, int height, int width) {
             DoubleMatrix2D view = this.mt.viewPart(row, column, height, width);
-            return new SparseDoubleMatrix2DImpl(view);
+            return new SparseDoubleTensor2DImpl(view);
         }
 
         @Override
-        public MatrixDouble setSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+        public TensorDouble setSubMatrix(int offsetRow, int offsetCol, TensorDouble mt) {
 
-            SmallMatrixDouble smd = mt.unwrap(SmallMatrixDouble.class);
+            SmallTensorDouble smd = mt.unwrap(SmallTensorDouble.class);
             if (smd != null) {
                 DoubleMatrix2D viewPart = this.mt.viewPart(offsetRow, offsetCol, mt.height(), mt.width());
                 double a00 = smd.sm[0];
@@ -401,9 +366,9 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+        public TensorDouble plusSubMatrix(int offsetRow, int offsetCol, TensorDouble mt) {
 
-            SmallMatrixDouble smd = mt.unwrap(SmallMatrixDouble.class);
+            SmallTensorDouble smd = mt.unwrap(SmallTensorDouble.class);
             if (smd != null) {
                 DoubleMatrix2D viewPart = this.mt.viewPart(offsetRow, offsetCol, mt.height(), mt.width());
                 double a00 = smd.sm[0];
@@ -433,7 +398,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble setVector(int r, int c, Vector vector) {
+        public TensorDouble setVector(int r, int c, Vector vector) {
             if (colIntention) {
                 this.mt.setQuick(r + 0, c, vector.getX());
                 this.mt.setQuick(r + 1, c, vector.getY());
@@ -445,12 +410,12 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
-        public MatrixDouble transpose() {
-            return new SparseDoubleMatrix2DImpl(this.mt.viewDice());
+        public TensorDouble transpose() {
+            return new SparseDoubleTensor2DImpl(this.mt.viewDice());
         }
 
         @Override
-        public MatrixDouble reset(double value) {
+        public TensorDouble reset(double value) {
             /* light-weight matrix for re-instantiation in-place */
             this.mt = new SparseDoubleMatrix2D(this.height(), this.width());
             if (value != 0) {

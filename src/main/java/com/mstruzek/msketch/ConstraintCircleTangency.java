@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
@@ -53,16 +53,16 @@ public class ConstraintCircleTangency extends Constraint {
     }
 
     @Override
-    public MatrixDouble getValue() {
+    public TensorDouble getValue() {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
         Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
-        return MatrixDouble.scalar(LK.length() + NM.length() - MK.length());
+        return TensorDouble.scalar(LK.length() + NM.length() - MK.length());
     }
 
     @Override
-    public void getJacobian(MatrixDouble mts) {
-        MatrixDouble mt = mts;
+    public void getJacobian(TensorDouble mts) {
+        TensorDouble mt = mts;
         Vector vLK = dbPoint.get(l_id).minus(dbPoint.get(k_id)).unit();
         Vector vNM = dbPoint.get(n_id).minus(dbPoint.get(m_id)).unit();
         Vector vMK = dbPoint.get(m_id).minus(dbPoint.get(k_id)).unit();
@@ -87,7 +87,7 @@ public class ConstraintCircleTangency extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian(double lagrange) {
+    public TensorDouble getHessian(double lagrange) {
         return null;
     }
 
@@ -123,7 +123,7 @@ public class ConstraintCircleTangency extends Constraint {
 
     @Override
     public double getNorm() {
-        MatrixDouble mt = getValue();
+        TensorDouble mt = getValue();
         return mt.getQuick(0, 0);
     }
 }

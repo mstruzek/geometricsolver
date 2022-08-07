@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import java.util.Collections;
 import java.util.Set;
@@ -129,7 +129,7 @@ public class ArcOld extends GeometricObject {
     }
 
     @Override
-    public void evaluateForceIntensity(int row, MatrixDouble mt) {
+    public void evaluateForceIntensity(int row, TensorDouble mt) {
         Vector f12 = p1.minus(a).unit().product(Consts.springStiffnessHigh * dS).product(p1.minus(a).length() - d_a_p1);        //F12 - sily w sprezynach
         Vector f23 = b.minus(p1).unit().product(Consts.springStiffnessHigh * dS).product(b.minus(p1).length() - d_p1_b);        //F23
 
@@ -150,7 +150,7 @@ public class ArcOld extends GeometricObject {
 
 
     @Override
-    public void setStiffnessMatrix(int row, int col, MatrixDouble mt) {
+    public void setStiffnessMatrix(int row, int col, TensorDouble mt) {
 
         /** Free Point
          * k= I*k
@@ -168,12 +168,12 @@ public class ArcOld extends GeometricObject {
          */
 
         // K -mala sztywnosci
-        MatrixDouble Ksp = MatrixDouble.diagonal(Consts.springStiffnessHigh * dS, Consts.springStiffnessHigh * dS);
-        MatrixDouble Ksm = Ksp.multiplyC(-1);
-        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
-        MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
+        TensorDouble Ksp = TensorDouble.diagonal(Consts.springStiffnessHigh * dS, Consts.springStiffnessHigh * dS);
+        TensorDouble Ksm = Ksp.multiplyC(-1);
+        TensorDouble Ks = TensorDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
+        TensorDouble Kb = TensorDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
         // -Ks-Kb
-        MatrixDouble Ksb = Ks.multiplyC(-1).plusSubMatrix(0, 0, Kb.multiplyC(-1));
+        TensorDouble Ksb = Ks.multiplyC(-1).plusSubMatrix(0, 0, Kb.multiplyC(-1));
 
         //FREEPOINT
         mt.plusSubMatrix(row + 0, col + 0, Ksm);

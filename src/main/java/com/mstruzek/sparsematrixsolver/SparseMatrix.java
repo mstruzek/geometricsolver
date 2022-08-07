@@ -1,6 +1,6 @@
 package com.mstruzek.sparsematrixsolver;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -35,7 +35,7 @@ public class SparseMatrix implements MatrixData {
         d = new TreeMap<Index, Double>();
     }
 
-    public SparseMatrix(MatrixDouble md) {
+    public SparseMatrix(TensorDouble md) {
         super();
         this.width = md.width();
         this.height = md.height();
@@ -195,7 +195,7 @@ public class SparseMatrix implements MatrixData {
         System.out.println(out);
         System.out.println(sm.d);
 
-        MatrixDouble force = MatrixDouble.matrix2D(5, 5, 0.0);
+        TensorDouble force = TensorDouble.matrix2D(5, 5, 0.0);
         force.setQuick(0, 0, 1.0);
         force.setQuick(2, 0, 1.0);
         force.setQuick(0, 2, 1.0);

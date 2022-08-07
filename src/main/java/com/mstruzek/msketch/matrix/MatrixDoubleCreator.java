@@ -18,7 +18,7 @@ public abstract class MatrixDoubleCreator {
      * @param size an integer > 0.
      * @return size x size two dimensional MatrixDouble.
      */
-    public abstract MatrixDouble makeIdentity(int size, double diag);
+    public abstract TensorDouble makeIdentity(int size, double diag);
 
     /**
      * Make small diagonal matrix usually 2x2 .
@@ -27,7 +27,7 @@ public abstract class MatrixDoubleCreator {
      * @param diag initial value
      * @return
      */
-    public abstract MatrixDouble makeDiagonal(int size, double diag);
+    public abstract TensorDouble makeDiagonal(int size, double diag);
 
     /**
      * Make small matrix usually 2x2 with all values zero and values on main diagonal .
@@ -35,7 +35,7 @@ public abstract class MatrixDoubleCreator {
      * @param values values
      * @return
      */
-    protected abstract MatrixDouble makeDiagonal(double... values);
+    protected abstract TensorDouble makeDiagonal(double... values);
 
     /**
      * Standard matrix two dimensional , rowSize X colSize.
@@ -45,7 +45,7 @@ public abstract class MatrixDoubleCreator {
      * @param initValue
      * @return
      */
-    public abstract MatrixDouble makeMatrix2D(int rowSize, int colSize, double initValue);
+    public abstract TensorDouble makeMatrix2D(int rowSize, int colSize, double initValue);
 
     /**
      * Column oriented matrix one dimensional - vector.
@@ -54,7 +54,7 @@ public abstract class MatrixDoubleCreator {
      * @param initValue
      * @return
      */
-    public abstract MatrixDouble makeMatrix1D(int rowSize, double initValue);
+    public abstract TensorDouble makeMatrix1D(int rowSize, double initValue);
 
     /**
      * Create column oriented one dimensional matrix backed by usually delegate shared DoubleMatrix1D.
@@ -62,6 +62,6 @@ public abstract class MatrixDoubleCreator {
      * @param delegate matrix
      * @return adapter
      */
-    public abstract MatrixDouble matrixDoubleFrom(Object delegate);
+    public abstract TensorDouble matrixDoubleFrom(Object delegate);
 
 }

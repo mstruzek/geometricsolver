@@ -5,7 +5,7 @@ import com.mstruzek.msketch.Vector;
 /**
  * Klasa reprezentuje macierz  dodatkowe operacje , takze w postaci wspoldzielonego widoku !
  */
-public class MatrixDouble2D implements MatrixDouble {
+public class TensorDouble2D implements TensorDouble {
 
     /*** zmienna przechowujaca nasze elementy */
     public double[][] m = null;
@@ -24,7 +24,7 @@ public class MatrixDouble2D implements MatrixDouble {
      * @param columns szerokosc -ilosc kolumn
      * @param rows    wysokosc - ilosc wiersze
      */
-    public MatrixDouble2D(int rows, int columns) {
+    public TensorDouble2D(int rows, int columns) {
         this.rowOffset = 0;
         this.colOffset = 0;
         this.columns = columns;
@@ -38,7 +38,7 @@ public class MatrixDouble2D implements MatrixDouble {
      * @param rows
      * @param columns
      */
-    public MatrixDouble2D(double[][] shared, int rowOffset, int colOffset, int rows, int columns) {
+    public TensorDouble2D(double[][] shared, int rowOffset, int colOffset, int rows, int columns) {
         this.rowOffset = rowOffset;
         this.colOffset = colOffset;
         this.rows = rows;
@@ -52,7 +52,7 @@ public class MatrixDouble2D implements MatrixDouble {
      * @param vec        wektora
      * @param columnType true if column type, false otherwise row type
      */
-    public MatrixDouble2D(Vector vec, boolean columnType) {
+    public TensorDouble2D(Vector vec, boolean columnType) {
         this.rowOffset = 0;
         this.colOffset = 0;
         if (columnType) {
@@ -87,7 +87,7 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble plus(MatrixDouble rhs) {
+    public TensorDouble plus(TensorDouble rhs) {
         assertEqualDimensions(this, rhs);
         double value;
         for (int i = 0; i < height(); i++) {
@@ -99,7 +99,7 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble mulitply(double c) {
+    public TensorDouble mulitply(double c) {
         for (int i = 0; i < height(); i++) {
             for (int j = 0; j < width(); j++) {
                 this.m[rowOffset + i][colOffset + j] *= c;
@@ -109,8 +109,8 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble multiplyC(double c) {
-        MatrixDouble mt = new MatrixDouble2D(width(), height());
+    public TensorDouble multiplyC(double c) {
+        TensorDouble mt = new TensorDouble2D(width(), height());
         for (int i = 0; i < height(); i++) {
             for (int j = 0; j < width(); j++) {
                 mt.setQuick(i, j, mt.getQuick(i, j) * c);
@@ -121,18 +121,18 @@ public class MatrixDouble2D implements MatrixDouble {
 
 
     @Override
-    public MatrixDouble multiply(MatrixDouble rhs) {
+    public TensorDouble multiply(TensorDouble rhs) {
         if (this.width() != rhs.height()) throw new Error("Illegal dimension of right-hand side operand matrix");
 
-        if (rhs instanceof SmallMatrixDouble && height() == rhs.height() && width() == rhs.width()) {
+        if (rhs instanceof SmallTensorDouble && height() == rhs.height() && width() == rhs.width()) {
             double a00 = getQuick(0, 0);
             double a01 = getQuick(0, 1);
             double a10 = getQuick(1, 0);
             double a11 = getQuick(1, 1);
-            SmallMatrixDouble mt = new SmallMatrixDouble(a00, a01, a10, a11);
+            SmallTensorDouble mt = new SmallTensorDouble(a00, a01, a10, a11);
             return mt.multiply(rhs);
         } else {
-            MatrixDouble2D mt = new MatrixDouble2D(rhs.width(), this.height());
+            TensorDouble2D mt = new TensorDouble2D(rhs.width(), this.height());
             for (int i = 0; i < height(); i++) { /// this row
                 for (int j = 0; j < rhs.width(); j++) { // other column
                     double acc = 0.0;
@@ -157,7 +157,7 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble viewSpan(int rowOffset, int colOffset, int height, int width) {
+    public TensorDouble viewSpan(int rowOffset, int colOffset, int height, int width) {
         /*
          * first level base tensor sharing policy !
          */
@@ -167,23 +167,23 @@ public class MatrixDouble2D implements MatrixDouble {
         if(colOffset + width > width()) {
             throw new Error("out ouf bound offset request");
         }
-        MatrixDouble2D md = new MatrixDouble2D(this.m, rowOffset, colOffset, height, width );
+        TensorDouble2D md = new TensorDouble2D(this.m, rowOffset, colOffset, height, width );
         return md;
     }
 
     @Override
-    public MatrixDouble setSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+    public TensorDouble setSubMatrix(int offsetRow, int offsetCol, TensorDouble mt) {
         //sprawdzamy czy macierz wstawiana nie jest za duza
         if (this.height() < (offsetRow + mt.height()) && this.width() < (offsetCol + mt.width())) {
             throw new IllegalStateException("dimension overflow");
         }
 
-        if (mt instanceof ScalarMatrixDouble) {
-            setQuick(offsetRow, offsetCol, ((ScalarMatrixDouble) mt).m);
+        if (mt instanceof ScalarTensorDouble) {
+            setQuick(offsetRow, offsetCol, ((ScalarTensorDouble) mt).m);
             return this;
         }
-        if (mt instanceof SmallMatrixDouble) {
-            SmallMatrixDouble smt = (SmallMatrixDouble) mt;
+        if (mt instanceof SmallTensorDouble) {
+            SmallTensorDouble smt = (SmallTensorDouble) mt;
             setQuick(offsetRow + 0, offsetCol + 0, smt.sm[0]);
             setQuick(offsetRow + 0, offsetCol + 1, smt.sm[1]);
             setQuick(offsetRow + 1, offsetCol + 0, smt.sm[2]);
@@ -191,7 +191,7 @@ public class MatrixDouble2D implements MatrixDouble {
             return this;
         }
 
-        MatrixDouble2D mtd = (MatrixDouble2D) mt;
+        TensorDouble2D mtd = (TensorDouble2D) mt;
         /// mozna wstawic
         for (int k = 0; k < mt.height(); k++) {
             System.arraycopy(mtd.m[k], 0, this.m[k + rowOffset + offsetRow], colOffset + offsetCol, mtd.m[k].length);
@@ -200,19 +200,19 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+    public TensorDouble plusSubMatrix(int offsetRow, int offsetCol, TensorDouble mt) {
         if (this.height() < (offsetRow + mt.height()) || this.width() < (offsetCol + mt.width())) {
             throw new Error("matrix dimension out of bounds");
         }
-        if (mt instanceof SmallMatrixDouble) {
-            SmallMatrixDouble smt = (SmallMatrixDouble) mt;
+        if (mt instanceof SmallTensorDouble) {
+            SmallTensorDouble smt = (SmallTensorDouble) mt;
             plus(offsetRow + 0, offsetCol + 0, smt.sm[0]);
             plus(offsetRow + 0, offsetCol + 1, smt.sm[1]);
             plus(offsetRow + 1, offsetCol + 0, smt.sm[2]);
             plus(offsetRow + 1, offsetCol + 1, smt.sm[3]);
             return this;
         } else {
-            MatrixDouble2D tmh = (MatrixDouble2D) mt;
+            TensorDouble2D tmh = (TensorDouble2D) mt;
             for (int i = 0; i < mt.height(); i++) {
                 for (int j = 0; j < mt.width(); j++) {
                     m[i + offsetRow][j + offsetCol] += tmh.m[i][j];
@@ -223,7 +223,7 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble setVector(int r, int c, Vector vector) {
+    public TensorDouble setVector(int r, int c, Vector vector) {
         if (this.width() == 1) { /// row oriented
             setQuick(r + 0, c, vector.getX());
             setQuick(r + 1, c, vector.getY());
@@ -238,8 +238,8 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble2D transpose() {
-        MatrixDouble2D tm = new MatrixDouble2D(width(), height());
+    public TensorDouble2D transpose() {
+        TensorDouble2D tm = new TensorDouble2D(width(), height());
         for (int i = 0; i < height(); i++) {
             for (int j = 0; j < width(); j++) {
                 tm.m[j][i] = this.m[i + rowOffset][j + colOffset];
@@ -249,7 +249,7 @@ public class MatrixDouble2D implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble reset(double value) {
+    public TensorDouble reset(double value) {
         for (int i = 0; i < height(); i++)
             for (int j = 0; j < width(); j++)
                 m[i + rowOffset][j + colOffset] = value;
@@ -258,7 +258,7 @@ public class MatrixDouble2D implements MatrixDouble {
 
     @Override
     public <T> T unwrap(Class<T> clazz) {
-        if (MatrixDouble2D.class.isAssignableFrom(clazz)) {
+        if (TensorDouble2D.class.isAssignableFrom(clazz)) {
             return (T) this;
         }
         return null;
@@ -268,16 +268,16 @@ public class MatrixDouble2D implements MatrixDouble {
     public static void main(String[] args) {
         double q1;
         double m1;
-        MatrixDouble2D md;
-        MatrixDouble span;
+        TensorDouble2D md;
+        TensorDouble span;
 
-        md = new MatrixDouble2D(8, 8);
-        md.setSubMatrix(2, 2, MatrixDouble.identity(2, -1.0));
-        md.setSubMatrix(4, 2, MatrixDouble.rotation(45));
-        md.setSubMatrix(6, 2, MatrixDouble.rotation(-30));
+        md = new TensorDouble2D(8, 8);
+        md.setSubMatrix(2, 2, TensorDouble.identity(2, -1.0));
+        md.setSubMatrix(4, 2, TensorDouble.rotation(45));
+        md.setSubMatrix(6, 2, TensorDouble.rotation(-30));
         md.mulitply(2.0);
         span = md.viewSpan(3, 3, 2, 2);
-        span.plus(MatrixDouble.identity(2, 200));
+        span.plus(TensorDouble.identity(2, 200));
 
         q1 = span.getQuick(0, 0);
         m1 = md.getQuick(3, 3);

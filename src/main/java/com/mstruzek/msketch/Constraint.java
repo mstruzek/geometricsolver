@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 /*
  * Wiez jedowymairowy,iloczyn skalarny,
@@ -37,7 +37,7 @@ public abstract class Constraint implements ConstraintInterface {
      *
      * @return macierz albo 1x1 albo 2x1;
      */
-    public abstract MatrixDouble getValue();
+    public abstract TensorDouble getValue();
 
     /**
      * Funkcja zwraca Jacobian w postaci wektora wierszowego gdy Constraint.size=1,
@@ -45,7 +45,7 @@ public abstract class Constraint implements ConstraintInterface {
      *
      * @param mts write computed jacobian into matrix span.
      */
-    public abstract void getJacobian(MatrixDouble mts);
+    public abstract void getJacobian(TensorDouble mts);
 
     /**
      * Funkcja zwraca norme danego wiezu
@@ -68,7 +68,7 @@ public abstract class Constraint implements ConstraintInterface {
      * Jedyny  wiez o size=2 czyli ConstraintConnect2Point ma staly
      * Jacobian zatem nie ma Hessianu
      */
-    public abstract MatrixDouble getHessian(double lagrange);
+    public abstract TensorDouble getHessian(double lagrange);
 
     /**
      * Funkcja zwraca true jesli Hessian jest staly
@@ -110,7 +110,7 @@ public abstract class Constraint implements ConstraintInterface {
      * @param mt
      * @return macierz ,jakobian wiezow d(Wiezy)/dq
      */
-    public static void getFullJacobian(MatrixDouble mt) {
+    public static void getFullJacobian(TensorDouble mt) {
         int rowPos = 0;
 
         for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
@@ -126,7 +126,7 @@ public abstract class Constraint implements ConstraintInterface {
      * @param mt
      * @return
      */
-    public static void evaluateConstraintVector(MatrixDouble mt) {
+    public static void evaluateConstraintVector(TensorDouble mt) {
         int currentRow = 0;
         for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
             mt.setSubMatrix(currentRow, 0, constraint.getValue());
@@ -156,11 +156,11 @@ public abstract class Constraint implements ConstraintInterface {
      * @param size liczebnosc prymitywnych punktow
      * @return
      */
-    public static MatrixDouble getFullHessian(MatrixDouble hs, MatrixDouble sv, int size) {
+    public static TensorDouble getFullHessian(TensorDouble hs, TensorDouble sv, int size) {
 
         int offset;             //licznik mnoznikow lagrange'a
         double lagrange;        //wartosc aktualnego mnoznika
-        MatrixDouble conHs;
+        TensorDouble conHs;
 
         offset = 0;
         for (Constraint constraint : ModelRegistry.dbConstraint.values()) {

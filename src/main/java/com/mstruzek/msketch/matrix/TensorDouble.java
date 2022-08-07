@@ -13,7 +13,7 @@ import java.util.stream.IntStream;
  *
  * - drukujemy do impl macierzy tylko impl : [ addSubMatrix, setSubMatrix, setVector, transpose ]
  */
-public interface MatrixDouble {
+public interface TensorDouble {
 
     String DOUBLE_STR_FORMAT = " %11.2e";
 //    String DOUBLE_STR_FORMAT = " %11.8f";
@@ -47,7 +47,7 @@ public interface MatrixDouble {
      *
      * @returns The resulting matrix , actual matrix this
      */
-    MatrixDouble plus(MatrixDouble rhs);
+    TensorDouble plus(TensorDouble rhs);
 
     /**
      * Mnozezenie kazdego elementu macierzy przez skalar
@@ -55,7 +55,7 @@ public interface MatrixDouble {
      * @param c skalar
      * @return this
      */
-    MatrixDouble mulitply(double c);
+    TensorDouble mulitply(double c);
 
     /**
      * Mnozezenie kazdego elementu macierzy przez skalar
@@ -64,7 +64,7 @@ public interface MatrixDouble {
      * @param c skalar
      * @return kopia macierzy aktualnej
      */
-    MatrixDouble multiplyC(double c);
+    TensorDouble multiplyC(double c);
 
     /**
      * Mnozezenie kazdego vectora macierzy przez odpowiadajacy  vector columnowy.
@@ -74,7 +74,7 @@ public interface MatrixDouble {
      * @param rhs prawy operand
      * @return
      */
-    MatrixDouble multiply(MatrixDouble rhs);
+    TensorDouble multiply(TensorDouble rhs);
 
     /**
      * Set value at corresponding coordinates.
@@ -104,7 +104,7 @@ public interface MatrixDouble {
      * @param width
      * @return
      */
-    MatrixDouble viewSpan(int row, int column, int height, int width);
+    TensorDouble viewSpan(int row, int column, int height, int width);
 
     /**
      * Funkcja wstawia macierz mt na dana pozycje w akutalnej macierzy
@@ -114,7 +114,7 @@ public interface MatrixDouble {
      * @param mt        macierz do wstawienia
      * @return this
      */
-    MatrixDouble setSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt);
+    TensorDouble setSubMatrix(int offsetRow, int offsetCol, TensorDouble mt);
 
     /**
      * Funkcja dodaje macierz mt do aktualnej macierzy i zwraca kopie , macierz this niezmieniona
@@ -131,7 +131,7 @@ public interface MatrixDouble {
      * @param mt        macierz do wstawienia
      * @return this matrix
      */
-    MatrixDouble plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt);
+    TensorDouble plusSubMatrix(int offsetRow, int offsetCol, TensorDouble mt);
 
 
     /**
@@ -141,7 +141,7 @@ public interface MatrixDouble {
      * @param c
      * @param vector
      */
-    MatrixDouble setVector(int r, int c, Vector vector);
+    TensorDouble setVector(int r, int c, Vector vector);
 
     /**
      * Transposes an mxn matrix into an nxm matrix. Each row of the input matrix becomes a column in the
@@ -149,7 +149,7 @@ public interface MatrixDouble {
      *
      * @return transposed cloned matrix.
      */
-    MatrixDouble transpose();
+    TensorDouble transpose();
 
     /**
      * Reset matrix fill with constant value.
@@ -157,7 +157,7 @@ public interface MatrixDouble {
      * @param value constant value that reset matrix to.
      * @return this matrix
      */
-    MatrixDouble reset(double value);
+    TensorDouble reset(double value);
 
     /**
      * Internal implementation from Colt, MatrixDouble2D, SmallMatrixDouble, ScalarMatrixDouble.
@@ -169,14 +169,14 @@ public interface MatrixDouble {
     <T> T unwrap(Class<T> clazz);
 
 
-    default void assertEqualDimensions(MatrixDouble left, MatrixDouble right) {
+    default void assertEqualDimensions(TensorDouble left, TensorDouble right) {
         if (left.width() != right.width() || left.height() != right.height()) {
             throw new Error("Matrices must be of the same dimension");
         }
     }
 
-    static MatrixDouble scalar(double value) {
-        return new ScalarMatrixDouble(value);
+    static TensorDouble scalar(double value) {
+        return new ScalarTensorDouble(value);
     }
 
     /**
@@ -185,31 +185,31 @@ public interface MatrixDouble {
      * @param columnar
      * @return
      */
-    static MatrixDouble smallMatrix(Vector vector, boolean columnar) {
-        return new MatrixDouble2D(vector, columnar);
+    static TensorDouble smallMatrix(Vector vector, boolean columnar) {
+        return new TensorDouble2D(vector, columnar);
     }
 
-    static MatrixDouble smallMatrix(double a00, double a01, double a10, double a11) {
-        SmallMatrixDouble mt = new SmallMatrixDouble(a00, a01, a10, a11);
+    static TensorDouble smallMatrix(double a00, double a01, double a10, double a11) {
+        SmallTensorDouble mt = new SmallTensorDouble(a00, a01, a10, a11);
         return mt;
     }
 
-    static MatrixDouble identity(int size, double diag) {
+    static TensorDouble identity(int size, double diag) {
         return DefaultDoubleMatrixCreator.INSTANCE.makeIdentity(size, diag);
 //        return MatrixDoubleCreator.getInstance().makeIdentity(size, diag);
     }
 
-    static MatrixDouble diagonal(int size, double c) {
+    static TensorDouble diagonal(int size, double c) {
         return DefaultDoubleMatrixCreator.INSTANCE.makeDiagonal(size, c);
 //        return MatrixDoubleCreator.getInstance().makeDiagonal(size, c);
     }
 
-    static MatrixDouble diagonal(double... diag) {
+    static TensorDouble diagonal(double... diag) {
         return DefaultDoubleMatrixCreator.INSTANCE.makeDiagonal(diag);
 //        return MatrixDoubleCreator.getInstance().makeDiagonal(diag);
     }
 
-    static MatrixDouble matrix2D(int rowSize, int colSize, double initValue) {
+    static TensorDouble matrix2D(int rowSize, int colSize, double initValue) {
         return MatrixDoubleCreator.getInstance().makeMatrix2D(rowSize, colSize, initValue);
     }
 
@@ -220,7 +220,7 @@ public interface MatrixDouble {
      * @param initValue
      * @return
      */
-    static MatrixDouble matrix1D(int rowSize, double initValue) {
+    static TensorDouble matrix1D(int rowSize, double initValue) {
         return MatrixDoubleCreator.getInstance().makeMatrix1D(rowSize, initValue);
     }
 
@@ -231,7 +231,7 @@ public interface MatrixDouble {
      * @param delegate source vector
      * @return
      */
-    static MatrixDouble matrixDoubleFrom(DoubleMatrix1D delegate) {
+    static TensorDouble matrixDoubleFrom(DoubleMatrix1D delegate) {
         return MatrixDoubleCreator.getInstance().matrixDoubleFrom(delegate);
     }
 
@@ -244,22 +244,22 @@ public interface MatrixDouble {
      * @param alfa degrees
      * @return
      */
-    static MatrixDouble rotation(double alfa) {
+    static TensorDouble rotation(double alfa) {
         double radians = Math.toRadians(alfa);
         double a00 = Math.cos(radians);
         double a01 = -1.0 * Math.sin(radians);
         double a10 = Math.sin(radians);
         double a11 = Math.cos(radians);
-        SmallMatrixDouble smd = new SmallMatrixDouble(a00, a01, a10, a11);
+        SmallTensorDouble smd = new SmallTensorDouble(a00, a01, a10, a11);
         return smd;
     }
 
-    static MatrixDouble matrixR() {
+    static TensorDouble matrixR() {
         double a00 = 0.0;
         double a01 = -1.0;
         double a10 = 1.0;
         double a11 = 0.0;
-        MatrixDouble smd = MatrixDouble.smallMatrix(a00, a01, a10, a11);
+        TensorDouble smd = TensorDouble.smallMatrix(a00, a01, a10, a11);
         return smd;
     }
 
@@ -268,16 +268,16 @@ public interface MatrixDouble {
      *
      * @return array string
      */
-    static String toStringData(String format, MatrixDouble matrixDouble) {
+    static String toStringData(String format, TensorDouble tensorDouble) {
         StringBuffer str = new StringBuffer();
-        for (int i = 0; i < matrixDouble.height(); i++) {
-            String first = String.format(format, matrixDouble.getQuick(i, 0));
+        for (int i = 0; i < tensorDouble.height(); i++) {
+            String first = String.format(format, tensorDouble.getQuick(i, 0));
             str.append(first);
-            for (int j = 1; j < matrixDouble.width(); j++) {
-                String cell = String.format("," + format, matrixDouble.getQuick(i, j));
+            for (int j = 1; j < tensorDouble.width(); j++) {
+                String cell = String.format("," + format, tensorDouble.getQuick(i, j));
                 str.append(cell);
             }
-            if (i < matrixDouble.width() - 1) str.append("\n");
+            if (i < tensorDouble.width() - 1) str.append("\n");
         }
         return str.toString();
     }
@@ -285,18 +285,18 @@ public interface MatrixDouble {
     /**
      * @return A string of a nicely organized version of the matrix or array.
      */
-    static String writeToString(MatrixDouble matrixDouble) {
+    static String writeToString(TensorDouble tensorDouble) {
         StringBuffer str = new StringBuffer();
         str.append("\n")
             .append("MatrixDouble - ")
-            .append(matrixDouble.height())
+            .append(tensorDouble.height())
             .append("x")
-            .append(matrixDouble.width())
+            .append(tensorDouble.width())
             .append("****************************************\n")
-            .append(IntStream.range(0, matrixDouble.width()/2).mapToObj(s -> String.format(WIDEN_DOUBLE_STR_FORMAT, s))
+            .append(IntStream.range(0, tensorDouble.width()/2).mapToObj(s -> String.format(WIDEN_DOUBLE_STR_FORMAT, s))
                 .collect(Collectors.joining()))
             .append("\n")
-            .append(toStringData(DOUBLE_STR_FORMAT, matrixDouble));
+            .append(toStringData(DOUBLE_STR_FORMAT, tensorDouble));
         return str.toString();
     }
 }

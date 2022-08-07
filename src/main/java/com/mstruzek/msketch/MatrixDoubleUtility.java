@@ -3,7 +3,7 @@ package com.mstruzek.msketch;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.impl.SparseDoubleMatrix2D;
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 /**
  * Klasa zawiera same funkcje static  do przeformatowania macierzy gestych na macierze rzadkie
@@ -18,7 +18,7 @@ public class MatrixDoubleUtility {
      * @param md
      * @return
      */
-    public static SparseDoubleMatrix2D toSparse(MatrixDouble md) {
+    public static SparseDoubleMatrix2D toSparse(TensorDouble md) {
 
         SparseDoubleMatrix2D unwrap = md.unwrap(SparseDoubleMatrix2D.class);
         if(unwrap != null) {
@@ -42,7 +42,7 @@ public class MatrixDoubleUtility {
      * @param md matrix double
      * @return
      */
-    public static DoubleMatrix1D toDenseVector(MatrixDouble md) {
+    public static DoubleMatrix1D toDenseVector(TensorDouble md) {
 
         DenseDoubleMatrix1D unwrap = md.unwrap(DenseDoubleMatrix1D.class);
         if(unwrap != null) {

@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import static com.mstruzek.msketch.ModelRegistry.dbParameter;
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
@@ -61,20 +61,20 @@ public class ConstraintAngle2Lines extends Constraint {
     }
 
     @Override
-    public MatrixDouble getValue() {
+    public TensorDouble getValue() {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
         double value = LK.product(NM) - LK.length() * NM.length() * Math.cos(dbParameter.get(param_id).getRadians());
-        return MatrixDouble.scalar(value);
+        return TensorDouble.scalar(value);
     }
 
     @Override
-    public void getJacobian(MatrixDouble mts) {
+    public void getJacobian(TensorDouble mts) {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
         Vector uLKdNM = LK.unit().product(NM.length()).product(Math.cos(dbParameter.get(param_id).getRadians()));
         Vector uNMdLK = NM.unit().product(LK.length()).product(Math.cos(dbParameter.get(param_id).getRadians()));
-        MatrixDouble mt = mts;
+        TensorDouble mt = mts;
         int j;
         //k
         j = po.get(k_id);
@@ -96,8 +96,8 @@ public class ConstraintAngle2Lines extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian(double lagrange) {
-        MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
+    public TensorDouble getHessian(double lagrange) {
+        TensorDouble mt = TensorDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id)).unit();
         Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id)).unit();
         double g = LK.product(NM) * Math.cos(dbParameter.get(param_id).getRadians());
@@ -117,12 +117,12 @@ public class ConstraintAngle2Lines extends Constraint {
         //k,m
         i = po.get(k_id);
         j = po.get(m_id);
-        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
+        mt.setSubMatrix(2 * i, 2 * j, TensorDouble.diagonal(2, (1 - g) * lagrange));
 
         //k,n
         i = po.get(k_id);
         j = po.get(n_id);
-        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
+        mt.setSubMatrix(2 * i, 2 * j, TensorDouble.diagonal(2, (g - 1) * lagrange));
 
         //l,k
         i = po.get(l_id);
@@ -137,22 +137,22 @@ public class ConstraintAngle2Lines extends Constraint {
         //l,m
         i = po.get(l_id);
         j = po.get(m_id);
-        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
+        mt.setSubMatrix(2 * i, 2 * j, TensorDouble.diagonal(2, (g - 1) * lagrange));
 
         //l,n
         i = po.get(l_id);
         j = po.get(n_id);
-        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
+        mt.setSubMatrix(2 * i, 2 * j, TensorDouble.diagonal(2, (1 - g) * lagrange));
 
         //m,k
         i = po.get(m_id);
         j = po.get(k_id);
-        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
+        mt.setSubMatrix(2 * i, 2 * j, TensorDouble.diagonal(2, (1 - g) * lagrange));
 
         //m,l
         i = po.get(m_id);
         j = po.get(l_id);
-        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
+        mt.setSubMatrix(2 * i, 2 * j, TensorDouble.diagonal(2, (g - 1) * lagrange));
 
         //m,m
         i = po.get(m_id);
@@ -167,12 +167,12 @@ public class ConstraintAngle2Lines extends Constraint {
         //n,k
         i = po.get(n_id);
         j = po.get(k_id);
-        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (g - 1) * lagrange));
+        mt.setSubMatrix(2 * i, 2 * j, TensorDouble.diagonal(2, (g - 1) * lagrange));
 
         //n,l
         i = po.get(n_id);
         j = po.get(l_id);
-        mt.setSubMatrix(2 * i, 2 * j, MatrixDouble.diagonal(2, (1 - g) * lagrange));
+        mt.setSubMatrix(2 * i, 2 * j, TensorDouble.diagonal(2, (1 - g) * lagrange));
 
         //n,m
         i = po.get(n_id);
@@ -221,7 +221,7 @@ public class ConstraintAngle2Lines extends Constraint {
     public double getNorm() {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
-        MatrixDouble mt = getValue();
+        TensorDouble mt = getValue();
         return mt.getQuick(0, 0) / (LK.length() * NM.length());
     }
 }

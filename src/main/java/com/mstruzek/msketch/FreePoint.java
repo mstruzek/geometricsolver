@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import java.util.Collections;
 import java.util.Set;
@@ -86,7 +86,7 @@ public class FreePoint extends GeometricObject {
     }
 
     @Override
-    public void evaluateForceIntensity(int row, MatrixDouble mt) {
+    public void evaluateForceIntensity(int row, TensorDouble mt) {
 
         // 8 = 4*2 (4 punkty kontrolne)
 
@@ -105,7 +105,7 @@ public class FreePoint extends GeometricObject {
 
 
     @Override
-    public void setStiffnessMatrix(int row, int col, MatrixDouble mt) {
+    public void setStiffnessMatrix(int row, int col, TensorDouble mt) {
         /**
          * k= I*k
          * [ -ks    ks     0;
@@ -114,8 +114,8 @@ public class FreePoint extends GeometricObject {
 
          */
         // K -mala sztywnosci
-        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
-        MatrixDouble Km = Ks.multiplyC(-1);
+        TensorDouble Ks = TensorDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
+        TensorDouble Km = Ks.multiplyC(-1);
 
         mt.plusSubMatrix(row + 0, col + 0, Km);
         mt.plusSubMatrix(row + 0, col + 2, Ks);

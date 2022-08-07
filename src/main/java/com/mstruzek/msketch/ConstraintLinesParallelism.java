@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
@@ -74,20 +74,20 @@ public class ConstraintLinesParallelism extends Constraint {
     }
 
     @Override
-    public MatrixDouble getValue() {
+    public TensorDouble getValue() {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         if ((m == null) && (n == null)) {
             double value = LK.cross(dbPoint.get(n_id).minus(dbPoint.get(m_id)));
-            return MatrixDouble.scalar(value);
+            return TensorDouble.scalar(value);
         } else {
             double value = LK.cross(n.minus(m));
-            return MatrixDouble.scalar(value);
+            return TensorDouble.scalar(value);
         }
     }
 
     @Override
-    public void getJacobian(MatrixDouble mts) {
-        MatrixDouble mt = mts;
+    public void getJacobian(TensorDouble mts) {
+        TensorDouble mt = mts;
         int i;
         if ((m == null) && (n == null)) {
             Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
@@ -128,11 +128,11 @@ public class ConstraintLinesParallelism extends Constraint {
     }
 
     @Override
-    public MatrixDouble getHessian(double lagrange) {
+    public TensorDouble getHessian(double lagrange) {
         /// macierz NxN
-        MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-        final MatrixDouble R = MatrixDouble.rotation(90 + 180).mulitply(lagrange);     /// R
-        final MatrixDouble Rm = MatrixDouble.rotation(90).mulitply(lagrange);          /// Rm = -R
+        TensorDouble mt = TensorDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
+        final TensorDouble R = TensorDouble.rotation(90 + 180).mulitply(lagrange);     /// R
+        final TensorDouble Rm = TensorDouble.rotation(90).mulitply(lagrange);          /// Rm = -R
         int i;
         int j;
         if ((m == null) && (n == null)) {
@@ -217,7 +217,7 @@ public class ConstraintLinesParallelism extends Constraint {
     @Override
     public double getNorm() {
         Vector LK = dbPoint.get(k_id).minus(dbPoint.get(l_id));
-        MatrixDouble mt = getValue();
+        TensorDouble mt = getValue();
         if ((m == null) && (n == null)) {
             return mt.getQuick(0, 0) / LK.length() / dbPoint.get(m_id).minus(dbPoint.get(n_id)).length();
         } else {

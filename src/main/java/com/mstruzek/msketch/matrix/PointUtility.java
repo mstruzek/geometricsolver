@@ -13,7 +13,7 @@ public class PointUtility {
      * Funkcja przepisuje wartosci z macierzy do wszystkich punktow
      * @param stateVector state vector
      */
-    public static void copyFromStateVector(MatrixDouble stateVector) {
+    public static void copyFromStateVector(TensorDouble stateVector) {
         int k = 0;
         for (Integer pointId : ModelRegistry.dbPoint.keySet()) {
             double x = stateVector.getQuick(k * 2, 0);
@@ -27,7 +27,7 @@ public class PointUtility {
      * Funkcja przepisuje wartosci z punktow do aktualnej macierzy
      * @param stateVector vector vector
      */
-    public static void copyIntoStateVector(MatrixDouble stateVector) {
+    public static void copyIntoStateVector(TensorDouble stateVector) {
         int k = 0;
         for (Integer i : ModelRegistry.dbPoint.keySet()) {
             double pointX = ModelRegistry.dbPoint.get(i).getX();
@@ -42,7 +42,7 @@ public class PointUtility {
      * Inicjalizacji wspolczynnikow Lagrange'a
      * @param stateVector state vector
      */
-    public static void setupLagrangeMultipliers(MatrixDouble stateVector) {
+    public static void setupLagrangeMultipliers(TensorDouble stateVector) {
         double defaultValue = 0.0;
         int size = ModelRegistry.dbPoint.size() * 2;
         for(int i = size; i < stateVector.height(); i++) {

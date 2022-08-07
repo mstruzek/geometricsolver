@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import java.util.Set;
 
@@ -39,13 +39,13 @@ public class FixLine extends GeometricObject {
     }
 
     @Override
-    public void evaluateForceIntensity(int row, MatrixDouble dest) {
+    public void evaluateForceIntensity(int row, TensorDouble dest) {
 
     }
 
 
     @Override
-    public void setStiffnessMatrix(int row, int col, MatrixDouble dest) {
+    public void setStiffnessMatrix(int row, int col, TensorDouble dest) {
         //poniewaz nie ma punktow kontrolnych to brak macierzy
     }
 

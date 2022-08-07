@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
@@ -64,8 +64,8 @@ public class ConstraintLinesPerpendicular extends Constraint {
     }
 
     @Override
-    public void getJacobian(MatrixDouble mts) {
-        MatrixDouble mt = mts;
+    public void getJacobian(TensorDouble mts) {
+        TensorDouble mt = mts;
         int j = 0;
         if ((m == null) && (n == null)) {
             /// K
@@ -103,22 +103,22 @@ public class ConstraintLinesPerpendicular extends Constraint {
     }
 
     @Override
-    public MatrixDouble getValue() {
+    public TensorDouble getValue() {
         if ((m == null) && (n == null)) {
             double value = (dbPoint.get(k_id).minus(dbPoint.get(l_id))).product(dbPoint.get(m_id).minus(dbPoint.get(n_id)));
-            return MatrixDouble.scalar(value);
+            return TensorDouble.scalar(value);
         } else {
             double value = (dbPoint.get(k_id).minus(dbPoint.get(l_id))).product(m.minus(n));
-            return MatrixDouble.scalar(value);
+            return TensorDouble.scalar(value);
         }
     }
 
     @Override
-    public MatrixDouble getHessian(double lagrange) {
+    public TensorDouble getHessian(double lagrange) {
         /// macierz NxN
-        MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-        MatrixDouble I = MatrixDouble.identity(2, 1.0 * lagrange);
-        MatrixDouble Im = MatrixDouble.identity(2, 1.0 * lagrange);
+        TensorDouble mt = TensorDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
+        TensorDouble I = TensorDouble.identity(2, 1.0 * lagrange);
+        TensorDouble Im = TensorDouble.identity(2, 1.0 * lagrange);
         int i;
         int j;
         if ((m == null) && (n == null)) {
@@ -204,7 +204,7 @@ public class ConstraintLinesPerpendicular extends Constraint {
     @Override
     public double getNorm() {
         Vector vKL = dbPoint.get(k_id).minus(dbPoint.get(l_id));
-        MatrixDouble mt = getValue();
+        TensorDouble mt = getValue();
         if ((m == null) && (n == null)) {
             return mt.getQuick(0, 0) / vKL.length() / dbPoint.get(m_id).minus(dbPoint.get(n_id)).length();
         } else {

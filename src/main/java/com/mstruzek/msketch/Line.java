@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import java.util.Collections;
 import java.util.Set;
@@ -104,7 +104,7 @@ public class Line extends GeometricObject {
     }
 
     @Override
-    public void evaluateForceIntensity(int row, MatrixDouble mt) {
+    public void evaluateForceIntensity(int row, TensorDouble mt) {
         // 8 = 4*2 (4 punkty kontrolne)
         Vector f12 = p1.minus(a).unit().product(Consts.springStiffnessLow).product(p1.minus(a).length() - d_a_p1);          //F12 - sily w sprezynach
         Vector f23 = p2.minus(p1).unit().product(Consts.springStiffnessHigh).product(p2.minus(p1).length() - d_p1_p2);      //F23
@@ -122,7 +122,7 @@ public class Line extends GeometricObject {
     }
 
     @Override
-    public void setStiffnessMatrix(int row, int col, MatrixDouble mt) {
+    public void setStiffnessMatrix(int row, int col, TensorDouble mt) {
 
         /**
          * k= I*k
@@ -132,11 +132,11 @@ public class Line extends GeometricObject {
          *     0  	 0     ks    -ks];
          */
         // K -mala sztywnosci
-        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
+        TensorDouble Ks = TensorDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
         // K - duza szytwnosci
-        MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
+        TensorDouble Kb = TensorDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
         // -Ks-Kb
-        MatrixDouble Ksb = Ks.multiplyC(-1).plus(Kb.multiplyC(-1));
+        TensorDouble Ksb = Ks.multiplyC(-1).plus(Kb.multiplyC(-1));
 
         //wiersz pierwszy
         mt.plusSubMatrix(row + 0, col + 0, Ks.multiplyC(-1));

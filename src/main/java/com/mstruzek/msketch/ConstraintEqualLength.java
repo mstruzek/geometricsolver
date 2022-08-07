@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
@@ -60,10 +60,10 @@ public class ConstraintEqualLength extends Constraint {
     }
 
     @Override
-    public void getJacobian(MatrixDouble mts) {
+    public void getJacobian(TensorDouble mts) {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id)).unit();
         Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id)).unit();
-        MatrixDouble mt = mts;
+        TensorDouble mt = mts;
         int j;
         //k
         j = po.get(k_id);
@@ -85,15 +85,15 @@ public class ConstraintEqualLength extends Constraint {
     }
 
     @Override
-    public MatrixDouble getValue() {
+    public TensorDouble getValue() {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
         double value = LK.length() - NM.length();
-        return MatrixDouble.scalar(value);
+        return TensorDouble.scalar(value);
     }
 
     @Override
-    public MatrixDouble getHessian(double lagrange) {
+    public TensorDouble getHessian(double lagrange) {
         return null;
     }
 
@@ -129,7 +129,7 @@ public class ConstraintEqualLength extends Constraint {
 
     @Override
     public double getNorm() {
-        MatrixDouble md = getValue();
+        TensorDouble md = getValue();
         return md.getQuick(0, 0);
     }
 

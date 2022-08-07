@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
@@ -47,20 +47,20 @@ public class ConstraintDistancePointLine extends Constraint {
     }
 
     @Override
-    public MatrixDouble getValue() {
+    public TensorDouble getValue() {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
         double d = ModelRegistry.dbParameter.get(param_id).getValue();
         double value = LK.cross(MK)  -  d * LK.length();
-        return MatrixDouble.scalar(value);
+        return TensorDouble.scalar(value);
     }
 
     @Override
-    public void getJacobian(MatrixDouble mts) {
+    public void getJacobian(TensorDouble mts) {
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
         double d = ModelRegistry.dbParameter.get(param_id).getValue(); /// parameter value
-        MatrixDouble mt = mts;
+        TensorDouble mt = mts;
         int j;
         //k
         j = po.get(k_id);
@@ -77,7 +77,7 @@ public class ConstraintDistancePointLine extends Constraint {
 
     @Override
     public double getNorm() {
-        MatrixDouble mt = getValue();
+        TensorDouble mt = getValue();
         return mt.getQuick(0, 0);
     }
 
@@ -88,21 +88,21 @@ public class ConstraintDistancePointLine extends Constraint {
 
     @Override
     @InstabilityBehavior(description = "equations `or Lagrange multiplier , update definition from jacobian equations !!")
-    public MatrixDouble getHessian(double lagrange) {
+    public TensorDouble getHessian(double lagrange) {
         if(true)
             return null;
 
         /// macierz NxN
-        MatrixDouble mt = MatrixDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
+        TensorDouble mt = TensorDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
         Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
         Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         Vector ML = dbPoint.get(m_id).minus(dbPoint.get(l_id));
         double d = ModelRegistry.dbParameter.get(param_id).getValue();
-        MatrixDouble R = MatrixDouble.matrixR();
-        MatrixDouble D = MatrixDouble.diagonal(2, 2 * d * d);
-        MatrixDouble Dm = MatrixDouble.diagonal(2, -2 * d * d);
+        TensorDouble R = TensorDouble.matrixR();
+        TensorDouble D = TensorDouble.diagonal(2, 2 * d * d);
+        TensorDouble Dm = TensorDouble.diagonal(2, -2 * d * d);
         double SC = MK.product(LK.pivot()); ///
-        MatrixDouble mat;
+        TensorDouble mat;
         int i;
         int j;
 

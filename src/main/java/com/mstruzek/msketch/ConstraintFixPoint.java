@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
@@ -51,12 +51,12 @@ public class ConstraintFixPoint extends Constraint {
     }
 
     @Override
-    public void getJacobian(MatrixDouble mts) {
-        MatrixDouble mt = mts;
+    public void getJacobian(TensorDouble mts) {
+        TensorDouble mt = mts;
         int j;
         //k
         j = po.get(k_id);
-        mt.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));
+        mt.setSubMatrix(0, j * 2, TensorDouble.identity(2, 1.0));
     }
 
     @Override
@@ -65,12 +65,12 @@ public class ConstraintFixPoint extends Constraint {
     }
 
     @Override
-    public MatrixDouble getValue() {
-        return MatrixDouble.smallMatrix(dbPoint.get(k_id).minus(k0_vec), true);
+    public TensorDouble getValue() {
+        return TensorDouble.smallMatrix(dbPoint.get(k_id).minus(k0_vec), true);
     }
 
     @Override
-    public MatrixDouble getHessian(double lagrange) {
+    public TensorDouble getHessian(double lagrange) {
         return null;
     }
 
@@ -106,7 +106,7 @@ public class ConstraintFixPoint extends Constraint {
 
     @Override
     public double getNorm() {
-        MatrixDouble mt = getValue();
+        TensorDouble mt = getValue();
         double val = Math.sqrt(mt.getQuick(0, 0) * mt.getQuick(0, 0) + mt.getQuick(1, 0) * mt.getQuick(1, 0));
         return val;
     }

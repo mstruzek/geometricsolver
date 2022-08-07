@@ -4,7 +4,7 @@ import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
 import com.mstruzek.msketch.*;
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 import com.mstruzek.msketch.matrix.PointUtility;
 
 import java.time.Instant;
@@ -77,21 +77,21 @@ public class GeometricSolverImpl implements GeometricSolver {
 
         /// Uklad rownan liniowych  [ A * x = b ] powstały z linerazycji ukladu dynamicznego
 
-        final MatrixDouble A;               /// Macierz głowna ukladu rownan liniowych
-        final MatrixDouble Fq;              /// Macierz sztywnosci ukladu obiektow zawieszonych na sprezynach.
-        final MatrixDouble Wq;              /// d(FI)/dq - Jacobian Wiezow
+        final TensorDouble A;               /// Macierz głowna ukladu rownan liniowych
+        final TensorDouble Fq;              /// Macierz sztywnosci ukladu obiektow zawieszonych na sprezynach.
+        final TensorDouble Wq;              /// d(FI)/dq - Jacobian Wiezow
 
         /// HESSIAN
-        final MatrixDouble Hs;
+        final TensorDouble Hs;
 
         // Wektor prawych stron [Fr; Fi]'
-        final MatrixDouble b;
+        final TensorDouble b;
 
         // skladowe to Fr - oddzialywania pomiedzy obiektami, sily w sprezynach
-        final MatrixDouble Fr;
+        final TensorDouble Fr;
 
         // skladowa to Fiq - wartosci poszczegolnych wiezow
-        final MatrixDouble Fi;
+        final TensorDouble Fi;
 
         double norm1;               /// wartosci bledow na wiezach
         double prevNorm;            /// norma z wczesniejszej iteracji,
@@ -99,7 +99,7 @@ public class GeometricSolverImpl implements GeometricSolver {
 
 
         solverStat.startTime  = Instant.now().toEpochMilli();
-        reporter.writeln("@#=================== Solver Initialized ===================#@ ");
+        reporter.writeln("#=================== Solver Initialized ===================# ");
         reporter.writeln("");
 
         solverWatch.startTick();
@@ -134,26 +134,26 @@ public class GeometricSolverImpl implements GeometricSolver {
         // - reference locations for Jacobian and Hessian evaluation !
         PointLocation.setup();
 
-        A = MatrixDouble.matrix2D(dimension, dimension, 0.0);
-        Fq = MatrixDouble.matrix2D(size, size, 0.0);
+        A = TensorDouble.matrix2D(dimension, dimension, 0.0);
+        Fq = TensorDouble.matrix2D(size, size, 0.0);
 
-        Wq = MatrixDouble.matrix2D(coffSize, size, 0.0);
-        Hs = MatrixDouble.matrix2D(size, size, 0.0);
+        Wq = TensorDouble.matrix2D(coffSize, size, 0.0);
+        Hs = TensorDouble.matrix2D(size, size, 0.0);
 
         /// macierz sztywnosci stala w czasie
         GeometricObject.evaluateStiffnessMatrix(Fq);
 
 /// Wektor prawych stron b
 
-        b = MatrixDouble.matrix1D(dimension, 0.0);
+        b = TensorDouble.matrix1D(dimension, 0.0);
         // right-hand side vector ~ b
         Fr = b.viewSpan(0, 0, size, 1);
         Fi = b.viewSpan(size, 0, coffSize, 1);
 
-        MatrixDouble dmx = null;
+        TensorDouble dmx = null;
 
         /// State Vector - zmienne stanu
-        MatrixDouble SV = MatrixDouble.matrix1D(dimension, 0.0);
+        TensorDouble SV = TensorDouble.matrix1D(dimension, 0.0);
         PointUtility.copyIntoStateVector(SV);
         PointUtility.setupLagrangeMultipliers(SV);
 
@@ -227,7 +227,7 @@ public class GeometricSolverImpl implements GeometricSolver {
 
 /// Bind delta-x into database points
 
-            dmx = MatrixDouble.matrixDoubleFrom(matrix1Db);
+            dmx = TensorDouble.matrixDoubleFrom(matrix1Db);
 
             /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ]
             SV.plus(dmx);
@@ -235,9 +235,9 @@ public class GeometricSolverImpl implements GeometricSolver {
 
 
             // Lagrange Coefficients
-            MatrixDouble LC = SV.viewSpan(size, 0, coffSize, 1);
+            TensorDouble LC = SV.viewSpan(size, 0, coffSize, 1);
             if (StateReporter.isDebugEnabled()) {
-                reporter.writeln(MatrixDouble.writeToString(LC));
+                reporter.writeln(TensorDouble.writeToString(LC));
             }
 
 

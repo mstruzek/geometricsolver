@@ -2,14 +2,14 @@ package com.mstruzek.msketch.matrix;
 
 import com.mstruzek.msketch.Vector;
 
-public class SmallMatrixDouble implements MatrixDouble {
+public class SmallTensorDouble implements TensorDouble {
 
     double[] sm = new double[4];
 
-    public SmallMatrixDouble() {
+    public SmallTensorDouble() {
     }
 
-    public SmallMatrixDouble(double a00, double a01, double a10, double a11) {
+    public SmallTensorDouble(double a00, double a01, double a10, double a11) {
         sm[0] = a00;
         sm[1] = a01;
         sm[2] = a10;
@@ -32,10 +32,10 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble plus(MatrixDouble rhs) {
-        SmallMatrixDouble mt = new SmallMatrixDouble();
-        if (rhs instanceof SmallMatrixDouble) {
-            SmallMatrixDouble rh = (SmallMatrixDouble) rhs;
+    public TensorDouble plus(TensorDouble rhs) {
+        SmallTensorDouble mt = new SmallTensorDouble();
+        if (rhs instanceof SmallTensorDouble) {
+            SmallTensorDouble rh = (SmallTensorDouble) rhs;
             mt.sm[0] = this.sm[0] + rh.sm[0];
             mt.sm[1] = this.sm[1] + rh.sm[1];
             mt.sm[2] = this.sm[2] + rh.sm[2];
@@ -46,7 +46,7 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble mulitply(double c) {
+    public TensorDouble mulitply(double c) {
         this.sm[0] = this.sm[0] * c;
         this.sm[1] = this.sm[1] * c;
         this.sm[2] = this.sm[2] * c;
@@ -55,8 +55,8 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble multiplyC(double c) {
-        SmallMatrixDouble mt = new SmallMatrixDouble();
+    public TensorDouble multiplyC(double c) {
+        SmallTensorDouble mt = new SmallTensorDouble();
         mt.sm[0] = this.sm[0] * c;
         mt.sm[1] = this.sm[1] * c;
         mt.sm[2] = this.sm[2] * c;
@@ -65,10 +65,10 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble multiply(MatrixDouble rhs) {
-        if (rhs instanceof SmallMatrixDouble) {
-            SmallMatrixDouble rh = (SmallMatrixDouble) rhs;
-            SmallMatrixDouble mt = new SmallMatrixDouble();
+    public TensorDouble multiply(TensorDouble rhs) {
+        if (rhs instanceof SmallTensorDouble) {
+            SmallTensorDouble rh = (SmallTensorDouble) rhs;
+            SmallTensorDouble mt = new SmallTensorDouble();
             /// ---------------------------------------
             double a00 = mt.sm[0];
             double a01 = mt.sm[1];
@@ -98,38 +98,38 @@ public class SmallMatrixDouble implements MatrixDouble {
     }
 
     @Override
-    public MatrixDouble viewSpan(int row, int column, int height, int width) {
+    public TensorDouble viewSpan(int row, int column, int height, int width) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble setSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+    public TensorDouble setSubMatrix(int offsetRow, int offsetCol, TensorDouble mt) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble plusSubMatrix(int offsetRow, int offsetCol, MatrixDouble mt) {
+    public TensorDouble plusSubMatrix(int offsetRow, int offsetCol, TensorDouble mt) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble setVector(int r, int c, Vector vector) {
+    public TensorDouble setVector(int r, int c, Vector vector) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble transpose() {
+    public TensorDouble transpose() {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
-    public MatrixDouble reset(double value) {
+    public TensorDouble reset(double value) {
         throw new IllegalStateException("no implementation");
     }
 
     @Override
     public <T> T unwrap(Class<T> clazz) {
-        if(SmallMatrixDouble.class.isAssignableFrom(clazz)) {
+        if(SmallTensorDouble.class.isAssignableFrom(clazz)) {
             return (T) this;
         }
         return null;

@@ -1,6 +1,6 @@
 package com.mstruzek.sparsematrixsolver;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 /**
  * Klasa reprezentuje macierz "g�st�"
@@ -32,7 +32,7 @@ public class DenseMatrix implements MatrixData {
         }
     }
 
-    public DenseMatrix(MatrixDouble md) {
+    public DenseMatrix(TensorDouble md) {
         super();
         this.width = md.width();
         this.height = md.height();
@@ -172,7 +172,7 @@ public class DenseMatrix implements MatrixData {
         dm.multiply(out, bv, 0, 0);
         System.out.println(out);
 
-        MatrixDouble force = MatrixDouble.matrix2D(8, 2, 3.0);
+        TensorDouble force = TensorDouble.matrix2D(8, 2, 3.0);
 
         DenseMatrix dq = new DenseMatrix(force);
 

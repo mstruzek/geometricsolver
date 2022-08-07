@@ -1,6 +1,6 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import java.util.Collections;
 import java.util.Set;
@@ -144,7 +144,7 @@ public class Arc extends GeometricObject {
     }
 
     @Override
-    public void evaluateForceIntensity(int row, MatrixDouble mt) {
+    public void evaluateForceIntensity(int row, TensorDouble mt) {
         Vector fap1 = p1.minus(a).unit().product(Consts.springStiffnessLow).product(p1.minus(a).length() - d_a_p1);
         Vector fbp1 = p1.minus(b).unit().product(Consts.springStiffnessLow).product(p1.minus(b).length() - d_b_p1);
         Vector fp1p2 = p2.minus(p1).unit().product(Consts.springStiffnessHigh).product(p2.minus(p1).length() - d_p1_p2);
@@ -163,15 +163,15 @@ public class Arc extends GeometricObject {
 
 
     @Override
-    public void setStiffnessMatrix(int row, int col, MatrixDouble mt) {
+    public void setStiffnessMatrix(int row, int col, TensorDouble mt) {
 
         // K -mala sztywnosci
-        MatrixDouble Kb = MatrixDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
-        MatrixDouble Ks = MatrixDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
+        TensorDouble Kb = TensorDouble.diagonal(Consts.springStiffnessHigh, Consts.springStiffnessHigh);
+        TensorDouble Ks = TensorDouble.diagonal(Consts.springStiffnessLow, Consts.springStiffnessLow);
 
-        MatrixDouble mKs = Ks.multiplyC(-1);
-        MatrixDouble mKb = Kb.multiplyC(-1);
-        MatrixDouble KsKbm = mKs.plus(mKb);
+        TensorDouble mKs = Ks.multiplyC(-1);
+        TensorDouble mKb = Kb.multiplyC(-1);
+        TensorDouble KsKbm = mKs.plus(mKb);
 
         mt.plusSubMatrix(row + 0, col + 0, mKs);
         mt.plusSubMatrix(row + 0, col + 8, Ks);//a

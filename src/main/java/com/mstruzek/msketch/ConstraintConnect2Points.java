@@ -1,7 +1,7 @@
 package com.mstruzek.msketch;
 
-import com.mstruzek.msketch.matrix.MatrixDouble;
-import com.mstruzek.msketch.matrix.MatrixDouble2D;
+import com.mstruzek.msketch.matrix.TensorDouble;
+import com.mstruzek.msketch.matrix.TensorDouble2D;
 
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
@@ -41,16 +41,16 @@ public class ConstraintConnect2Points extends Constraint {
     }
 
     @Override
-    public void getJacobian(MatrixDouble mts) {
-        MatrixDouble mt = mts;
+    public void getJacobian(TensorDouble mts) {
+        TensorDouble mt = mts;
         int j = 0;
         //k
         j = po.get(k_id);
-        mt.setSubMatrix(0, j * 2, MatrixDouble.identity(2, 1.0));        //macierz jednostkowa = I
+        mt.setSubMatrix(0, j * 2, TensorDouble.identity(2, 1.0));        //macierz jednostkowa = I
 
         //l
         j = po.get(l_id);
-        mt.setSubMatrix(0, j * 2, MatrixDouble.identity(2, -1.0));       // = -I
+        mt.setSubMatrix(0, j * 2, TensorDouble.identity(2, -1.0));       // = -I
     }
 
     @Override
@@ -59,12 +59,12 @@ public class ConstraintConnect2Points extends Constraint {
     }
 
     @Override
-    public MatrixDouble getValue() {
-        return new MatrixDouble2D(dbPoint.get(k_id).Vector().minus(dbPoint.get(l_id)), true);
+    public TensorDouble getValue() {
+        return new TensorDouble2D(dbPoint.get(k_id).Vector().minus(dbPoint.get(l_id)), true);
     }
 
     @Override
-    public MatrixDouble getHessian(double lagrange) {
+    public TensorDouble getHessian(double lagrange) {
         return null;
     }
 
@@ -100,7 +100,7 @@ public class ConstraintConnect2Points extends Constraint {
 
     @Override
     public double getNorm() {
-        MatrixDouble md = getValue();
+        TensorDouble md = getValue();
         return Math.sqrt(md.getQuick(0, 0) * md.getQuick(0, 0) + md.getQuick(1, 0) * md.getQuick(1, 0));
     }
 
