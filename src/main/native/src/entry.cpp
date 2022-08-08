@@ -27,5 +27,22 @@ int main(int argc, char* args[])
     long stopTime = graph::TimeNanosecondsNow();
     long startTime = graph::TimeNanosecondsNow();    
 
+
+    
+    int error;
+
+    error = 0;
+
+    try {
+
+            solveSystemOnGPU(&error);
+
+    } catch(const std::exception& e) {
+
+            return 2;
+    }
+
+
+
     return 0;
 }

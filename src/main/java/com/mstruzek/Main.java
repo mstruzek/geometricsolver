@@ -8,9 +8,21 @@ public class Main {
         System.out.println("Hello world!");
 
 
-        SolverStat solverStatistics = JNISolverGate.getSolverStatistics();
+        try {
+            SolverStat solverStatistics = JNISolverGate.getSolverStatistics();
 
-        System.out.printf("accEvaluationTime = %d\n", solverStatistics.accEvaluationTime);
+            System.out.printf("accEvaluationTime = %d\n", solverStatistics.accEvaluationTime);
+
+
+            JNISolverGate.solveSystem();
+
+        } catch (Throwable e) {
+
+            System.err.println("last error" + JNISolverGate.getLastError());
+
+        }
+
+
 
 
     }

@@ -45,6 +45,13 @@ extern "C" {
 #define CONSTRAINT_TYPE_ID_SetVertical         16
 
 
+/**
+ * @brief  setup all matricies for computation and prepare kernel stream  intertwined with cusolver
+ *
+ */
+void solveSystemOnGPU(int *error);
+
+
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
  * Method:    initDriver

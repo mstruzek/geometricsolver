@@ -13,7 +13,7 @@ project(gsketcherjni VERSION 0.0.1
 
 
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
@@ -42,8 +42,8 @@ find_package(JNI)     #  in this cmake-3.20 settings JNI module is not setting t
 find_package(CUDAToolkit 11.7)
 
 
-add_library(${PROJECT_SHARED_LIBRARY} SHARED
-        src/com_mstruzek_jni_JNISolverGate.cpp)
+add_library(${PROJECT_SHARED_LIBRARY} SHARED 
+        src/com_mstruzek_jni_JNISolverGate.cu)
 
 
 target_include_directories(${PROJECT_SHARED_LIBRARY} PUBLIC     
@@ -51,14 +51,14 @@ target_include_directories(${PROJECT_SHARED_LIBRARY} PUBLIC
         ${JAVA_INCLUDE_PATH2})
 
 
-target_link_libraries(${PROJECT_SHARED_LIBRARY} PUBLIC
-        CUDA::cudart
-        CUDA::cublas
+target_link_libraries(${PROJECT_SHARED_LIBRARY} PUBLIC 
+        CUDA::cudart 
+        CUDA::cublas 
         CUDA::cusolver
         CUDA::cusparse)
-target_include_directories(${PROJECT_SHARED_LIBRARY} PRIVATE PUBLIC
-        CUDA::cudart
-        CUDA::cublas
+target_include_directories(${PROJECT_SHARED_LIBRARY} PRIVATE PUBLIC 
+        CUDA::cudart 
+        CUDA::cublas 
         CUDA::cusolver
         CUDA::cusparse)
 
@@ -85,4 +85,4 @@ target_include_directories(${PROJECT_TEST_EXECUTABLE} PRIVATE PUBLIC
         CUDA::cusolver
         CUDA::cusparse)
 
-
+target_link_libraries(${PROJECT_TEST_EXECUTABLE} PUBLIC ${PROJECT_SHARED_LIBRARY})

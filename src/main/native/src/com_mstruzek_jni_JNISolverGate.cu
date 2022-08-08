@@ -8,9 +8,9 @@
 #include <stdio.h>
 #include <type_traits>
 #include <vector>
+#include <numeric>
 
 #include "model.cuh"
-
 #include "stopWatch.h"
 
 /// GPU common variables
@@ -42,12 +42,6 @@ static std::unique_ptr<int[]> accConstraintSize;
 
 /// Accymylated Geometric Object Size
 static std::unique_ptr<int[]> accGeometricSize; /// 2 * point.size()
-
-/**
- * @brief  setup all matricies for computation and prepare kernel stream  intertwined with cusolver
- *
- */
-void solveSystemOnGPU(int *error);
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
@@ -156,7 +150,14 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem(JNIEnv *e
 
         error = 0;
 
-        solveSystemOnGPU(&error);
+        try {
+
+                solveSystemOnGPU(&error);
+
+        } catch(const std::exception& e) {
+                env->ThrowNew(env->FindClass("java/lang/RuntimeException"), e.what());
+                return JNI_ERROR;
+        }
 
         if (error != 0) {
                 return JNI_ERROR;
@@ -166,13 +167,13 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem(JNIEnv *e
 }
 
 template <typename FieldType> void JniSetFieldValue(JNIEnv *env, jclass objClazz, jobject object, const char *fieldName, FieldType &sourceField) {
-        if constexpr (std::is_same_v<FieldType, double>) {
+        if constexpr (std::is_same<FieldType, double>::value) {
                 env->SetDoubleField(object, env->GetFieldID(objClazz, fieldName, "D"), sourceField);
-        } else if constexpr (std::is_same_v<FieldType, long>) {
+        } else if constexpr (std::is_same<FieldType, long>::value) {
                 env->SetLongField(object, env->GetFieldID(objClazz, fieldName, "J"), sourceField);
-        } else if constexpr (std::is_same_v<FieldType, int>) {
+        } else if constexpr (std::is_same<FieldType, int>::value) {
                 env->SetIntField(object, env->GetFieldID(objClazz, fieldName, "I"), sourceField);
-        } else if constexpr (std::is_same_v<FieldType, bool>) {
+        } else if constexpr (std::is_same<FieldType, bool>::value) {
                 env->SetBooleanField(object, env->GetFieldID(objClazz, fieldName, "Z"), sourceField);
         }
 }
@@ -362,7 +363,98 @@ template <typename Obj, typename ValueFunction> std::unique_ptr<int[]> accumalat
         return accumulated;
 }
 
-#include <numeric>
+
+
+void checkCudaStatus_impl(cudaError_t status, size_t __line_) {
+        if (status != cudaSuccess) {
+                printf("%li: cuda API failed with status %d\n", __line_, status);
+                throw std::logic_error("cuda API error");
+        }
+}
+
+
+#define checkCudaStatus(status)                 checkCudaStatus_impl        (status,        __LINE__)
+
+
+/// KERNEL# GPU
+__global__ void kernel_add(int* HA, int* HB, int* HC, int size) 
+{
+
+        int i = threadIdx.x;
+
+        if(i < size) {
+
+                HC[i] = HA[i] + HB[i];
+        }
+
+}
+
+void solveSystemOnGPU(int *error) {
+
+
+        constexpr int N = 1024;
+
+        constexpr int size = N * sizeof(int);
+
+        int* a;
+        int* b;
+        int* c;
+
+        int* HA;
+        int* HB;
+        int* HC;
+
+        checkCudaStatus(cudaSetDevice(0));
+
+/// HOST#
+        a = (int*) malloc(size);
+        b = (int*) malloc(size);
+        c = (int*) malloc(size);
+
+        printf("mem allocated \n");
+
+/// DEVICE#
+        checkCudaStatus(cudaMalloc((void**)&HA, size));
+        checkCudaStatus(cudaMalloc((void**)&HB, size));
+        checkCudaStatus(cudaMalloc((void**)&HC, size));
+
+        printf("cuda malloc \n");
+
+/// --- test data
+        for(int i = 0 ; i < N ; i++) {
+                a[i] = i;
+                b[i] = N-i;
+                c[i] = 0;
+        }
+
+        checkCudaStatus(cudaMemcpy((void*)HA, a, size, cudaMemcpyHostToDevice));
+        checkCudaStatus(cudaMemcpy((void*)HB, b, size, cudaMemcpyHostToDevice));
+        checkCudaStatus(cudaMemcpy((void*)HC, c, size, cudaMemcpyHostToDevice));
+
+        printf("cuda memcpy \n");
+
+        int gridSize = 1;
+        int blockSize = 1024;
+
+        kernel_add<<<gridSize, blockSize>>>(HA,HB,HC, N);
+
+
+        checkCudaStatus(cudaMemcpy((void*)c, HC, size, cudaMemcpyDeviceToHost));
+
+        for(int i= 0; i < N ; i++) {
+                printf("%d  --- %d \n",i , c[i]);
+        }
+
+        checkCudaStatus(cudaFree(HA));
+        checkCudaStatus(cudaFree(HB));
+        checkCudaStatus(cudaFree(HC));
+
+        free(a);
+        free(b);
+        free(c);
+
+        *error = 0;      
+}
 
 /**
  *  /// wydzielic pliku CU
@@ -372,7 +464,7 @@ template <typename Obj, typename ValueFunction> std::unique_ptr<int[]> accumalat
  *  ///
  *
  */
-void solveSystemOnGPU(int *error) {
+void solveSystemOnGPUAA(int *error) {
 
         int size;      /// wektor stanu
         int coffSize;  /// wspolczynniki Lagrange
