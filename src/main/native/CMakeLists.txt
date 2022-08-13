@@ -2,7 +2,14 @@ cmake_minimum_required(VERSION 3.20)
 
 
 # cuda compiler tooling
-set(CMAKE_CUDA_COMPILER /usr/local/cuda-11.7/bin/nvcc)
+
+
+if(UNIX) 
+	set(CMAKE_CUDA_COMPILER /usr/local/cuda-11.7/bin/nvcc)	
+elseif(WIN32)
+	set(CMAKE_CUDA_COMPILER "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.7\\bin\\nvcc.exe")
+endif()
+
 
 
 # JNI binding into cuda solver infrastructure
@@ -32,8 +39,11 @@ set(PROJECT_TEST_EXECUTABLE gsketcherjnie)
 
 ###########################################     \\\library  runtime image
 
-
-set(JAVA_HOME /usr/lib/jvm/java-17-openjdk-17.0.3.0.5-0.1.ea.el8.x86_64)
+if(UNIX) 
+	set(JAVA_HOME /usr/lib/jvm/java-17-openjdk-17.0.3.0.5-0.1.ea.el8.x86_64)	
+elseif(WIN32)
+	#set(JAVA_HOME "C:\\Program Files\\Java\\jdk-17.0.2\\")
+endif()
 
 
 find_package(JNI)     #  in this cmake-3.20 settings JNI module is not setting the target JNI::JNI (cmake-3.24)
@@ -43,7 +53,7 @@ find_package(CUDAToolkit 11.7)
 
 
 add_library(${PROJECT_SHARED_LIBRARY} SHARED 
-        src/com_mstruzek_jni_JNISolverGate.cu)
+        src/com_mstruzek_jni_JNISolverGate.cpp)
 
 
 target_include_directories(${PROJECT_SHARED_LIBRARY} PUBLIC     
