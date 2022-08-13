@@ -14,7 +14,7 @@
 
 #include <string.h>
 
-#include "model.cuh"
+#include "model.h"
 #include "stop_watch.h"
 
 #include "geometric_solver.h"
@@ -23,6 +23,13 @@
 
 static int deviceId;
 static cudaError_t error;
+
+
+/// ------------ domain model przenosimy do pliku *.cu i laczymy assemblujemy *.cuh -> do *.cu
+
+/// ----------- statyczne skladowe i funkcje 
+
+
 
 /// points register
 static std::vector<graph::Point> points; /// poLocations id-> point_offset
@@ -36,12 +43,14 @@ static std::vector<graph::Constraint> constraints; /// ===> Wiezy , accumulative
 /// parameters register
 static std::vector<graph::Parameter> parameters; /// paramLocation id-> param_offset
 
-static graph::SolverStat stat;
+static graph::SolverStat solverStat{};
 
 /// Point  Offset in computation matrix [id] -> point offset   ~~ Gather Vectors
 static std::shared_ptr<int[]> pointOffset;
 static std::shared_ptr<int[]> constraintOffset;
 static std::shared_ptr<int[]> geometricOffset;
+
+
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
@@ -157,7 +166,7 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem(JNIEnv *e
         try {
                 solveSystemOnGPU(
                         points, geometrics, constraints, parameters, pointOffset, constraintOffset, geometricOffset, 
-                        &stat, 
+                        NULL, // &stat
                         &err);
 
         } catch (const std::exception &e) {
@@ -172,7 +181,8 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem(JNIEnv *e
         return JNI_SUCCESS;
 }
 
-template <typename FieldType> void JniSetFieldValue(JNIEnv *env, jclass objClazz, jobject object, const char *fieldName, FieldType &sourceField) {
+template <typename FieldType> 
+void JniSetFieldValue(JNIEnv *env, jclass objClazz, jobject object, const char * const fieldName, FieldType sourceField) {
         if constexpr (std::is_same<FieldType, double>::value) {
                 env->SetDoubleField(object, env->GetFieldID(objClazz, fieldName, "D"), sourceField);
         } else if constexpr (std::is_same<FieldType, long>::value) {
@@ -211,6 +221,10 @@ JNIEXPORT jobject JNICALL Java_com_mstruzek_jni_JNISolverGate_getSolverStatistic
                 return 0;
         }
 
+        
+        graph::SolverStat &stat = solverStat;
+
+        
         JniSetFieldValue(env, objectClazz, solverStatObject, "startTime", stat.startTime);
         JniSetFieldValue(env, objectClazz, solverStatObject, "stopTime", stat.stopTime);
         JniSetFieldValue(env, objectClazz, solverStatObject, "timeDelta", stat.timeDelta);

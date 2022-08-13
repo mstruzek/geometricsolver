@@ -1,7 +1,9 @@
 #ifndef _GEOMETRIC_SOLVER_H_
 #define _GEOMETRIC_SOLVER_H_
 
+#include <memory>
 #include <vector>
+#include "model.h"
 
 
 void checkCudaStatus_impl(cudaError_t status, size_t __line_);

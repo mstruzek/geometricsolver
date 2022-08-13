@@ -5,29 +5,19 @@
 
 namespace graph {
 
-long TimeNanosecondsNow() {
-        auto fromEpoch = std::chrono::high_resolution_clock::now().time_since_epoch();
-        return std::chrono::duration<long, std::nano>(fromEpoch).count();
-}
+long TimeNanosecondsNow();
 
 class StopWatch {
       public:
-        StopWatch() { reset(); }
+        StopWatch();
 
-        void setStartTick() { startTick = TimeNanosecondsNow(); }
+        void setStartTick();
 
-        void setStopTick() {
-                stopTick = TimeNanosecondsNow();
-                accTime += (stopTick - startTick);
-        }
+        void setStopTick();
 
-        long delta() { return stopTick - startTick; }
+        long delta();
 
-        void reset() {
-                startTick = 0L;
-                stopTick = 0L;
-                accTime = 0L;
-        }
+        void reset();
 
         long startTick;
         long stopTick;
