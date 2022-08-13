@@ -4,12 +4,25 @@
 #include <cuda_runtime_api.h>
 #include <math.h>
 
+
+#include "model_config.h"
+
 namespace graph {
 
 //// odseparowac cuh i cu file
 
 
+/**
+ * @brief typedef struct {} Vector; .... macierze strukturalnie z wyjatkiem wektora wszystko strukturalnie 
+ * 
+ */
+
 class Vector;
+
+#define _COMP_CPU_GPU_VISIBLE_           __host__ __device__
+#define _COMP_CPU_VISIBLE_               __host__ 
+#define _COMP_GPU_VISIBLE_               __device__ 
+#define _COMP_GPU_INLINE_VISIBLE_        __device__ __forceinline__
 
 
 class Tensor {
@@ -99,33 +112,46 @@ class Vector {
       public:
         Vector() = default;
 
+        _COMP_CPU_GPU_VISIBLE_
         Vector(Vector const &other) = default;
 
+        _COMP_CPU_GPU_VISIBLE_
         Vector(double px, double py) : x(px), y(py) {}
 
+        _COMP_GPU_INLINE_VISIBLE_ 
         Vector plus(Vector const &other) const { return Vector(this->x + other.x, this->y + other.y); }
 
+        _COMP_GPU_INLINE_VISIBLE_ 
         Vector minus(Vector const &other) const { return Vector(this->x - other.x, this->y - other.y); }
 
+        _COMP_GPU_INLINE_VISIBLE_
         double product(Vector const &other) const { return (this->x * other.x + this->y * other.y); }
 
+        _COMP_GPU_INLINE_VISIBLE_
         Vector product(double scalar) const { return Vector(this->x * scalar, this->y * scalar); }
 
+        _COMP_GPU_INLINE_VISIBLE_
         double cross(Vector const &other) const { return (this->x * other.y - this->y * other.x); }
-
+        
+        _COMP_GPU_INLINE_VISIBLE_
         Vector operator/(double scalar) const { return Vector(this->x / scalar, this->y / scalar); }
 
+        _COMP_GPU_INLINE_VISIBLE_
         double length() const { return sqrt(this->x * this->x + this->y * this->y); }
 
+        _COMP_GPU_INLINE_VISIBLE_
         Vector unit() const { return this->operator/(length()); }
 
+        _COMP_GPU_INLINE_VISIBLE_
         Vector pivot() const { return Vector(-this->y, this->x); }
 
+        _COMP_GPU_INLINE_VISIBLE_
         Vector Rot(double angle) {
                 double rad = toRadians(angle);
                 return Vector(this->x * cos(rad) - this->y * sin(rad), this->x * sin(rad) + this->y * cos(rad));
         }
 
+        _COMP_GPU_INLINE_VISIBLE_
         SmallTensor cartesian(Vector const &rhs) {
                 double a00 = this->x * rhs.x;
                 double a01 = this->x * rhs.y;
@@ -134,6 +160,7 @@ class Vector {
                 return SmallTensor(a00, a01, a10, a11);
         }
 
+        _COMP_CPU_GPU_VISIBLE_
         bool operator==(Vector const &other) const { return (this->x == other.x && this->y == other.y); }
 
       public:
@@ -142,17 +169,21 @@ class Vector {
 
 class Point : public Vector {
       public:
+        
+        _COMP_CPU_VISIBLE_
         Point() = default;
 
+        _COMP_CPU_VISIBLE_
         Point(int id, double px, double py) : Vector(px, py), id(id) {}
-
 
       public:
         int id;
 };
 
 struct Geometric {
-        Geometric(int id, int geometricTypeId, int p1, int p2, int p3, int a, int b, int c, int d)
+
+        
+        _COMP_CPU_VISIBLE_ Geometric(int id, int geometricTypeId, int p1, int p2, int p3, int a, int b, int c, int d)
             : id(id), geometricTypeId(geometricTypeId), p1(p1), p2(p2), p3(p3), a(a), b(b), c(c), d(d) {}
 
         int id;
@@ -169,21 +200,22 @@ struct Geometric {
 /**
  *   Geometric Object size in terms of point set size.
  */
-int geometricSetSize(graph::Geometric const& geometric) {
+
+_COMP_CPU_VISIBLE_ int geometricSetSize(graph::Geometric const& geometric) {
         switch (geometric.geometricTypeId) {
-        case GEOMETRIC_TYPE_ID_FreePoint:
+        case GEOMETRIC_TYPE_ID_FREE_POINT:
                 return 3 * 2;
-        case GEOMETRIC_TYPE_ID_Line:
+        case GEOMETRIC_TYPE_ID_LINE:
                 return 4 * 2;
-        case GEOMETRIC_TYPE_ID_Circle:
+        case GEOMETRIC_TYPE_ID_CIRCLE:
                 return 4 * 2;
-        case GEOMETRIC_TYPE_ID_Arc:
+        case GEOMETRIC_TYPE_ID_ARC:
                 return 7 * 2;
         }
 }
 
 struct Constraint {
-        Constraint(int id, int constraintTypeId, int k, int l, int m, int n, int paramId, double vecX, double vecY)
+        _COMP_CPU_VISIBLE_ Constraint(int id, int constraintTypeId, int k, int l, int m, int n, int paramId, double vecX, double vecY)
             : id(id), constraintTypeId(constraintTypeId), k(k), l(l), m(m), n(n), paramId(paramId), vecX(vecX), vecY(vecY) {}
 
         int id;
@@ -197,47 +229,47 @@ struct Constraint {
         double vecY;
 };
 
-int constraintSize(graph::Constraint const& constraint) {
+_COMP_CPU_VISIBLE_ int constraintSize(graph::Constraint const& constraint) {
         switch (constraint.constraintTypeId) {
-        case CONSTRAINT_TYPE_ID_FixPoint:
+        case CONSTRAINT_TYPE_ID_FIX_POINT:
                 return 2;
-        case CONSTRAINT_TYPE_ID_ParametrizedXFix:
+        case CONSTRAINT_TYPE_ID_PARAMETRIZED_XFIX:
                 return 1;
-        case CONSTRAINT_TYPE_ID_ParametrizedYFix:
+        case CONSTRAINT_TYPE_ID_PARAMETRIZED_YFIX:
                 return 1;
-        case CONSTRAINT_TYPE_ID_Connect2Points:
+        case CONSTRAINT_TYPE_ID_CONNECT_2_POINTS:
                 return 2;
-        case CONSTRAINT_TYPE_ID_HorizontalPoint:
+        case CONSTRAINT_TYPE_ID_HORIZONTAL_POINT:
                 return 1;
-        case CONSTRAINT_TYPE_ID_VerticalPoint:
+        case CONSTRAINT_TYPE_ID_VERTICAL_POINT:
                 return 1;
-        case CONSTRAINT_TYPE_ID_LinesParallelism:
+        case CONSTRAINT_TYPE_ID_LINES_PARALLELISM:
                 return 1;
-        case CONSTRAINT_TYPE_ID_LinesPerpendicular:
+        case CONSTRAINT_TYPE_ID_LINES_PERPENDICULAR:
                 return 1;
-        case CONSTRAINT_TYPE_ID_EqualLength:
+        case CONSTRAINT_TYPE_ID_EQUAL_LENGTH:
                 return 1;
-        case CONSTRAINT_TYPE_ID_ParametrizedLength:
+        case CONSTRAINT_TYPE_ID_PARAMETRIZED_LENGTH:
                 return 1;
-        case CONSTRAINT_TYPE_ID_Tangency:
+        case CONSTRAINT_TYPE_ID_TANGENCY:
                 return 1;
-        case CONSTRAINT_TYPE_ID_CircleTangency:
+        case CONSTRAINT_TYPE_ID_CIRCLE_TANGENCY:
                 return 1;
-        case CONSTRAINT_TYPE_ID_Distance2Points:
+        case CONSTRAINT_TYPE_ID_DISTANCE_2_POINTS:
                 return 1;
-        case CONSTRAINT_TYPE_ID_DistancePointLine:
+        case CONSTRAINT_TYPE_ID_DISTANCE_POINT_LINE:
                 return 1;
-        case CONSTRAINT_TYPE_ID_Angle2Lines:
+        case CONSTRAINT_TYPE_ID_ANGLE_2_LINES:
                 return 1;
-        case CONSTRAINT_TYPE_ID_SetHorizontal:
+        case CONSTRAINT_TYPE_ID_SET_HORIZONTAL:
                 return 1;
-        case CONSTRAINT_TYPE_ID_SetVertical:
+        case CONSTRAINT_TYPE_ID_SET_VERTICAL:
                 return 1;
         }
 }
 
 struct Parameter {
-        Parameter(int id, double value) : id(id), value(value) {}
+        _COMP_CPU_VISIBLE_ Parameter(int id, double value) : id(id), value(value) {}
 
         int id;
         double value;
@@ -246,9 +278,9 @@ struct Parameter {
 /// corespond to java implementations
 struct SolverStat {
 
-        SolverStat() = default;
+        _COMP_CPU_VISIBLE_ SolverStat() = default;
 
-        SolverStat(long startTime, long stopTime, long timeDelta, int size, int coefficientArity, int dimension, long accEvaluationTime, long accSolverTime,
+        _COMP_CPU_VISIBLE_ SolverStat(long startTime, long stopTime, long timeDelta, int size, int coefficientArity, int dimension, long accEvaluationTime, long accSolverTime,
                    bool convergence, double error, double constraintDelta, int iterations)
             : startTime(startTime), stopTime(stopTime), timeDelta(timeDelta), size(size), coefficientArity(coefficientArity), dimension(dimension),
               accEvaluationTime(accEvaluationTime), accSolverTime(accSolverTime), convergence(convergence), error(error), constraintDelta(constraintDelta),

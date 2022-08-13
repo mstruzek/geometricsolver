@@ -18,40 +18,6 @@ extern "C" {
 #define JNI_ERROR   com_mstruzek_jni_JNISolverGate_JNI_ERROR
 
 
-/// correspond to GeometricType enum definition order
-#define GEOMETRIC_TYPE_ID_FreePoint   0
-#define GEOMETRIC_TYPE_ID_Line        1
-#define GEOMETRIC_TYPE_ID_FixLine     2
-#define GEOMETRIC_TYPE_ID_Circle      3
-#define GEOMETRIC_TYPE_ID_Arc         4
-
-/// correspond to ConstraintType enum definition order
-#define CONSTRAINT_TYPE_ID_FixPoint            0
-#define CONSTRAINT_TYPE_ID_ParametrizedXFix    1
-#define CONSTRAINT_TYPE_ID_ParametrizedYFix    2
-#define CONSTRAINT_TYPE_ID_Connect2Points      3
-#define CONSTRAINT_TYPE_ID_HorizontalPoint     4
-#define CONSTRAINT_TYPE_ID_VerticalPoint       5
-#define CONSTRAINT_TYPE_ID_LinesParallelism    6
-#define CONSTRAINT_TYPE_ID_LinesPerpendicular  7
-#define CONSTRAINT_TYPE_ID_EqualLength         8
-#define CONSTRAINT_TYPE_ID_ParametrizedLength  9
-#define CONSTRAINT_TYPE_ID_Tangency            10
-#define CONSTRAINT_TYPE_ID_CircleTangency      11
-#define CONSTRAINT_TYPE_ID_Distance2Points     12
-#define CONSTRAINT_TYPE_ID_DistancePointLine   13
-#define CONSTRAINT_TYPE_ID_Angle2Lines         14
-#define CONSTRAINT_TYPE_ID_SetHorizontal       15
-#define CONSTRAINT_TYPE_ID_SetVertical         16
-
-
-/**
- * @brief  setup all matricies for computation and prepare kernel stream  intertwined with cusolver
- *
- */
-void solveSystemOnGPU(int *error);
-
-
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
  * Method:    initDriver

@@ -1,9 +1,13 @@
 #include <iostream>
 #include <stdio.h>
 
-#include "stopWatch.h"
+#include "stop_watch.h"
+
+#include "geometric_solver.h"
 
 #include "com_mstruzek_jni_JNISolverGate.h"
+
+
 #define jni_initDriver                 Java_com_mstruzek_jni_JNISolverGate_initDriver
 #define jni_getLastError               Java_com_mstruzek_jni_JNISolverGate_getLastError
 #define jni_closeDriver                Java_com_mstruzek_jni_JNISolverGate_closeDriver
@@ -26,23 +30,6 @@ int main(int argc, char* args[])
 
     long stopTime = graph::TimeNanosecondsNow();
     long startTime = graph::TimeNanosecondsNow();    
-
-
-    
-    int error;
-
-    error = 0;
-
-    try {
-
-            solveSystemOnGPU(&error);
-
-    } catch(const std::exception& e) {
-
-            return 2;
-    }
-
-
 
     return 0;
 }

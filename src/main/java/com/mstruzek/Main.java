@@ -14,7 +14,12 @@ public class Main {
             System.out.printf("accEvaluationTime = %d\n", solverStatistics.accEvaluationTime);
 
 
+            /**
+             * Test completed - compiled CU kernel with cublas and cusolver in libs !
+             */
             JNISolverGate.solveSystem();
+
+
 
         } catch (Throwable e) {
 
