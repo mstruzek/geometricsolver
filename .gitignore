@@ -4,3 +4,8 @@ out/
 _backlog.md
 .idea/
 .vscode/
+src/main/native/bin/
+src/main/native/.vs/
+src/main/native/x64/
+.vs/
+bin/

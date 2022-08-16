@@ -6,35 +6,126 @@
 #include <stdexcept>
 #include <stdio.h>
 
-#include "model.h"
+#include "model.cuh"
 #include "model_config.h"
 
+/// ------------ domain model przenosimy do pliku *.cu i laczymy assemblujemy *.cuh -> do *.cu
+
+/// ----------- statyczne skladowe i funkcje
+
+/// points register
+static std::vector<graph::Point> points; /// poLocations id-> point_offset
+
+/// geometricc register
+static std::vector<graph::Geometric> geometrics; /// ==> Macierz A, accumulative offset for each primitive
+
+/// constraints register
+static std::vector<graph::Constraint> constraints; /// ===> Wiezy , accumulative offset for each constraint
+
+/// parameters register
+static std::vector<graph::Parameter> parameters; /// paramLocation id-> param_offset
+
+/// Point  Offset in computation matrix [id] -> point offset   ~~ Gather Vectors
+static std::shared_ptr<int[]> pointOffset;
+static std::shared_ptr<int[]> constraintOffset;
+static std::shared_ptr<int[]> geometricOffset;
+
+/// <summary>
+/// 
+/// </summary>
+/// <param name="status"></param>
+/// <param name="__line_"></param>
 void checkCudaStatus_impl(cudaError_t status, size_t __line_) {
         if (status != cudaSuccess) {
-            
+
                 printf("%d: cuda API failed with status %d\n", static_cast<int>(__line_), static_cast<int>(status));
                 throw std::logic_error("cuda API error");
         }
 }
 
+
+
 /// KERNEL# GPU
-__global__ void kernel_add(int *HA, int *HB, int *HC, int size) {
+__global__ void kernel_add(int *HA, int *HB, int *HC, int size);
 
-        int i = threadIdx.x;
 
-        if (i < size) {
 
-                HC[i] = HA[i] + HB[i];
-        }
+namespace solver {
+
+void resetComputationData(cudaError_t *error) {
+        std::remove_if(points.begin(), points.end(), [](auto _) { return true; });
+        std::remove_if(geometrics.begin(), geometrics.end(), [](auto _) { return true; });
+        std::remove_if(constraints.begin(), constraints.end(), [](auto _) { return true; });
+        std::remove_if(parameters.begin(), parameters.end(), [](auto _) { return true; });
+
+        pointOffset = NULL;
+        constraintOffset = NULL;
+        geometricOffset = NULL;
 }
+
+/**
+ *
+ */
+void resetComputationContext(cudaError_t *error) {}
+
+/**
+ *
+ */
+void initComputationContext(cudaError_t *error) {}
+
+
+/**
+ *
+ */
+void registerPointType(int id, double px, double py) { points.emplace_back(id, px, py); }
+
+/**
+ *
+ */
+void registerGeometricType(int id, int geometricTypeId, int p1, int p2, int p3, int a, int b, int c, int d) {
+        geometrics.emplace_back(id, geometricTypeId, p1, p2, p3, a, b, c, d);
+}
+
+/**
+ *
+ */
+void registerParameterType(int id, double value) { parameters.emplace_back(id, value);  }
+
+/**
+ *
+ */
+void registerConstraintType(int id, int jconstraintTypeId, int k, int l, int m, int n, int paramId, double vecX, double vecY) 
+{
+        constraints.emplace_back(id, jconstraintTypeId, k, l, m, n, paramId, vecX, vecY);
+}
+
+/**
+ *
+ */
+double getPointPXCoordinate(int id) 
+{
+        int offset = pointOffset[id];
+        double px = points[offset].x;
+        return px;
+}
+
+/**
+ *
+ */
+double getPointPYCoordinate(int id)
+{
+        int offset = pointOffset[id];
+        double py = points[offset].y;
+        return py;
+}
+
+
 
 ///
 /// Setup all matricies for computation and prepare kernel stream  intertwined with cuSolver
 ///
 ///
-void solveSystemOnGPU(std::vector<graph::Point> const &points, std::vector<graph::Geometric> const &geometrics,
-                      std::vector<graph::Constraint> const &constraints, std::vector<graph::Parameter> const &parameters, std::shared_ptr<int[]> pointOffset,
-                      std::shared_ptr<int[]> constraintOffset, std::shared_ptr<int[]> geometricOffset, graph::SolverStat *stat, int *err) {
+void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
 
         constexpr int N = 1024;
 
@@ -96,8 +187,22 @@ void solveSystemOnGPU(std::vector<graph::Point> const &points, std::vector<graph
         free(b);
         free(c);
 
-        *err = 0;
+        *error = cudaSuccess;
 }
+
+} // namespace solver
+
+
+
+__global__ void kernel_add(int *HA, int *HB, int *HC, int size)
+{
+        int i = threadIdx.x;
+        if (i < size) 
+        {
+                HC[i] = HA[i] + HB[i];
+        }
+}
+
 
 /// Accumulated Constraint Size
 static std::unique_ptr<int[]> accConstraintSize;
@@ -132,7 +237,6 @@ void GeometricObjectEvaluateForceVector() { /// Sily  - F(q)
 // KERNEL#
 void ConstraintEvaluateConstraintVector() {
         /// Wiezy  - Fi(q)
-
         /// b.mulitply(-1);
 }
 
@@ -193,11 +297,11 @@ struct EvaluationContext {
         const int *const constraintOffset; /// accumulative offset with constraint size evaluation function
         const int *const geometricOffset;  /// accumulative offset with geometric size evaluation function
 
-        graph::SolverStat *const stat;
+        solver::SolverStat *const stat;
 
-        __device__ graph::Point const &getPoint(int pointId) const;
+        __host__ __device__ graph::Point const &getPoint(int pointId) const;
 
-        __device__ graph::Geometric *getGeomtricObject(int geometricId) const;
+        __host__ __device__ graph::Geometric *getGeomtricObject(int geometricId) const;
 };
 
 __device__ graph::Point const &EvaluationContext::getPoint(int pointId) const {
