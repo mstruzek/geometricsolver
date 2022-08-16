@@ -86,7 +86,8 @@ double getPointPYCoordinate(int id);
  */
 void solveSystemOnGPU(SolverStat *stat, cudaError_t *error);
 
-
+                
+void getPointCoordinateVector(double *state_arr);
 
 } // namespace solver
 

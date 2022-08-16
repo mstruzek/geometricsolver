@@ -29,10 +29,12 @@ void solveSystemOnGPUAA(int *error) {
 
         dimension = size + coffSize;
 
+        
         /// Uklad rownan liniowych  [ A * x = b ] powstały z linerazycji ukladu dynamicznego
 
         /// 1# CPU -> GPU inicjalizacja macierzy
 
+        ///------------------------
         graph::Tensor A;  /// Macierz głowna ukladu rownan liniowych
         graph::Tensor Fq; /// Macierz sztywnosci ukladu obiektow zawieszonych na sprezynach.
         graph::Tensor Wq; /// d(FI)/dq - Jacobian Wiezow

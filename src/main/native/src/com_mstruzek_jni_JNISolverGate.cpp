@@ -92,7 +92,8 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_closeDriver(JNIEnv *e
         if (error != cudaSuccess) {
                 printf("driver  error %d  = %s \n", static_cast<int>(error), cudaGetErrorString(error));
                 return JNI_ERROR;
-        }
+        }        
+        printf("device reset completed ! \n");        
         return JNI_SUCCESS;
 }
 
@@ -303,6 +304,19 @@ JNIEXPORT jdouble JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointPYCoordina
  */
 JNIEXPORT jdoubleArray JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointCoordinateVector(JNIEnv *env, jclass clazz) {
         /// depraceted or remove !
-        jdoubleArray vec = env->NewDoubleArray(1024);
-        return (jdoubleArray)vec;
+        jboolean isCopy;                
+        /// przeinicjalizowac wypelenieni tego vecotr
+        jdoubleArray stateVector = env->NewDoubleArray(2 * 1024);        
+        /// acquire pinne or copy
+        jdouble* state_arr = env->GetDoubleArrayElements(stateVector, &isCopy);
+                
+        solver::getPointCoordinateVector(state_arr);
+
+        if (isCopy == JNI_TRUE) {
+                env->ReleaseDoubleArrayElements(stateVector, (double *) state_arr, 0);
+        } else {
+                env->ReleaseDoubleArrayElements(stateVector, (double*) state_arr, 0);
+        }                            
+
+        return stateVector;
 }

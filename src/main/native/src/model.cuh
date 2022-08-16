@@ -65,24 +65,27 @@ class Tensor {
 
         __host__ __device__ Tensor transpose() const { return Tensor(false); }
 
+        
+        /// cuBLAS -  column-major storage !
+        __host__ __device__ static Tensor fromDeviceMem(double *dev_tensor, int rows, int cols) {
+                Tensor t = Tensor(false);
+                t.rows = rows;
+                t.cols = cols;
+                t.tensor_ref = dev_tensor;
+                return t;
+        }
+
       public:
         int rows = 0;
         int cols = 0;
         union {
                 double tensor[4] = {};
-                double *tensor_ref;
+                double *tensor_ref;  /// cuBLAS -  column-major storage !
 
         };
         bool nonMemOwning; /// cast_helper if true -> SmallTensor otherwise RefMatrixDouble
 };
 
-/// non-ownig reference wrapper
-class TensorImpl : public Tensor {
-      public:
-        __host__ TensorImpl() : Tensor(false) { tensor_ref = nullptr; }
-
-        
-};
 
 /// 2x2
 class SmallTensor : public Tensor {
@@ -103,9 +106,7 @@ class SmallTensor : public Tensor {
                 tensor[1] = a01;
                 tensor[2] = a10;
                 tensor[3] = a11;
-        }
-
-        __host__ __device__ static SmallTensor diagonal(double diagonal) { return SmallTensor(diagonal); }
+        }               
 
         __host__ __device__ SmallTensor tensorR() {
                 double a00 = 0.0;
@@ -113,9 +114,9 @@ class SmallTensor : public Tensor {
                 double a10 = 1.0;
                 double a11 = 0.0;
                 return SmallTensor(a00, a01, a10, a11);
-        }
-      public:
-        
+        }        
+
+        __host__ __device__ static SmallTensor diagonal(double diagonal) { return SmallTensor(diagonal); }
 };
 
 
