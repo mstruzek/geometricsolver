@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 
-#include <cuda_runtime_api.h>
+#include "cuda_runtime.h"
 
 void checkCudaStatus_impl(cudaError_t status, size_t __line_);
 

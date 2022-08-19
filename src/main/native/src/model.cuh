@@ -1,8 +1,8 @@
 #ifndef _MODEL_H_
 #define _MODEL_H_
 
-#include <cuda_runtime_api.h>
-#include <math.h>
+#include "cuda_runtime.h"
+#include "math.h"
 
 #include "model_config.h"
 
@@ -41,16 +41,22 @@ class Tensor {
       public:
 
         __host__ __device__ Tensor() : nonMemOwning(true)
-        {};
+        {}
 
         __host__ __device__ Tensor(bool nonMemOwning) : nonMemOwning(nonMemOwning)
-        {};
+        {}
 
         __host__ __device__ void setVector(int offsetRow, int offsetCol, Vector const &value) {
                 this->cols = offsetRow;
-        };
+        }
 
-        __host__ __device__ void plusSubTensor(int offsetRow, int offsetCol, Tensor const &mt) { return; }
+        __host__ __device__ void setValue(int offsetRow, int offsetCol, double const &value){ 
+
+        }
+
+        __host__ __device__ void plusSubTensor(int offsetRow, int offsetCol, Tensor const &mt) { 
+            return; 
+        }
 
         __host__ __device__ void setSubTensor(int offsetRow, int offsetCol, Tensor const &mt) {
                 return;

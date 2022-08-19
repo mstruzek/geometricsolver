@@ -56,8 +56,15 @@ int main(int argc, char* args[])
     err = jni_registerPointType(&env, eclass, 1, 20.0, 20.0);
     err = jni_registerPointType(&env, eclass, 2, 60.0, 20.0);
     err = jni_registerPointType(&env, eclass, 3, 80.0, 20.0);
-    err = jni_registerGeometricType(&env, eclass, 1, GEOMETRIC_TYPE_ID_LINE, 1, 2, -1, 0, 3, -1, -1);
+    err = jni_registerGeometricType(&env, eclass, 1, GEOMETRIC_TYPE_ID_LINE, 1, 2, 0, 3, -1, -1, -1);
 
+
+    err = jni_registerPointType(&env, eclass, 4, 20.0, 0.0);
+    err = jni_registerPointType(&env, eclass, 5, 20.0, 20.0);
+    err = jni_registerPointType(&env, eclass, 6, 20.0, 60.0);
+    err = jni_registerPointType(&env, eclass, 7, 20.0, 80.0);
+
+    err = jni_registerGeometricType(&env, eclass, 2, GEOMETRIC_TYPE_ID_LINE, 5, 6, 4, 7, -1, -1, -1);
 
     err = jni_initComputationContext(&env, eclass);
 

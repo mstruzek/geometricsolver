@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -87,6 +87,7 @@
     <CudaCompile Include="kernel.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </CudaCompile>
+    <ClCompile Include="src\linear_system.cpp" />
     <ClCompile Include="src\stop_watch.cpp">
       <FileType>Document</FileType>
     </ClCompile>
@@ -99,8 +100,10 @@
   <ItemGroup>
     <ClInclude Include="src\com_mstruzek_jni_JNISolverGate.h" />
     <ClInclude Include="src\geometric_solver.h" />
+    <ClInclude Include="src\linear_system.h" />
     <ClInclude Include="src\model.cuh" />
     <ClInclude Include="src\model_config.h" />
+    <ClInclude Include="src\solver_kernel.cuh" />
     <ClInclude Include="src\stop_watch.h" />
   </ItemGroup>
   <ItemGroup>
