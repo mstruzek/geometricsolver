@@ -1,25 +1,28 @@
 #include "linear_system.h"
 
 
+//#define NF_DEBUF
+
+
 namespace errors {
 
 void _checkCudaStatus(cudaError_t status, size_t __line) {
     if (status != cudaSuccess) {
-        printf("%li: cuda API failed with status %d\n", __line, status);
+        printf("[ %d ]: cuda API failed with status %d\n", (int) __line, status);
         throw std::logic_error("cuda API error");
     }
 }
 
 void _checkCuSolverStatus(cusolverStatus_t status, size_t _line_) {
     if (status != CUSOLVER_STATUS_SUCCESS) {
-        printf("%li: CuSolver API failed with status %d\n", _line_, status);
+        printf("[ %d ]: CuSolver API failed with status %d\n", (int) _line_, status);
         throw std::logic_error("CuSolver error");
     }
 }
 
 void _checkCublasStatus(cublasStatus_t status, size_t __line) {
     if (status != CUBLAS_STATUS_SUCCESS) {
-        printf("%li: cuBLAS API failed with status %d\n", __line, status);
+        printf("[ %d ] : cuBLAS API failed with status %d\n", (int) __line, status);
         throw std::logic_error("cuBLAS error");
     }
 }
@@ -30,91 +33,114 @@ void _checkCublasStatus(cublasStatus_t status, size_t __line) {
 
 
 /// cuda variables
-cusolverDnHandle_t handle = NULL;
-cudaStream_t stream = NULL;
-cudaError_t lastError;
+static cusolverDnHandle_t handle = NULL;
+static cublasHandle_t cublasHandle = NULL;
+static cudaError_t lastError;
 
-cudaEvent_t start;
-cudaEvent_t end;
-float ms;
+static cudaEvent_t start;
+static cudaEvent_t end;
+static float ms;
 
 /// cusolver context
-int Lwork = 0;
-void *Workspace;
-int *info; /**przyczyna INT na urzadzenieu ! BLAD 700       cudaErrorIllegalAddress */
-int hinfo;
+static int Lwork = 0;
+static void *Workspace;
+static int *info; /**przyczyna INT na urzadzenieu __device__ __host__ ! ERROR 700       cudaErrorIllegalAddress */
+static int hinfo;
 
 /// marker
 #define CU_SOLVER  
 
+CU_SOLVER void linear_system_method_cuSolver_reset(cudaStream_t stream) {
 
-CU_SOLVER void linear_system_method_0_reset() {
+// mem release
+    if (Workspace != NULL) {
+        checkCudaStatus(cudaFreeAsync(Workspace, stream));
+        checkCudaStatus(cudaFreeAsync(info, stream));
+    }
 
-    if (stream == NULL)
-        return ;
 
-/// mem release
-    checkCudaStatus(cudaFree(Workspace));
-    checkCudaStatus(cudaFree(info));
+    if (start != NULL) {
+        checkCudaStatus(cudaEventDestroy(start));
+    }
+    if (end != NULL) {
+        checkCudaStatus(cudaEventDestroy(end));
+    }          
 
-    checkCudaStatus(cudaEventDestroy(start));
-    checkCudaStatus(cudaEventDestroy(end));
-
-    checkCudaStatus(cudaStreamDestroy(stream));        
-    checkCuSolverStatus(cusolverDnDestroy(handle));
-    
+    if (handle != NULL) {
+        checkCuSolverStatus(cusolverDnDestroy(handle));
+    }
+    if (cublasHandle != NULL) {
+        checkCublasStatus(cublasDestroy(cublasHandle));
+    }          
 }
 
 
+CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cudaStream_t stream) 
+{   
+    // Considerations - zapis bezposrednio do zmiennych na urzadzeniu !
 
-CU_SOLVER void linear_system_method_0(double *A, double *b, size_t N) 
-{
-    if (stream == NULL) {
+///  # cuSolver setup solver -- nie zaincjalozowac wyrzej
+    checkCuSolverStatus(cusolverDnCreate(&handle));        
+    checkCuSolverStatus(cusolverDnSetStream(handle, stream));
 
-        /// setup solver
-        checkCudaStatus(cudaStreamCreate(&stream));
-        checkCuSolverStatus(cusolverDnCreate(&handle));
-        checkCuSolverStatus(cusolverDnSetStream(handle, stream));
-
-        lastError = cudaGetLastError();
-        if (lastError != cudaSuccess) {
-            printf("[cuSolver]: error solver is not initialized \n");
-            exit(1);
-        }
-                 
-        checkCudaStatus(cudaEventCreate(&start));
-        checkCudaStatus(cudaEventCreate(&end));
-
-    /// Lwork * 2 !!!
-        checkCuSolverStatus(cusolverDnDpotrf_bufferSize(handle, CUBLAS_FILL_MODE_LOWER, N, A, N, &Lwork));        
-
-        checkCudaStatus(cudaMalloc((void **)&Workspace, Lwork * sizeof(data_type)));
-        checkCudaStatus(cudaMalloc((void **)&info, sizeof(int)));
-        checkCudaStatus(cudaMemset(info, 0, sizeof(int)));
-
-        printf("workspace attached, 'Lwork' (workspace size)  = %d \n", Lwork);
+    // ! blocking
+    lastError = cudaGetLastError();
+    if (lastError != cudaSuccess) {
+        printf("[cuSolver]: error solver is not initialized \n");
+        exit(1);
     }
+
+        
+/// # cuBlas context
+    checkCublasStatus(cublasCreate(&cublasHandle));
+    checkCublasStatus(cublasSetStream(cublasHandle, stream));
+
+    // ! blocking
+    lastError = cudaGetLastError();
+    if (lastError != cudaSuccess) {
+        printf("[cuBlas]: error cuBlas is not initialized on stream\n");
+        exit(1);
+    }
+///
+
+    checkCudaStatus(cudaEventCreate(&start));
+    checkCudaStatus(cudaEventCreate(&end));
+
+    /// Lwork * 1.5 !!!
+    checkCuSolverStatus(cusolverDnDpotrf_bufferSize(handle, CUBLAS_FILL_MODE_LOWER, N, A, N, &Lwork));        
+
+    checkCudaStatus(cudaMallocAsync((void **)&Workspace, Lwork * sizeof(double), stream));
+    checkCudaStatus(cudaMallocAsync((void **)&info, sizeof(int), stream));
+    checkCudaStatus(cudaMemsetAsync(info, 0, sizeof(int)), stream);
+
+    // ! blocking NDEBUG
+    printf("workspace attached, 'Lwork' (workspace size)  = %d \n", Lwork);
+    
+
+    checkCudaStatus(cudaStreamSynchronize(stream));    
 
     /// a tu inicjalizujemy wektory
 
     checkCudaStatus(cudaEventRecord(start, stream));
 
-/// Cholesky Factorization
+/// Cholesky Factorization -- near error < 10e-10 step preserve old factorization !
 
-    checkCuSolverStatus(cusolverDnDpotrf(handle, CUBLAS_FILL_MODE_LOWER, N, A, N, (data_type *)Workspace, Lwork, info));
+    checkCuSolverStatus(cusolverDnDpotrf(handle, CUBLAS_FILL_MODE_LOWER, N, A, N, (double*)Workspace, Lwork, info));    
 
-    // checkCudaStatus(cudaStreamSynchronize(stream));
+    checkCudaStatus(cudaMemcpyAsync(&hinfo, info, sizeof(int), cudaMemcpyDeviceToHost, stream));
+    
+    checkCudaStatus(cudaStreamSynchronize(stream));
 
-    checkCudaStatus(cudaMemcpy(&hinfo, info, sizeof(int), cudaMemcpyDeviceToHost));
-
+    // !blocking 
     if (hinfo < 0) {
         printf("error! wrong parameter %d \n", hinfo);
-        goto solver_exit;
+        exit(1);
     }
 
+    // !blocking
     if (hinfo > 0) {
         printf("error! leading minor is not positive definite %d \n", hinfo);
-        goto solver_exit;
+        exit(1);
     }
 
     ///
@@ -124,26 +150,37 @@ CU_SOLVER void linear_system_method_0(double *A, double *b, size_t N)
 
 
 /// inspect computation requirments
-    checkCudaStatus(cudaMemcpy(&hinfo, info, sizeof(int), cudaMemcpyDeviceToHost));
-    if (hinfo != 0) {
-        printf("error! wrong parameter %d \n", hinfo);
-        goto uexit;
-    }
+    checkCudaStatus(cudaMemcpyAsync(&hinfo, info, sizeof(int), cudaMemcpyDeviceToHost, stream));
 
     /// Print result vector
     checkCudaStatus(cudaEventRecord(end, stream));
-
-    /// hx = b
     
 ///  b - is output vector
-    checkCudaStatus(cudaMemcpyAsync(hb, b, N * sizeof(data_type), cudaMemcpyDeviceToHost, stream));
     
     checkCudaStatus(cudaStreamSynchronize(stream));
 
+    // !blocking
+    if (hinfo != 0) {
+        printf("error! wrong parameter %d \n", hinfo);
+        exit(1);
+    }
+
+
     checkCudaStatus(cudaEventElapsedTime(&ms, start, end));
 
-    printf(" [r] time measurment %f  \n", ms);
+    // !blocking
+    printf("[t] measurment %f  \n", ms);
 
 /// suspected state vector to be presetend in vector b
 
+}
+
+
+void linear_system_method_cuBlas_vectorNorm(int n, double *x, double *result, cudaStream_t stream) {
+    
+    //
+    checkCublasStatus(cublasSetStream(cublasHandle, stream));
+
+    // Initilize async request 
+    cublasDnrm2(cublasHandle, n, x, 1, result);
 }

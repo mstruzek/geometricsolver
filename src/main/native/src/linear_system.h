@@ -4,8 +4,8 @@
 #include <stdexcept>
 
 #include "cublas_v2.h"
-#include <cuda_runtime_api.h>
-#include <cusolverDn.h>
+#include "cuda_runtime_api.h"
+#include "cusolverDn.h"
 
 #define checkCublasStatus(status)               errors::_checkCublasStatus(status, __LINE__)
 #define checkCudaStatus(status)                 errors::_checkCudaStatus(status, __LINE__)
@@ -28,13 +28,26 @@ namespace errors {
 /// <param name="A">input</param>
 /// <param name="b">input/output vector</param>
 /// <param name="N"></param>
-void linear_system_method_0(double *A, double *b, size_t N);
+void linear_system_method_cuSolver(double *A, double *b, size_t N, cudaStream_t stream);
 
 
 /// <summary>
 /// rest cuSolver additional state data
 /// </summary>
-void linear_system_method_0_reset();
+void linear_system_method_cuSolver_reset(cudaStream_t stream);
+
+
+
+
+/// <summary>
+/// test vector norm async with result stored on the device
+/// </summary>
+/// <param name="n"></param>
+/// <param name="x"></param>
+/// <param name="result"></param>
+void linear_system_method_cuBlas_vectorNorm(int n, double *x, double *result, cudaStream_t stream);
+
+
 
 
 #endif //_LINEAR_SYSTEM_CUH_

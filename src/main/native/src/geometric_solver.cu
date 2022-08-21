@@ -4,6 +4,8 @@
 #include "stop_watch.h"
 
 #include <memory>
+#include <condition_variable>
+#include <atomic>
 
 #include <functional>
 #include <numeric>
@@ -18,6 +20,22 @@
 
 #include "model_config.h"
 
+
+/* clang_format : LLVM,
+                  GNU,
+                  Google,
+                  Chromium,
+                  Microsoft,
+                  Mozilla,
+                  WebKit.
+                  */
+
+
+/// MAX SOLVER ITERATIONS
+#define CMAX 20
+
+
+#define CONVERGENCE_LIMIT 10e-5
 
 
 /// ------------ domain model przenosimy do pliku *.cu i laczymy assemblujemy *.cuh -> do *.cu
@@ -48,28 +66,48 @@ static std::unique_ptr<int[]> accConstraintSize;
 
 /// === Solver Performance Watchers
 
-/// observation of total calculation time
+/// observation of submited tasks
 static graph::StopWatch solverWatch;
 
-/// observation all neccessar evalution of tensor A,b and tensor views.
-static graph::StopWatch accEvoWatch;
+
+/// observation of computation time - single computation run
+cudaEvent_t computeStart[CMAX] = {};
+cudaEvent_t computeStop[CMAX] = {};
+
+
+/// observation of matrices  preperations 
+cudaEvent_t prepStart[CMAX] = {};
+cudaEvent_t prepStop[CMAX] = {};
+
 
 /// observation of accumalated cuSolver method
-static graph::StopWatch accLUWatch;
+cudaEvent_t solverStart[CMAX] = {};
+cudaEvent_t solverStop[CMAX] = {};
+
 
 int size;      /// wektor stanu
 int coffSize;  /// wspolczynniki Lagrange
 int dimension; /// dimension = size + coffSize
+
+
+/// ===========================================================
+/// Async Computation - Implicit ref in utility:: namespace
+///
+static cudaStream_t stream = NULL;
+
+///
+/// ===========================================================
+
 
 namespace utility {
 
 template <typename Ty> 
 void memcpyToDevice(Ty **dest_device, const Ty *const &vector, size_t size) {
     /// allocate destination vector
-    checkCudaStatus(cudaMalloc((void **)dest_device, size * sizeof(Ty)));
+    checkCudaStatus(cudaMallocAsync((void **)dest_device, size * sizeof(Ty), stream));
 
     /// transfer into new allocation host_vector
-    checkCudaStatus(cudaMemcpy(*dest_device, vector, size * sizeof(Ty), cudaMemcpyHostToDevice));
+    checkCudaStatus(cudaMemcpyAsync(*dest_device, vector, size * sizeof(Ty), cudaMemcpyHostToDevice, stream));
 }
 
 template <typename Ty> 
@@ -80,7 +118,7 @@ void memcpyToDevice(Ty **dest_device, std::vector<Ty> const &vector) {
 
 template <typename Ty> void mallocToDevice(Ty **dev_ptr, size_t size) {
     /// safe malloc
-    checkCudaStatus(cudaMalloc((void **)dev_ptr, size));
+    checkCudaStatus(cudaMallocAsync((void **)dev_ptr, size, stream));
 }
 
 
@@ -88,7 +126,7 @@ template <typename Ty> void mallocToDevice(Ty **dev_ptr, size_t size) {
 template <typename Ty> 
 void memcpyFromDevice(std::vector<Ty> &vector, Ty *src_device) {
     /// transfer into new allocation host_vector
-    checkCudaStatus(cudaMemcpy(vector.data(), src_device, vector.size() * sizeof(Ty), cudaMemcpyDeviceToHost));
+    checkCudaStatus(cudaMemcpyAsync(vector.data(), src_device, vector.size() * sizeof(Ty), cudaMemcpyDeviceToHost, stream));
 }
 
 
@@ -96,12 +134,12 @@ void memcpyFromDevice(std::vector<Ty> &vector, Ty *src_device) {
 
 template <typename Ty> void freeMem(Ty *dev_ptr) {
     /// safe free mem
-    checkCudaStatus(cudaFree(dev_ptr));
+    checkCudaStatus(cudaFreeAsync(dev_ptr, stream));
 }
 
 void memset(void *dev_ptr, int value, size_t size) {
     ///
-    checkCudaStatus(cudaMemset(dev_ptr, value, size));
+    checkCudaStatus(cudaMemsetAsync(dev_ptr, value, size, stream));
 }
 
 
@@ -134,13 +172,6 @@ std::unique_ptr<int[]> accumalatedValue(std::vector<Obj> vector, ValueFunction v
 
 } // namespace utility
 
-/// KERNEL# GPU
-__global__ void kernel_add(int *HA, int *HB, int *HC, int size) {
-    int i = threadIdx.x;
-    if (i < size) {
-        HC[i] = HA[i] + HB[i];
-    }
-}
 
 namespace solver {
 
@@ -159,7 +190,10 @@ void resetComputationData(cudaError_t *error) {
 /**
  *
  */
-void resetComputationContext(cudaError_t *error) {}
+void resetComputationContext(cudaError_t *error) {
+
+    
+}
 
 /**
  *
@@ -179,8 +213,7 @@ void initComputationContext(cudaError_t *error) {
     accConstraintSize = utility::accumalatedValue(constraints, graph::constraintSize);
 
     solverWatch.reset();
-    accEvoWatch.reset();
-    accLUWatch.reset();
+
 
     /// `A` tensor internal structure dimensions
     size = std::accumulate(geometrics.begin(), geometrics.end(), 0,
@@ -197,6 +230,22 @@ void initComputationContext(cudaError_t *error) {
      *
      * przeliczenie pozycji absolutnej punktu na macierzy wyjsciowej
      */
+    if (stream == NULL) {
+
+        // implicit in utility::
+        checkCudaStatus(cudaStreamCreate(&stream));
+
+        int evID = 0;
+        while (evID++ < CMAX) {
+            // #observations
+            checkCudaStatus(cudaEventCreate(prepStart));
+            checkCudaStatus(cudaEventCreate(prepStop));
+            checkCudaStatus(cudaEventCreate(computeStart));
+            checkCudaStatus(cudaEventCreate(computeStop));
+            checkCudaStatus(cudaEventCreate(solverStart));
+            checkCudaStatus(cudaEventCreate(solverStop));
+        }
+    }
 }
 
 /**
@@ -245,21 +294,100 @@ double getPointPYCoordinate(int id) {
 
 void getPointCoordinateVector(double *state_arr) {}
 
-#define MAX_SOLVER_ITERATIONS 20
 
-#define CONVERGENCE_LIMIT 10e-5
+
+
+void ConstraintGetFullNorm(Computation *dev_ev) {
+
+}
+
+
+/// D.3.1.1. Device-Side Kernel Launch - kernel default shared memory, number of bytes
+constexpr size_t Ns =  0;
+
+/// grid size
+constexpr size_t DIM_GRID = 1;
+
+/// thread block size
+constexpr size_t DIM_BLOCK = 1024;
+
+
+/// lock for escaped data from computation rail
+/// -- first conveged computation contex or last invalid
+
+/// shared with cuda stream callback for wait, notify mechanism
+std::condition_variable condition;
+
+std::mutex mutex;
+
+// host reference guarded by mutex 
+std::atomic<Computation*> result;
+
+
+
+/// <summary>
+/// Computation Round Handler
+/// </summary>
+/// <param name="userData"></param>
+void computationResultHandler(cudaStream_t stream, cudaError_t status, void *userData)
+{
+    // synchronize on stream
+    
+    Computation *computation = static_cast<Computation *>(userData);
+
+    // obsluga bledow w strumieniu
+    if (status != cudaSuccess) {
+
+        const char *errorName = cudaGetErrorName(status);
+        const char *errorStr = cudaGetErrorString(status);
+
+        printf("[error] - computation id [%d] ,  %s = $s \n", computation->computationId, errorName, errorStr);
+        return;
+    }
+
+    bool last = computation->computationId == (CMAX - 1);
+
+    if (computation->norm2 < CONVERGENCE_LIMIT || last) {
+
+        /// update result
+        result.store(computation, std::memory_order_seq_cst);
+
+        condition.notify_one();
+    }
+
+    // synchronize with stream next computation
+}
+
 
 ///
 /// Setup all matricies for computation and prepare kernel stream  intertwined with cuSolver
 ///
 ///
 void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
-    int N = dimension;
+    /// # Consideration -> ::"ingest stream and observe" fetch first converged
+    ///
+    //   -- napelniamy strumien i obserwujemy wektor bledy ASYNC , cudaStreamAddCallback( { stream, cudaError_t , userData } ):
+    ///
+    //   -- "cublas_v2.h" funkcje API czytaj/i wpisuja  wspolczynnik z HOST jak i z DEVICE
+    ///
+    //   -- to umozlwia asynchroniczna evaluacje
+    ///
+    //   -- zalaczamy zadanie FI(q) = 0 norm2 -> wpiszemy do ExecutionContext variable
+    ///
+    //   --- state-vector lineage memcpy(deviceToDevice)
+    /// 
 
+    
+    int N = dimension;      
+
+    /// prepare local result context
+    result.store(NULL, std::memory_order_seq_cst);
+
+    
     /// Uklad rownan liniowych  [ A * x = b ] powsta³y z linerazycji ukladu dynamicznego - tensory na urzadzeniu.
     double *dev_A = nullptr;
     double *dev_b = nullptr;
-    double *dev_SV = nullptr; /// STATE VECTOR
+    double *dev_SV[CMAX] = {}; /// STATE VECTOR  -- lineage
     double *dev_dx = nullptr; /// [ A ] * [ dx ] = [ b ]
 
     /// w drugiej fazie dopisac => dodatkowo potrzebny per block  __shared__  memory   ORR    L1   fast region memory
@@ -276,12 +404,13 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     int *d_accGeometricSize;  /// accumulative offset with geometric size evaluation function
     int *d_accConstraintSize; /// accumulative offset with constraint size evaluation function
 
+
     if (points.size() == 0) {
         printf("[solver] - empty evaluation space model\n");
         return;
     }
 
-    if (constraints.size()) {
+    if (constraints.size() == 0 ) {
         printf("[solver] - no constraint configuration applied onto model\n");
         return;
     }
@@ -289,31 +418,37 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
 /// cuSolver component configuration
     int major = 0;    
     int minor = 0;
-    int patch = 0;
+    int patch = 0;    
     
     checkCuSolverStatus(cusolverGetProperty(MAJOR_VERSION, &major));
     checkCuSolverStatus(cusolverGetProperty(MINOR_VERSION, &minor));
     checkCuSolverStatus(cusolverGetProperty(PATCH_LEVEL, &patch));
-    printf("CUSOLVER Version (Major,Minor,PatchLevel): %d.%d.%d\n", major, minor, patch);
+    printf("[ CUSOLVER ]  version ( Major.Minor.PatchLevel): %d.%d.%d\n", major, minor, patch);
 
 
     ///
     /// for [GPU] Evaluation  - dane obliczeniowego modelu !
     ///
+    // immutables
     std::unique_ptr<Computation> ev(new Computation());
     ev->size = size;
     ev->coffSize = coffSize;
     ev->dimension = dimension = N;
 
+    // immutables - 
     utility::memcpyToDevice(&d_points, points);
     utility::memcpyToDevice(&d_geometrics, geometrics);
     utility::memcpyToDevice(&d_constraints, constraints);
     utility::memcpyToDevice(&d_parameters, parameters);
 
+    // immutables
     utility::memcpyToDevice(&d_pointOffset, pointOffset.get(), points.rbegin()->id);
     utility::memcpyToDevice(&d_parameterOffset, parameterOffset.get(), parameters.rbegin()->id);
     utility::memcpyToDevice(&d_accGeometricSize, accGeometricSize.get(), geometrics.size());
     utility::memcpyToDevice(&d_accConstraintSize, accConstraintSize.get(), constraints.size());
+
+
+    checkCudaStatus(cudaStreamSynchronize(stream));
 
     ev->points = d_points;
     ev->geometrics = d_geometrics;
@@ -328,28 +463,32 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     ///
     ///  [ GPU ] tensors `A` `x` `dx` `b`  ------------------------
     ///
+    /// one allocation block - slice
 
     utility::mallocToDevice(&dev_A, N * N * sizeof(double));
     utility::mallocToDevice(&dev_b, N * sizeof(double));
-    utility::mallocToDevice(&dev_SV, size * sizeof(double));
+    utility::mallocToDevice(&dev_SV[0], N * sizeof(double)); // each computation seperate SV vector
     utility::mallocToDevice(&dev_dx, N * sizeof(double));
+
+
+    checkCudaStatus(cudaStreamSynchronize(stream));
 
     ev->A = dev_A;
     ev->b = dev_b;
-    ev->SV = dev_SV;
+    ev->SV = dev_SV[0];
     ev->dx = dev_dx;
 
     ///
     /// [ GPU ] computation context mapped onto devive object
-    ///
-    ///
+    /// 
+    ///    
+    // tu chce snapshot na kazda iteracje kopiowanie async, events [start,stop,workspace, streamId, stream]
     Computation *dev_ev;
 
     utility::memcpyToDevice(&dev_ev, ev.get(), 1);
 
     /// referencec
     // graph::Tensor A = graph::Tensor::fromDeviceMem(dev_A, N, N); /// Macierz g³owna ukladu rownan liniowych
-
     // graph::Tensor Fq; /// [size x size]     Macierz sztywnosci ukladu obiektow zawieszonych na sprezynach.
     // graph::Tensor Wq; /// [coffSize x size]  d(FI)/dq - Jacobian Wiezow
 
@@ -365,160 +504,170 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     // skladowa to Fiq - wartosci poszczegolnych wiezow
     // graph::Tensor Fi = graph::Tensor::fromDeviceMem(dev_b + size, coffSize, 1);
 
-    double norm1;            /// wartosci bledow na wiezach
-    double prevNorm;         /// norma z wczesniejszej iteracji,
-    double errorFluctuation; /// fluktuacja bledu
-
+    
     stat->startTime = graph::TimeNanosecondsNow();
 
     printf("@#=================== Solver Initialized ===================#@ \n");
     printf("");
 
     /// Inicjalizacja Macierzy A, b, i pochodne
+      
 
-    accEvoWatch.setStartTick();
 
-    /// KERNEL_0 - Cooficients Stiffnes Matrix
-    int blockSize = geometrics.size();
-    computeStiffnessMatrix<<<1, 1024>>>(dev_ev, blockSize);
+/// SV - State Vector
+    CopyIntoStateVector<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev);
 
-    /// asynchronous kernel invocation
-    checkCudaStatus(cudaDeviceSynchronize());
+/// SV -> setup Lagrange multipliers    
+    utility::memset(ev->SV + ev->size, 0, ev->coffSize);
 
-    CopyIntoStateVector<<<1, 1024>>>(dev_ev);
 
-    // ??SetupLagrangeMultipliers(); // SV
+/// # asynchronous kernel invocation
 
-    accEvoWatch.setStopTick();
+    checkCudaStatus(cudaStreamSynchronize(stream));
 
-    cudaError_t lastError = cudaPeekAtLastError();
-    if (lastError != cudaSuccess) {
-        printf(" [ kernel ] computation failed - stiffness matrix \n");
-        throw std::logic_error("kernel - stiffness matrix");
-    }
 
-    norm1 = 0.0;
-    prevNorm = 0.0;
-    errorFluctuation = 0.0;
+
+    linear_system_method_cuSolver_reset(stream);
 
     int itr = 0;
+    
+    // #########################################################################
+    // 
+    // idea - zapelniamy strumien w calym zakresie rozwiazania do CMAX
+    // -- i zczytujemy pierwszy mozliwy poprawny wynik
+    // 
+    while (itr < CMAX) {
 
-    linear_system_method_0_reset();
+        // #observation
+        checkCudaStatus(cudaEventRecord(computeStart[itr] ,stream));
+
+        // #observation
+        checkCudaStatus(cudaEventRecord(prepStart[itr], stream));
+        
+/// # KERNEL_PRE
+
+        if (itr > 1){
+            /// zerujemy macierz A      !!!!! second buffer
+            utility::memset(dev_ev->A, 0, N * N * sizeof(double)); // --- ze wzgledu na addytywnosc
+        }
+        
+/// macierz `A
+                
+
+        /// Cooficients Stiffnes Matrix
+        ComputeStiffnessMatrix<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev, geometrics.size());
 
 
-    while (itr < MAX_SOLVER_ITERATIONS) {
+#ifdef CDEBUG
 
-        accEvoWatch.setStartTick();
+        checkCudaStatus(cudaStreamSynchronize(stream));
 
-        /// --- KERNEL_PRE
+        cudaError_t lastError = cudaPeekAtLastError();
+        if (lastError != cudaSuccess) {
+            printf(" [ kernel ] computation failed - stiffness matrix \n");
+            throw std::logic_error("kernel - stiffness matrix");
+        }
+#endif
 
-        /// zerujemy macierz A
+        /// 
+        EvaluateConstraintHessian<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev, N);
 
-        /// # KERNEL_PRE
+        /// upper Triangular
+        /// --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix   `A = `A set value
 
-        utility::memset(dev_ev->A, 0, N * N * sizeof(double)); // --- ze wzgledu na addytywnosc
+        EvaluateConstraintJacobian<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev, N);
+
 
         /// Tworzymy Macierz vector b vector `b
+        
+/// [ b ]  - right hand site
 
-        /// # KERNEL_PRE
-        GeometricObjectEvaluateForceVector(); // Fr /// Sily  - F(q)
-        ConstraintEvaluateConstraintVector(); // Fi / Wiezy  - Fi(q)
+        /// Fr /// Sily  - F(q)
+        EvaluateForceIntensity<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev, N);     
 
-        // b.setSubMatrix(0,0, (Fr));
-        // b.setSubMatrix(size,0, (Fi));
+        /// Fi / Wiezy  - Fi(q)
+        EvaluateConstraintValue<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev, N);          
+        
 
-        b; /// --- schowac Do EvaluteForce - Constraint  .mulitply(-1);
-
-        /// macierz `A
-
-        /// # KERNEL_PRE (__shared__ JACOBIAN)
-
-        ConstraintGetFullJacobian(); // --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix   `A = `A set value
+        // [  b   ] ; /// --- schowac Do EvaluteForce - Constraint  .mulitply(-1);               
 
 
-        /// # KERNEL_PRE
+        ///  upper traingular
 
-        ConstraintGetFullHessian(); // --- (Hs, SV, size); // --- write without intermediate matrix '`A = `A +value
-
-        A.setSubTensor(0, 0, Fq);  /// procedure SET
-        A.plusSubTensor(0, 0, Hs); /// procedure ADD
-
-        A.setSubTensor(size, 0, Wq);
-        A.setSubTensor(0, size, Wq.transpose());
-
-        accEvoWatch.setStopTick();
+        // #observation
+        checkCudaStatus(cudaEventRecord(prepStop[itr], stream));        
 
 
-        /// DENSE - CuSolver
-        /// LU Solver
-        /// 
+        // DENSE - CuSolver
+        // LU Solver
+        // 
 /// ======== LINER SYSTEM equation CuSolver    === START
-        
-        accLUWatch.setStartTick();
+                
+        // #observation
+        checkCudaStatus(cudaEventRecord(solverStart[itr], stream));
 
-        
-        linear_system_method_0(dev_ev->A, dev_ev->b, dev_ev->dimension);
+        linear_system_method_cuSolver(dev_ev->A, dev_ev->b, dev_ev->dimension, stream);
 
-
-        accLUWatch.setStopTick();
+        // #observation
+        checkCudaStatus(cudaEventRecord(solverStop[itr], stream));
 
 /// ======== LINER SYSTEM equation CuSolver    === STOP
       
         /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ]
         
-        /// --- KERNEL_POST - cublas saxpy !!!
         
-        StateVectorAddDifference<<<1, 1024>>>(dev_ev->SV, dev_ev->b, dev_ev->dimension);
+        StateVectorAddDifference<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(ev.get()->SV, ev.get()->b, ev.get()->dimension);
 
 
         /// --- KERNEL_POST( __synchronize__ REDUCTION )
 
-///  get `constraint norm` 
-/// 
-        norm1 = ConstraintGetFullNorm();        
 
-        printf(" [ step :: %02d]  duration [ns] = %,12d  norm = %e \n", itr, (accLUWatch.stopTick - accEvoWatch.startTick), norm1);
+        // write into __device__ Computation block
+        ConstraintGetFullNorm(dev_ev);        
 
-        /// Gdy po 5-6 przejsciach iteracji, normy wiezow kieruja sie w strone minimum energii, to repozycjonowac prowadzace punkty
 
-        if (norm1 < CONVERGENCE_LIMIT) {
-            stat->error = norm1;
-            printf("fast convergence - norm [ %e ] \n", norm1);
-            printf("constraint error = %e \n", norm1);
-            printf("");
-            break;
-        }
+        /// retrive ComputationFrom device
 
-        /// liczymy zmiane bledu
-        errorFluctuation = norm1 - prevNorm;
-        prevNorm = norm1;
-        stat->error = norm1;
+        void *userData = nullptr ;    // local_Computation
 
-        if (itr > 1 && errorFluctuation / prevNorm > 0.70) {
+        /// callback dispatched to special cuda p_thread 
+        checkCudaStatus(cudaStreamAddCallback(stream, computationResultHandler, userData, 0));              
 
-            linear_system_method_0_reset();
+        checkCudaStatus(cudaEventRecord(computeStop[itr], stream));
 
-            CopyFromStateVector<<<1, 1024>>>(dev_ev);
-            
-
-            utility::memcpyFromDevice(points, d_points);
-            
-
-            printf("CHANGES - STOP ITERATION *******");
-            printf(" errorFluctuation          : %d \n", errorFluctuation);
-            printf(" relative error            : %f \n", (errorFluctuation / norm1));
-            solverWatch.setStopTick();
-            stat->constraintDelta = ConstraintGetFullNorm();
-            stat->convergence = false;
-            stat->stopTime = graph::TimeNanosecondsNow();
-            stat->iterations = itr;
-            stat->accSolverTime = accLUWatch.accTime;
-            stat->accEvaluationTime = accEvoWatch.accTime;
-            stat->timeDelta = solverWatch.stopTick - solverWatch.startTick;
-            return;
-        }
         itr++;
     }
+
+/// all computation tiles submited - for first result , or invalid last
+
+    std::unique_lock<std::mutex> ulock(mutex);
+
+    /// atomic read
+    if (result.load(std::memory_order_seq_cst) == nullptr) {
+
+        /// spurious wakeup
+        condition.wait(ulock, [] { return result.load(std::memory_order_seq_cst) != nullptr; });
+    }
+    
+    // condition met
+    ///
+    /// 
+    /// 
+    /// 
+    /// HOST computation view
+    Computation *computation= result.load(std::memory_order_seq_cst);
+
+
+    // STATE VECTOR result
+
+
+
+
+    // oczekuje strumienia ale nie kopiujemy danych
+
+    checkCudaStatus(cudaStreamSynchronize(stream));
+    
+
 
     solverWatch.setStopTick();
     long solutionDelta = solverWatch.delta();
@@ -526,22 +675,24 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     printf("# solution delta : %d \n", solutionDelta); // print execution time
     printf("\n");                                      // print execution time
 
-    CopyFromStateVector<<<1, 1024>>>(dev_ev);
+    CopyFromStateVector<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(computation);
 
     utility::memcpyFromDevice(points, d_points);
 
-    stat->constraintDelta = ConstraintGetFullNorm();
-    stat->convergence = norm1 < CONVERGENCE_LIMIT;
+    stat->constraintDelta = computation->norm2;
+    stat->convergence = computation->norm2 < CONVERGENCE_LIMIT;
     stat->stopTime = graph::TimeNanosecondsNow();
     stat->iterations = itr;
-    stat->accSolverTime = accLUWatch.accTime;
-    stat->accEvaluationTime = accEvoWatch.accTime;
+    stat->accSolverTime = 0;
+    stat->accEvaluationTime = 0;
     stat->timeDelta = solverWatch.stopTick - solverWatch.startTick;
 
     /// w drugiej fazie dopisac => dodatkowo potrzebny per block  __shared__  memory   ORR    L1   fast region memory
     ///
     /// Evaluation data for  device  - CONST DATE for in process execution
 
+
+    checkCudaStatus(cudaStreamSynchronize(stream));
 
 /// free allocated memory in solution
 Error:
@@ -561,53 +712,25 @@ Error:
     utility::freeMem(d_accGeometricSize);  /// accumulative offset with geometric size evaluation function
     utility::freeMem(d_accConstraintSize); /// accumulative offset with constraint size evaluation function
 
+        
+    // implicit object for utility
+    if (stream != NULL) {
+        checkCudaStatus(cudaStreamDestroy(stream));
+    }
+
     *error = cudaSuccess;
 }
 
 } // namespace solver
 
-/// CPU#
-long AllLagrangeCoffSize() { return 0; }
 
 /// KERNEL#
-double ConstraintGetFullNorm() { 
-
-
-    // cublasStatus_t  cublasDnrm2(cublasHandle_t handle, int n, const double          *x, int incx, double *result)
-}
-
-/// CPU#
-void PointLocationSetup() {}
-
-
-/// CPU# and GPU#
-void SetupLagrangeMultipliers(void) {}
-
-/// KERNEL#
-void GeometricObjectEvaluateForceVector() { /// Sily  - F(q)
-                                            // b.mulitply(-1);
-}
-
-// KERNEL#
 void ConstraintEvaluateConstraintVector() {
     /// Wiezy  - Fi(q)
     /// b.mulitply(-1);
 }
 
-// KERNEL#
-void ConstraintGetFullJacobian() {}
 
-/// KERNEL# and last step update CPU memory for JNI synchronizationa
-void PointUtilityCopyFromStateVector() {}
-
-/// KERNEL#
-void ConstraintGetFullHessian() {}
-
-#define MAX_SOLVER_ITERATIONS 20
-
-#define CONVERGENCE_LIMIT 10e-5
-
-/// DEVICE# context
 
 /// @brief Setup __device__ vector of geometric points in this moment.
 ///

@@ -2,11 +2,15 @@
 #define _SOLVER_KERNEL_CUH_
 
 #include "cuda_runtime.h"
-
-#include <math.h>
-#include <stdio.h>
+#include "math.h"
+#include "stdio.h"
 
 #include "model.cuh"
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846 // pi
+#endif
+
 
 /// KERNEL#
 
@@ -14,28 +18,36 @@
 ///
 ///         cudaMalloc, cudaMemcpy
 ///
+// - 
 struct Computation {
+// immutable
+    int computationId;
+    int norm2;          ///  cublasDnrm2(...)
+    int info;           /// device variable cuBlas
 
-    int size;      /// wektor stanu
-    int coffSize;  /// wspolczynniki Lagrange
-    int dimension; /// N - dimension = size + coffSize
 
-    /// macierze ukladu rowa�
-    double *A;
-    double *SV; /// State Vector  [ SV = SV + dx ]
-    double *dx; /// przyrosty   [ A * dx = b ]
+    int size;           /// wektor stanu
+    int coffSize;       /// wspolczynniki Lagrange
+    int dimension;      /// N - dimension = size + coffSize
+
+
+// macierze ukladu rowan - this computation only
+    double *A;  
+    double *SV;         /// State Vector  [ SV = SV + dx ] , previous task -- "lineage"
+    double *dx;         /// przyrosty   [ A * dx = b ]
     double *b;
 
-    /// mainly static data
+
+// immutable mainly static data
     graph::Point *points;
     graph::Geometric *geometrics;
     graph::Constraint *constraints;
     graph::Parameter *parameters;
 
-    const int *pointOffset;       /// ---
-    const int *parameterOffset;   /// paramater offset from given ID
-    const int *accGeometricSize;  /// accumulative offset with geometric size evaluation function
-    const int *accConstraintSize; /// accumulative offset with constraint size evaluation function
+    const int *pointOffset;             /// ---
+    const int *parameterOffset;         /// paramater offset from given ID
+    const int *accGeometricSize;        /// accumulative offset with geometric size evaluation function
+    const int *accConstraintSize;       /// accumulative offset with constraint size evaluation function
 
     /// w drugiej fazie dopisac => dodatkowo potrzebny per block  __shared__  memory   ORR    L1   fast region memory
 
@@ -48,12 +60,14 @@ struct Computation {
     __host__ __device__ graph::Constraint *getConstraint(int constraintId) const;
 
     __host__ __device__ graph::Parameter *getParameter(int parameterId) const;
+
+    __host__ __device__ double getLagrangeMultiplier(int constraintId) const;
 };
 
 __host__ __device__ graph::Point const &Computation::getPoint(int pointId) const {
     int offset = pointOffset[pointId];
     return points[offset];
-};
+}
 
 __host__ __device__ graph::Vector const &Computation::getPointSV(int pointId) const {
     int offset = pointOffset[pointId];
@@ -77,7 +91,14 @@ __host__ __device__ graph::Parameter *Computation::getParameter(int parameterId)
     return static_cast<graph::Parameter *>(&parameters[offset]);
 }
 
-__host__ __device__ double toRadians(double value) { return (M_PI / 180.0) * value; }
+__host__ __device__ double toRadians(double value) { 
+    return (M_PI / 180.0) * value; 
+}
+
+__host__ __device__ double Computation::getLagrangeMultiplier(int constraintId) const {
+    int multiOffset = accConstraintSize[constraintId];
+    return SV[size + multiOffset];
+}
 
 /// [ KERNEL# GPU ]
 
@@ -285,7 +306,7 @@ __device__ void setStiffnessMatrix_Arc(int tID, graph::Tensor &mt);
  * @param ec
  * @return __global__
  */
-__global__ void computeStiffnessMatrix(Computation *ec, int N) {
+__global__ void ComputeStiffnessMatrix(Computation *ec, int N) {
     /// actually max single block with 1024 threads
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -470,7 +491,7 @@ __device__ void setStiffnessMatrix_Arc(int tID, graph::Tensor &mt) {
 /// Free Point ============================================================================
 ///
 
-__device__ void evaluateForceIntensity_FreePoint(int tID, graph::Geometric *geometric, Computation *ec, graph::Tensor &mt) {
+__device__ void setForceIntensity_FreePoint(int tID, graph::Geometric *geometric, Computation *ec, graph::Tensor &mt) {
     graph::Point const &a = ec->getPoint(geometric->a);
     graph::Point const &b = ec->getPoint(geometric->b);
     graph::Point const &p1 = ec->getPoint(geometric->p1);
@@ -497,7 +518,7 @@ __device__ void evaluateForceIntensity_FreePoint(int tID, graph::Geometric *geom
 /// Line    ===============================================================================
 ///
 
-__device__ void evaluateForceIntensity_Line(int tID, graph::Geometric *geometric, Computation *ec, graph::Tensor &mt) {
+__device__ void setForceIntensity_Line(int tID, graph::Geometric *geometric, Computation *ec, graph::Tensor &mt) {
     graph::Point const &a = ec->getPoint(geometric->a);
     graph::Point const &b = ec->getPoint(geometric->b);
     graph::Point const &p1 = ec->getPoint(geometric->p1);
@@ -527,13 +548,13 @@ __device__ void evaluateForceIntensity_Line(int tID, graph::Geometric *geometric
 /// FixLine ===============================================================================
 ///
 
-__device__ void evaluateForceIntensity_FixLine(int tID, graph::Geometric *geometric, Computation *ec, graph::Tensor &mt) {}
+__device__ void setForceIntensity_FixLine(int tID, graph::Geometric *geometric, Computation *ec, graph::Tensor &mt) {}
 
 ///
 /// Circle  ===============================================================================
 ///
 
-__device__ void evaluateForceIntensity_Circle(int tID, graph::Geometric *geometric, Computation *ec, graph::Tensor &mt) {
+__device__ void setForceIntensity_Circle(int tID, graph::Geometric *geometric, Computation *ec, graph::Tensor &mt) {
     graph::Point const &a = ec->getPoint(geometric->a);
     graph::Point const &b = ec->getPoint(geometric->b);
     graph::Point const &p1 = ec->getPoint(geometric->p1);
@@ -564,7 +585,7 @@ __device__ void evaluateForceIntensity_Circle(int tID, graph::Geometric *geometr
 /// Arc ===================================================================================
 ///
 
-__device__ void evaluateForceIntensity_Arc(int tID, graph::Geometric *geometric, Computation *ec, graph::Tensor &mt) {
+__device__ void setForceIntensity_Arc(int tID, graph::Geometric *geometric, Computation *ec, graph::Tensor &mt) {
     graph::Point const &a = ec->getPoint(geometric->a);
     graph::Point const &b = ec->getPoint(geometric->b);
     graph::Point const &c = ec->getPoint(geometric->c);
@@ -601,7 +622,7 @@ __device__ void evaluateForceIntensity_Arc(int tID, graph::Geometric *geometric,
 /// Evaluate Force Intensity ==============================================================
 ///
 
-__global__ void evaluateForceIntensity(Computation *ec, int N) {
+__global__ void EvaluateForceIntensity(Computation *ec, int N) {
     int tID;
     graph::Geometric *geometric = nullptr;
 
@@ -616,23 +637,23 @@ __global__ void evaluateForceIntensity(Computation *ec, int N) {
         switch (geometric->geometricTypeId) {
 
         case GEOMETRIC_TYPE_ID_FREE_POINT:
-            evaluateForceIntensity_FreePoint(tID, geometric, ec, mt);
+            setForceIntensity_FreePoint(tID, geometric, ec, mt);
             break;
 
         case GEOMETRIC_TYPE_ID_LINE:
-            evaluateForceIntensity_Line(tID, geometric, ec, mt);
+            setForceIntensity_Line(tID, geometric, ec, mt);
             break;
 
         case GEOMETRIC_TYPE_ID_FIX_LINE:
-            evaluateForceIntensity_FixLine(tID, geometric, ec, mt);
+            setForceIntensity_FixLine(tID, geometric, ec, mt);
             break;
 
         case GEOMETRIC_TYPE_ID_CIRCLE:
-            evaluateForceIntensity_Circle(tID, geometric, ec, mt);
+            setForceIntensity_Circle(tID, geometric, ec, mt);
             break;
 
         case GEOMETRIC_TYPE_ID_ARC:
-            evaluateForceIntensity_Arc(tID, geometric, ec, mt);
+            setForceIntensity_Arc(tID, geometric, ec, mt);
             break;
         default:
             break;
@@ -649,7 +670,7 @@ __global__ void evaluateForceIntensity(Computation *ec, int N) {
 ///
 /// ConstraintFixPoint ====================================================================
 ///
-__device__ void evaluateValueConstraintFixPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintFixPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Vector ko_vec = graph::Vector(constraint->vecX, constraint->vecY);
     const int offset = ec->accConstraintSize[tID];
@@ -664,7 +685,7 @@ __device__ void evaluateValueConstraintFixPoint(int tID, graph::Constraint *cons
 ///
 /// ConstraintParametrizedXfix ============================================================
 ///
-__device__ void evaluateValueConstraintParametrizedXfix(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintParametrizedXfix(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Parameter *param = ec->getParameter(constraint->paramId);
     const int offset = ec->accConstraintSize[tID];
@@ -678,7 +699,7 @@ __device__ void evaluateValueConstraintParametrizedXfix(int tID, graph::Constrai
 ///
 /// ConstraintParametrizedYfix ============================================================
 ///
-__device__ void evaluateValueConstraintParametrizedYfix(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintParametrizedYfix(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Parameter *param = ec->getParameter(constraint->paramId);
     const int offset = ec->accConstraintSize[tID];
@@ -692,7 +713,7 @@ __device__ void evaluateValueConstraintParametrizedYfix(int tID, graph::Constrai
 ///
 /// ConstraintConnect2Points ==============================================================
 ///
-__device__ void evaluateValueConstraintConnect2Points(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintConnect2Points(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
     const int offset = ec->accConstraintSize[tID];
@@ -706,7 +727,7 @@ __device__ void evaluateValueConstraintConnect2Points(int tID, graph::Constraint
 ///
 /// ConstraintHorizontalPoint =============================================================
 ///
-__device__ void evaluateValueConstraintHorizontalPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintHorizontalPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
     const int offset = ec->accConstraintSize[tID];
@@ -720,7 +741,7 @@ __device__ void evaluateValueConstraintHorizontalPoint(int tID, graph::Constrain
 ///
 /// ConstraintVerticalPoint ===============================================================
 ///
-__device__ void evaluateValueConstraintVerticalPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintVerticalPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
     const int offset = ec->accConstraintSize[tID];
@@ -734,7 +755,7 @@ __device__ void evaluateValueConstraintVerticalPoint(int tID, graph::Constraint 
 ///
 /// ConstraintLinesParallelism ============================================================
 ///
-__device__ void evaluateValueConstraintLinesParallelism(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintLinesParallelism(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
     const graph::Point &m = ec->getPoint(constraint->m);
@@ -753,7 +774,7 @@ __device__ void evaluateValueConstraintLinesParallelism(int tID, graph::Constrai
 ///
 /// ConstraintLinesPerpendicular ==========================================================
 ///
-__device__ void evaluateValueConstraintLinesPerpendicular(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintLinesPerpendicular(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
     const graph::Point &m = ec->getPoint(constraint->m);
@@ -772,7 +793,7 @@ __device__ void evaluateValueConstraintLinesPerpendicular(int tID, graph::Constr
 ///
 /// ConstraintEqualLength =================================================================
 ///
-__device__ void evaluateValueConstraintEqualLength(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintEqualLength(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
     const graph::Point &m = ec->getPoint(constraint->m);
@@ -791,7 +812,7 @@ __device__ void evaluateValueConstraintEqualLength(int tID, graph::Constraint *c
 ///
 /// ConstraintParametrizedLength ==========================================================
 ///
-__device__ void evaluateValueConstraintParametrizedLength(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintParametrizedLength(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
     const graph::Point &m = ec->getPoint(constraint->m);
@@ -811,7 +832,7 @@ __device__ void evaluateValueConstraintParametrizedLength(int tID, graph::Constr
 ///
 /// ConstrainTangency =====================================================================
 ///
-__device__ void evaluateValueConstrainTangency(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstrainTangency(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
     const graph::Point &m = ec->getPoint(constraint->m);
@@ -831,7 +852,7 @@ __device__ void evaluateValueConstrainTangency(int tID, graph::Constraint *const
 ///
 /// ConstraintCircleTangency ==============================================================
 ///
-__device__ void evaluateValueConstraintCircleTangency(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintCircleTangency(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
     const graph::Point &m = ec->getPoint(constraint->m);
@@ -851,7 +872,7 @@ __device__ void evaluateValueConstraintCircleTangency(int tID, graph::Constraint
 ///
 /// ConstraintDistance2Points =============================================================
 ///
-__device__ void evaluateValueConstraintDistance2Points(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintDistance2Points(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
     const graph::Parameter *param = ec->getParameter(constraint->paramId);
@@ -866,7 +887,7 @@ __device__ void evaluateValueConstraintDistance2Points(int tID, graph::Constrain
 ///
 /// ConstraintDistancePointLine ===========================================================
 ///
-__device__ void evaluateValueConstraintDistancePointLine(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintDistancePointLine(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
     const graph::Point &m = ec->getPoint(constraint->m);
@@ -886,7 +907,7 @@ __device__ void evaluateValueConstraintDistancePointLine(int tID, graph::Constra
 ///
 /// ConstraintAngle2Lines =================================================================
 ///
-__device__ void evaluateValueConstraintAngle2Lines(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintAngle2Lines(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     /// coordinate system o_x axis
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
@@ -907,10 +928,10 @@ __device__ void evaluateValueConstraintAngle2Lines(int tID, graph::Constraint *c
 ///
 /// ConstraintSetHorizontal ===============================================================
 ///
-__device__ void evaluateValueConstraintSetHorizontal(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintSetHorizontal(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     /// coordinate system oY axis
-    static __device__ graph::Vector m = graph::Vector(0.0, 0.0);
-    static __device__ graph::Vector n = graph::Vector(0.0, 100.0);
+    const graph::Vector m = graph::Vector(0.0, 0.0);
+    const graph::Vector n = graph::Vector(0.0, 100.0);
 
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
@@ -925,10 +946,10 @@ __device__ void evaluateValueConstraintSetHorizontal(int tID, graph::Constraint 
 ///
 /// ConstraintSetVertical =================================================================
 ///
-__device__ void evaluateValueConstraintSetVertical(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
+__device__ void setValueConstraintSetVertical(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt) {
     /// coordinate system oX axis
-    static __device__ graph::Vector m = graph::Vector(0.0, 0.0);
-    static __device__ graph::Vector n = graph::Vector(100.0, 0.0);
+    const graph::Vector m = graph::Vector(0.0, 0.0);
+    const graph::Vector n = graph::Vector(100.0, 0.0);
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
     const int offset = ec->accConstraintSize[tID];
@@ -942,7 +963,7 @@ __device__ void evaluateValueConstraintSetVertical(int tID, graph::Constraint *c
 ///
 /// Evaluate Constraint Value =============================================================
 ///
-__global__ void evaluateConstraintValue(Computation *ec, int N)
+__global__ void EvaluateConstraintValue(Computation *ec, int N)
 {
     int tID;
     graph::Constraint *constraint = nullptr;
@@ -957,55 +978,55 @@ __global__ void evaluateConstraintValue(Computation *ec, int N)
 
         switch (constraint->constraintTypeId) {
         case CONSTRAINT_TYPE_ID_FIX_POINT:
-            evaluateValueConstraintFixPoint(tID, constraint, ec, mt);
+            setValueConstraintFixPoint(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_PARAMETRIZED_XFIX:
-            evaluateValueConstraintParametrizedXfix(tID, constraint, ec, mt);
+            setValueConstraintParametrizedXfix(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_PARAMETRIZED_YFIX:
-            evaluateValueConstraintParametrizedYfix(tID, constraint, ec, mt);
+            setValueConstraintParametrizedYfix(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_CONNECT_2_POINTS:
-            evaluateValueConstraintConnect2Points(tID, constraint, ec, mt);
+            setValueConstraintConnect2Points(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_HORIZONTAL_POINT:
-            evaluateValueConstraintHorizontalPoint(tID, constraint, ec, mt);
+            setValueConstraintHorizontalPoint(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_VERTICAL_POINT:
-            evaluateValueConstraintVerticalPoint(tID, constraint, ec, mt);
+            setValueConstraintVerticalPoint(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_LINES_PARALLELISM:
-            evaluateValueConstraintLinesParallelism(tID, constraint, ec, mt);
+            setValueConstraintLinesParallelism(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_LINES_PERPENDICULAR:
-            evaluateValueConstraintLinesPerpendicular(tID, constraint, ec, mt);
+            setValueConstraintLinesPerpendicular(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_EQUAL_LENGTH:
-            evaluateValueConstraintEqualLength(tID, constraint, ec, mt);
+            setValueConstraintEqualLength(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_PARAMETRIZED_LENGTH:
-            evaluateValueConstraintParametrizedLength(tID, constraint, ec, mt);
+            setValueConstraintParametrizedLength(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_TANGENCY:
-            evaluateValueConstrainTangency(tID, constraint, ec, mt);
+            setValueConstrainTangency(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_CIRCLE_TANGENCY:
-            evaluateValueConstraintCircleTangency(tID, constraint, ec, mt);
+            setValueConstraintCircleTangency(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_DISTANCE_2_POINTS:
-            evaluateValueConstraintDistance2Points(tID, constraint, ec, mt);
+            setValueConstraintDistance2Points(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_DISTANCE_POINT_LINE:
-            evaluateValueConstraintDistancePointLine(tID, constraint, ec, mt);
+            setValueConstraintDistancePointLine(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_ANGLE_2_LINES:
-            evaluateValueConstraintAngle2Lines(tID, constraint, ec, mt);
+            setValueConstraintAngle2Lines(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_SET_HORIZONTAL:
-            evaluateValueConstraintSetHorizontal(tID, constraint, ec, mt);
+            setValueConstraintSetHorizontal(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_SET_VERTICAL:
-            evaluateValueConstraintSetVertical(tID, constraint, ec, mt);
+            setValueConstraintSetVertical(tID, constraint, ec, mt);
             break;
         default:
             break;
@@ -1025,9 +1046,9 @@ __global__ void evaluateConstraintValue(Computation *ec, int N)
 ///
 /// ConstraintFixPoint    =================================================================
 ///
-__device__ void evaluateJacobianConstraintFixPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintFixPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
-    const static __device__ graph::Tensor I = graph::SmallTensor::diagonal(1.0);
+    const graph::Tensor I = graph::SmallTensor::diagonal(1.0);
 
     int i;
 
@@ -1039,7 +1060,7 @@ __device__ void evaluateJacobianConstraintFixPoint(int tID, graph::Constraint *c
 ///
 /// ConstraintParametrizedXfix    =========================================================
 ///
-__device__ void evaluateJacobianConstraintParametrizedXfix(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintParametrizedXfix(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
 
     int i;
@@ -1053,7 +1074,7 @@ __device__ void evaluateJacobianConstraintParametrizedXfix(int tID, graph::Const
 ///
 /// ConstraintParametrizedYfix    =========================================================
 ///
-__device__ void evaluateJacobianConstraintParametrizedYfix(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintParametrizedYfix(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
     
     int i;
@@ -1068,10 +1089,10 @@ __device__ void evaluateJacobianConstraintParametrizedYfix(int tID, graph::Const
 ///
 /// ConstraintConnect2Points    ===========================================================
 ///
-__device__ void evaluateJacobianConstraintConnect2Points(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintConnect2Points(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
-    const static __device__ graph::Tensor I = graph::SmallTensor::diagonal(1.0);
-    const static __device__ graph::Tensor mI = graph::SmallTensor::diagonal(-1.0);
+    const graph::Tensor I = graph::SmallTensor::diagonal(1.0);
+    const graph::Tensor mI = graph::SmallTensor::diagonal(-1.0);
 
     int i;
 
@@ -1086,7 +1107,7 @@ __device__ void evaluateJacobianConstraintConnect2Points(int tID, graph::Constra
 ///
 /// ConstraintHorizontalPoint    ==========================================================
 ///
-__device__ void evaluateJacobianConstraintHorizontalPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintHorizontalPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
     
     int i;
@@ -1101,7 +1122,7 @@ __device__ void evaluateJacobianConstraintHorizontalPoint(int tID, graph::Constr
 ///
 /// ConstraintVerticalPoint    ============================================================
 ///
-__device__ void evaluateJacobianConstraintVerticalPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintVerticalPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
         
     int i;
@@ -1116,7 +1137,7 @@ __device__ void evaluateJacobianConstraintVerticalPoint(int tID, graph::Constrai
 ///
 /// ConstraintLinesParallelism    =========================================================
 ///
-__device__ void evaluateJacobianConstraintLinesParallelism(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintLinesParallelism(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
@@ -1145,7 +1166,7 @@ __device__ void evaluateJacobianConstraintLinesParallelism(int tID, graph::Const
 ///
 /// ConstraintLinesPerpendicular    =======================================================
 ///
-__device__ void evaluateJacobianConstraintLinesPerpendicular(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintLinesPerpendicular(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
@@ -1171,7 +1192,7 @@ __device__ void evaluateJacobianConstraintLinesPerpendicular(int tID, graph::Con
 ///
 /// ConstraintEqualLength    ==============================================================
 ///
-__device__ void evaluateJacobianConstraintEqualLength(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintEqualLength(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
@@ -1200,7 +1221,7 @@ __device__ void evaluateJacobianConstraintEqualLength(int tID, graph::Constraint
 ///
 /// ConstraintParametrizedLength    =======================================================
 ///
-__device__ void evaluateJacobianConstraintParametrizedLength(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintParametrizedLength(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
@@ -1235,7 +1256,7 @@ __device__ void evaluateJacobianConstraintParametrizedLength(int tID, graph::Con
 ///
 /// ConstrainTangency    ==================================================================
 ///
-__device__ void evaluateJacobianConstrainTangency(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstrainTangency(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
@@ -1269,7 +1290,7 @@ __device__ void evaluateJacobianConstrainTangency(int tID, graph::Constraint *co
 ///
 /// ConstraintCircleTangency    ===========================================================
 ///
-__device__ void evaluateJacobianConstraintCircleTangency(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintCircleTangency(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
@@ -1299,7 +1320,7 @@ __device__ void evaluateJacobianConstraintCircleTangency(int tID, graph::Constra
 ///
 /// ConstraintDistance2Points    ==========================================================
 ///
-__device__ void evaluateJacobianConstraintDistance2Points(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintDistance2Points(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
@@ -1319,7 +1340,7 @@ __device__ void evaluateJacobianConstraintDistance2Points(int tID, graph::Constr
 ///
 /// ConstraintDistancePointLine    ========================================================
 ///
-__device__ void evaluateJacobianConstraintDistancePointLine(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintDistancePointLine(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
@@ -1347,7 +1368,7 @@ __device__ void evaluateJacobianConstraintDistancePointLine(int tID, graph::Cons
 ///
 /// ConstraintAngle2Lines    ==============================================================
 ///
-__device__ void evaluateJacobianConstraintAngle2Lines(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintAngle2Lines(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
     const graph::Point &k = ec->getPoint(constraint->k);
     const graph::Point &l = ec->getPoint(constraint->l);
@@ -1381,10 +1402,10 @@ __device__ void evaluateJacobianConstraintAngle2Lines(int tID, graph::Constraint
 ///
 /// ConstraintSetHorizontal    ============================================================
 ///
-__device__ void evaluateJacobianConstraintSetHorizontal(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintSetHorizontal(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
-    static __device__ graph::Vector m = graph::Vector(0.0, 0.0);
-    static __device__ graph::Vector n = graph::Vector(0.0, 100.0);
+    const graph::Vector m = graph::Vector(0.0, 0.0);
+    const graph::Vector n = graph::Vector(0.0, 100.0);
 
     int i;
 
@@ -1399,10 +1420,10 @@ __device__ void evaluateJacobianConstraintSetHorizontal(int tID, graph::Constrai
 ///
 /// ConstraintSetVertical    ==============================================================
 ///
-__device__ void evaluateJacobianConstraintSetVertical(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+__device__ void setJacobianConstraintSetVertical(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
 {
-    static __device__ graph::Vector m = graph::Vector(0.0, 0.0);
-    static __device__ graph::Vector n = graph::Vector(100.0, 0.0);
+    const graph::Vector m = graph::Vector(0.0, 0.0);
+    const graph::Vector n = graph::Vector(100.0, 0.0);
 
     int i;
 
@@ -1421,7 +1442,7 @@ __device__ void evaluateJacobianConstraintSetVertical(int tID, graph::Constraint
 /// (FI)' - (dfi/dq)` transponowane - upper traingular matrix A
 ///
 /// 
-__global__ void evaluateConstraintJacobian(Computation *ec, int N)
+__global__ void EvaluateConstraintJacobian(Computation *ec, int N)
 {
 
     int tID;
@@ -1440,55 +1461,55 @@ __global__ void evaluateConstraintJacobian(Computation *ec, int N)
 
         switch (constraint->constraintTypeId) {
         case CONSTRAINT_TYPE_ID_FIX_POINT:
-            evaluateJacobianConstraintFixPoint(tID, constraint, ec, mt);
+            setJacobianConstraintFixPoint(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_PARAMETRIZED_XFIX:
-            evaluateJacobianConstraintParametrizedXfix(tID, constraint, ec, mt);
+            setJacobianConstraintParametrizedXfix(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_PARAMETRIZED_YFIX:
-            evaluateJacobianConstraintParametrizedYfix(tID, constraint, ec, mt);
+            setJacobianConstraintParametrizedYfix(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_CONNECT_2_POINTS:
-            evaluateJacobianConstraintConnect2Points(tID, constraint, ec, mt);
+            setJacobianConstraintConnect2Points(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_HORIZONTAL_POINT:
-            evaluateJacobianConstraintHorizontalPoint(tID, constraint, ec, mt);
+            setJacobianConstraintHorizontalPoint(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_VERTICAL_POINT:
-            evaluateJacobianConstraintVerticalPoint(tID, constraint, ec, mt);
+            setJacobianConstraintVerticalPoint(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_LINES_PARALLELISM:
-            evaluateJacobianConstraintLinesParallelism(tID, constraint, ec, mt);
+            setJacobianConstraintLinesParallelism(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_LINES_PERPENDICULAR:
-            evaluateJacobianConstraintLinesPerpendicular(tID, constraint, ec, mt);
+            setJacobianConstraintLinesPerpendicular(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_EQUAL_LENGTH:
-            evaluateJacobianConstraintEqualLength(tID, constraint, ec, mt);
+            setJacobianConstraintEqualLength(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_PARAMETRIZED_LENGTH:
-            evaluateJacobianConstraintParametrizedLength(tID, constraint, ec, mt);
+            setJacobianConstraintParametrizedLength(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_TANGENCY:
-            evaluateJacobianConstrainTangency(tID, constraint, ec, mt);
+            setJacobianConstrainTangency(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_CIRCLE_TANGENCY:
-            evaluateJacobianConstraintCircleTangency(tID, constraint, ec, mt);
+            setJacobianConstraintCircleTangency(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_DISTANCE_2_POINTS:
-            evaluateJacobianConstraintDistance2Points(tID, constraint, ec, mt);
+            setJacobianConstraintDistance2Points(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_DISTANCE_POINT_LINE:
-            evaluateJacobianConstraintDistancePointLine(tID, constraint, ec, mt);
+            setJacobianConstraintDistancePointLine(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_ANGLE_2_LINES:
-            evaluateJacobianConstraintAngle2Lines(tID, constraint, ec, mt);
+            setJacobianConstraintAngle2Lines(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_SET_HORIZONTAL:
-            evaluateJacobianConstraintSetHorizontal(tID, constraint, ec, mt);
+            setJacobianConstraintSetHorizontal(tID, constraint, ec, mt);
             break;
         case CONSTRAINT_TYPE_ID_SET_VERTICAL:
-            evaluateJacobianConstraintSetVertical(tID, constraint, ec, mt);
+            setJacobianConstraintSetVertical(tID, constraint, ec, mt);
             break;
         default:
             break;
@@ -1498,4 +1519,425 @@ __global__ void evaluateConstraintJacobian(Computation *ec, int N)
 }
 
 
+///
+/// ============================ CONSTRAINT HESSIAN MATRIX  ===============================
+///
+/**
+ * (H) - ((dfi/dq)`)/dq  - upper triangular matrix A
+ */
+
+///
+/// ConstraintFixPoint  ===================================================================
+///
+__device__ void setHessianTensorConstraintFixPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// empty
+}
+
+///
+/// ConstraintParametrizedXfix  ===========================================================
+///
+__device__ void setHessianTensorConstraintParametrizedXfix(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// empty
+}
+
+///
+/// ConstraintParametrizedYfix  ===========================================================
+///
+__device__ void setHessianTensorConstraintParametrizedYfix(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// empty
+}
+
+///
+/// ConstraintConnect2Points  =============================================================
+///
+__device__ void setHessianTensorConstraintConnect2Points(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// empty
+}
+
+///
+/// ConstraintHorizontalPoint  ============================================================
+///
+__device__ void setHessianTensorConstraintHorizontalPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// empty
+}
+
+///
+/// ConstraintVerticalPoint  ==============================================================
+///
+__device__ void setHessianTensorConstraintVerticalPoint(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// empty
+}
+
+///
+/// ConstraintLinesParallelism  ===========================================================
+///
+__device__ void setHessianTensorConstraintLinesParallelism(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+        /// macierz NxN
+        const double lagrange = ec->getLagrangeMultiplier(tID);
+        const graph::Tensor R = graph::SmallTensor::rotation(90 + 180).multiplyC(lagrange);     /// R
+        const graph::Tensor Rm = graph::SmallTensor::rotation(90).multiplyC(lagrange);          /// Rm = -R
+
+        int i;
+        int j;
+
+
+        //k,m
+        i = ec->pointOffset[constraint->k];
+        j = ec->pointOffset[constraint->m];
+        mt.plusSubTensor(2 * i, 2 * j, R);
+
+        //k,n
+        i = ec->pointOffset[constraint->k];
+        j = ec->pointOffset[constraint->n];
+        mt.plusSubTensor(2 * i, 2 * j, Rm);
+
+        //l,m
+        i = ec->pointOffset[constraint->l];
+        j = ec->pointOffset[constraint->m];
+        mt.plusSubTensor(2 * i, 2 * j, Rm);
+
+        //l,n
+        i = ec->pointOffset[constraint->l];
+        j = ec->pointOffset[constraint->n];
+        mt.plusSubTensor(2 * i, 2 * j, R);
+
+        //m,k
+        i = ec->pointOffset[constraint->m];
+        j = ec->pointOffset[constraint->k];
+        mt.plusSubTensor(2 * i, 2 * j, Rm);
+
+        //m,l
+        i = ec->pointOffset[constraint->m];
+        j = ec->pointOffset[constraint->l];
+        mt.plusSubTensor(2 * i, 2 * j, R);
+
+        //n,k
+        i = ec->pointOffset[constraint->n];
+        j = ec->pointOffset[constraint->k];
+        mt.plusSubTensor(2 * i, 2 * j, R);
+
+        //n,l
+        i = ec->pointOffset[constraint->n];
+        j = ec->pointOffset[constraint->l];
+        mt.plusSubTensor(2 * i, 2 * j, Rm);
+
+}
+
+///
+/// ConstraintLinesPerpendicular  =========================================================
+///
+__device__ void setHessianTensorConstraintLinesPerpendicular(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+        const double lagrange = ec->getLagrangeMultiplier(tID);
+        const graph::Tensor I = graph::SmallTensor::identity(1.0 * lagrange);
+        const graph::Tensor Im = graph::SmallTensor::identity(1.0 * lagrange);
+
+        int i;
+        int j;
+
+        //wstawiamy I,-I w odpowiednie miejsca
+        /// K,M
+        i = ec->pointOffset[constraint->k];
+        j = ec->pointOffset[constraint->m];
+        mt.plusSubTensor(2 * i, 2 * j, I);
+
+        /// K,N
+        i = ec->pointOffset[constraint->k];
+        j = ec->pointOffset[constraint->n];
+        mt.plusSubTensor(2 * i, 2 * j, Im);
+
+        /// L,M
+        i = ec->pointOffset[constraint->l];
+        j = ec->pointOffset[constraint->m];
+        mt.plusSubTensor(2 * i, 2 * j, Im);
+
+        /// L,N
+        i = ec->pointOffset[constraint->l];
+        j = ec->pointOffset[constraint->n];
+        mt.plusSubTensor(2 * i, 2 * j, I);
+
+        /// M,K
+        i = ec->pointOffset[constraint->m];
+        j = ec->pointOffset[constraint->k];
+        mt.plusSubTensor(2 * i, 2 * j, I);
+
+        /// M,L
+        i = ec->pointOffset[constraint->m];
+        j = ec->pointOffset[constraint->l];
+        mt.plusSubTensor(2 * i, 2 * j, Im);
+
+        /// N,K
+        i = ec->pointOffset[constraint->n];
+        j = ec->pointOffset[constraint->k];
+        mt.plusSubTensor(2 * i, 2 * j, Im);
+
+        /// N,L
+        i = ec->pointOffset[constraint->n];
+        j = ec->pointOffset[constraint->l];
+        mt.plusSubTensor(2 * i, 2 * j, I);
+}
+
+///
+/// ConstraintEqualLength  ================================================================
+///
+__device__ void setHessianTensorConstraintEqualLength(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// empty
+}
+
+///
+/// ConstraintParametrizedLength  =========================================================
+///
+__device__ void setHessianTensorConstraintParametrizedLength(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// empty
+}
+
+///
+/// ConstrainTangency  ====================================================================
+///
+__device__ void setHessianTensorConstrainTangency(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// equation error - java impl
+}
+
+///
+/// ConstraintCircleTangency  =============================================================
+///
+__device__ void setHessianTensorConstraintCircleTangency(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// no equation from - java impl
+}
+
+///
+/// ConstraintDistance2Points  ============================================================
+///
+__device__ void setHessianTensorConstraintDistance2Points(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// empty
+}
+
+///
+/// ConstraintDistancePointLine  ==========================================================
+///
+__device__ void setHessianTensorConstraintDistancePointLine(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// equation error - java impl
+}
+
+///
+/// ConstraintAngle2Lines  ================================================================
+///
+__device__ void setHessianTensorConstraintAngle2Lines(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    const graph::Point &k = ec->getPoint(constraint->k);
+    const graph::Point &l = ec->getPoint(constraint->l);
+    const graph::Point &m = ec->getPoint(constraint->m);
+    const graph::Point &n = ec->getPoint(constraint->n);
+
+    const double lagrange = ec->getLagrangeMultiplier(tID);
+
+    const double d = ec->getParameter(constraint->paramId)->value;
+    const double rad = toRadians(d);
+
+    const graph::Vector LK = l.minus(k).unit();
+    const graph::Vector NM = n.minus(m).unit();
+    double g = LK.product(NM) * cos(rad);
+
+    const graph::Tensor I_1G = graph::SmallTensor::diagonal((1 - g) * lagrange);
+    const graph::Tensor I_Gd  = graph::SmallTensor::diagonal((g - 1) * lagrange);
+
+    int i;
+    int j;
+
+    //k,k
+    i = ec->pointOffset[constraint->k];
+    j = ec->pointOffset[constraint->k];
+    // 0
+
+    //k,l
+    i = ec->pointOffset[constraint->k];
+    j = ec->pointOffset[constraint->l];
+    //0
+
+    //k,m
+    i = ec->pointOffset[constraint->k];
+    j = ec->pointOffset[constraint->m];
+    mt.plusSubTensor(2 * i, 2 * j, I_1G);
+
+    //k,n
+    i = ec->pointOffset[constraint->k];
+    j = ec->pointOffset[constraint->n];
+    mt.plusSubTensor(2 * i, 2 * j, I_Gd);
+
+    //l,k
+    i = ec->pointOffset[constraint->l];
+    j = ec->pointOffset[constraint->k];
+    //0
+
+    //l,l
+    i = ec->pointOffset[constraint->l];
+    j = ec->pointOffset[constraint->l];
+    // 0
+
+    //l,m
+    i = ec->pointOffset[constraint->l];
+    j = ec->pointOffset[constraint->m];
+    mt.plusSubTensor(2 * i, 2 * j, I_Gd);
+
+    //l,n
+    i = ec->pointOffset[constraint->l];
+    j = ec->pointOffset[constraint->n];
+    mt.plusSubTensor(2 * i, 2 * j, I_1G);
+
+    //m,k
+    i = ec->pointOffset[constraint->m];
+    j = ec->pointOffset[constraint->k];
+    mt.plusSubTensor(2 * i, 2 * j, I_1G);
+
+    //m,l
+    i = ec->pointOffset[constraint->m];
+    j = ec->pointOffset[constraint->l];
+    mt.plusSubTensor(2 * i, 2 * j, I_Gd);
+
+    //m,m
+    i = ec->pointOffset[constraint->m];
+    j = ec->pointOffset[constraint->m];
+    //0
+
+    //m,n
+    i = ec->pointOffset[constraint->m];
+    j = ec->pointOffset[constraint->n];
+    //0
+
+    //n,k
+    i = ec->pointOffset[constraint->n];
+    j = ec->pointOffset[constraint->k];
+    mt.plusSubTensor(2 * i, 2 * j, I_Gd);
+
+    //n,l
+    i = ec->pointOffset[constraint->n];
+    j = ec->pointOffset[constraint->l];
+    mt.plusSubTensor(2 * i, 2 * j, I_1G);
+
+    //n,m
+    i = ec->pointOffset[constraint->n];
+    j = ec->pointOffset[constraint->m];
+    //0
+
+    //n,n
+    i = ec->pointOffset[constraint->n];
+    j = ec->pointOffset[constraint->n];
+    //0
+}
+
+///
+/// ConstraintSetHorizontal  ==============================================================
+///
+__device__ void setHessianTensorConstraintSetHorizontal(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// empty
+}
+
+///
+/// ConstraintSetVertical  ================================================================
+///
+__device__ void setHessianTensorConstraintSetVertical(int tID, graph::Constraint *constraint, Computation *ec, graph::Tensor &mt)
+{
+    /// empty
+}
+
+
+
+
+
+
+///
+/// Evaluate Constraint Hessian Matrix=====================================================
+///
+///
+/// (FI)' - ((dfi/dq)`)/dq
+///
+///
+__global__ void EvaluateConstraintHessian(Computation *ec, int N)
+{
+    int tID;
+    graph::Constraint *constraint = nullptr;
+
+    tID = blockDim.x * blockIdx.x + threadIdx.x;
+
+    /// unpack tensor for evaluation
+    /// COLUMN_ORDER - tensor A
+
+    graph::Tensor mt = graph::Tensor::fromDeviceMem(ec->A, ec->size, 1);
+
+    if (tID < N) {
+
+        constraint = ec->getConstraint(tID);
+
+        switch (constraint->constraintTypeId) {
+        case CONSTRAINT_TYPE_ID_FIX_POINT:
+            setHessianTensorConstraintFixPoint(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_PARAMETRIZED_XFIX:
+            setHessianTensorConstraintParametrizedXfix(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_PARAMETRIZED_YFIX:
+            setHessianTensorConstraintParametrizedYfix(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_CONNECT_2_POINTS:
+            setHessianTensorConstraintConnect2Points(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_HORIZONTAL_POINT:
+            setHessianTensorConstraintHorizontalPoint(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_VERTICAL_POINT:
+            setHessianTensorConstraintVerticalPoint(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_LINES_PARALLELISM:
+            setHessianTensorConstraintLinesParallelism(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_LINES_PERPENDICULAR:
+            setHessianTensorConstraintLinesPerpendicular(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_EQUAL_LENGTH:
+            setHessianTensorConstraintEqualLength(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_PARAMETRIZED_LENGTH:
+            setHessianTensorConstraintParametrizedLength(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_TANGENCY:
+            setHessianTensorConstrainTangency(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_CIRCLE_TANGENCY:
+            setHessianTensorConstraintCircleTangency(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_DISTANCE_2_POINTS:
+            setHessianTensorConstraintDistance2Points(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_DISTANCE_POINT_LINE:
+            setHessianTensorConstraintDistancePointLine(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_ANGLE_2_LINES:
+            setHessianTensorConstraintAngle2Lines(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_SET_HORIZONTAL:
+            setHessianTensorConstraintSetHorizontal(tID, constraint, ec, mt);
+            break;
+        case CONSTRAINT_TYPE_ID_SET_VERTICAL:
+            setHessianTensorConstraintSetVertical(tID, constraint, ec, mt);
+            break;
+        default:
+            break;
+        }
+        return;
+    }
+}
 #endif // #ifndef _SOLVER_KERNEL_CUH_

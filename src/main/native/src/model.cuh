@@ -4,9 +4,13 @@
 #include "cuda_runtime.h"
 #include "math.h"
 
+#include <stdio.h>
+
 #include "model_config.h"
 
 namespace graph {
+
+
 
 
 class Vector;
@@ -114,13 +118,28 @@ class SmallTensor : public Tensor {
                 tensor[3] = a11;
         }               
 
-        __host__ __device__ SmallTensor tensorR() {
+        __host__ __device__ static  SmallTensor tensorR() {
                 double a00 = 0.0;
                 double a01 = -1.0;
                 double a10 = 1.0;
                 double a11 = 0.0;
                 return SmallTensor(a00, a01, a10, a11);
-        }        
+        }      
+
+        __host__ __device__ static SmallTensor rotation(double alfa) {
+            double radians = toRadians(alfa);
+            double a00 = cos(radians);
+            double a01 = -1.0 * sin(radians);
+            double a10 = sin(radians);
+            double a11 = cos(radians);
+            return SmallTensor(a00, a01, a10, a11);
+
+        }
+
+
+        __host__ __device__ static SmallTensor identity(double value) { 
+            return SmallTensor(value);
+        }
 
         __host__ __device__ static SmallTensor diagonal(double diagonal) { return SmallTensor(diagonal); }
 };
@@ -279,7 +298,8 @@ int constraintSize(Constraint const &constraint) {
                 return 1;
 
         default:
-                return -1;
+            printf("unknown constraint type");
+            exit(1);
         }
 }
 
@@ -294,7 +314,9 @@ int geometricSetSize(Geometric const &geometric) {
         case GEOMETRIC_TYPE_ID_ARC:
                 return 7 * 2;
         default:
-                return -1;
+            printf("unknown geometric type");
+            exit(1);
+
         }
 }
 
