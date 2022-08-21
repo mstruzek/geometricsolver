@@ -3,9 +3,9 @@
 #include "cuda_runtime.h"
 #include "stop_watch.h"
 
-#include <memory>
-#include <condition_variable>
 #include <atomic>
+#include <condition_variable>
+#include <memory>
 
 #include <functional>
 #include <numeric>
@@ -20,7 +20,6 @@
 
 #include "model_config.h"
 
-
 /* clang_format : LLVM,
                   GNU,
                   Google,
@@ -30,13 +29,10 @@
                   WebKit.
                   */
 
-
 /// MAX SOLVER ITERATIONS
 #define CMAX 20
 
-
 #define CONVERGENCE_LIMIT 10e-5
-
 
 /// ------------ domain model przenosimy do pliku *.cu i laczymy assemblujemy *.cuh -> do *.cu
 
@@ -69,26 +65,21 @@ static std::unique_ptr<int[]> accConstraintSize;
 /// observation of submited tasks
 static graph::StopWatch solverWatch;
 
-
 /// observation of computation time - single computation run
 cudaEvent_t computeStart[CMAX] = {};
 cudaEvent_t computeStop[CMAX] = {};
 
-
-/// observation of matrices  preperations 
+/// observation of matrices  preperations
 cudaEvent_t prepStart[CMAX] = {};
 cudaEvent_t prepStop[CMAX] = {};
-
 
 /// observation of accumalated cuSolver method
 cudaEvent_t solverStart[CMAX] = {};
 cudaEvent_t solverStop[CMAX] = {};
 
-
 int size;      /// wektor stanu
 int coffSize;  /// wspolczynniki Lagrange
 int dimension; /// dimension = size + coffSize
-
 
 /// ===========================================================
 /// Async Computation - Implicit ref in utility:: namespace
@@ -98,11 +89,11 @@ static cudaStream_t stream = NULL;
 ///
 /// ===========================================================
 
+namespace utility
+{
 
-namespace utility {
-
-template <typename Ty> 
-void memcpyToDevice(Ty **dest_device, const Ty *const &vector, size_t size) {
+template <typename Ty> void memcpyToDevice(Ty **dest_device, const Ty *const &vector, size_t size)
+{
     /// allocate destination vector
     checkCudaStatus(cudaMallocAsync((void **)dest_device, size * sizeof(Ty), stream));
 
@@ -110,46 +101,46 @@ void memcpyToDevice(Ty **dest_device, const Ty *const &vector, size_t size) {
     checkCudaStatus(cudaMemcpyAsync(*dest_device, vector, size * sizeof(Ty), cudaMemcpyHostToDevice, stream));
 }
 
-template <typename Ty> 
-void memcpyToDevice(Ty **dest_device, std::vector<Ty> const &vector) {
+template <typename Ty> void memcpyToDevice(Ty **dest_device, std::vector<Ty> const &vector)
+{
     /// memcpy to device
     memcpyToDevice(dest_device, vector.data(), vector.size());
 }
 
-template <typename Ty> void mallocToDevice(Ty **dev_ptr, size_t size) {
+template <typename Ty> void mallocToDevice(Ty **dev_ptr, size_t size)
+{
     /// safe malloc
     checkCudaStatus(cudaMallocAsync((void **)dev_ptr, size, stream));
 }
 
-
-
-template <typename Ty> 
-void memcpyFromDevice(std::vector<Ty> &vector, Ty *src_device) {
+template <typename Ty> void memcpyFromDevice(std::vector<Ty> &vector, Ty *src_device)
+{
     /// transfer into new allocation host_vector
-    checkCudaStatus(cudaMemcpyAsync(vector.data(), src_device, vector.size() * sizeof(Ty), cudaMemcpyDeviceToHost, stream));
+    checkCudaStatus(
+        cudaMemcpyAsync(vector.data(), src_device, vector.size() * sizeof(Ty), cudaMemcpyDeviceToHost, stream));
 }
 
-
-
-
-template <typename Ty> void freeMem(Ty *dev_ptr) {
+template <typename Ty> void freeMem(Ty *dev_ptr)
+{
     /// safe free mem
     checkCudaStatus(cudaFreeAsync(dev_ptr, stream));
 }
 
-void memset(void *dev_ptr, int value, size_t size) {
+void memset(void *dev_ptr, int value, size_t size)
+{
     ///
     checkCudaStatus(cudaMemsetAsync(dev_ptr, value, size, stream));
 }
 
-
 template <typename Obj, typename ObjIdFunction>
-std::unique_ptr<int[]> stateOffset(std::vector<Obj> objects, ObjIdFunction objectIdFunction) {
+std::unique_ptr<int[]> stateOffset(std::vector<Obj> objects, ObjIdFunction objectIdFunction)
+{
 
     std::unique_ptr<int[]> offsets(new int[objectIdFunction(objects.rbegin())]);
     auto iterator = objects.begin();
     int offset = 0;
-    while (iterator != objects.end()) {
+    while (iterator != objects.end())
+    {
         auto objectId = objectIdFunction(iterator);
         offsets[objectId] = offset++;
         iterator++;
@@ -160,10 +151,12 @@ std::unique_ptr<int[]> stateOffset(std::vector<Obj> objects, ObjIdFunction objec
 /// #/include <numeric> std::partial_sum
 
 template <typename Obj, typename ValueFunction>
-std::unique_ptr<int[]> accumalatedValue(std::vector<Obj> vector, ValueFunction valueFunction) {
+std::unique_ptr<int[]> accumalatedValue(std::vector<Obj> vector, ValueFunction valueFunction)
+{
     int accValue = 0;
     std::unique_ptr<int[]> accumulated(new int[vector.size()]);
-    for (int offset = 0; offset < vector.size(); offset++) {
+    for (int offset = 0; offset < vector.size(); offset++)
+    {
         accumulated[offset] = accValue;
         accValue = accValue + valueFunction(vector[offset]);
     }
@@ -172,10 +165,11 @@ std::unique_ptr<int[]> accumalatedValue(std::vector<Obj> vector, ValueFunction v
 
 } // namespace utility
 
+namespace solver
+{
 
-namespace solver {
-
-void resetComputationData(cudaError_t *error) {
+void resetComputationData(cudaError_t *error)
+{
     std::remove_if(points.begin(), points.end(), [](auto _) { return true; });
     std::remove_if(geometrics.begin(), geometrics.end(), [](auto _) { return true; });
     std::remove_if(constraints.begin(), constraints.end(), [](auto _) { return true; });
@@ -190,16 +184,17 @@ void resetComputationData(cudaError_t *error) {
 /**
  *
  */
-void resetComputationContext(cudaError_t *error) {
-
-    
+void resetComputationContext(cudaError_t *error)
+{
 }
 
 /**
  *
  */
-void initComputationContext(cudaError_t *error) {
-    if (points.size() == 0) {
+void initComputationContext(cudaError_t *error)
+{
+    if (points.size() == 0)
+    {
         throw new std::exception("empty solution space, add some geometric types");
     }
 
@@ -214,12 +209,12 @@ void initComputationContext(cudaError_t *error) {
 
     solverWatch.reset();
 
-
     /// `A` tensor internal structure dimensions
     size = std::accumulate(geometrics.begin(), geometrics.end(), 0,
                            [](auto acc, auto const &geometric) { return acc + graph::geometricSetSize(geometric); });
-    coffSize = std::accumulate(constraints.begin(), constraints.end(), 0,
-                               [](auto acc, auto const &constraint) { return acc + graph::constraintSize(constraint); });
+    coffSize = std::accumulate(constraints.begin(), constraints.end(), 0, [](auto acc, auto const &constraint) {
+        return acc + graph::constraintSize(constraint);
+    });
 
     dimension = size + coffSize;
 
@@ -230,13 +225,15 @@ void initComputationContext(cudaError_t *error) {
      *
      * przeliczenie pozycji absolutnej punktu na macierzy wyjsciowej
      */
-    if (stream == NULL) {
+    if (stream == NULL)
+    {
 
         // implicit in utility::
         checkCudaStatus(cudaStreamCreate(&stream));
 
         int evID = 0;
-        while (evID++ < CMAX) {
+        while (evID++ < CMAX)
+        {
             // #observations
             checkCudaStatus(cudaEventCreate(prepStart));
             checkCudaStatus(cudaEventCreate(prepStop));
@@ -251,25 +248,32 @@ void initComputationContext(cudaError_t *error) {
 /**
  *
  */
-void registerPointType(int id, double px, double py) { points.emplace_back(id, px, py); }
+void registerPointType(int id, double px, double py)
+{
+    points.emplace_back(id, px, py);
+}
 
 /**
  *
  */
-void registerGeometricType(int id, int geometricTypeId, int p1, int p2, int p3, int a, int b, int c, int d) {
+void registerGeometricType(int id, int geometricTypeId, int p1, int p2, int p3, int a, int b, int c, int d)
+{
     geometrics.emplace_back(id, geometricTypeId, p1, p2, p3, a, b, c, d);
 }
 
 /**
  *
  */
-void registerParameterType(int id, double value) { parameters.emplace_back(id, value); }
+void registerParameterType(int id, double value)
+{
+    parameters.emplace_back(id, value);
+}
 
 /**
  *
  */
-void registerConstraintType(int id, int jconstraintTypeId, int k, int l, int m, int n, int paramId, 
-    double vecX, double vecY) 
+void registerConstraintType(int id, int jconstraintTypeId, int k, int l, int m, int n, int paramId, double vecX,
+                            double vecY)
 {
     constraints.emplace_back(id, jconstraintTypeId, k, l, m, n, paramId, vecX, vecY);
 }
@@ -277,7 +281,8 @@ void registerConstraintType(int id, int jconstraintTypeId, int k, int l, int m, 
 /**
  *
  */
-double getPointPXCoordinate(int id) {
+double getPointPXCoordinate(int id)
+{
     int offset = pointOffset[id];
     double px = points[offset].x;
     return px;
@@ -286,31 +291,29 @@ double getPointPXCoordinate(int id) {
 /**
  *
  */
-double getPointPYCoordinate(int id) {
+double getPointPYCoordinate(int id)
+{
     int offset = pointOffset[id];
     double py = points[offset].y;
     return py;
 }
 
-void getPointCoordinateVector(double *state_arr) {}
-
-
-
-
-void ConstraintGetFullNorm(Computation *dev_ev) {
-
+void getPointCoordinateVector(double *state_arr)
+{
 }
 
+void ConstraintGetFullNorm(Computation *dev_ev)
+{
+}
 
 /// D.3.1.1. Device-Side Kernel Launch - kernel default shared memory, number of bytes
-constexpr size_t Ns =  0;
+constexpr size_t Ns = 0;
 
 /// grid size
 constexpr size_t DIM_GRID = 1;
 
 /// thread block size
 constexpr size_t DIM_BLOCK = 1024;
-
 
 /// lock for escaped data from computation rail
 /// -- first conveged computation contex or last invalid
@@ -320,10 +323,8 @@ std::condition_variable condition;
 
 std::mutex mutex;
 
-// host reference guarded by mutex 
-std::atomic<Computation*> result;
-
-
+// host reference guarded by mutex
+std::atomic<Computation *> result;
 
 /// <summary>
 /// Computation Round Handler
@@ -332,11 +333,12 @@ std::atomic<Computation*> result;
 void computationResultHandler(cudaStream_t stream, cudaError_t status, void *userData)
 {
     // synchronize on stream
-    
+
     Computation *computation = static_cast<Computation *>(userData);
 
     // obsluga bledow w strumieniu
-    if (status != cudaSuccess) {
+    if (status != cudaSuccess)
+    {
 
         const char *errorName = cudaGetErrorName(status);
         const char *errorStr = cudaGetErrorString(status);
@@ -347,7 +349,8 @@ void computationResultHandler(cudaStream_t stream, cudaError_t status, void *use
 
     bool last = computation->computationId == (CMAX - 1);
 
-    if (computation->norm2 < CONVERGENCE_LIMIT || last) {
+    if (computation->norm2 < CONVERGENCE_LIMIT || last)
+    {
 
         /// update result
         result.store(computation, std::memory_order_seq_cst);
@@ -358,15 +361,16 @@ void computationResultHandler(cudaStream_t stream, cudaError_t status, void *use
     // synchronize with stream next computation
 }
 
-
 ///
 /// Setup all matricies for computation and prepare kernel stream  intertwined with cuSolver
 ///
 ///
-void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
+void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
+{
     /// # Consideration -> ::"ingest stream and observe" fetch first converged
     ///
-    //   -- napelniamy strumien i obserwujemy wektor bledy ASYNC , cudaStreamAddCallback( { stream, cudaError_t , userData } ):
+    //   -- napelniamy strumien i obserwujemy wektor bledy ASYNC , cudaStreamAddCallback( { stream, cudaError_t ,
+    //   userData } ):
     ///
     //   -- "cublas_v2.h" funkcje API czytaj/i wpisuja  wspolczynnik z HOST jak i z DEVICE
     ///
@@ -375,20 +379,18 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     //   -- zalaczamy zadanie FI(q) = 0 norm2 -> wpiszemy do ExecutionContext variable
     ///
     //   --- state-vector lineage memcpy(deviceToDevice)
-    /// 
+    ///
 
-    
-    int N = dimension;      
+    int N = dimension;
 
     /// prepare local result context
     result.store(NULL, std::memory_order_seq_cst);
 
-    
     /// Uklad rownan liniowych  [ A * x = b ] powsta³y z linerazycji ukladu dynamicznego - tensory na urzadzeniu.
     double *dev_A = nullptr;
     double *dev_b = nullptr;
     double *dev_SV[CMAX] = {}; /// STATE VECTOR  -- lineage
-    double *dev_dx = nullptr; /// [ A ] * [ dx ] = [ b ]
+    double *dev_dx = nullptr;  /// [ A ] * [ dx ] = [ b ]
 
     /// w drugiej fazie dopisac => dodatkowo potrzebny per block  __shared__  memory   ORR    L1   fast region memory
     ///
@@ -404,27 +406,27 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     int *d_accGeometricSize;  /// accumulative offset with geometric size evaluation function
     int *d_accConstraintSize; /// accumulative offset with constraint size evaluation function
 
-
-    if (points.size() == 0) {
+    if (points.size() == 0)
+    {
         printf("[solver] - empty evaluation space model\n");
         return;
     }
 
-    if (constraints.size() == 0 ) {
+    if (constraints.size() == 0)
+    {
         printf("[solver] - no constraint configuration applied onto model\n");
         return;
     }
 
-/// cuSolver component configuration
-    int major = 0;    
+    /// cuSolver component configuration
+    int major = 0;
     int minor = 0;
-    int patch = 0;    
-    
+    int patch = 0;
+
     checkCuSolverStatus(cusolverGetProperty(MAJOR_VERSION, &major));
     checkCuSolverStatus(cusolverGetProperty(MINOR_VERSION, &minor));
     checkCuSolverStatus(cusolverGetProperty(PATCH_LEVEL, &patch));
     printf("[ CUSOLVER ]  version ( Major.Minor.PatchLevel): %d.%d.%d\n", major, minor, patch);
-
 
     ///
     /// for [GPU] Evaluation  - dane obliczeniowego modelu !
@@ -435,7 +437,7 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     ev->coffSize = coffSize;
     ev->dimension = dimension = N;
 
-    // immutables - 
+    // immutables -
     utility::memcpyToDevice(&d_points, points);
     utility::memcpyToDevice(&d_geometrics, geometrics);
     utility::memcpyToDevice(&d_constraints, constraints);
@@ -446,7 +448,6 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     utility::memcpyToDevice(&d_parameterOffset, parameterOffset.get(), parameters.rbegin()->id);
     utility::memcpyToDevice(&d_accGeometricSize, accGeometricSize.get(), geometrics.size());
     utility::memcpyToDevice(&d_accConstraintSize, accConstraintSize.get(), constraints.size());
-
 
     checkCudaStatus(cudaStreamSynchronize(stream));
 
@@ -470,7 +471,6 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     utility::mallocToDevice(&dev_SV[0], N * sizeof(double)); // each computation seperate SV vector
     utility::mallocToDevice(&dev_dx, N * sizeof(double));
 
-
     checkCudaStatus(cudaStreamSynchronize(stream));
 
     ev->A = dev_A;
@@ -480,8 +480,8 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
 
     ///
     /// [ GPU ] computation context mapped onto devive object
-    /// 
-    ///    
+    ///
+    ///
     // tu chce snapshot na kazda iteracje kopiowanie async, events [start,stop,workspace, streamId, stream]
     Computation *dev_ev;
 
@@ -504,72 +504,66 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     // skladowa to Fiq - wartosci poszczegolnych wiezow
     // graph::Tensor Fi = graph::Tensor::fromDeviceMem(dev_b + size, coffSize, 1);
 
-    
     stat->startTime = graph::TimeNanosecondsNow();
 
     printf("@#=================== Solver Initialized ===================#@ \n");
     printf("");
 
     /// Inicjalizacja Macierzy A, b, i pochodne
-      
 
-
-/// SV - State Vector
+    /// SV - State Vector
     CopyIntoStateVector<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev);
 
-/// SV -> setup Lagrange multipliers    
+    /// SV -> setup Lagrange multipliers
     utility::memset(ev->SV + ev->size, 0, ev->coffSize);
 
-
-/// # asynchronous kernel invocation
+    /// # asynchronous kernel invocation
 
     checkCudaStatus(cudaStreamSynchronize(stream));
-
-
 
     linear_system_method_cuSolver_reset(stream);
 
     int itr = 0;
-    
+
     // #########################################################################
-    // 
+    //
     // idea - zapelniamy strumien w calym zakresie rozwiazania do CMAX
     // -- i zczytujemy pierwszy mozliwy poprawny wynik
-    // 
-    while (itr < CMAX) {
-
+    //
+    while (itr < CMAX)
+    {
         // #observation
-        checkCudaStatus(cudaEventRecord(computeStart[itr] ,stream));
+        checkCudaStatus(cudaEventRecord(computeStart[itr], stream));
 
         // #observation
         checkCudaStatus(cudaEventRecord(prepStart[itr], stream));
-        
-/// # KERNEL_PRE
 
-        if (itr > 1){
+        /// # KERNEL_PRE
+
+        if (itr > 1)
+        {
             /// zerujemy macierz A      !!!!! second buffer
             utility::memset(dev_ev->A, 0, N * N * sizeof(double)); // --- ze wzgledu na addytywnosc
         }
-        
-/// macierz `A
-                
+
+        /// macierz `A
 
         /// Cooficients Stiffnes Matrix
         ComputeStiffnessMatrix<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev, geometrics.size());
-
 
 #ifdef CDEBUG
 
         checkCudaStatus(cudaStreamSynchronize(stream));
 
         cudaError_t lastError = cudaPeekAtLastError();
-        if (lastError != cudaSuccess) {
+        if (lastError != cudaSuccess)
+        {
             printf(" [ kernel ] computation failed - stiffness matrix \n");
             throw std::logic_error("kernel - stiffness matrix");
         }
 #endif
 
-        /// 
+        ///
         EvaluateConstraintHessian<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev, N);
 
         /// upper Triangular
@@ -577,32 +571,28 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
 
         EvaluateConstraintJacobian<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev, N);
 
-
         /// Tworzymy Macierz vector b vector `b
-        
-/// [ b ]  - right hand site
+
+        /// [ b ]  - right hand site
 
         /// Fr /// Sily  - F(q)
-        EvaluateForceIntensity<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev, N);     
+        EvaluateForceIntensity<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev, N);
 
         /// Fi / Wiezy  - Fi(q)
-        EvaluateConstraintValue<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev, N);          
-        
+        EvaluateConstraintValue<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev, N);
 
-        // [  b   ] ; /// --- schowac Do EvaluteForce - Constraint  .mulitply(-1);               
-
+        // [  b   ] ; /// --- schowac Do EvaluteForce - Constraint  .mulitply(-1);
 
         ///  upper traingular
 
         // #observation
-        checkCudaStatus(cudaEventRecord(prepStop[itr], stream));        
-
+        checkCudaStatus(cudaEventRecord(prepStop[itr], stream));
 
         // DENSE - CuSolver
         // LU Solver
-        // 
-/// ======== LINER SYSTEM equation CuSolver    === START
-                
+        //
+        /// ======== LINER SYSTEM equation CuSolver    === START
+
         // #observation
         checkCudaStatus(cudaEventRecord(solverStart[itr], stream));
 
@@ -611,63 +601,53 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
         // #observation
         checkCudaStatus(cudaEventRecord(solverStop[itr], stream));
 
-/// ======== LINER SYSTEM equation CuSolver    === STOP
-      
-        /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ]
-        
-        
-        StateVectorAddDifference<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(ev.get()->SV, ev.get()->b, ev.get()->dimension);
+        /// ======== LINER SYSTEM equation CuSolver    === STOP
 
+        /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ]
+
+        StateVectorAddDifference<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(ev.get()->SV, ev.get()->b, ev.get()->dimension);
 
         /// --- KERNEL_POST( __synchronize__ REDUCTION )
 
-
         // write into __device__ Computation block
-        ConstraintGetFullNorm(dev_ev);        
-
+        ConstraintGetFullNorm(dev_ev);
 
         /// retrive ComputationFrom device
 
-        void *userData = nullptr ;    // local_Computation
+        void *userData = nullptr; // local_Computation
 
-        /// callback dispatched to special cuda p_thread 
-        checkCudaStatus(cudaStreamAddCallback(stream, computationResultHandler, userData, 0));              
+        /// callback dispatched to special cuda p_thread
+        checkCudaStatus(cudaStreamAddCallback(stream, computationResultHandler, userData, 0));
 
         checkCudaStatus(cudaEventRecord(computeStop[itr], stream));
 
         itr++;
     }
 
-/// all computation tiles submited - for first result , or invalid last
+    /// all computation tiles submited - for first result , or invalid last
 
     std::unique_lock<std::mutex> ulock(mutex);
 
     /// atomic read
-    if (result.load(std::memory_order_seq_cst) == nullptr) {
-
+    if (result.load(std::memory_order_seq_cst) == nullptr)
+    {
         /// spurious wakeup
         condition.wait(ulock, [] { return result.load(std::memory_order_seq_cst) != nullptr; });
     }
-    
+
     // condition met
     ///
-    /// 
-    /// 
-    /// 
+    ///
+    ///
+    ///
     /// HOST computation view
-    Computation *computation= result.load(std::memory_order_seq_cst);
-
+    Computation *computation = result.load(std::memory_order_seq_cst);
 
     // STATE VECTOR result
-
-
-
 
     // oczekuje strumienia ale nie kopiujemy danych
 
     checkCudaStatus(cudaStreamSynchronize(stream));
-    
-
 
     solverWatch.setStopTick();
     long solutionDelta = solverWatch.delta();
@@ -691,7 +671,6 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     ///
     /// Evaluation data for  device  - CONST DATE for in process execution
 
-
     checkCudaStatus(cudaStreamSynchronize(stream));
 
 /// free allocated memory in solution
@@ -712,9 +691,9 @@ Error:
     utility::freeMem(d_accGeometricSize);  /// accumulative offset with geometric size evaluation function
     utility::freeMem(d_accConstraintSize); /// accumulative offset with constraint size evaluation function
 
-        
     // implicit object for utility
-    if (stream != NULL) {
+    if (stream != NULL)
+    {
         checkCudaStatus(cudaStreamDestroy(stream));
     }
 
@@ -723,14 +702,12 @@ Error:
 
 } // namespace solver
 
-
 /// KERNEL#
-void ConstraintEvaluateConstraintVector() {
+void ConstraintEvaluateConstraintVector()
+{
     /// Wiezy  - Fi(q)
     /// b.mulitply(-1);
 }
-
-
 
 /// @brief Setup __device__ vector of geometric points in this moment.
 ///
@@ -746,8 +723,10 @@ void ConstraintEvaluateConstraintVector() {
 /// </summary>
 /// <param name="status"></param>
 /// <param name="__line_"></param>
-void checkCudaStatus_impl(cudaError_t status, size_t __line_) {
-    if (status != cudaSuccess) {
+void checkCudaStatus_impl(cudaError_t status, size_t __line_)
+{
+    if (status != cudaSuccess)
+    {
         printf("%d: cuda API failed with status %d\n", static_cast<int>(__line_), static_cast<int>(status));
         throw std::logic_error("cuda API error");
     }
