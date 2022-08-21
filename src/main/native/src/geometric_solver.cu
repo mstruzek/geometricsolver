@@ -342,9 +342,9 @@ void ConstraintGetFullNorm(size_t coffSize, size_t size, double* b, double *resu
 
 
 
-double *getComputationNormFieldOffset(Computation* dev_ev)
+double *getComputationNormFieldOffset(ComputationState* dev_ev)
 {
-    char *norm = (static_cast<char *>(static_cast<void *>(dev_ev)) + 8);
+    char *norm = (static_cast<char *>(static_cast<void *>(dev_ev)) + 4 + 4 );
     double *offset = static_cast<double *>(static_cast<void *>(norm));
     return offset;
 }
@@ -368,7 +368,7 @@ std::condition_variable condition;
 std::mutex mutex;
 
 // host reference guarded by mutex
-std::atomic<Computation *> result;
+std::atomic<ComputationState *> result;
 
 /// <summary>
 /// Computation Round Handler
@@ -378,7 +378,7 @@ void computationResultHandler(cudaStream_t stream, cudaError_t status, void *use
 {
     // synchronize on stream
 
-    Computation *computation = static_cast<Computation *>(userData);
+    ComputationState *computation = static_cast<ComputationState *>(userData);
 
     // obsluga bledow w strumieniu
     if (status != cudaSuccess)
@@ -387,11 +387,11 @@ void computationResultHandler(cudaStream_t stream, cudaError_t status, void *use
         const char *errorName = cudaGetErrorName(status);
         const char *errorStr = cudaGetErrorString(status);
 
-        printf("[error] - computation id [%d] ,  %s = $s \n", computation->computationId, errorName, errorStr);
+        printf("[error] - computation id [%d] ,  %s = $s \n", computation->cID, errorName, errorStr);
         return;
     }
 
-    bool last = computation->computationId == (CMAX - 1);
+    bool last = computation->cID == (CMAX - 1);
 
     if (computation->norm < CONVERGENCE_LIMIT || last)
     {
@@ -432,10 +432,10 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     double *dev_dx = nullptr;  /// [ A ] * [ dx ] = [ b ]
     double *dev_SV[CMAX] = {NULL}; /// STATE VECTOR  -- lineage
 
-    Computation *dev_ev[CMAX] = {NULL};     /// device referensible
+    ComputationState *dev_ev[CMAX] = {NULL};     /// device referensible
         
     /// Local Computation References
-    Computation *ev[CMAX] = { NULL };
+    ComputationState *ev[CMAX] = { NULL };
         
     
     
@@ -452,6 +452,11 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     int *d_parameterOffset;   ///
     int *d_accGeometricSize;  /// accumulative offset with geometric size evaluation function
     int *d_accConstraintSize; /// accumulative offset with constraint size evaluation function
+
+    /// model aggreate for const immutable data
+    GeometricModel *model = nullptr;
+    GeometricModel *dev_geometricModel = nullptr;
+
 
     if (points.size() == 0)
     {
@@ -485,7 +490,8 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     /// ============================================================
 
     
-/// statuc data in computation
+/// const data in computation
+    utility::mallocAsync(&d_points, points.size());
     utility::mallocAsync(&d_points, points.size());
     utility::mallocAsync(&d_geometrics, geometrics.size());
     utility::mallocAsync(&d_constraints, constraints.size());
@@ -509,6 +515,9 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     utility::memcpyToDevice(&d_accGeometricSize, accGeometricSize.get(), geometrics.size());
     utility::memcpyToDevice(&d_accConstraintSize, accConstraintSize.get(), constraints.size());
 
+
+
+
     ///
     ///  [ GPU ] tensors `A` `x` `dx` `b`  ------------------------
     ///
@@ -518,13 +527,16 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     utility::mallocAsync(&dev_b, N);
     utility::mallocAsync(&dev_dx, N);
        
-
     utility::mallocAsync(&dev_SV[0], CMAX * N); /// each computation state with its own StateVector
     utility::mallocAsync(&dev_ev[0], CMAX);         
        
+    utility::mallocAsync(&dev_geometricModel, 1);         
+
 checkCudaStatus(cudaStreamSynchronize(stream));
 
+    utility::mallocHost(&model, 1);       /// model
 
+    utility::mallocHost(&ev[0], CMAX); /// paged lock accesible for fast memcpy 
     utility::mallocHost(&ev[0], CMAX); /// paged lock accesible for fast memcpy 
     
     
@@ -538,6 +550,22 @@ checkCudaStatus(cudaStreamSynchronize(stream));
         ev[itr] = ev[0] + (itr);                    /// each computation state with its own host Evalution Context
     }
 
+    // new (model) GeometricModel();
+    model->size = size;
+    model->coffSize = coffSize;
+    model->dimension = dimension = N;
+    
+    model->points = d_points;
+    model->geometrics = d_geometrics;
+    model->constraints = d_constraints;
+    model->parameters = d_parameters;
+
+    model->pointOffset = d_pointOffset;
+    model->parameterOffset = d_parameterOffset;
+    model->accGeometricSize = d_accGeometricSize;
+    model->accConstraintSize = d_accConstraintSize;
+
+    utility::memcpyToDevice(&dev_geometricModel, model, 1);
 
     /// ===============================================
     /// Aync Flow - wszystkie bloki za juz zaincjalizowane
@@ -593,26 +621,15 @@ checkCudaStatus(cudaStreamSynchronize(stream));
         }
                 
         ///  Host Context - with references to device
-        (new (ev[itr]) Computation());
-        ev[itr]->computationId = itr;
-        ev[itr]->size = size;
-        ev[itr]->coffSize = coffSize;
-        ev[itr]->dimension = dimension = N;
-
-        ev[itr]->points = d_points;
-        ev[itr]->geometrics = d_geometrics;
-        ev[itr]->constraints = d_constraints;
-        ev[itr]->parameters = d_parameters;
-
-        ev[itr]->pointOffset = d_pointOffset;
-        ev[itr]->parameterOffset = d_parameterOffset;
-        ev[itr]->accGeometricSize = d_accGeometricSize;
-        ev[itr]->accConstraintSize = d_accConstraintSize;
-
-        ev[itr]->A = dev_A;
-        ev[itr]->b = dev_b;
-        ev[itr]->SV = dev_SV[itr];
+        
+        // new (ev[itr]) ComputationState();
+        ev[itr]->cID= itr;        
+        ev[itr]->SV = dev_SV[itr];          /// state vector lineage
+        ev[itr]->A = dev_A;        
+        ev[itr]->b = dev_b;                
         ev[itr]->dx = dev_dx;
+
+        ev[itr]->model = dev_geometricModel;
 
         ///
         /// [ GPU ] computation context mapped onto devive object
@@ -757,7 +774,7 @@ std::unique_lock<std::mutex> ulock(mutex);
     ///
     ///
     /// HOST computation view
-    Computation *computation = result.load(std::memory_order_seq_cst);
+    ComputationState *computation = result.load(std::memory_order_seq_cst);
 
     // STATE VECTOR offset
 
@@ -778,7 +795,7 @@ checkCudaStatus(cudaStreamSynchronize(stream));
     stat->constraintDelta = computation->norm;
     stat->convergence = computation->norm < CONVERGENCE_LIMIT;
     stat->stopTime = graph::TimeNanosecondsNow();
-    stat->iterations = computation->computationId;
+    stat->iterations = computation->cID;
     stat->accSolverTime = 0;
     stat->accEvaluationTime = 0;
     stat->timeDelta = solverWatch.stopTick - solverWatch.startTick;
