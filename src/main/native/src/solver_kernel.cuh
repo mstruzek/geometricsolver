@@ -18,27 +18,26 @@
 ///
 ///         cudaMalloc, cudaMemcpy
 ///
-// - 
+/// -  HostComputation , DeviceComputation - dwa odseparowane obiekty !
+/// 
 struct Computation {
-// immutable
-    int computationId;
-    int norm2;          ///  cublasDnrm2(...)
+/// immutable
+    int computationId;    
     int info;           /// device variable cuBlas
+    double norm; ///  cublasDnrm2(...)
 
+    int size;      /// wektor stanu
+    int coffSize;  /// wspolczynniki Lagrange
+    int dimension; /// N - dimension = size + coffSize
 
-    int size;           /// wektor stanu
-    int coffSize;       /// wspolczynniki Lagrange
-    int dimension;      /// N - dimension = size + coffSize
-
-
-// macierze ukladu rowan - this computation only
+/// macierze ukladu rowan - this computation only [ __device__ ]
     double *A;  
     double *SV;         /// State Vector  [ SV = SV + dx ] , previous task -- "lineage"
     double *dx;         /// przyrosty   [ A * dx = b ]
     double *b;
 
 
-// immutable mainly static data
+/// immutable mainly static data [ __device__ ]
     graph::Point *points;
     graph::Geometric *geometrics;
     graph::Constraint *constraints;
@@ -63,6 +62,51 @@ struct Computation {
 
     __host__ __device__ double getLagrangeMultiplier(int constraintId) const;
 };
+
+
+/// <summary>
+/// Immutable Object
+/// </summary>
+struct GeometricModel
+{
+    int size;      /// wektor stanu
+    int coffSize;  /// wspolczynniki Lagrange
+    int dimension; /// N - dimension = size + coffSize
+
+    graph::Point *points;
+    graph::Geometric *geometrics;
+    graph::Constraint *constraints;
+    graph::Parameter *parameters;
+
+    const int *pointOffset;       /// ---
+    const int *parameterOffset;   /// paramater offset from given ID
+    const int *accGeometricSize;  /// accumulative offset with geometric size evaluation function
+    const int *accConstraintSize; /// accumulative offset with constraint size evaluation function
+};
+
+///
+/// HostComputationState    -
+/// DeviceComputationState  -
+///
+struct ComputationState
+{
+    int cID;        /// computatio unique id
+    int info;       /// device variable cuBlas
+    double norm;    ///  cublasDnrm2(...)
+
+    double *A;
+    double *SV;     /// State Vector  [ SV = SV + dx ] , previous task -- "lineage"
+    double *dx;     /// przyrosty   [ A * dx = b ]
+    double *b; 
+
+    GeometricModel *model;
+};
+
+
+
+
+
+
 
 __host__ __device__ graph::Point const &Computation::getPoint(int pointId) const {
     int offset = pointOffset[pointId];
@@ -108,12 +152,11 @@ __host__ __device__ double Computation::getLagrangeMultiplier(int constraintId) 
 /// </summary>
 /// <param name="ec"></param>
 /// <returns></returns>
-__global__ void CopyIntoStateVector(Computation *ec) {
+__global__ void CopyIntoStateVector(double *SV, graph::Point *points, size_t size) {
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
-    int size = ec->size;
     if (tID < size) {
-        ec->SV[2 * tID + 0] = ec->points[tID].x;
-        ec->SV[2 * tID + 1] = ec->points[tID].y;
+        SV[2 * tID + 0] = points[tID].x;
+        SV[2 * tID + 1] = points[tID].y;
     }
 }
 
@@ -122,13 +165,13 @@ __global__ void CopyIntoStateVector(Computation *ec) {
 /// </summary>
 /// <param name="ec"></param>
 /// <returns></returns>
-__global__ void CopyFromStateVector(Computation *ec) {
+__global__ void CopyFromStateVector(graph::Point *points, double *SV, size_t size)
+{
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
-    int size = ec->size;
     if (tID < size) {
-        graph::Point *point = &ec->points[tID];
-        point->x = ec->SV[2 * tID + 0];
-        point->y = ec->SV[2 * tID + 1];
+        graph::Point *point = &points[tID];
+        point->x = SV[2 * tID + 0];
+        point->y = SV[2 * tID + 1];
     }
 }
 

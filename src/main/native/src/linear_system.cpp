@@ -58,7 +58,6 @@ CU_SOLVER void linear_system_method_cuSolver_reset(cudaStream_t stream) {
         checkCudaStatus(cudaFreeAsync(info, stream));
     }
 
-
     if (start != NULL) {
         checkCudaStatus(cudaEventDestroy(start));
     }
