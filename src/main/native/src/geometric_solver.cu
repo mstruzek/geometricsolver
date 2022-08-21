@@ -86,6 +86,10 @@ int dimension; /// dimension = size + coffSize
 ///
 static cudaStream_t stream = NULL;
 
+
+        // --- inflow, --- graph / sekwencja zadan
+        // --- outflow --- zdejmujemy kopiowanie 
+
 ///
 /// ===========================================================
 
@@ -432,7 +436,7 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     double *dev_dx = nullptr;  /// [ A ] * [ dx ] = [ b ]
     double *dev_SV[CMAX] = {NULL}; /// STATE VECTOR  -- lineage
 
-    ComputationState *dev_ev[CMAX] = {NULL};     /// device referensible
+    ComputationState *dev_ev[CMAX] = {NULL};     /// device reference
         
     /// Local Computation References
     ComputationState *ev[CMAX] = { NULL };
@@ -516,8 +520,6 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     utility::memcpyToDevice(&d_accConstraintSize, accConstraintSize.get(), constraints.size());
 
 
-
-
     ///
     ///  [ GPU ] tensors `A` `x` `dx` `b`  ------------------------
     ///
@@ -543,7 +545,7 @@ checkCudaStatus(cudaStreamSynchronize(stream));
 /// [ Alternative-Option ] cudaHostRegister ( void* ptr, size_t size, unsigned int  flags ) ::
 /// cudaHostRegisterMapped:
 
-    for (int itr = 1 ; itr< CMAX ; ++itr )      
+    for (int itr = 1 ; itr < CMAX ; ++itr )      
     {
         dev_SV[itr] = dev_SV[0] + (itr * N);        /// each computation state with its own StateVector
         dev_ev[itr] = dev_ev[0] + (itr);            /// each computation state with its own device Evalution Context

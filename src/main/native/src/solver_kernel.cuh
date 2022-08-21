@@ -239,7 +239,7 @@ __device__ void setStiffnessMatrix_FreePoint(int rc, graph::Tensor &mt)
 
      */
     // K -mala sztywnosci
-    graph::SmallTensor Ks = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_LOW);
+    graph::Tensor Ks = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_LOW);
     graph::Tensor Km = Ks.multiplyC(-1);
 
     mt.plusSubTensor(rc + 0, rc + 0, Km);
@@ -267,9 +267,9 @@ __device__ void setStiffnessMatrix_Line(int rc, graph::Tensor &mt)
      *     0  	 0     ks    -ks];
      */
     // K -mala sztywnosci
-    graph::SmallTensor Ks = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_LOW);
+    graph::Tensor Ks = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_LOW);
     // K - duza szytwnosci
-    graph::SmallTensor Kb = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_HIGH);
+    graph::Tensor Kb = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_HIGH);
     // -Ks-Kb
     graph::Tensor Ksb = Ks.multiplyC(-1).plus(Kb.multiplyC(-1));
 
@@ -308,9 +308,9 @@ __device__ void setStiffnessMatrix_Circle(int rc, graph::Tensor &mt)
      *     0  	 0     ks    -ks];
      */
     // K -mala sztywnosci
-    graph::SmallTensor Ks = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_LOW);
+    graph::Tensor Ks = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_LOW);
     // K - duza szytwnosci
-    graph::SmallTensor Kb = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_HIGH * CIRCLE_SPRING_ALFA);
+    graph::Tensor Kb = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_HIGH * CIRCLE_SPRING_ALFA);
     // -Ks-Kb
     graph::Tensor Ksb = Ks.multiplyC(-1).plus(Kb.multiplyC(-1));
 
@@ -334,8 +334,8 @@ __device__ void setStiffnessMatrix_Circle(int rc, graph::Tensor &mt)
 __device__ void setStiffnessMatrix_Arc(int rc, graph::Tensor &mt)
 {
     // K -mala sztywnosci
-    graph::SmallTensor Kb = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_HIGH);
-    graph::SmallTensor Ks = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_LOW);
+    graph::Tensor Kb = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_HIGH);
+    graph::Tensor Ks = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_LOW);
 
     graph::Tensor mKs = Ks.multiplyC(-1);
     graph::Tensor mKb = Kb.multiplyC(-1);
