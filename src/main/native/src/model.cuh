@@ -31,11 +31,11 @@ __forceinline__ __device__ __host__ double getVectorY(Vector const &value);
 class Tensor
 {
   public:
-    __host__ __device__ Tensor(bool nonMemOwning = true) : nonMemOwning(nonMemOwning)
+    __forceinline__ __host__ __device__ Tensor(bool nonMemOwning = true) : nonMemOwning(nonMemOwning)
     {
     }
 
-    __host__ __device__ Tensor(double a00, double a01, double a10, double a11) : Tensor(true)
+    __forceinline__ __host__ __device__ Tensor(double a00, double a01, double a10, double a11) : Tensor(true)
     {
         tensor[0] = a00;
         tensor[1] = a01;
@@ -43,7 +43,8 @@ class Tensor
         tensor[3] = a11;
     }
 
-    __host__ __device__ void Tensor::setVector(int offsetRow, int offsetCol, Vector const &value)
+    __forceinline__ __host__ __device__ __forceinline__ void Tensor::setVector(int offsetRow, int offsetCol,
+                                                                              Vector const &value)
     {
         if (tensor_ref != nullptr)
         {
@@ -52,7 +53,7 @@ class Tensor
         }
     };
 
-    __host__ __device__ void setValue(int offsetRow, int offsetCol, double const &value)
+    __forceinline__ __host__ __device__ void setValue(int offsetRow, int offsetCol, double const &value)
     {
         if (tensor_ref != nullptr)
         {
@@ -77,7 +78,7 @@ class Tensor
         }
     }
 
-    __host__ __device__ void setSubTensor(int row, int offsetCol, Tensor const &mt)
+    __forceinline__ __host__ __device__ void setSubTensor(int row, int offsetCol, Tensor const &mt)
     {
         if (tensor_ref != nullptr && mt.nonMemOwning == true)
         {
@@ -94,7 +95,7 @@ class Tensor
         }
     }
 
-    __host__ __device__ Tensor multiplyC(double scalar)
+    __forceinline__ __host__ __device__ Tensor multiplyC(double scalar)
     {
         if (nonMemOwning == true)
         {
@@ -108,7 +109,7 @@ class Tensor
         return Tensor(false);
     }
 
-    __host__ __device__ Tensor plus(Tensor const &other)
+    __forceinline__ __host__ __device__ Tensor plus(Tensor const &other)
     {
         if (nonMemOwning == true && other.nonMemOwning == true)
         {
@@ -123,7 +124,7 @@ class Tensor
     }
 
     /// cuBLAS -  column-major storage !
-    __host__ __device__ static Tensor fromDeviceMem(double *dev_tensor, int ld, int cols)
+    __forceinline__ __host__ __device__ static Tensor fromDeviceMem(double *dev_tensor, int ld, int cols)
     {
         Tensor t = Tensor(false);
         t.ld = ld;
@@ -153,7 +154,7 @@ __host__ __device__ double toRadians(double angdeg)
 class SmallTensor
 {
   public:
-    __host__ __device__ static Tensor tensorR()
+    __forceinline__ __host__ __device__ static Tensor tensorR()
     {
         double a00 = 0.0;
         double a01 = -1.0;
@@ -162,7 +163,7 @@ class SmallTensor
         return Tensor(a00, a01, a10, a11);
     }
 
-    __host__ __device__ static Tensor rotation(double alfa)
+    __forceinline__ __host__ __device__ static Tensor rotation(double alfa)
     {
         double radians = toRadians(alfa);
         double a00 = cos(radians);
@@ -172,12 +173,12 @@ class SmallTensor
         return Tensor(a00, a01, a10, a11);
     }
 
-    __host__ __device__ static Tensor identity(double value)
+    __forceinline__ __host__ __device__ static Tensor identity(double value)
     {
         return Tensor(value, 0.0, 0.0, value);
     }
 
-    __host__ __device__ static Tensor diagonal(double diagonal)
+    __forceinline__ __host__ __device__ static Tensor diagonal(double diagonal)
     {
         return Tensor(diagonal, 0.0, 0.0, diagonal);
     }
@@ -228,28 +229,28 @@ class Vector
         return Vector(this->x / scalar, this->y / scalar);
     }
 
-    __host__ __device__ double length() const
+    __host__ __device__ __forceinline__ double length() const
     {
         return sqrt(this->x * this->x + this->y * this->y);
     }
 
-    __host__ __device__ Vector unit() const
+    __host__ __device__ __forceinline__ Vector unit() const
     {
         return this->operator/(length());
     }
 
-    __host__ __device__ Vector pivot() const
+    __host__ __device__ __forceinline__ Vector pivot() const
     {
         return Vector(-this->y, this->x);
     }
 
-    __host__ __device__ Vector Rot(double angle)
+    __host__ __device__ __forceinline__ Vector Rot(double angle)
     {
         double rad = toRadians(angle);
         return Vector(this->x * cos(rad) - this->y * sin(rad), this->x * sin(rad) + this->y * cos(rad));
     }
 
-    __host__ __device__ Tensor cartesian(Vector const &rhs)
+    __host__ __device__ __forceinline__ Tensor cartesian(Vector const &rhs)
     {
         double a00 = this->x * rhs.x;
         double a01 = this->x * rhs.y;
@@ -258,7 +259,7 @@ class Vector
         return Tensor(a00, a01, a10, a11);
     }
 
-    __host__ __device__ bool operator==(Vector const &other) const
+    __host__ __device__ __forceinline__ bool operator==(Vector const &other) const
     {
         return (this->x == other.x && this->y == other.y);
     }

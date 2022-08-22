@@ -166,6 +166,10 @@ template <typename Ty> void memset(Ty *dev_ptr, int value, size_t size)
 template <typename Obj, typename ObjIdFunction>
 std::unique_ptr<int[]> stateOffset(std::vector<Obj> objects, ObjIdFunction objectIdFunction)
 {
+    if (objects.empty())
+    {
+        return std::unique_ptr<int[]>(new int[0]);
+    }
 
     std::unique_ptr<int[]> offsets(new int[objectIdFunction(objects.rbegin())]);
     auto iterator = objects.begin();
@@ -346,7 +350,7 @@ void ConstraintGetFullNorm(size_t coffSize, size_t size, double* b, double *resu
 
 
 
-double *getComputationNormFieldOffset(ComputationState* dev_ev)
+__host__ __device__ double *getComputationNormFieldOffset(ComputationState* dev_ev)
 {
     char *norm = (static_cast<char *>(static_cast<void *>(dev_ev)) + 4 + 4 );
     double *offset = static_cast<double *>(static_cast<void *>(norm));
@@ -360,8 +364,22 @@ constexpr size_t Ns = 0;
 /// grid size
 constexpr size_t DIM_GRID = 1;
 
+
+
+/*
+   The maximum registers per thread is 255.
+
+    CUDAdrv.MAX_THREADS_PER_BLOCK, which is good, ( 1024 )
+
+    " if your kernel uses many registers, it also limits the amount of threads you can use."    
+
+*/
+
+
+/// https://docs.nvidia.com/cuda/turing-tuning-guide/index.html#sm-occupancy
+/// 
 /// thread block size
-constexpr size_t DIM_BLOCK = 1024;
+constexpr size_t DIM_BLOCK = 512;
 
 /// lock for escaped data from computation rail
 /// -- first conveged computation contex or last invalid
@@ -384,10 +402,14 @@ void computationResultHandler(cudaStream_t stream, cudaError_t status, void *use
 
     ComputationState *computation = static_cast<ComputationState *>(userData);
 
+#ifdef CDEBUG
+    printf("handler: %d \n", computation->cID);
+#endif CDEBUG
+
+
     // obsluga bledow w strumieniu
     if (status != cudaSuccess)
     {
-
         const char *errorName = cudaGetErrorName(status);
         const char *errorStr = cudaGetErrorString(status);
 
@@ -399,7 +421,6 @@ void computationResultHandler(cudaStream_t stream, cudaError_t status, void *use
 
     if (computation->norm < CONVERGENCE_LIMIT || last)
     {
-
         /// update offset
         result.store(computation, std::memory_order_seq_cst);
 
@@ -408,6 +429,10 @@ void computationResultHandler(cudaStream_t stream, cudaError_t status, void *use
 
     // synchronize with stream next computation
 }
+
+
+
+#undef CDEBUG
 
 ///
 /// Setup all matricies for computation and prepare kernel stream  intertwined with cuSolver
@@ -499,8 +524,8 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     utility::mallocAsync(&d_constraints, constraints.size());
     utility::mallocAsync(&d_parameters, parameters.size());
 
-    utility::mallocAsync(&d_pointOffset, points.rbegin()->id);
-    utility::mallocAsync(&d_parameterOffset, parameters.rbegin()->id);
+    utility::mallocAsync(&d_pointOffset, (++points.rbegin())->id);
+    utility::mallocAsync(&d_parameterOffset, (parameters.empty()) ? 0 : (++parameters.rbegin())->id);
     utility::mallocAsync(&d_accGeometricSize, geometrics.size());
     utility::mallocAsync(&d_accConstraintSize, constraints.size());
 
@@ -512,8 +537,8 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     utility::memcpyToDevice(&d_parameters, parameters);
 
     // immutables
-    utility::memcpyToDevice(&d_pointOffset, pointOffset.get(), points.rbegin()->id);
-    utility::memcpyToDevice(&d_parameterOffset, parameterOffset.get(), parameters.rbegin()->id);
+    utility::memcpyToDevice(&d_pointOffset, pointOffset.get(), (++points.rbegin())->id);
+    utility::memcpyToDevice(&d_parameterOffset, parameterOffset.get(), (parameters.empty()) ? 0 : (++parameters.rbegin())->id);
     utility::memcpyToDevice(&d_accGeometricSize, accGeometricSize.get(), geometrics.size());
     utility::memcpyToDevice(&d_accConstraintSize, accConstraintSize.get(), constraints.size());
 
@@ -570,7 +595,7 @@ checkCudaStatus(cudaStreamSynchronize(stream));
 
     stat->startTime = graph::TimeNanosecondsNow();
 
-    printf("@#=================== Solver Initialized ===================#@ \n");
+    printf("#=============== Solver Initialized =============# \n");
     printf("");
 
 
@@ -578,6 +603,9 @@ checkCudaStatus(cudaStreamSynchronize(stream));
     linear_system_method_cuSolver_reset(stream);
 
     int itr = 0;
+
+
+
 
     /// #########################################################################
     ///
@@ -652,36 +680,48 @@ checkCudaStatus(cudaStreamSynchronize(stream));
         ComputeStiffnessMatrix<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev[itr], geometrics.size());
 
 #ifdef CDEBUG
-
         checkCudaStatus(cudaStreamSynchronize(stream));
-
-        cudaError_t lastError = cudaPeekAtLastError();
-        if (lastError != cudaSuccess)
-        {
-            printf(" [ kernel ] computation failed - stiffness matrix \n");
-            throw std::logic_error("kernel - stiffness matrix");
-        }
+        checkCudaStatus(cudaPeekAtLastError());
 #endif
 
-        ///
-        EvaluateConstraintHessian<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev[itr], N);
+        /// [ cuda / error ] 701 : cuda API failed 701,  cudaErrorLaunchOutOfResources  = too many resources requested for launch
+        EvaluateConstraintHessian<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev[itr], constraints.size());
+
+#ifdef CDEBUG
+        checkCudaStatus(cudaStreamSynchronize(stream));
+        checkCudaStatus(cudaPeekAtLastError());
+#endif
 
         /// upper Triangular
         /// --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix   `A = `A set value
 
-        EvaluateConstraintJacobian<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev[itr], N);
+        EvaluateConstraintJacobian<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev[itr], constraints.size());
+
+#ifdef CDEBUG
+        checkCudaStatus(cudaStreamSynchronize(stream));
+        checkCudaStatus(cudaPeekAtLastError());
+#endif
 
         /// Tworzymy Macierz dest b dest `b
 
         /// [ b ]  - right hand site
 
-        /// Fr /// Sily  - F(q)
-        EvaluateForceIntensity<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev[itr], N);
+        /// Fr /// Sily  - F(q) --  .mulitply(-1);
+        EvaluateForceIntensity<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev[itr], geometrics.size());
 
-        /// Fi / Wiezy  - Fi(q)
-        EvaluateConstraintValue<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev[itr], N);
+#ifdef CDEBUG
+        checkCudaStatus(cudaStreamSynchronize(stream));
+        checkCudaStatus(cudaPeekAtLastError());
+#endif
 
-        // [  b   ] ; /// --- schowac Do EvaluteForce - Constraint  .mulitply(-1);
+        /// Fi / Wiezy  - Fi(q)  --  .mulitply(-1);
+        EvaluateConstraintValue<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev[itr], constraints.size());
+
+#ifdef CDEBUG
+        checkCudaStatus(cudaStreamSynchronize(stream));
+        checkCudaStatus(cudaPeekAtLastError());
+#endif
+
 
         ///  upper traingular
 
@@ -707,6 +747,11 @@ checkCudaStatus(cudaStreamSynchronize(stream));
 
         StateVectorAddDifference<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_SV[itr], dev_b, N);
 
+#ifdef CDEBUG
+        checkCudaStatus(cudaStreamSynchronize(stream));
+        checkCudaStatus(cudaPeekAtLastError());
+#endif
+
         /// --- KERNEL_POST( __synchronize__ REDUCTION )
 
         /// write into __device__ Computation block
@@ -717,17 +762,6 @@ checkCudaStatus(cudaStreamSynchronize(stream));
         double *dev_norm = getComputationNormFieldOffset(dev_ev[itr]);
 
         ConstraintGetFullNorm(coffSize, size, dev_b, dev_norm, stream);
-
-#ifdef CDEBUG
-
-        double hostNorm = 0.0        
-        
-        ConstraintGetFullNorm(ev.get(), &hostNorm, stream);
-        
-        checkCudaStatus(cudaStreamSynchronize(stream));
-
-        printf("[norm2] constraint norm  = %d", hostNorm);
-#endif
 
         // synchronize -- "adress still const"
         utility::memcpyFromDevice(ev[itr], dev_ev[itr], 1);

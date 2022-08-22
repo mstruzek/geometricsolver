@@ -13,10 +13,8 @@
 
 /// KERNEL#
 ///
-/// -  HostComputation , DeviceComputation 
+/// -  HostComputation , DeviceComputation
 ///
-
-
 
 ///  ===============================================================================
 
@@ -31,7 +29,7 @@ struct ComputationState
     double *dx; /// przyrosty   [ A * dx = b ]
     double *b;
 
-// geometric structure - effectievly consts 
+    // geometric structure - effectievly consts
     int size;      /// wektor stanu
     int coffSize;  /// wspolczynniki Lagrange
     int dimension; /// N - dimension = size + coffSize
@@ -46,23 +44,22 @@ struct ComputationState
     const int *accGeometricSize;  /// accumulative offs with geometric size evaluation function
     const int *accConstraintSize; /// accumulative offs with constraint size evaluation function
 
+    __host__ __device__ __forceinline__ graph::Vector const &getPoint(int pointId) const;
 
-    __host__ __device__ graph::Vector const &getPoint(int pointId) const;
+    __host__ __device__ __forceinline__ double getLagrangeMultiplier(int constraintId) const;
 
-    __host__ __device__ double getLagrangeMultiplier(int constraintId) const;
+    __host__ __device__ __forceinline__ graph::Point const &getPointRef(int pointId) const;
 
-    __host__ __device__ graph::Point const &getPointRef(int pointId) const;
+    __host__ __device__ __forceinline__ graph::Geometric *getGeometricObject(int geometricId) const;
 
-    __host__ __device__ graph::Geometric *getGeometricObject(int geometricId) const;
+    __host__ __device__ __forceinline__ graph::Constraint *getConstraint(int constraintId) const;
 
-    __host__ __device__ graph::Constraint *getConstraint(int constraintId) const;
-
-    __host__ __device__ graph::Parameter *getParameter(int parameterId) const;
+    __host__ __device__ __forceinline__ graph::Parameter *getParameter(int parameterId) const;
 };
 
 ///  ===============================================================================
 
-__host__ __device__ graph::Vector const &ComputationState::getPoint(int pointId) const
+__host__ __device__ __forceinline__ graph::Vector const &ComputationState::getPoint(int pointId) const
 {
     int offset = pointOffset[pointId];
     graph::Vector *vector;
@@ -70,37 +67,37 @@ __host__ __device__ graph::Vector const &ComputationState::getPoint(int pointId)
     return *vector;
 }
 
-__host__ __device__ double ComputationState::getLagrangeMultiplier(int constraintId) const
+__host__ __device__ __forceinline__ double ComputationState::getLagrangeMultiplier(int constraintId) const
 {
     int multiOffset = accConstraintSize[constraintId];
     return SV[size + multiOffset];
 }
 
-__host__ __device__ graph::Point const &ComputationState::getPointRef(int pointId) const
+__host__ __device__ __forceinline__ graph::Point const &ComputationState::getPointRef(int pointId) const
 {
     int offset = pointOffset[pointId];
     return points[offset];
 }
 
-__host__ __device__ graph::Geometric *ComputationState::getGeometricObject(int geometricId) const
+__host__ __device__ __forceinline__ graph::Geometric *ComputationState::getGeometricObject(int geometricId) const
 {
     /// geometricId is associated with `threadIdx
     return static_cast<graph::Geometric *>(&geometrics[geometricId]);
 }
 
-__host__ __device__ graph::Constraint *ComputationState::getConstraint(int constraintId) const
+__host__ __device__ __forceinline__ graph::Constraint *ComputationState::getConstraint(int constraintId) const
 {
     /// constraintId is associated with `threadIdx
     return static_cast<graph::Constraint *>(&constraints[constraintId]);
 }
 
-__host__ __device__ graph::Parameter *ComputationState::getParameter(int parameterId) const
+__host__ __device__ __forceinline__ graph::Parameter *ComputationState::getParameter(int parameterId) const
 {
     int offset = parameterOffset[parameterId];
     return static_cast<graph::Parameter *>(&parameters[offset]);
 }
 
-__host__ __device__ double toRadians(double value)
+__host__ __device__ __forceinline__ double toRadians(double value)
 {
     return (M_PI / 180.0) * value;
 }
@@ -219,6 +216,13 @@ __global__ void ComputeStiffnessMatrix(ComputationState *ec, int N)
     return;
 }
 
+/// -1 * b from equation reduction
+__device__ __constant__ constexpr double SPRING_LOW = CONSTS_SPRING_STIFFNESS_LOW;
+
+__device__ __constant__ constexpr double SPRING_HIGH = CONSTS_SPRING_STIFFNESS_HIGH;
+
+__device__ __constant__ constexpr double SPRING_ALFA = CIRCLE_SPRING_ALFA;
+
 ///
 /// Free Point ============================================================================
 ///
@@ -233,7 +237,7 @@ __device__ void setStiffnessMatrix_FreePoint(int rc, graph::Tensor &mt)
 
      */
     // K -mala sztywnosci
-    graph::Tensor Ks = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_LOW);
+    graph::Tensor Ks = graph::SmallTensor::diagonal(SPRING_LOW);
     graph::Tensor Km = Ks.multiplyC(-1);
 
     mt.plusSubTensor(rc + 0, rc + 0, Km);
@@ -261,9 +265,9 @@ __device__ void setStiffnessMatrix_Line(int rc, graph::Tensor &mt)
      *     0  	 0     ks    -ks];
      */
     // K -mala sztywnosci
-    graph::Tensor Ks = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_LOW);
+    graph::Tensor Ks = graph::SmallTensor::diagonal(SPRING_LOW);
     // K - duza szytwnosci
-    graph::Tensor Kb = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_HIGH);
+    graph::Tensor Kb = graph::SmallTensor::diagonal(SPRING_HIGH);
     // -Ks-Kb
     graph::Tensor Ksb = Ks.multiplyC(-1).plus(Kb.multiplyC(-1));
 
@@ -302,9 +306,9 @@ __device__ void setStiffnessMatrix_Circle(int rc, graph::Tensor &mt)
      *     0  	 0     ks    -ks];
      */
     // K -mala sztywnosci
-    graph::Tensor Ks = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_LOW);
+    graph::Tensor Ks = graph::SmallTensor::diagonal(SPRING_LOW);
     // K - duza szytwnosci
-    graph::Tensor Kb = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_HIGH * CIRCLE_SPRING_ALFA);
+    graph::Tensor Kb = graph::SmallTensor::diagonal(SPRING_HIGH * CIRCLE_SPRING_ALFA);
     // -Ks-Kb
     graph::Tensor Ksb = Ks.multiplyC(-1).plus(Kb.multiplyC(-1));
 
@@ -328,8 +332,8 @@ __device__ void setStiffnessMatrix_Circle(int rc, graph::Tensor &mt)
 __device__ void setStiffnessMatrix_Arc(int rc, graph::Tensor &mt)
 {
     // K -mala sztywnosci
-    graph::Tensor Kb = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_HIGH);
-    graph::Tensor Ks = graph::SmallTensor::diagonal(CONSTS_SPRING_STIFFNESS_LOW);
+    graph::Tensor Kb = graph::SmallTensor::diagonal(SPRING_HIGH);
+    graph::Tensor Ks = graph::SmallTensor::diagonal(SPRING_LOW);
 
     graph::Tensor mKs = Ks.multiplyC(-1);
     graph::Tensor mKb = Kb.multiplyC(-1);
@@ -383,9 +387,9 @@ __device__ void setForceIntensity_FreePoint(int row, graph::Geometric const *geo
     // 8 = 4*2 (4 punkty kontrolne)
 
     // F12 - sily w sprezynach
-    graph::Vector f12 = p1.minus(a).unit().product(CONSTS_SPRING_STIFFNESS_LOW).product(p1.minus(a).length() - d_a_p1);
+    graph::Vector f12 = p1.minus(a).unit().product(-SPRING_LOW).product(p1.minus(a).length() - d_a_p1);
     // F23
-    graph::Vector f23 = b.minus(p1).unit().product(CONSTS_SPRING_STIFFNESS_LOW).product(b.minus(p1).length() - d_p1_b);
+    graph::Vector f23 = b.minus(p1).unit().product(-SPRING_LOW).product(b.minus(p1).length() - d_p1_b);
 
     // F1 - sily na poszczegolne punkty
     mt.setVector(row + 0, 0, f12);
@@ -412,14 +416,13 @@ __device__ void setForceIntensity_Line(int row, graph::Geometric const *geometri
     double d_p2_b = abs(b.minus(p2).length());
 
     // 8 = 4*2 (4 punkty kontrolne)
-    graph::Vector f12 = p1.minus(a)
-                            .unit()
-                            .product(CONSTS_SPRING_STIFFNESS_LOW)
-                            .product(p1.minus(a).length() - d_a_p1); // F12 - sily w sprezynach
-    graph::Vector f23 =
-        p2.minus(p1).unit().product(CONSTS_SPRING_STIFFNESS_HIGH).product(p2.minus(p1).length() - d_p1_p2); // F23
-    graph::Vector f34 =
-        b.minus(p2).unit().product(CONSTS_SPRING_STIFFNESS_LOW).product(b.minus(p2).length() - d_p2_b); // F34
+    //
+    // F12 - sily w sprezynach
+    graph::Vector f12 = p1.minus(a).unit().product(-SPRING_LOW).product(p1.minus(a).length() - d_a_p1);
+    // F23
+    graph::Vector f23 = p2.minus(p1).unit().product(-SPRING_HIGH).product(p2.minus(p1).length() - d_p1_p2);
+    // F34
+    graph::Vector f34 = b.minus(p2).unit().product(-SPRING_LOW).product(b.minus(p2).length() - d_p2_b);
 
     // F1 - silu na poszczegolne punkty
     mt.setVector(row + 0, 0, f12);
@@ -457,16 +460,14 @@ __device__ void setForceIntensity_Circle(int row, graph::Geometric const *geomet
     double d_p2_b = abs(b.minus(p2).length());
 
     // 8 = 4*2 (4 punkty kontrolne)
-    graph::Vector f12 = p1.minus(a)
-                            .unit()
-                            .product(CONSTS_SPRING_STIFFNESS_LOW)
-                            .product(p1.minus(a).length() - d_a_p1); // F12 - sily w sprezynach
-    graph::Vector f23 = p2.minus(p1)
-                            .unit()
-                            .product(CONSTS_SPRING_STIFFNESS_HIGH * CIRCLE_SPRING_ALFA)
-                            .product(p2.minus(p1).length() - d_p1_p2); // F23
-    graph::Vector f34 =
-        b.minus(p2).unit().product(CONSTS_SPRING_STIFFNESS_LOW).product(b.minus(p2).length() - d_p2_b); // F34
+
+    // F12 - sily w sprezynach
+    graph::Vector f12 = p1.minus(a).unit().product(-SPRING_LOW).product(p1.minus(a).length() - d_a_p1);
+    // F23
+    graph::Vector f23 =
+        p2.minus(p1).unit().product(-SPRING_HIGH * SPRING_ALFA).product(p2.minus(p1).length() - d_p1_p2);
+    // F34
+    graph::Vector f34 = b.minus(p2).unit().product(-SPRING_LOW).product(b.minus(p2).length() - d_p2_b);
 
     // F1 - silu na poszczegolne punkty
     mt.setVector(row + 0, 0, f12);
@@ -501,14 +502,12 @@ __device__ void setForceIntensity_Arc(int row, graph::Geometric const *geometric
     double d_p3_d = abs(d.minus(p3).length());
     double d_p2_c = abs(c.minus(p2).length());
 
-    graph::Vector fap1 = p1.minus(a).unit().product(CONSTS_SPRING_STIFFNESS_LOW).product(p1.minus(a).length() - d_a_p1);
-    graph::Vector fbp1 = p1.minus(b).unit().product(CONSTS_SPRING_STIFFNESS_LOW).product(p1.minus(b).length() - d_b_p1);
-    graph::Vector fp1p2 =
-        p2.minus(p1).unit().product(CONSTS_SPRING_STIFFNESS_HIGH).product(p2.minus(p1).length() - d_p1_p2);
-    graph::Vector fp1p3 =
-        p3.minus(p1).unit().product(CONSTS_SPRING_STIFFNESS_HIGH).product(p3.minus(p1).length() - d_p1_p3);
-    graph::Vector fp2c = c.minus(p2).unit().product(CONSTS_SPRING_STIFFNESS_LOW).product(c.minus(p2).length() - d_p2_c);
-    graph::Vector fp3d = d.minus(p3).unit().product(CONSTS_SPRING_STIFFNESS_LOW).product(d.minus(p3).length() - d_p3_d);
+    graph::Vector fap1 = p1.minus(a).unit().product(-SPRING_LOW).product(p1.minus(a).length() - d_a_p1);
+    graph::Vector fbp1 = p1.minus(b).unit().product(-SPRING_LOW).product(p1.minus(b).length() - d_b_p1);
+    graph::Vector fp1p2 = p2.minus(p1).unit().product(-SPRING_HIGH).product(p2.minus(p1).length() - d_p1_p2);
+    graph::Vector fp1p3 = p3.minus(p1).unit().product(-SPRING_HIGH).product(p3.minus(p1).length() - d_p1_p3);
+    graph::Vector fp2c = c.minus(p2).unit().product(-SPRING_LOW).product(c.minus(p2).length() - d_p2_c);
+    graph::Vector fp3d = d.minus(p3).unit().product(-SPRING_LOW).product(d.minus(p3).length() - d_p3_d);
 
     mt.setVector(row + 0, 0, fap1);
     mt.setVector(row + 2, 0, fbp1);
@@ -580,7 +579,7 @@ __device__ void setValueConstraintFixPoint(int row, graph::Constraint const *con
     const graph::Vector ko_vec = graph::Vector(constraint->vecX, constraint->vecY);
 
     ///
-    graph::Vector value = k.minus(ko_vec);
+    graph::Vector value = k.minus(ko_vec).product(-1);
 
     ///
     mt.setVector(row, 0, value);
@@ -596,7 +595,7 @@ __device__ void setValueConstraintParametrizedXfix(int row, graph::Constraint co
     const graph::Parameter *param = ec->getParameter(constraint->paramId);
 
     ///
-    double value = k.x - param->value;
+    double value = -1 * (k.x - param->value);
     ///
     mt.setValue(row, 0, value);
 }
@@ -611,7 +610,7 @@ __device__ void setValueConstraintParametrizedYfix(int row, graph::Constraint co
     const graph::Parameter *param = ec->getParameter(constraint->paramId);
 
     ///
-    double value = k.y - param->value;
+    double value = -1 * (k.y - param->value);
     ///
     mt.setValue(row, 0, value);
 }
@@ -626,7 +625,7 @@ __device__ void setValueConstraintConnect2Points(int row, graph::Constraint cons
     const graph::Vector &l = ec->getPoint(constraint->l);
 
     ///
-    graph::Vector value = k.minus(l);
+    graph::Vector value = k.minus(l).product(-1);
     ///
     mt.setVector(row, 0, value);
 }
@@ -641,7 +640,7 @@ __device__ void setValueConstraintHorizontalPoint(int row, graph::Constraint con
     const graph::Vector &l = ec->getPoint(constraint->l);
 
     ///
-    double value = k.x - l.x;
+    double value = -1 * (k.x - l.x);
     ///
     mt.setValue(row, 0, value);
 }
@@ -656,7 +655,7 @@ __device__ void setValueConstraintVerticalPoint(int row, graph::Constraint const
     const graph::Vector &l = ec->getPoint(constraint->l);
 
     ///
-    double value = k.y - l.y;
+    double value = -1 * (k.y - l.y);
     ///
     mt.setValue(row, 0, value);
 }
@@ -676,7 +675,7 @@ __device__ void setValueConstraintLinesParallelism(int row, graph::Constraint co
     const graph::Vector NM = n.minus(m);
 
     ///
-    double value = LK.cross(NM);
+    double value = -1 * LK.cross(NM);
     ///
     mt.setValue(row, 0, value);
 }
@@ -696,7 +695,7 @@ __device__ void setValueConstraintLinesPerpendicular(int row, graph::Constraint 
     const graph::Vector MN = m.minus(n);
 
     ///
-    double value = KL.product(MN);
+    double value = -1 * KL.product(MN);
     ///
     mt.setValue(row, 0, value);
 }
@@ -716,7 +715,7 @@ __device__ void setValueConstraintEqualLength(int row, graph::Constraint const *
     const graph::Vector NM = n.minus(m);
 
     ///
-    double value = LK.length() - NM.length();
+    double value = -1 * (LK.length() - NM.length());
     ///
     mt.setValue(row, 0, value);
 }
@@ -737,7 +736,7 @@ __device__ void setValueConstraintParametrizedLength(int row, graph::Constraint 
     const graph::Vector NM = n.minus(m);
 
     ///
-    double value = param->value * LK.length() - NM.length();
+    double value = -1 * (param->value * LK.length() - NM.length());
     ///
     mt.setValue(row, 0, value);
 }
@@ -758,7 +757,7 @@ __device__ void setValueConstrainTangency(int row, graph::Constraint const *cons
     const graph::Vector MK = m.minus(k);
 
     ///
-    double value = LK.cross(MK) * LK.cross(MK) - LK.product(LK) * NM.product(NM);
+    double value = -1 * (LK.cross(MK) * LK.cross(MK) - LK.product(LK) * NM.product(NM));
     ///
     mt.setValue(row, 0, value);
 }
@@ -779,7 +778,7 @@ __device__ void setValueConstraintCircleTangency(int row, graph::Constraint cons
     const graph::Vector MK = m.minus(k);
 
     ///
-    double value = LK.length() + NM.length() - MK.length();
+    double value = -1 * (LK.length() + NM.length() - MK.length());
     ///
     mt.setValue(row, 0, value);
 }
@@ -795,7 +794,7 @@ __device__ void setValueConstraintDistance2Points(int row, graph::Constraint con
     const graph::Parameter *param = ec->getParameter(constraint->paramId);
 
     ///
-    double value = l.minus(k).length() - param->value;
+    double value = -1 * (l.minus(k).length() - param->value);
     ///
     mt.setValue(row, 0, value);
 }
@@ -816,7 +815,7 @@ __device__ void setValueConstraintDistancePointLine(int row, graph::Constraint c
     const graph::Vector MK = m.minus(k);
 
     ///
-    double value = LK.cross(MK) - param->value * LK.length();
+    double value = -1 * (LK.cross(MK) - param->value * LK.length());
     ///
     mt.setValue(row, 0, value);
 }
@@ -838,7 +837,7 @@ __device__ void setValueConstraintAngle2Lines(int row, graph::Constraint const *
     const graph::Vector NM = n.minus(m);
 
     ///
-    double value = LK.product(NM) - LK.length() * NM.length() * cos(toRadians(param->value));
+    double value = -1 * (LK.product(NM) - LK.length() * NM.length() * cos(toRadians(param->value)));
     ///
     mt.setValue(row, 0, value);
 }
@@ -857,7 +856,7 @@ __device__ void setValueConstraintSetHorizontal(int row, graph::Constraint const
     const graph::Vector &l = ec->getPoint(constraint->l);
 
     ///
-    double value = k.minus(l).product(m.minus(n));
+    double value = -1 * k.minus(l).product(m.minus(n));
     ///
     mt.setValue(row, 0, value);
 }
@@ -875,7 +874,7 @@ __device__ void setValueConstraintSetVertical(int row, graph::Constraint const *
     const graph::Vector &l = ec->getPoint(constraint->l);
 
     ///
-    double value = k.minus(l).product(m.minus(n));
+    double value = -1 * k.minus(l).product(m.minus(n));
     ///
     mt.setValue(row, 0, value);
 }
