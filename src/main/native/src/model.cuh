@@ -4,6 +4,9 @@
 #include "cuda_runtime.h"
 #include "math.h"
 
+//#//include <cuda/std/detail/libcxx/include/cstdlib> 
+
+
 #include <stdio.h>
 
 #include "model_config.h"
@@ -101,8 +104,7 @@ class Tensor
             double a10 = tensor[2] * scalar;
             double a11 = tensor[3] * scalar;
             return Tensor(a00, a01, a10, a11);
-        }
-        /// create empty in other case !
+        }               
         return Tensor(false);
     }
 
@@ -116,8 +118,7 @@ class Tensor
             double a10 = tensor[2] + other.tensor[2];
             double a11 = tensor[3] + other.tensor[3];
             return Tensor(a00, a01, a10, a11);
-        }
-        /// create empty in other case !
+        }        
         return Tensor(false);
     }
 
@@ -265,6 +266,9 @@ class Vector
   public:
     double x, y;
 };
+
+
+typedef Vector PPoint;
 
 __forceinline__ __device__ __host__ double getVectorX(Vector const &value)
 {

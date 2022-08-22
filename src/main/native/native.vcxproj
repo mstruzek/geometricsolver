@@ -60,6 +60,7 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <Include>%(Include)</Include>
     </CudaCompile>
     <CudaLink>
       <AdditionalDependencies>

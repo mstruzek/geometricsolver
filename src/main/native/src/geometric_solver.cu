@@ -458,8 +458,6 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     int *d_accConstraintSize; /// accumulative offset with constraint size evaluation function
 
     /// model aggreate for const immutable data
-    GeometricModel *model = nullptr;
-    GeometricModel *dev_geometricModel = nullptr;
 
 
     if (points.size() == 0)
@@ -531,12 +529,8 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
        
     utility::mallocAsync(&dev_SV[0], CMAX * N); /// each computation state with its own StateVector
     utility::mallocAsync(&dev_ev[0], CMAX);         
-       
-    utility::mallocAsync(&dev_geometricModel, 1);         
-
+      
 checkCudaStatus(cudaStreamSynchronize(stream));
-
-    utility::mallocHost(&model, 1);       /// model
 
     utility::mallocHost(&ev[0], CMAX); /// paged lock accesible for fast memcpy 
     utility::mallocHost(&ev[0], CMAX); /// paged lock accesible for fast memcpy 
@@ -551,23 +545,6 @@ checkCudaStatus(cudaStreamSynchronize(stream));
         dev_ev[itr] = dev_ev[0] + (itr);            /// each computation state with its own device Evalution Context
         ev[itr] = ev[0] + (itr);                    /// each computation state with its own host Evalution Context
     }
-
-    // new (model) GeometricModel();
-    model->size = size;
-    model->coffSize = coffSize;
-    model->dimension = dimension = N;
-    
-    model->points = d_points;
-    model->geometrics = d_geometrics;
-    model->constraints = d_constraints;
-    model->parameters = d_parameters;
-
-    model->pointOffset = d_pointOffset;
-    model->parameterOffset = d_parameterOffset;
-    model->accGeometricSize = d_accGeometricSize;
-    model->accConstraintSize = d_accConstraintSize;
-
-    utility::memcpyToDevice(&dev_geometricModel, model, 1);
 
     /// ===============================================
     /// Aync Flow - wszystkie bloki za juz zaincjalizowane
@@ -624,14 +601,28 @@ checkCudaStatus(cudaStreamSynchronize(stream));
                 
         ///  Host Context - with references to device
         
-        // new (ev[itr]) ComputationState();
+        // computation state;
         ev[itr]->cID= itr;        
         ev[itr]->SV = dev_SV[itr];          /// state vector lineage
         ev[itr]->A = dev_A;        
         ev[itr]->b = dev_b;                
         ev[itr]->dx = dev_dx;
 
-        ev[itr]->model = dev_geometricModel;
+        // geometric structure 
+        ev[itr]->size = size;
+        ev[itr]->coffSize = coffSize;
+        ev[itr]->dimension = dimension = N;
+
+        ev[itr]->points = d_points;
+        ev[itr]->geometrics = d_geometrics;
+        ev[itr]->constraints = d_constraints;
+        ev[itr]->parameters = d_parameters;
+
+        ev[itr]->pointOffset = d_pointOffset;
+        ev[itr]->parameterOffset = d_parameterOffset;
+        ev[itr]->accGeometricSize = d_accGeometricSize;
+        ev[itr]->accConstraintSize = d_accConstraintSize;
+
 
         ///
         /// [ GPU ] computation context mapped onto devive object
