@@ -79,7 +79,7 @@ public class ConstraintLinesParallelism extends Constraint {
         if ((m == null) && (n == null)) {
             double value = LK.cross(dbPoint.get(n_id).minus(dbPoint.get(m_id)));
             return TensorDouble.scalar(value);
-        } else {
+        } else { // not-used
             double value = LK.cross(n.minus(m));
             return TensorDouble.scalar(value);
         }

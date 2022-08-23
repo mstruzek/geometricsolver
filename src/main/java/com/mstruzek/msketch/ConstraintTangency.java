@@ -90,8 +90,10 @@ public class ConstraintTangency extends Constraint {
     @Override
     @InstabilityBehavior(description = "equations, `or lagrange multiplier")
     public TensorDouble getHessian(double lagrange) {
+/*
         if (true)
-            return null;
+*/
+//            return null;
         /*
          * wspolczynnik lagrange ?? mat.dot(lagrange) ??
          */
@@ -111,97 +113,97 @@ public class ConstraintTangency extends Constraint {
         i = po.get(k_id);
         j = po.get(k_id);
         mat = ML.pivot().cartesian(ML.pivot()).mulitply(2.0).plus(TensorDouble.diagonal(2, -2.0 * NM.product(NM)));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //k,l
         i = po.get(k_id);
         j = po.get(l_id);
         mat = R.multiplyC(-2.0 * MK.product(LK.pivot())).plus(ML.pivot().cartesian(MK.pivot()).mulitply(-2.0)).plus(TensorDouble.diagonal(2, 2.0 * NM.product(NM)));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //k,m
         i = po.get(k_id);
         j = po.get(m_id);
         mat = R.multiplyC(2 * MK.product(LK.pivot())).plus(ML.pivot().cartesian(LK.pivot()).mulitply(2.0)).plus(TensorDouble.diagonal(2, -4.0 * NM.product(LK)));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //k,n
         i = po.get(k_id);
         j = po.get(n_id);
         mat = TensorDouble.diagonal(2, 4.0 * NM.product(LK));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //l,k
         i = po.get(l_id);
         j = po.get(k_id);
         mat = R.multiplyC(2.0 * MK.product(LK.pivot())).plus(MK.pivot().cartesian(MK.pivot()).mulitply(-2.0).plus(TensorDouble.diagonal(2, 2.0 * NM.product(NM))));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //l,l
         i = po.get(l_id);
         j = po.get(l_id);
         mat = MK.pivot().cartesian(MK.pivot()).mulitply(2.0).plus(TensorDouble.diagonal(2, -2.0 * NM.product(NM)));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //l,m
         i = po.get(l_id);
         j = po.get(m_id);
         mat = R.multiplyC(MK.product(LK.pivot())).plus(MK.pivot().cartesian(LK.pivot())).mulitply(-2.0).plus(TensorDouble.diagonal(2, 4.0 * NM.product(LK)));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //l,n
         i = po.get(l_id);
         j = po.get(n_id);
         mat = TensorDouble.diagonal(2, -4.0 * NM.product(LK));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //m,k
         i = po.get(m_id);
         j = po.get(k_id);
         mat = R.multiplyC(-2.0 * MK.product(LK.pivot())).plus(LK.pivot().cartesian(ML.pivot()).mulitply(2.0)).plus(TensorDouble.diagonal(2, -4.0 * NM.product(LK)));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //m,l
         i = po.get(m_id);
         j = po.get(l_id);
         mat = R.multiplyC(MK.product(LK.pivot())).mulitply(2.0).plus(LK.pivot().cartesian(MK.pivot()).mulitply(-2.0)).plus(TensorDouble.diagonal(2, 4.0 * NM.product(LK)));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //m,m
         i = po.get(m_id);
         j = po.get(m_id);
         mat = LK.pivot().cartesian(LK.pivot()).plus(TensorDouble.diagonal(2, -1.0 * LK.product(LK))).mulitply(2.0);
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //m,n
         i = po.get(m_id);
         j = po.get(n_id);
         mat = TensorDouble.diagonal(2, 2.0 * LK.product(LK));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //n,k
         i = po.get(n_id);
         j = po.get(k_id);
         mat = TensorDouble.diagonal(2, 4.0 * LK.product(NM));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //n,l
         i = po.get(n_id);
         j = po.get(l_id);
         mat = TensorDouble.diagonal(2, -4.0 * LK.product(NM));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //n,m
         i = po.get(n_id);
         j = po.get(m_id);
         mat = TensorDouble.diagonal(2, 2.0 * LK.product(LK));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
         //n,n
         i = po.get(n_id);
         j = po.get(n_id);
         mat = TensorDouble.diagonal(2, -2.0 * LK.product(LK));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat);
 
     /// TODO aktualnie = 1.0   <==
 

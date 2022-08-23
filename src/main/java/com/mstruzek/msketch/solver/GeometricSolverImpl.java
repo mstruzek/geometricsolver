@@ -54,7 +54,7 @@ public class GeometricSolverImpl implements GeometricSolver {
     @Override
     public void setup() {
 
-        StateReporter.DebugEnabled = false;
+        StateReporter.DebugEnabled = true;
 
         reporter = StateReporter.getInstance();
 
@@ -200,11 +200,15 @@ public class GeometricSolverImpl implements GeometricSolver {
             A.setSubMatrix(0, size, Wq.transpose());
 
             /*
-             *  LU Decomposition  -- Colt Linera Equatio Solver
+             *  LU Decomposition  -- Colt Linear Equation Solver
              *
-             *   rozwiazjemy zadanie [ A ] * [ dx ] = [ b ]
+             *   rozwiazujemy zadanie [ A ] * [ dx ] = [ b ]
              */
 /// Solver LU Single Iteration Step
+
+            if (StateReporter.isDebugEnabled()) {
+                reporter.writeln(TensorDouble.writeToString(A));
+            }
 
             DoubleMatrix2D matrix2DA = MatrixDoubleUtility.toSparse(A);
             DoubleMatrix1D matrix1Db = MatrixDoubleUtility.toDenseVector(b);

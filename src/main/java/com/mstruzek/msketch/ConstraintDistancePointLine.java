@@ -107,49 +107,58 @@ public class ConstraintDistancePointLine extends Constraint {
         int j;
 
         //k,k
-        i = po.get(k_id);j = po.get(k_id);
-            mat = ML.pivot().cartesian(MK.pivot().minus(LK.pivot())).mulitply(2).plus(Dm);
-            mt.setSubMatrix(2 * i, 2 * j, mat);
+        i = po.get(k_id);
+        j = po.get(k_id);
+        mat = ML.pivot().cartesian(MK.pivot().minus(LK.pivot())).mulitply(2).plus(Dm);
+        mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //k,l
-        i = po.get(k_id);j = po.get(l_id);
-            mat = R.multiplyC(-2.0 * SC).plus(ML.pivot().cartesian(MK).multiply(R).mulitply(2.0)).plus(D);
-            mt.setSubMatrix(2 * i, 2 * j, mat);
+        i = po.get(k_id);
+        j = po.get(l_id);
+        mat = R.multiplyC(-2.0 * SC).plus(ML.pivot().cartesian(MK).multiply(R).mulitply(2.0)).plus(D);
+        mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //k,m
-        i = po.get(k_id);j = po.get(m_id);
-            mat = R.multiplyC(2 * SC).plus(ML.pivot().cartesian(LK.pivot()).mulitply(2.0));
-            mt.setSubMatrix(2 * i, 2 * j, mat);
+        i = po.get(k_id);
+        j = po.get(m_id);
+        mat = R.multiplyC(2 * SC).plus(ML.pivot().cartesian(LK.pivot()).mulitply(2.0));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,k
-        i = po.get(l_id);j = po.get(k_id);
-            mat = R.multiplyC(2 * SC).plus(MK.pivot().cartesian(ML.pivot()).mulitply(-2.0)).plus(D);
-            mt.setSubMatrix(2 * i, 2 * j, mat);
+        i = po.get(l_id);
+        j = po.get(k_id);
+        mat = R.multiplyC(2 * SC).plus(MK.pivot().cartesian(ML.pivot()).mulitply(-2.0)).plus(D);
+        mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,l
-        i = po.get(l_id);j = po.get(l_id);
-            mat = MK.pivot().cartesian(MK.pivot()).mulitply(2.0).plus(Dm);
-            mt.setSubMatrix(2 * i, 2 * j, mat);
+        i = po.get(l_id);
+        j = po.get(l_id);
+        mat = MK.pivot().cartesian(MK.pivot()).mulitply(2.0).plus(Dm);
+        mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //l,m
-        i = po.get(l_id);j = po.get(m_id);
-            mat = R.multiplyC(-2.0 * SC).plus(MK.pivot().cartesian(LK.pivot()).mulitply(-2.0));
-            mt.setSubMatrix(2 * i, 2 * j, mat);
+        i = po.get(l_id);
+        j = po.get(m_id);
+        mat = R.multiplyC(-2.0 * SC).plus(MK.pivot().cartesian(LK.pivot()).mulitply(-2.0));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,k
-        i = po.get(m_id);j = po.get(k_id);
-            mat = R.multiplyC(-2.0 * SC).plus(LK.pivot().cartesian(MK.pivot()).mulitply(-2.0));
-            mt.setSubMatrix(2 * i, 2 * j, mat);
+        i = po.get(m_id);
+        j = po.get(k_id);
+        mat = R.multiplyC(-2.0 * SC).plus(LK.pivot().cartesian(MK.pivot()).mulitply(-2.0));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,l
-        i = po.get(m_id);j = po.get(l_id);
-            mat = R.multiplyC(2.0 * SC).plus(LK.pivot().cartesian(MK.pivot()).mulitply(-2.0));
-            mt.setSubMatrix(2 * i, 2 * j, mat);
+        i = po.get(m_id);
+        j = po.get(l_id);
+        mat = R.multiplyC(2.0 * SC).plus(LK.pivot().cartesian(MK.pivot()).mulitply(-2.0));
+        mt.setSubMatrix(2 * i, 2 * j, mat);
 
         //m,m
-        i = po.get(m_id);j = po.get(m_id);
-            mat = LK.pivot().cartesian(LK.pivot()).mulitply(2.0);
-            mt.setSubMatrix(2 * i, 2 * j, mat);
+        i = po.get(m_id);
+        j = po.get(m_id);
+        mat = LK.pivot().cartesian(LK.pivot()).mulitply(2.0);
+        mt.setSubMatrix(2 * i, 2 * j, mat);
 
         // \\\\\\\ \\\\\\ HESSIAN
         return mt.mulitply(lagrange);
