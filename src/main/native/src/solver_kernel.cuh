@@ -380,9 +380,12 @@ __device__ void setForceIntensity_FreePoint(int row, graph::Geometric const *geo
     graph::Vector const &a = ec->getPoint(geometric->a);
     graph::Vector const &b = ec->getPoint(geometric->b);
     graph::Vector const &p1 = ec->getPoint(geometric->p1);
+    
+    // declaration time const 
+    graph::Point const &p1c = ec->getPointRef(geometric->p1);
 
-    double d_a_p1 = abs(p1.minus(a).length()) * 0.1;
-    double d_p1_b = abs(b.minus(p1).length()) * 0.1;
+    const double d_a_p1 = abs(p1c.minus(a).length()) * 0.1;
+    const double d_p1_b = abs(b.minus(p1c).length()) * 0.1;
 
     // 8 = 4*2 (4 punkty kontrolne)
 
@@ -411,9 +414,13 @@ __device__ void setForceIntensity_Line(int row, graph::Geometric const *geometri
     graph::Vector const &p1 = ec->getPoint(geometric->p1);
     graph::Vector const &p2 = ec->getPoint(geometric->p2);
 
-    double d_a_p1 = abs(p1.minus(a).length());
-    double d_p1_p2 = abs(p2.minus(p1).length());
-    double d_p2_b = abs(b.minus(p2).length());
+    // declaration time const 
+    graph::Point const &p1c = ec->getPointRef(geometric->p1);
+    graph::Point const &p2c = ec->getPointRef(geometric->p2);
+
+    const double d_a_p1 = abs(p1c.minus(a).length());
+    const double d_p1_p2 = abs(p2c.minus(p1c).length());
+    const double d_p2_b = abs(b.minus(p2c).length());
 
     // 8 = 4*2 (4 punkty kontrolne)
     //
@@ -455,9 +462,14 @@ __device__ void setForceIntensity_Circle(int row, graph::Geometric const *geomet
     graph::Vector const &p1 = ec->getPoint(geometric->p1);
     graph::Vector const &p2 = ec->getPoint(geometric->p2);
 
-    double d_a_p1 = abs(p1.minus(a).length());
-    double d_p1_p2 = abs(p2.minus(p1).length());
-    double d_p2_b = abs(b.minus(p2).length());
+    // declaration time const 
+    graph::Point const &p1c = ec->getPointRef(geometric->p1);
+    graph::Point const &p2c = ec->getPointRef(geometric->p2);
+
+    const double d_a_p1 = abs(p1c.minus(a).length());
+    const double d_p1_p2 = abs(p2c.minus(p1c).length());
+    const double d_p2_b = abs(b.minus(p2c).length());
+
 
     // 8 = 4*2 (4 punkty kontrolne)
 
@@ -494,13 +506,18 @@ __device__ void setForceIntensity_Arc(int row, graph::Geometric const *geometric
     graph::Vector const &p2 = ec->getPoint(geometric->p2);
     graph::Vector const &p3 = ec->getPoint(geometric->p3);
 
-    /// Naciag wstepny lepiej sie zbiegaja
-    double d_a_p1 = abs(p1.minus(a).length());
-    double d_b_p1 = abs(p1.minus(b).length());
-    double d_p1_p2 = abs(p2.minus(p1).length());
-    double d_p1_p3 = abs(p3.minus(p1).length());
-    double d_p3_d = abs(d.minus(p3).length());
-    double d_p2_c = abs(c.minus(p2).length());
+    // declaration time const 
+    graph::Point const &p1c = ec->getPointRef(geometric->p1);
+    graph::Point const &p2c = ec->getPointRef(geometric->p2);
+    graph::Point const &p3c = ec->getPointRef(geometric->p3);
+
+    /// naciag wstepny lepiej sie zbiegaja
+    double d_a_p1 = abs(p1c.minus(a).length());
+    double d_b_p1 = abs(p1c.minus(b).length());
+    double d_p1_p2 = abs(p2c.minus(p1c).length());
+    double d_p1_p3 = abs(p3c.minus(p1c).length());
+    double d_p3_d = abs(d.minus(p3c).length());
+    double d_p2_c = abs(c.minus(p2c).length());
 
     graph::Vector fap1 = p1.minus(a).unit().product(-SPRING_LOW).product(p1.minus(a).length() - d_a_p1);
     graph::Vector fbp1 = p1.minus(b).unit().product(-SPRING_LOW).product(p1.minus(b).length() - d_b_p1);
@@ -1385,7 +1402,8 @@ __global__ void EvaluateConstraintJacobian(ComputationState *ec, int N)
     /// COLUMN_ORDER - tensor A
     int constraintOffset = (ec->size) + ec->accConstraintSize[tID];
 
-    graph::Tensor mt = graph::Tensor::fromDeviceMem(ec->A + (ec->dimension) * constraintOffset, ec->size, 1);
+
+    graph::Tensor mt = graph::Tensor::fromDeviceMem(ec->A + (ec->dimension) * constraintOffset, ec->dimension, 1);
 
     if (tID < N)
     {

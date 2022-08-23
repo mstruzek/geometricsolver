@@ -4,8 +4,7 @@
 #include "cuda_runtime.h"
 #include "math.h"
 
-//#//include <cuda/std/detail/libcxx/include/cstdlib> 
-
+//#//include <cuda/std/detail/libcxx/include/cstdlib>
 
 #include <stdio.h>
 
@@ -14,7 +13,6 @@
 namespace graph
 {
 
-
 struct Geometric;
 
 struct Constraint;
@@ -22,20 +20,22 @@ struct Constraint;
 int constraintSize(Constraint const &constraint);
 int geometricSetSize(Geometric const &geometric);
 
+#define __GPU_COMM_INL__ __forceinline__ __host__ __device__
+
 class Vector;
 
-__forceinline__ __device__ __host__ double getVectorX(Vector const &value);
+__GPU_COMM_INL__ double getVectorX(Vector const &value);
 
-__forceinline__ __device__ __host__ double getVectorY(Vector const &value);
+__GPU_COMM_INL__ double getVectorY(Vector const &value);
 
 class Tensor
 {
   public:
-    __forceinline__ __host__ __device__ Tensor(bool nonMemOwning = true) : nonMemOwning(nonMemOwning)
+    __GPU_COMM_INL__ Tensor(bool nonMemOwning = true) : nonMemOwning(nonMemOwning)
     {
     }
 
-    __forceinline__ __host__ __device__ Tensor(double a00, double a01, double a10, double a11) : Tensor(true)
+    __GPU_COMM_INL__ Tensor(double a00, double a01, double a10, double a11) : Tensor(true)
     {
         tensor[0] = a00;
         tensor[1] = a01;
@@ -43,8 +43,7 @@ class Tensor
         tensor[3] = a11;
     }
 
-    __forceinline__ __host__ __device__ __forceinline__ void Tensor::setVector(int offsetRow, int offsetCol,
-                                                                              Vector const &value)
+    __GPU_COMM_INL__ void Tensor::setVector(int offsetRow, int offsetCol, Vector const &value)
     {
         if (tensor_ref != nullptr)
         {
@@ -53,15 +52,27 @@ class Tensor
         }
     };
 
-    __forceinline__ __host__ __device__ void setValue(int offsetRow, int offsetCol, double const &value)
+    __GPU_COMM_INL__ void setValue(int offsetRow, int offsetCol, double const &value)
     {
         if (tensor_ref != nullptr)
         {
             tensor_ref[ld * offsetCol + offsetRow] = value;
         }
     }
+    
+    __GPU_COMM_INL__ double getValue(int offsetRow, int offsetCol) const
+    {
+        if (tensor_ref != nullptr)
+        {
+            return tensor_ref[ld * offsetCol + offsetRow];
+        }
+        else if (nonMemOwning == true)
+        {
+            return tensor[2 * offsetRow + offsetCol ];
+        }
+    }
 
-    __host__ __device__ void plusSubTensor(int offsetRow, int offsetCol, Tensor const &mt)
+    __GPU_COMM_INL__ void plusSubTensor(int offsetRow, int offsetCol, Tensor const &mt)
     {
         if (tensor_ref != nullptr && mt.nonMemOwning == true)
         {
@@ -78,7 +89,7 @@ class Tensor
         }
     }
 
-    __forceinline__ __host__ __device__ void setSubTensor(int row, int offsetCol, Tensor const &mt)
+    __GPU_COMM_INL__ void setSubTensor(int row, int offsetCol, Tensor const &mt)
     {
         if (tensor_ref != nullptr && mt.nonMemOwning == true)
         {
@@ -95,7 +106,7 @@ class Tensor
         }
     }
 
-    __forceinline__ __host__ __device__ Tensor multiplyC(double scalar)
+    __GPU_COMM_INL__ Tensor multiplyC(double scalar)
     {
         if (nonMemOwning == true)
         {
@@ -105,11 +116,11 @@ class Tensor
             double a10 = tensor[2] * scalar;
             double a11 = tensor[3] * scalar;
             return Tensor(a00, a01, a10, a11);
-        }               
+        }
         return Tensor(false);
     }
 
-    __forceinline__ __host__ __device__ Tensor plus(Tensor const &other)
+    __GPU_COMM_INL__ Tensor plus(Tensor const &other)
     {
         if (nonMemOwning == true && other.nonMemOwning == true)
         {
@@ -119,12 +130,12 @@ class Tensor
             double a10 = tensor[2] + other.tensor[2];
             double a11 = tensor[3] + other.tensor[3];
             return Tensor(a00, a01, a10, a11);
-        }        
+        }
         return Tensor(false);
     }
 
     /// cuBLAS -  column-major storage !
-    __forceinline__ __host__ __device__ static Tensor fromDeviceMem(double *dev_tensor, int ld, int cols)
+    __GPU_COMM_INL__ static Tensor fromDeviceMem(double *dev_tensor, int ld, int cols)
     {
         Tensor t = Tensor(false);
         t.ld = ld;
@@ -137,7 +148,7 @@ class Tensor
     int ld = 0;
     int cols = 0;
     union {
-        double tensor[4] = {0.0};
+        double tensor[4] = {0.0}; /// row-major storage - logical mistake !!!
         double *tensor_ref; /// cuBLAS -  column-major storage !
     };
     bool nonMemOwning; /// cast_helper if true -> SmallTensor otherwise RefMatrixDouble
@@ -145,7 +156,7 @@ class Tensor
 
 #define DEGREES_TO_RADIANS 0.017453292519943295;
 
-__host__ __device__ double toRadians(double angdeg)
+__GPU_COMM_INL__ double toRadians(double angdeg)
 {
     return angdeg * DEGREES_TO_RADIANS;
 }
@@ -154,7 +165,7 @@ __host__ __device__ double toRadians(double angdeg)
 class SmallTensor
 {
   public:
-    __forceinline__ __host__ __device__ static Tensor tensorR()
+    __GPU_COMM_INL__ static Tensor tensorR()
     {
         double a00 = 0.0;
         double a01 = -1.0;
@@ -163,7 +174,7 @@ class SmallTensor
         return Tensor(a00, a01, a10, a11);
     }
 
-    __forceinline__ __host__ __device__ static Tensor rotation(double alfa)
+    __GPU_COMM_INL__ static Tensor rotation(double alfa)
     {
         double radians = toRadians(alfa);
         double a00 = cos(radians);
@@ -173,84 +184,86 @@ class SmallTensor
         return Tensor(a00, a01, a10, a11);
     }
 
-    __forceinline__ __host__ __device__ static Tensor identity(double value)
+    __GPU_COMM_INL__ static Tensor identity(double value)
     {
         return Tensor(value, 0.0, 0.0, value);
     }
 
-    __forceinline__ __host__ __device__ static Tensor diagonal(double diagonal)
+    __GPU_COMM_INL__ static Tensor diagonal(double diagonal)
     {
         return Tensor(diagonal, 0.0, 0.0, diagonal);
     }
 };
 
+
+
 class Vector
 {
   public:
-    __host__ __device__ Vector(){};
+    __GPU_COMM_INL__ Vector(){};
 
-    __host__ __device__ Vector(Vector const &other)
+    __GPU_COMM_INL__ Vector(Vector const &other)
     {
         this->x = other.x;
         this->y = other.y;
     };
 
-    __host__ __device__ Vector(double px, double py) : x(px), y(py)
+    __GPU_COMM_INL__ Vector(double px, double py) : x(px), y(py)
     {
     }
 
-    __host__ __device__ Vector plus(Vector const &other) const
+    __GPU_COMM_INL__ Vector plus(Vector const &other) const
     {
         return Vector(this->x + other.x, this->y + other.y);
     }
 
-    __host__ __device__ Vector minus(Vector const &other) const
+    __GPU_COMM_INL__ Vector minus(Vector const &other) const
     {
         return Vector(this->x - other.x, this->y - other.y);
     }
 
-    __host__ __device__ double product(Vector const &other) const
+    __GPU_COMM_INL__ double product(Vector const &other) const
     {
         return (this->x * other.x + this->y * other.y);
     }
 
-    __host__ __device__ Vector product(double scalar) const
+    __GPU_COMM_INL__ Vector product(double scalar) const
     {
         return Vector(this->x * scalar, this->y * scalar);
     }
 
-    __host__ __device__ double cross(Vector const &other) const
+    __GPU_COMM_INL__ double cross(Vector const &other) const
     {
         return (this->x * other.y - this->y * other.x);
     }
 
-    __host__ __device__ Vector operator/(double scalar) const
+    __GPU_COMM_INL__ Vector operator/(double scalar) const
     {
         return Vector(this->x / scalar, this->y / scalar);
     }
 
-    __host__ __device__ __forceinline__ double length() const
+    __GPU_COMM_INL__ double length() const
     {
         return sqrt(this->x * this->x + this->y * this->y);
     }
 
-    __host__ __device__ __forceinline__ Vector unit() const
+    __GPU_COMM_INL__ Vector unit() const
     {
         return this->operator/(length());
     }
 
-    __host__ __device__ __forceinline__ Vector pivot() const
+    __GPU_COMM_INL__ Vector pivot() const
     {
         return Vector(-this->y, this->x);
     }
 
-    __host__ __device__ __forceinline__ Vector Rot(double angle)
+    __GPU_COMM_INL__ Vector Rot(double angle)
     {
         double rad = toRadians(angle);
         return Vector(this->x * cos(rad) - this->y * sin(rad), this->x * sin(rad) + this->y * cos(rad));
     }
 
-    __host__ __device__ __forceinline__ Tensor cartesian(Vector const &rhs)
+    __GPU_COMM_INL__ Tensor cartesian(Vector const &rhs)
     {
         double a00 = this->x * rhs.x;
         double a01 = this->x * rhs.y;
@@ -259,7 +272,7 @@ class Vector
         return Tensor(a00, a01, a10, a11);
     }
 
-    __host__ __device__ __forceinline__ bool operator==(Vector const &other) const
+    __GPU_COMM_INL__ bool operator==(Vector const &other) const
     {
         return (this->x == other.x && this->y == other.y);
     }
@@ -268,15 +281,14 @@ class Vector
     double x, y;
 };
 
-
 typedef Vector PPoint;
 
-__forceinline__ __device__ __host__ double getVectorX(Vector const &value)
+__GPU_COMM_INL__ double getVectorX(Vector const &value)
 {
     return value.x;
 }
 
-__forceinline__ __device__ __host__ double getVectorY(Vector const &value)
+__GPU_COMM_INL__ double getVectorY(Vector const &value)
 {
     return value.y;
 }

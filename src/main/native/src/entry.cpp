@@ -51,26 +51,28 @@ int main(int argc, char* args[])
     
     /// line_1
 
-    err = jni_registerPointType(&env, eclass, 0, 0.0, 20.0);
+    err = jni_registerPointType(&env, eclass, 0, -20.0, 20.0);
     err = jni_registerPointType(&env, eclass, 1, 20.0, 20.0);
     err = jni_registerPointType(&env, eclass, 2, 60.0, 20.0);
-    err = jni_registerPointType(&env, eclass, 3, 80.0, 20.0);    
-    err = jni_registerConstraintType(&env, eclass, 1, CONSTRAINT_TYPE_ID_FIX_POINT, 0, -1, -1, -1, -1, 0.0, 20.0);
-    err = jni_registerConstraintType(&env, eclass, 2, CONSTRAINT_TYPE_ID_FIX_POINT, 3, -1, -1, -1, -1, 80.0, 20.0);    
-    err = jni_registerGeometricType(&env, eclass, 1, GEOMETRIC_TYPE_ID_LINE, 1, 2, 0, 3, -1, -1, -1);
-     
+    err = jni_registerPointType(&env, eclass, 3, 100.0, 20.0);    
+    err = jni_registerConstraintType(&env, eclass, 1, CONSTRAINT_TYPE_ID_FIX_POINT, 0, -1, -1, -1, -1, -20.0, 20.0);
+    err = jni_registerConstraintType(&env, eclass, 2, CONSTRAINT_TYPE_ID_FIX_POINT, 3, -1, -1, -1, -1, 100.0, 20.0);    
+    err = jni_registerGeometricType(&env, eclass, 1, GEOMETRIC_TYPE_ID_LINE, 1, 2, -1, 0,  3,  -1, -1);
+    
+                                                                            // jint p1, jint p2, jint p3, jint a, jint b, jint c,jint d
+
 
     /// line_2
-    err = jni_registerPointType(&env, eclass, 4, 20.0, 0.0);
-    err = jni_registerPointType(&env, eclass, 5, 20.0, 20.0);
-    err = jni_registerPointType(&env, eclass, 6, 20.0, 60.0);
-    err = jni_registerPointType(&env, eclass, 7, 20.0, 80.0);    
-    err = jni_registerConstraintType(&env, eclass, 3, CONSTRAINT_TYPE_ID_FIX_POINT, 4, -1, -1, -1, -1, 20.0, 0.0);
-    err = jni_registerConstraintType(&env, eclass, 4, CONSTRAINT_TYPE_ID_FIX_POINT, 7, -1, -1, -1, -1, 20.0, 80.0);    
-    err = jni_registerGeometricType(&env, eclass, 2, GEOMETRIC_TYPE_ID_LINE, 5, 6, 4, 7, -1, -1, -1);
+    //err = jni_registerPointType(&env, eclass, 4, 20.0, 0.0);
+    //err = jni_registerPointType(&env, eclass, 5, 20.0, 20.0);
+    //err = jni_registerPointType(&env, eclass, 6, 20.0, 60.0);
+    //err = jni_registerPointType(&env, eclass, 7, 20.0, 80.0);    
+    //err = jni_registerConstraintType(&env, eclass, 3, CONSTRAINT_TYPE_ID_FIX_POINT, 4, -1, -1, -1, -1, 20.0, 0.0);
+    //err = jni_registerConstraintType(&env, eclass, 4, CONSTRAINT_TYPE_ID_FIX_POINT, 7, -1, -1, -1, -1, 20.0, 80.0);    
+    //err = jni_registerGeometricType(&env, eclass, 2, GEOMETRIC_TYPE_ID_LINE, 5, 6, 4, 7, -1, -1, -1);
    
     // constraint(1,5)(Connect2Points)
-    err = jni_registerConstraintType(&env, eclass, 5, CONSTRAINT_TYPE_ID_CONNECT_2_POINTS, 1, 5, -1, -1, -1, -1, -1);    
+    //err = jni_registerConstraintType(&env, eclass, 5, CONSTRAINT_TYPE_ID_CONNECT_2_POINTS, 1, 5, -1, -1, -1, -1, -1);    
 
 
     err = jni_initComputationContext(&env, eclass);

@@ -164,9 +164,9 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem(JNIEnv *e
         /// </summary>
         solver::solveSystemOnGPU(&solverStat, &error);
     }
-    catch (const std::exception &e)
-    {
-        env->ThrowNew(env->FindClass("java/lang/RuntimeException"), e.what());
+    catch (const std::exception &e) {
+        printf("exception  = %s \n", e.what());
+        // env->ThrowNew(env->FindClass("java/lang/RuntimeException"), e.what());
         return JNI_ERROR;
     }
 
