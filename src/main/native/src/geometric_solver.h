@@ -6,9 +6,7 @@
 
 #include "cuda_runtime.h"
 
-void checkCudaStatus_impl(cudaError_t status, size_t __line_);
 
-#define checkCudaStatus(status) checkCudaStatus_impl(status, __LINE__)
 
 
 namespace solver {

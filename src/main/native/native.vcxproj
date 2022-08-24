@@ -90,6 +90,7 @@
     <CudaCompile Include="kernel.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </CudaCompile>
+    <ClCompile Include="src\cuerror.cpp" />
     <ClCompile Include="src\linear_system.cpp" />
     <ClCompile Include="src\linear_system_hem.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -105,12 +106,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\com_mstruzek_jni_JNISolverGate.h" />
+    <ClInclude Include="src\cuerror.h" />
     <ClInclude Include="src\geometric_solver.h" />
     <ClInclude Include="src\linear_system.h" />
     <ClInclude Include="src\model.cuh" />
     <ClInclude Include="src\model_config.h" />
     <ClInclude Include="src\solver_kernel.cuh" />
     <ClInclude Include="src\stop_watch.h" />
+    <ClInclude Include="src\utility.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\com_mstruzek_jni_JNISolverGate.h_" />
