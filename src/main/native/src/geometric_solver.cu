@@ -412,12 +412,14 @@ __device__ constexpr const char *FORMAT_STR_DOUBLE = " %11.2e";
 __device__ constexpr const char *FORMAT_STR_DOUBLE_CM = ", %11.2e";
 
 
-__global__ void stdoutTensorData(ComputationState *ev, size_t ld, size_t cols)
+
+__global__ void stdoutTensorData(ComputationState *ev, size_t rows, size_t cols)
 {
-    const graph::Tensor t = graph::Tensor::fromDeviceMem(ev->A, ld, cols);
+    const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
+    const graph::Tensor t = graph::tensorDevMem(ev->A, layout, rows, cols);
 
     printf("A ,,,\ n");
-    printf("\n MatrixDouble - %d x %d ****************************************\n", t.ld, t.cols);
+    printf("\n MatrixDouble - %d x %d ****************************************\n", t.rows, t.cols);
 
     /// table header
     for (int i = 0; i < cols / 2; i++)
@@ -428,7 +430,7 @@ __global__ void stdoutTensorData(ComputationState *ev, size_t ld, size_t cols)
 
     /// table data
 
-    for (int i = 0; i < ld; i++)
+    for (int i = 0; i < rows; i++)
     {
         printf(FORMAT_STR_DOUBLE, t.getValue(i, 0));
 
@@ -441,25 +443,26 @@ __global__ void stdoutTensorData(ComputationState *ev, size_t ld, size_t cols)
     }
 }
 
-__global__ void stdoutRightHandSide(ComputationState *ev, size_t ld)
+__global__ void stdoutRightHandSide(ComputationState *ev, size_t rows)
 {
-    const graph::Tensor b = graph::Tensor::fromDeviceMem(ev->b, ld, 1);
+    const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
+    const graph::Tensor b = graph::tensorDevMem(ev->b, layout, rows, 1);
 
     printf("\n b \n");
-    printf("\n MatrixDouble - %d x %d ****************************************\n", b.ld, b.cols);
+    printf("\n MatrixDouble - %d x %d ****************************************\n", b.rows, b.cols);
     printf("\n");
     /// table data
 
-    for (int i = 0; i < ld; i++)
+    for (int i = 0; i < rows; i++)
     {
         printf(FORMAT_STR_DOUBLE, b.getValue(i, 0));
         printf("\n");
     }
-
-    printf("\n\n");
 }
 
+#define CDEBUG
 #undef CDEBUG
+
 
 ///
 /// Setup all matricies for computation and prepare kernel stream  intertwined with cuSolver
@@ -712,10 +715,23 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
         checkCudaStatus(cudaPeekAtLastError());
 #endif
 
-        /// upper Triangular
-        /// --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix   `A = `A set value
+        /*        
+            Lower Tensor Slice         
 
-        EvaluateConstraintJacobian<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_ev[itr], constraints.size());
+            --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix   
+        */ 
+        
+        size_t dimBlock = constraints.size();
+        EvaluateConstraintJacobian<<<DIM_GRID, dimBlock, Ns, stream>>>(dev_ev[itr], constraints.size());
+
+
+
+        /*
+            Transposed Jacobian - Uperr Tensor Slice
+
+            --- (Wq)'; /// Jq' = (d(Fi)/dq)' --- transposed - write without intermediary matrix   
+        */
+        EvaluateConstraintTRJacobian<<<DIM_GRID, dimBlock, Ns, stream>>>(dev_ev[itr], constraints.size());
 
 #ifdef CDEBUG
         checkCudaStatus(cudaStreamSynchronize(stream));
@@ -753,9 +769,12 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
          */
         // printf("address %x  %p ,\ n", &dev_ev[itr]->A, &dev_ev[itr]->A);
 
+#ifdef  CDEBUG
         stdoutTensorData<<<DIM_GRID, 1, Ns, stream>>>(dev_ev[itr], N, N);
         stdoutRightHandSide<<<DIM_GRID, 1, Ns, stream>>>(dev_ev[itr], N);
         checkCudaStatus(cudaStreamSynchronize(stream));
+#endif //  CDEBUG
+
 
         ///  upper traingular
 

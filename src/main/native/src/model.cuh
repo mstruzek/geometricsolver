@@ -21,8 +21,40 @@ int constraintSize(Constraint const &constraint);
 int geometricSetSize(Geometric const &geometric);
 
 #define __GPU_COMM_INL__ __forceinline__ __host__ __device__
+#define __GPU_DEV_INL__ __forceinline__ __device__
 
 class Vector;
+
+enum StorageType
+{
+    row_major,   // row-major storage format
+    column_major // column-major storage format - cuBlas, Fortran
+};
+
+///
+/// Tensor memory u
+///
+class Layout
+{
+  public:
+    StorageType mtype; /// column_major / row-major
+    size_t ld;         /// leading dimension
+    size_t rffset;     /// row offset
+    size_t cffset;     /// column offset
+};
+
+/// obejmujemy dwa przypadki / jacobian i jacobian' transponowany
+
+__GPU_COMM_INL__ static Layout defaultColumnMajor(size_t ld, size_t rffset, size_t cffset)
+{
+    return Layout{StorageType::column_major, ld, rffset, cffset};
+}
+
+__GPU_DEV_INL__ static Layout default2x2()
+{
+    __device__ static Layout u{StorageType::row_major, 2, 0, 0};
+    return u;
+}
 
 __GPU_COMM_INL__ double getVectorX(Vector const &value);
 
@@ -31,11 +63,11 @@ __GPU_COMM_INL__ double getVectorY(Vector const &value);
 class Tensor
 {
   public:
-    __GPU_COMM_INL__ Tensor(bool nonMemOwning = true) : nonMemOwning(nonMemOwning)
+    __GPU_COMM_INL__ Tensor(Layout u = default2x2()) : u(u)
     {
     }
 
-    __GPU_COMM_INL__ Tensor(double a00, double a01, double a10, double a11) : Tensor(true)
+    __GPU_COMM_INL__ Tensor(double a00, double a01, double a10, double a11) : Tensor()
     {
         tensor[0] = a00;
         tensor[1] = a01;
@@ -43,38 +75,46 @@ class Tensor
         tensor[3] = a11;
     }
 
-    __GPU_COMM_INL__ void Tensor::setVector(int offsetRow, int offsetCol, Vector const &value)
+    __GPU_COMM_INL__ void setVector(int offsetRow, int offsetCol, Vector const &value)
     {
-        if (tensor_ref != nullptr)
+        if (u.mtype == column_major)
         {
-            tensor_ref[ld * offsetCol + offsetRow + 0] = getVectorX(value);
-            tensor_ref[ld * offsetCol + offsetRow + 1] = getVectorY(value);
+            if (colIntention)
+            { /// verticalu
+                A[u.ld * (u.cffset + offsetCol) + u.rffset + offsetRow + 0] = getVectorX(value);
+                A[u.ld * (u.cffset + offsetCol) + u.rffset + offsetRow + 1] = getVectorY(value);
+            }
+            else
+            { /// horizontalu
+                A[u.ld * (u.cffset + offsetCol) + u.rffset + offsetRow] = getVectorX(value);
+                A[u.ld * (u.cffset + offsetCol + 1) + u.rffset + offsetRow] = getVectorY(value);
+            }
         }
     };
 
     __GPU_COMM_INL__ void setValue(int offsetRow, int offsetCol, double const &value)
     {
-        if (tensor_ref != nullptr)
+        if (u.mtype == column_major)
         {
-            tensor_ref[ld * offsetCol + offsetRow] = value;
+            A[u.ld * (u.cffset + offsetCol) + u.rffset + offsetRow] = value;
         }
     }
-    
+
     __GPU_COMM_INL__ double getValue(int offsetRow, int offsetCol) const
     {
-        if (tensor_ref != nullptr)
+        if (u.mtype == column_major)
         {
-            return tensor_ref[ld * offsetCol + offsetRow];
+            return A[u.ld * (u.cffset + offsetCol) + u.rffset + offsetRow];
         }
-        else if (nonMemOwning == true)
+        else if (u.mtype == row_major)
         {
-            return tensor[2 * offsetRow + offsetCol ];
+            return tensor[2 * offsetRow + offsetCol];
         }
     }
 
     __GPU_COMM_INL__ void plusSubTensor(int offsetRow, int offsetCol, Tensor const &mt)
     {
-        if (tensor_ref != nullptr && mt.nonMemOwning == true)
+        if (u.mtype == column_major && mt.u.mtype == row_major)
         {
             /// small tensor
             double a00 = mt.tensor[0];
@@ -82,16 +122,16 @@ class Tensor
             double a10 = mt.tensor[2];
             double a11 = mt.tensor[3];
 
-            tensor_ref[ld * offsetCol + offsetRow + 0] += a00;
-            tensor_ref[ld * offsetCol + offsetRow + 1] += a10;
-            tensor_ref[ld * (offsetCol + 1) + offsetRow + 0] += a01;
-            tensor_ref[ld * (offsetCol + 1) + offsetRow + 1] += a11;
+            A[u.ld * (u.cffset + offsetCol) + u.rffset + offsetRow + 0] += a00;
+            A[u.ld * (u.cffset + offsetCol) + u.rffset + offsetRow + 1] += a10;
+            A[u.ld * (u.cffset + offsetCol + 1) + u.rffset + offsetRow + 0] += a01;
+            A[u.ld * (u.cffset + offsetCol + 1) + u.rffset + offsetRow + 1] += a11;
         }
     }
 
-    __GPU_COMM_INL__ void setSubTensor(int row, int offsetCol, Tensor const &mt)
+    __GPU_COMM_INL__ void setSubTensor(int offsetRow, int offsetCol, Tensor const &mt)
     {
-        if (tensor_ref != nullptr && mt.nonMemOwning == true)
+        if (u.mtype == column_major)
         {
             /// small tensor
             double a00 = mt.tensor[0];
@@ -99,16 +139,16 @@ class Tensor
             double a10 = mt.tensor[2];
             double a11 = mt.tensor[3];
 
-            tensor_ref[ld * offsetCol + row + 0] = a00;
-            tensor_ref[ld * offsetCol + row + 1] = a10;
-            tensor_ref[ld * (offsetCol + 1) + row + 0] = a01;
-            tensor_ref[ld * (offsetCol + 1) + row + 1] = a11;
+            A[u.ld * (u.cffset + offsetCol) + u.rffset + offsetRow + 0] = a00;
+            A[u.ld * (u.cffset + offsetCol) + u.rffset + offsetRow + 1] = a10;
+            A[u.ld * (u.cffset + offsetCol + 1) + u.rffset + offsetRow + 0] = a01;
+            A[u.ld * (u.cffset + offsetCol + 1) + u.rffset + offsetRow + 1] = a11;
         }
     }
 
     __GPU_COMM_INL__ Tensor multiplyC(double scalar)
     {
-        if (nonMemOwning == true)
+        if (u.mtype == row_major)
         {
             /// SmallTensor
             double a00 = tensor[0] * scalar;
@@ -117,12 +157,12 @@ class Tensor
             double a11 = tensor[3] * scalar;
             return Tensor(a00, a01, a10, a11);
         }
-        return Tensor(false);
+        return Tensor();
     }
 
     __GPU_COMM_INL__ Tensor plus(Tensor const &other)
     {
-        if (nonMemOwning == true && other.nonMemOwning == true)
+        if (u.mtype == row_major && other.u.mtype == row_major)
         {
             /// SmallTensor
             double a00 = tensor[0] + other.tensor[0];
@@ -131,28 +171,43 @@ class Tensor
             double a11 = tensor[3] + other.tensor[3];
             return Tensor(a00, a01, a10, a11);
         }
-        return Tensor(false);
+        return Tensor();
     }
 
-    /// cuBLAS -  column-major storage !
-    __GPU_COMM_INL__ static Tensor fromDeviceMem(double *dev_tensor, int ld, int cols)
+    __GPU_COMM_INL__ Tensor transpose() const
     {
-        Tensor t = Tensor(false);
-        t.ld = ld;
-        t.cols = cols;
-        t.tensor_ref = dev_tensor;
-        return t;
+        double a00 = tensor[0];
+        double a01 = tensor[1];
+        double a10 = tensor[2];
+        double a11 = tensor[3];
+        return Tensor(a00, a10, a01, a11);
     }
+
 
   public:
-    int ld = 0;
-    int cols = 0;
     union {
         double tensor[4] = {0.0}; /// row-major storage - logical mistake !!!
-        double *tensor_ref; /// cuBLAS -  column-major storage !
+        double *A;                /// parent reference tensor cuBLAS -  column-major storage !
     };
-    bool nonMemOwning; /// cast_helper if true -> SmallTensor otherwise RefMatrixDouble
+    Layout u;          /// memory u-layout  for parent  tensor A  - encodes offsets into view
+    bool colIntention; /// vector operations
+    int rows = 0;      /// range is not validated
+    int cols = 0;      /// range is not validated
 };
+
+
+    /// cuBLAS -  column-major storage !
+__GPU_COMM_INL__ static Tensor tensorDevMem(double *dev_tensor, Layout parent, int rows, int cols)
+{
+    Tensor t = Tensor(parent);
+    t.A = dev_tensor;
+    t.colIntention = rows > cols;
+    t.rows = rows;
+    t.cols = cols;
+    return t;
+}
+
+
 
 #define DEGREES_TO_RADIANS 0.017453292519943295;
 
@@ -194,6 +249,45 @@ class SmallTensor
         return Tensor(diagonal, 0.0, 0.0, diagonal);
     }
 };
+
+///
+/// Transpose Tensor Adapter - utility class for transposed storage operations into output tensor
+///  -- transpose/inversed offsetRow/offsetCol order
+/// 
+class AdapterTensor : public Tensor
+{
+
+  public:
+    __GPU_COMM_INL__ AdapterTensor(Layout layout) : Tensor(layout)
+    {
+    }
+
+    __GPU_COMM_INL__ void setVector(int offsetRow, int offsetCol, Vector const &value)
+    {
+        Tensor::setVector(offsetCol, offsetRow, value);
+    }
+
+    __GPU_COMM_INL__ void setValue(int offsetRow, int offsetCol, double const &value)
+    {
+        Tensor::setValue(offsetCol, offsetRow, value);
+    }
+
+    __GPU_COMM_INL__ void setSubTensor(int offsetRow, int offsetCol, Tensor const &mt)
+    {
+        Tensor::plusSubTensor(offsetCol, offsetRow, mt.transpose());
+    }
+};
+
+// transponsed operations 
+__GPU_COMM_INL__ static AdapterTensor transposeTensorDevMem(double *dev_tensor, Layout parent, int rows, int cols)
+{
+    AdapterTensor t = AdapterTensor(parent);
+    t.A = dev_tensor;
+    t.colIntention = rows > cols;
+    t.rows = rows;
+    t.cols = cols;
+    return t;
+}
 
 
 

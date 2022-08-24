@@ -1,14 +1,5 @@
 #include "linear_system.h"
 
-//#define NF_DEBUF
-
-/*
-  cusolverStatus_t CUSOLVERAPI cusolverDnLoggerSetFile(FILE *file);
-  cusolverStatus_t CUSOLVERAPI cusolverDnLoggerOpenFile(const char *logFile);
-  cusolverStatus_t CUSOLVERAPI cusolverDnLoggerSetLevel(int level);
-  cusolverStatus_t CUSOLVERAPI cusolverDnLoggerSetMask(int mask);
-  cusolverStatus_t CUSOLVERAPI cusolverDnLoggerForceDisable();
-*/
 
 namespace errors
 {
@@ -53,10 +44,6 @@ static cusolverDnHandle_t handle = NULL;
 static cublasHandle_t cublasHandle = NULL;
 static cudaError_t lastError;
 
-static cudaEvent_t start;
-static cudaEvent_t end;
-static float ms;
-
 /// cusolver context
 static int Lwork = 0;
 static double *Workspace;
@@ -65,8 +52,10 @@ static double *Workspace;
 static int *devIpiv = nullptr;
 
 /// state from Factorization or Solver
-static int *devInfo =
-    nullptr; /**przyczyna INT na urzadzenieu __device__ __host__ ! ERROR 700       cudaErrorIllegalAddress */
+static int *devInfo = nullptr; 
+
+/** przyczyna INT na urzadzenieu __device__ __host__ ! ERROR 700       cudaErrorIllegalAddress */
+
 
 /// host infot
 static int hInfo;
@@ -84,14 +73,6 @@ CU_SOLVER void linear_system_method_cuSolver_reset(cudaStream_t stream)
         checkCudaStatus(cudaFreeAsync(devInfo, stream));
     }
 
-    if (start != NULL)
-    {
-        checkCudaStatus(cudaEventDestroy(start));
-    }
-    if (end != NULL)
-    {
-        checkCudaStatus(cudaEventDestroy(end));
-    }
 
     if (handle != NULL)
     {
@@ -103,13 +84,21 @@ CU_SOLVER void linear_system_method_cuSolver_reset(cudaStream_t stream)
     }
 }
 
+
+///
+/// Visualt Studio Communit ; > Debug > Wlasciwosci Debugowania > Debugowanie > Srodowisko: 
+/// 
+///         CUSOLVERDN_LOG_LEVEL=5
+///         CUSOLVERDN_LOG_MASK = 16
+///
+#define CS_DEBUG
 #undef CS_DEBUG
 
 CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cudaStream_t stream)
 {
     //
     //
-    //     LU Solver -  !!    this solver REQUIRMENTS -  "  n×n matrix "
+    //     LU Solver -  !!    this solver REQUIRMENTS -  "  nï¿½n matrix "
     //
     //
     //      cusolverDnDgetrf_bufferSize
@@ -134,16 +123,19 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
     /// reset previous errror
     hInfo = 0;
 
-    /// # cuBlas context
-    checkCublasStatus(cublasCreate(&cublasHandle));
-    checkCublasStatus(cublasSetStream(cublasHandle, stream));
 
-    ///  # cuSolver setup solver -- nie zaincjalozowac wyrzej
-    checkCuSolverStatus(cusolverDnCreate(&handle));
-    checkCuSolverStatus(cusolverDnSetStream(handle, stream));
+    if (cublasHandle == NULL)
+    {
+        /// # cuBlas context
+        checkCublasStatus(cublasCreate(&cublasHandle));
+        checkCublasStatus(cublasSetStream(cublasHandle, stream));
 
-    checkCudaStatus(cudaEventCreate(&start));
-    checkCudaStatus(cudaEventCreate(&end));
+        ///  # cuSolver setup solver -- nie zaincjalozowac wyrzej
+        checkCuSolverStatus(cusolverDnCreate(&handle));
+        checkCuSolverStatus(cusolverDnSetStream(handle, stream));
+    }
+
+    int preLwork = Lwork;
 
     ///
     /// LU - calculate the size of work buffers needed.
@@ -153,25 +145,24 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
     ///
     checkCuSolverStatus(cusolverDnDgetrf_bufferSize(handle, N, N, A, N, &Lwork));
 
-    /*
+    if (Lwork > preLwork)
+    {
+        // free mem
+        checkCudaStatus(cudaFreeAsync(Workspace, stream));
+        checkCudaStatus(cudaFreeAsync(devIpiv, stream));
+        checkCudaStatus(cudaFreeAsync(devInfo, stream));
+
+        checkCudaStatus(cudaMallocAsync((void **)&Workspace, Lwork * sizeof(double), stream));
+        checkCudaStatus(cudaMallocAsync((void **)&devIpiv, N * sizeof(double), stream));
+        checkCudaStatus(cudaMallocAsync((void **)&devInfo, 1 * sizeof(double), stream));
+
+        printf("[ LU ] workspace attached, 'Lwork' (workspace size)  = %d \n", Lwork);
+    }
 
 
-
-
-    */
-
-    checkCudaStatus(cudaMallocAsync((void **)&Workspace, Lwork * sizeof(double), stream));
-
-    checkCudaStatus(cudaMallocAsync((void **)&devIpiv, N * sizeof(double), stream));
-    checkCudaStatus(cudaMallocAsync((void **)&devInfo, 1 * sizeof(double), stream));
-
-    printf("[ LU ] workspace attached, 'Lwork' (workspace size)  = %d \n", Lwork);
-
-    checkCudaStatus(cudaStreamSynchronize(stream));
-
-    /// a tu inicjalizujemy wektory
-
-    checkCudaStatus(cudaEventRecord(start, stream));
+#ifdef CS_DEBUG
+    checkCudaStatus(cudaStreamSynchronize(stream));    
+#endif    
 
     ///
     /// LU factorization    --  P * A = L *U
@@ -210,7 +201,11 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
 
     if (hInfo == 0)
     {
+
+#ifdef CS_DEBUG
         printf("[ LU ] factorization success ! \n");
+#endif CS_DEBUG
+
     }
 
     ///
@@ -234,8 +229,6 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
     /// inspect computation requirments
     checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, sizeof(int), cudaMemcpyDeviceToHost, stream));
 
-    /// Print result vector
-    checkCudaStatus(cudaEventRecord(end, stream));
 
     ///  b - is output vector
 
@@ -250,13 +243,11 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
 
     if (hInfo == 0)
     {
+
+#ifdef CS_DEBUG
         printf("[ LU ] operation successful ! \n");
+#endif
     }
-
-    checkCudaStatus(cudaEventElapsedTime(&ms, start, end));
-
-    // !blocking
-    printf("[t] measurment %f  \n", ms);
 
     /// suspected state vector to be presetend in vector b
 }
