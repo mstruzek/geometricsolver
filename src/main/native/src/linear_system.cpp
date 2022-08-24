@@ -210,15 +210,20 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
         exit(1);
     }
 
-    if (hInfo == 0)
-    {
 
 #ifdef CS_DEBUG
+    if (hInfo == 0)
+    {
         printf("[ LU ] operation successful ! \n");
-#endif
-    }
 
+    }
+#endif
+
+    ///
     /// suspected state vector to be presetend in vector b
+    /// 
+    ///   B
+    /// 
 }
 
 void linear_system_method_cuBlas_vectorNorm(int n, double *x, double *result, cudaStream_t stream)

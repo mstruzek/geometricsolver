@@ -92,9 +92,6 @@
     </CudaCompile>
     <ClCompile Include="src\cuerror.cpp" />
     <ClCompile Include="src\linear_system.cpp" />
-    <ClCompile Include="src\linear_system_hem.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="src\stop_watch.cpp">
       <FileType>Document</FileType>
     </ClCompile>

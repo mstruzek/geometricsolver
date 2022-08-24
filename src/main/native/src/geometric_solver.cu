@@ -77,6 +77,9 @@ static int dimension; /// dimension = size + coffSize
 ///
 static cudaStream_t stream = NULL;
 
+
+/// implicitly depends on `stream` reference !
+
 #include "utility.cuh"
 
 
@@ -243,79 +246,16 @@ __host__ __device__ double *getComputationNormFieldOffset(ComputationState *dev_
     return &dev_ev->norm;
 }
 
-/// D.3.1.1. Device-Side Kernel Launch - kernel default shared memory, number of bytes
-constexpr size_t Ns = 0;
 
-/// grid size
-constexpr size_t DIM_GRID = 1;
+/// ==============================================================================
+/// 
+///                             debug utility
+/// 
+/// ==============================================================================
 
-/*
-   The maximum registers per thread is 255.
-
-    CUDAdrv.MAX_THREADS_PER_BLOCK, which is good, ( 1024 )
-
-    " if your kernel uses many registers, it also limits the amount of threads you can use."
-
-*/
-
-/// https://docs.nvidia.com/cuda/turing-tuning-guide/index.html#sm-occupancy
-///
-/// thread block size
-constexpr size_t DIM_BLOCK = 512;
-
-/// lock for escaped data from computation rail
-/// -- first conveged computation contex or last invalid
-
-/// shared with cuda stream callback for wait, notify mechanism
-std::condition_variable condition;
-
-std::mutex mutex;
-
-// host reference guarded by mutex
-std::atomic<ComputationState *> result;
-
-/// <summary>
-/// Computation Round Handler
-/// </summary>
-/// <param name="userData"></param>
-void computationResultHandler(cudaStream_t stream, cudaError_t status, void *userData)
-{
-    // synchronize on stream
-
-    ComputationState *computation = static_cast<ComputationState *>(userData);
-
-#ifdef CDEBUG
-    printf("handler: %d \n", computation->cID);
-#endif CDEBUG
-
-    // obsluga bledow w strumieniu
-    if (status != cudaSuccess)
-    {
-        const char *errorName = cudaGetErrorName(status);
-        const char *errorStr = cudaGetErrorString(status);
-
-        printf("[error] - computation id [%d] ,  %s = $s \n", computation->cID, errorName, errorStr);
-        return;
-    }
-
-    bool last = computation->cID == (CMAX - 1);
-
-    if (computation->norm < CONVERGENCE_LIMIT || last)
-    {
-        /// update offset
-        result.store(computation, std::memory_order_seq_cst);
-
-        condition.notify_one();
-    }
-
-    // synchronize with stream next computation
-}
-
-__device__ constexpr const char *WIDEN_DOUBLE_STR_FORMAT = "%26d";
-
-__device__ constexpr const char *FORMAT_STR_DOUBLE = " %11.2e";
-__device__ constexpr const char *FORMAT_STR_DOUBLE_CM = ", %11.2e";
-
+__device__ constexpr const char *WIDEN_DOUBLE_STR_FORMAT    = "%26d";
+__device__ constexpr const char *FORMAT_STR_DOUBLE          = " %11.2e";
+__device__ constexpr const char *FORMAT_STR_DOUBLE_CM       = ", %11.2e";
 
 
 __global__ void stdoutTensorData(ComputationState *ev, size_t rows, size_t cols)
@@ -348,6 +288,7 @@ __global__ void stdoutTensorData(ComputationState *ev, size_t rows, size_t cols)
     }
 }
 
+
 __global__ void stdoutRightHandSide(ComputationState *ev, size_t rows)
 {
     const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
@@ -365,8 +306,94 @@ __global__ void stdoutRightHandSide(ComputationState *ev, size_t rows)
     }
 }
 
+/// ==============================================================================
 
 
+/// D.3.1.1. Device-Side Kernel Launch - kernel default shared memory, number of bytes
+constexpr size_t Ns = 0;
+
+/// grid size
+constexpr size_t DIM_GRID = 1;
+
+/*
+    The maximum registers per thread is 255.
+
+    CUDAdrv.MAX_THREADS_PER_BLOCK, which is good, ( 1024 )
+
+    "if your kernel uses many registers, it also limits the amount of threads you can use."
+
+*/
+
+/// https://docs.nvidia.com/cuda/turing-tuning-guide/index.html#sm-occupancy
+///
+/// thread block size
+constexpr size_t DIM_BLOCK = 512;
+
+
+/// lock for escaped data from computation rail
+/// -- first conveged computation contex or last invalid
+
+/// shared with cuda stream callback for wait, notify mechanism
+std::condition_variable condition;
+
+
+std::mutex mutex;
+
+
+// host reference guarded by mutex
+std::atomic<ComputationState *> result;
+
+#define CDEBUG
+
+/// <summary>
+/// Computation Round Handler
+/// </summary>
+/// <param name="userData"></param>
+void computationResultHandler(cudaStream_t stream, cudaError_t status, void *userData)
+{
+    // synchronize on stream
+
+    ComputationState *computation = static_cast<ComputationState *>(userData);
+
+    // obsluga bledow w strumieniu
+    if (status != cudaSuccess)
+    {
+        const char *errorName = cudaGetErrorName(status);
+        const char *errorStr = cudaGetErrorString(status);
+
+        printf("[error] - computation id [%d] ,  %s = $s \n", computation->cID, errorName, errorStr);
+        return;
+    }
+
+    
+
+#ifdef CDEBUG
+    printf("[ resutl / handler ]- computationId (%d)  , norm (%e) \n", computation->cID, computation->norm);
+#endif CDEBUG
+
+
+    bool last = computation->cID == (CMAX - 1);
+
+    if (computation->norm < CONVERGENCE_LIMIT || last)
+    {
+        /// update offset
+        // result.store(computation, std::memory_order_seq_cst);
+
+        auto desidreState = static_cast<ComputationState *>(nullptr);
+
+        if (result.compare_exchange_strong(desidreState, computation))
+        {
+            condition.notify_one();
+        }
+
+         
+    }
+
+    // synchronize with stream next computation
+}
+
+
+#undef CDEBUG
 
 ///
 /// Setup all matricies for computation and prepare kernel stream  intertwined with cuSolver
@@ -385,6 +412,10 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     ///
 
     int N = dimension;
+
+
+    solverWatch.setStartTick();
+
 
     /// prepare local offset context
     result.store(NULL, std::memory_order_seq_cst);
@@ -768,8 +799,21 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     solverWatch.setStopTick();
     long solutionDelta = solverWatch.delta();
 
-    printf("# solution delta : %d \n", solutionDelta); // print execution time
-    printf("\n");                                      // print execution time
+    printf("\n");                             
+    printf("===================================================\n");     
+    printf("\n");
+    printf("solution time delta [ns]        ( %d )\n", solutionDelta); 
+    printf("\n");
+    printf("===================================================\n");         
+    printf("comp ID                         ( %d )\n", computation->cID);         
+    printf("computation norm                ( %e )\n", computation->norm);         
+    printf("\n");
+    printf("computation size                ( %d )\n", computation->size);         
+    printf("computation coffSize            ( %d )\n", computation->coffSize);         
+    printf("computation dimension           ( %d )\n", computation->dimension);         
+    printf("\n");
+    printf("===================================================\n");
+    printf("\n");
 
     CopyFromStateVector<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(d_points, computation->SV, size);
 

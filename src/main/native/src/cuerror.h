@@ -6,14 +6,19 @@
 #include "cusolverDn.h"
 
 
-
+/// cuBLAS - error handler
 #define checkCublasStatus(status) errors::_checkCublasStatus(status, __LINE__, __FILE__)
+
+/// CUDA - error handler
 #define checkCudaStatus(status) errors::_checkCudaStatus(status, __LINE__, __FILE__)
+
+/// cuSolver - error handler
 #define checkCuSolverStatus(status) errors::_checkCuSolverStatus(status, __LINE__, __FILE__)
 
 
 namespace errors
 {
+		/// implementations
 
 void _checkCublasStatus(cublasStatus_t status, size_t __line, const char *__file__);
 
