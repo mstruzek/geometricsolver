@@ -208,6 +208,8 @@ public class GeometricSolverImpl implements GeometricSolver {
 
             if (StateReporter.isDebugEnabled()) {
                 reporter.writeln(TensorDouble.writeToString(A));
+
+                reporter.writeln(TensorDouble.writeToString(b));
             }
 
             DoubleMatrix2D matrix2DA = MatrixDoubleUtility.toSparse(A);
@@ -223,9 +225,24 @@ public class GeometricSolverImpl implements GeometricSolver {
             }
 
 /// LU Solver
+
+
+
             LUDecompositionQuick LU = new LUDecompositionQuick();
             LU.decompose(matrix2DA);
-            LU.solve(matrix1Db);
+
+            DoubleMatrix2D comLU = LU.getLU();
+            reporter.writeln(TensorDouble.writeToString(TensorDouble.matrixDoubleFrom(comLU)));
+
+
+            if(LU.isNonsingular()) {
+                LU.solve(matrix1Db);
+            } else {
+                reporter.writeln("nonsingular : " + LU.isNonsingular());
+                solverStat.convergence = false;
+                return solverStat;
+            }
+
 
             accLUWatch.stopTick();
 

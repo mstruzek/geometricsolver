@@ -1,6 +1,7 @@
 package com.mstruzek.msketch.matrix;
 
 import cern.colt.matrix.DoubleMatrix1D;
+import cern.colt.matrix.DoubleMatrix2D;
 import com.mstruzek.msketch.Vector;
 
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ public interface TensorDouble {
     String DOUBLE_STR_FORMAT = " %11.2e";
 //    String DOUBLE_STR_FORMAT = " %11.8f";
     String WIDEN_DOUBLE_STR_FORMAT = "%26s";
+
 
     /**
      * Number of columns
@@ -235,6 +237,11 @@ public interface TensorDouble {
         return MatrixDoubleCreator.getInstance().matrixDoubleFrom(delegate);
     }
 
+    static TensorDouble matrixDoubleFrom(DoubleMatrix2D delegate) {
+        return MatrixDoubleCreator.getInstance().matrixDoubleFrom(delegate);
+    }
+
+
 
     /**
      * Small rotation  matrix around OZ axis.
@@ -277,7 +284,7 @@ public interface TensorDouble {
                 String cell = String.format("," + format, tensorDouble.getQuick(i, j));
                 str.append(cell);
             }
-            if (i < tensorDouble.width() - 1) str.append("\n");
+            if (i < tensorDouble.width() - 1 || tensorDouble.width()==1) str.append("\n");
         }
         return str.toString();
     }
