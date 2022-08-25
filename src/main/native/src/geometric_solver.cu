@@ -7,6 +7,7 @@
 #include <condition_variable>
 #include <memory>
 
+#include <algorithm>
 #include <functional>
 #include <numeric>
 
@@ -54,7 +55,7 @@ static std::unique_ptr<int[]> accConstraintSize;
 /// === Solver Performance Watchers
 
 /// observation of submited tasks
-static graph::StopWatch solverWatch;
+static graph::StopWatch<graph::ClockMillis> solverWatch;
 
 /// observation of computation time - single computation run
 static cudaEvent_t computeStart[CMAX] = {nullptr};
@@ -77,12 +78,9 @@ static int dimension; /// dimension = size + coffSize
 ///
 static cudaStream_t stream = NULL;
 
-
 /// implicitly depends on `stream` reference !
 
 #include "utility.cuh"
-
-
 
 #define CDEBUG
 #undef CDEBUG
@@ -90,22 +88,20 @@ static cudaStream_t stream = NULL;
 ///
 /// ===========================================================
 
-
-
 namespace solver
 {
 
 void resetComputationData(cudaError_t *error)
 {
-    std::remove_if(points.begin(), points.end(), [](auto _) { return true; });
-    std::remove_if(geometrics.begin(), geometrics.end(), [](auto _) { return true; });
-    std::remove_if(constraints.begin(), constraints.end(), [](auto _) { return true; });
-    std::remove_if(parameters.begin(), parameters.end(), [](auto _) { return true; });
+    points.erase(std::begin(points), std::end(points));
+    geometrics.erase(std::begin(geometrics), std::end(geometrics));
+    constraints.erase(std::begin(constraints), std::end(constraints));
+    parameters.erase(std::begin(parameters), std::end(parameters));
 
-    pointOffset = NULL;
-    parameterOffset = NULL;
-    accConstraintSize = NULL;
-    accGeometricSize = NULL;
+    pointOffset = nullptr;
+    parameterOffset = nullptr;
+    accConstraintSize = nullptr;
+    accGeometricSize = nullptr;
 }
 
 /**
@@ -246,25 +242,23 @@ __host__ __device__ double *getComputationNormFieldOffset(ComputationState *dev_
     return &dev_ev->norm;
 }
 
-
 /// ==============================================================================
-/// 
+///
 ///                             debug utility
-/// 
+///
 /// ==============================================================================
 
-__device__ constexpr const char *WIDEN_DOUBLE_STR_FORMAT    = "%26d";
-__device__ constexpr const char *FORMAT_STR_DOUBLE          = " %11.2e";
-__device__ constexpr const char *FORMAT_STR_DOUBLE_CM       = ", %11.2e";
-
+__device__ constexpr const char *WIDEN_DOUBLE_STR_FORMAT = "%26d";
+__device__ constexpr const char *FORMAT_STR_DOUBLE = " %11.2e";
+__device__ constexpr const char *FORMAT_STR_DOUBLE_CM = ", %11.2e";
 
 __global__ void stdoutTensorData(ComputationState *ev, size_t rows, size_t cols)
 {
     const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
     const graph::Tensor t = graph::tensorDevMem(ev->A, layout, rows, cols);
 
-    printf("A ,,,\ n");
-    printf("\n MatrixDouble - %d x %d ****************************************\n", t.rows, t.cols);
+    printf("A \n");
+    printf("\n MatrixDouble - %d x %d **************************************** \n", t.rows, t.cols);
 
     /// table header
     for (int i = 0; i < cols / 2; i++)
@@ -288,7 +282,6 @@ __global__ void stdoutTensorData(ComputationState *ev, size_t rows, size_t cols)
     }
 }
 
-
 __global__ void stdoutRightHandSide(ComputationState *ev, size_t rows)
 {
     const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
@@ -307,7 +300,6 @@ __global__ void stdoutRightHandSide(ComputationState *ev, size_t rows)
 }
 
 /// ==============================================================================
-
 
 /// D.3.1.1. Device-Side Kernel Launch - kernel default shared memory, number of bytes
 constexpr size_t Ns = 0;
@@ -329,16 +321,13 @@ constexpr size_t DIM_GRID = 1;
 /// thread block size
 constexpr size_t DIM_BLOCK = 512;
 
-
 /// lock for escaped data from computation rail
 /// -- first conveged computation contex or last invalid
 
 /// shared with cuda stream callback for wait, notify mechanism
 std::condition_variable condition;
 
-
 std::mutex mutex;
-
 
 // host reference guarded by mutex
 std::atomic<ComputationState *> result;
@@ -361,16 +350,13 @@ void computationResultHandler(cudaStream_t stream, cudaError_t status, void *use
         const char *errorName = cudaGetErrorName(status);
         const char *errorStr = cudaGetErrorString(status);
 
-        printf("[error] - computation id [%d] ,  %s = $s \n", computation->cID, errorName, errorStr);
+        printf("[error] - computation id [%d] ,  %s = %s \n", computation->cID, errorName, errorStr);
         return;
     }
-
-    
 
 #ifdef CDEBUG
     printf("[ resutl / handler ]- computationId (%d)  , norm (%e) \n", computation->cID, computation->norm);
 #endif CDEBUG
-
 
     bool last = computation->cID == (CMAX - 1);
 
@@ -385,13 +371,10 @@ void computationResultHandler(cudaStream_t stream, cudaError_t status, void *use
         {
             condition.notify_one();
         }
-
-         
     }
 
     // synchronize with stream next computation
 }
-
 
 #undef CDEBUG
 
@@ -413,16 +396,12 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
 
     int N = dimension;
 
-
     solverWatch.setStartTick();
-
 
     /// prepare local offset context
     result.store(NULL, std::memory_order_seq_cst);
 
-
     checkCudaStatus(cudaDeviceSynchronize());
-
 
     /// Uklad rownan liniowych  [ A * x = b ] powsta³y z linerazycji ukladu dynamicznego - tensory na urzadzeniu.
     double *dev_A = nullptr;
@@ -518,7 +497,6 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
 
     for (int itr = 0; itr < CMAX; ++itr)
     {
-
         utility::mallocAsync(&dev_SV[itr], N); /// each computation state with its own StateVector
         utility::mallocAsync(&dev_ev[itr], 1); /// each computation state with its own device Evalution Context
     }
@@ -555,7 +533,7 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     // skladowa to Fiq - wartosci poszczegolnych wiezow
     // graph::Tensor Fi = graph::Tensor::fromDeviceMem(dev_b + size, coffSize, 1);
 
-    stat->startTime = graph::TimeNanosecondsNow();
+    stat->startTime = graph::ClockMillis()();
 
     printf("#=============== Solver Initialized =============# \n");
     printf("");
@@ -582,7 +560,8 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
         }
         else
         {
-            checkCudaStatus(cudaMemcpyAsync(dev_SV[itr], dev_SV[itr - 1], N * sizeof(double), cudaMemcpyDeviceToDevice, stream));
+            checkCudaStatus(
+                cudaMemcpyAsync(dev_SV[itr], dev_SV[itr - 1], N * sizeof(double), cudaMemcpyDeviceToDevice, stream));
         }
 
         ///  Host Context - with references to device
@@ -650,21 +629,19 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
         checkCudaStatus(cudaPeekAtLastError());
 #endif
 
-        /*        
-            Lower Tensor Slice         
+        /*
+            Lower Tensor Slice
 
-            --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix   
-        */ 
-        
+            --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix
+        */
+
         size_t dimBlock = constraints.size();
         EvaluateConstraintJacobian<<<DIM_GRID, dimBlock, Ns, stream>>>(dev_ev[itr], constraints.size());
-
-
 
         /*
             Transposed Jacobian - Uperr Tensor Slice
 
-            --- (Wq)'; /// Jq' = (d(Fi)/dq)' --- transposed - write without intermediary matrix   
+            --- (Wq)'; /// Jq' = (d(Fi)/dq)' --- transposed - write without intermediary matrix
         */
         EvaluateConstraintTRJacobian<<<DIM_GRID, dimBlock, Ns, stream>>>(dev_ev[itr], constraints.size());
 
@@ -704,14 +681,11 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
          */
         // printf("address %x  %p ,\ n", &dev_ev[itr]->A, &dev_ev[itr]->A);
 
-#ifdef  CDEBUG
+#ifdef CDEBUG
         stdoutTensorData<<<DIM_GRID, 1, Ns, stream>>>(dev_ev[itr], N, N);
         stdoutRightHandSide<<<DIM_GRID, 1, Ns, stream>>>(dev_ev[itr], N);
         checkCudaStatus(cudaStreamSynchronize(stream));
 #endif //  CDEBUG
-
-
-        ///  upper traingular
 
         /// #observation
         checkCudaStatus(cudaEventRecord(prepStop[itr], stream));
@@ -719,6 +693,7 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
         /// DENSE - CuSolver
         /// LU Solver
         ///
+
         /// ======== LINER SYSTEM equation CuSolver    === START
 
         /// #observation
@@ -775,11 +750,13 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
 
     std::unique_lock<std::mutex> ulock(mutex);
 
+    ComputationState *computation;
+
     /// atomic read
     if (result.load(std::memory_order_seq_cst) == nullptr)
     {
         /// spurious wakeup
-        condition.wait(ulock, [] { return result.load(std::memory_order_seq_cst) != nullptr; });
+        condition.wait(ulock, [&] { return (computation = result.load(std::memory_order_seq_cst)) != nullptr; });
     }
 
     // condition met
@@ -788,7 +765,7 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     ///
     ///
     /// HOST computation view
-    ComputationState *computation = result.load(std::memory_order_seq_cst);
+
 
     // STATE VECTOR offset
 
@@ -799,18 +776,18 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     solverWatch.setStopTick();
     long solutionDelta = solverWatch.delta();
 
-    printf("\n");                             
-    printf("===================================================\n");     
     printf("\n");
-    printf("solution time delta [ns]        ( %d )\n", solutionDelta); 
+    printf("===================================================\n");
     printf("\n");
-    printf("===================================================\n");         
-    printf("comp ID                         ( %d )\n", computation->cID);         
-    printf("computation norm                ( %e )\n", computation->norm);         
+    printf("solution time delta [ns]        ( %d )\n", solutionDelta);
     printf("\n");
-    printf("computation size                ( %d )\n", computation->size);         
-    printf("computation coffSize            ( %d )\n", computation->coffSize);         
-    printf("computation dimension           ( %d )\n", computation->dimension);         
+    printf("===================================================\n");
+    printf("comp ID                         ( %d )\n", computation->cID);
+    printf("computation norm                ( %e )\n", computation->norm);
+    printf("\n");
+    printf("computation size                ( %d )\n", computation->size);
+    printf("computation coffSize            ( %d )\n", computation->coffSize);
+    printf("computation dimension           ( %d )\n", computation->dimension);
     printf("\n");
     printf("===================================================\n");
     printf("\n");
@@ -821,7 +798,7 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
 
     stat->constraintDelta = computation->norm;
     stat->convergence = computation->norm < CONVERGENCE_LIMIT;
-    stat->stopTime = graph::TimeNanosecondsNow();
+    stat->stopTime = graph::ClockMillis()();
     stat->iterations = computation->cID;
     stat->accSolverTime = 0;
     stat->accEvaluationTime = 0;
@@ -833,14 +810,17 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
 
     checkCudaStatus(cudaStreamSynchronize(stream));
 
+    goto Error;
+
 /// free allocated memory in solution
 Error:
-    utility::freeHostMem(ev[0]);
 
-    utility::freeMem(dev_ev[0]);
+    std::for_each(ev, ev + CMAX, [](auto ev) { utility::freeHostMem(ev); });
+    std::for_each(dev_ev, dev_ev + CMAX, [](auto dev_ev) { utility::freeMem(dev_ev); });
+    std::for_each(dev_SV, dev_SV + CMAX, [](auto dev_SV) { utility::freeMem(dev_SV); });
+
     utility::freeMem(dev_A);
     utility::freeMem(dev_b);
-    utility::freeMem(dev_SV[0]);
     utility::freeMem(dev_dx);
 
     utility::freeMem(d_points);
@@ -864,8 +844,6 @@ Error:
 
 } // namespace solver
 
-
-
 /// @brief Setup __device__ dest of geometric points in this moment.
 ///
 /// @param ec evaluation context
@@ -874,4 +852,3 @@ Error:
 /// @tparam TZ tensor dimension without constraints
 /// @return void
 ///
-

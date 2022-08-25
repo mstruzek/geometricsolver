@@ -92,9 +92,6 @@
     </CudaCompile>
     <ClCompile Include="src\cuerror.cpp" />
     <ClCompile Include="src\linear_system.cpp" />
-    <ClCompile Include="src\stop_watch.cpp">
-      <FileType>Document</FileType>
-    </ClCompile>
     <CudaCompile Include="src\geometric_solver.cu" />
   </ItemGroup>
   <ItemGroup>

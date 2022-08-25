@@ -3,25 +3,66 @@
 
 #include <chrono>
 
-namespace graph {
 
-long TimeNanosecondsNow();
 
-class StopWatch {
-      public:
-        StopWatch();
+/// header-only
 
-        void setStartTick();
+namespace graph
+{
 
-        void setStopTick();
+struct ClockNano
+{
+    long operator()()
+    {
+        auto epoch = std::chrono::high_resolution_clock::now().time_since_epoch();
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(epoch).count();
+    }
+};
 
-        long delta();
+struct ClockMillis
+{
+    long operator()()
+    {
+        auto epoch = std::chrono::system_clock::now().time_since_epoch();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(epoch).count();
+    }
+};
 
-        void reset();
+template <typename ClockFactory = ClockMillis> class StopWatch
+{
+    ClockFactory clock;
+  public:
+    StopWatch()
+    {
+        reset();
+    }
 
-        long startTick;
-        long stopTick;
-        long accTime;
+    void reset()
+    {
+        startTick = 0L;
+        stopTick = 0L;
+        accTime = 0L;
+    }
+
+    void setStartTick()
+    {
+        startTick = clock();
+    }
+
+    void setStopTick()
+    {
+        stopTick = clock();
+        accTime += (stopTick - startTick);
+    }
+
+    long delta()
+    {
+        return stopTick - startTick;
+    }
+
+    long startTick;
+    long stopTick;
+    long accTime;
 };
 
 } // namespace graph

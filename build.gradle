@@ -66,5 +66,5 @@ def compileNative = tasks.register("compile-native") {
 }
 
 
-tasks.compileJava.dependsOn(compileNative)
+//tasks.compileJava.dependsOn(compileNative)
 

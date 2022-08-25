@@ -53,21 +53,3 @@ op(A) x X = B
 		   
 B  - nrhs = 1 jeden 'b'		   
 
-
-
-#####################
-
-
-
-Jacobian Set przywroci zapis jak na poczatku --> ROW-ORDER !!!
-
--- i poprawic Jacobiany :: constraintOffset  "rowOrder"
-
--- setVector -- zorientowana kolumnowo !!
-
--- setVectorT -- zorietnowana wierszowo !! prawidlowe podstawienie !!!
-
--- przygotowac Tensorm::fromDeviceMemTransposed(ec->A + (ec->dimension) * constraintOffset, ec->dimension, 1)  
-	
-	to oznacz iz setValue , setVector , setSubTensor() odkladamy transponowae wartosci w traansponowane wspolrzedne !
-

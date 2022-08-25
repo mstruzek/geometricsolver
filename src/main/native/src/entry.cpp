@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdio.h>
+#include <cstddef>
 
 #include "stop_watch.h"
 
@@ -25,32 +26,36 @@
 #define jni_getPointCoordinateVector   Java_com_mstruzek_jni_JNISolverGate_getPointCoordinateVector
 
 
+// JNI mock implementations
+jclass FindClass_Impl(JNIEnv *env, const char *name);
+
+// JNI mock implementations
+jint ThrowNew_Impl(JNIEnv *env, jclass clazz, const char *msg);
+
+
 int main(int argc, char* args[]) 
 {
-
     int err;
 
     printf("empty inspector \n");
 
-    long stopTime = graph::TimeNanosecondsNow();
-    long startTime = graph::TimeNanosecondsNow();    
-
-
     ///  MOCK
     JNINativeInterface_ functions_iface = {};
+
+    functions_iface.FindClass = FindClass_Impl;
+    functions_iface.ThrowNew = ThrowNew_Impl;
         
     JNIEnv env = {};
     env.functions = &functions_iface;
 
-    jclass eclass = {};
+    jclass eclass = nullptr;
         
-
+    
     err = jni_initDriver(&env, eclass);
 
     err = jni_resetComputationData(&env, eclass);
     
     /// line_1
-
     err = jni_registerPointType(&env, eclass, 0, -20.0, 20.0);
     err = jni_registerPointType(&env, eclass, 1, 200.0, 20.0);
     err = jni_registerPointType(&env, eclass, 2, 600.0, 20.0);
@@ -60,7 +65,6 @@ int main(int argc, char* args[])
     err = jni_registerGeometricType(&env, eclass, 1, GEOMETRIC_TYPE_ID_LINE, 1, 2, -1, 0,  3,  -1, -1);
     
                                                                             // jint p1, jint p2, jint p3, jint a, jint b, jint c,jint d
-
 
     /// line_2
     err = jni_registerPointType(&env, eclass, 4, 20.0, 0.0);
@@ -82,4 +86,14 @@ int main(int argc, char* args[])
 
 
     return 0;
+}
+
+jclass FindClass_Impl(JNIEnv *env, const char *name)
+{
+    return NULL;
+}
+
+jint ThrowNew_Impl(JNIEnv *env, jclass clazz, const char *msg)
+{
+    throw new std::logic_error("--empty");
 }

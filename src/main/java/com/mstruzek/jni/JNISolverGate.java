@@ -12,7 +12,18 @@ public class JNISolverGate {
 
 
     static {
-        System.load("/home/mstruzek/cworkspace/gsketcherjni/build/target/cmake-build/libgsketcherjni.so");
+
+        // na testy tylko   --Djni.path=
+        if(OsUtility.isWindows()) {
+
+            System.load("e:\\source\\gsketcherjni\\build\\Debug\\gsketcherjni.dll");
+
+
+        } else {
+
+            System.load("/home/mstruzek/cworkspace/gsketcherjni/build/target/cmake-build/libgsketcherjni.so");
+        }
+
     }
 
     /**
