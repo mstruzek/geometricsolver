@@ -1,5 +1,6 @@
 .gradle/buildOutputCleanup/
 out/
+build/
 .gradle/
 _backlog.md
 .idea/
