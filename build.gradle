@@ -10,23 +10,16 @@ repositories {
     mavenCentral()
 }
 
-
-
-
 compileJava {
     targetCompatibility = 17
     sourceCompatibility = 17
 }
 
 dependencies {
-
     implementation group: 'colt', name: 'colt', version: '1.2.0'
     implementation group: 'gov.nist.math', name: 'jama', version: '1.0.3'
-
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
-
 }
-
 
 
 def JAVA_JDK = "/usr/lib/jvm/java-17-openjdk-17.0.3.0.5-0.1.ea.el8.x86_64"
