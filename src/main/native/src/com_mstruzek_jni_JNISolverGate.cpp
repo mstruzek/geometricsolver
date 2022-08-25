@@ -329,17 +329,15 @@ JNIEXPORT jdouble JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointPYCoordina
  */
 JNIEXPORT jdoubleArray JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointCoordinateVector(JNIEnv *env, jclass clazz)
 {
-    /// depraceted or remove !
     jboolean isCopy;
-    /// przeinicjalizowac wypelenieni tego vecotr
+    /// przeinicjalizowac wypelenieni tego vecotr !!
     jdoubleArray stateVector = env->NewDoubleArray(2 * 1024);
-    /// acquire pinne or copy
+    /// acquire pined or copy
     jdouble *state_arr = env->GetDoubleArrayElements(stateVector, &isCopy);
 
     solver::getPointCoordinateVector(state_arr);
 
-    if (isCopy == JNI_TRUE)
-    {
+    if (isCopy == JNI_TRUE) {
         env->ReleaseDoubleArrayElements(stateVector, (double *)state_arr, 0);
     }
     else

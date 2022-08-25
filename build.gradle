@@ -58,15 +58,18 @@ def compileNative = tasks.register("compile-native") {
     }
 }
 
+tasks.compileJava.dependsOn(compileNative)
+
+
 def cleanNative = tasks.register("clean-native") {
     doLast {
         ant.delete(dir: nativeBuildPath)
     }
 }
 
-
 tasks.clean.dependsOn(cleanNative)
-tasks.compileJava.dependsOn(compileNative)
+
+
 
 
 

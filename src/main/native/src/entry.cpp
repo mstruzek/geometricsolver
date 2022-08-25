@@ -95,5 +95,5 @@ jclass FindClass_Impl(JNIEnv *env, const char *name)
 
 jint ThrowNew_Impl(JNIEnv *env, jclass clazz, const char *msg)
 {
-    throw new std::logic_error("--empty");
+    throw new std::logic_error(msg);
 }
