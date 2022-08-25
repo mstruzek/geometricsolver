@@ -403,7 +403,7 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
 
     checkCudaStatus(cudaDeviceSynchronize());
 
-    /// Uklad rownan liniowych  [ A * x = b ] powsta³y z linerazycji ukladu dynamicznego - tensory na urzadzeniu.
+    /// Uklad rownan liniowych  [ A * x = b ] powstaï¿½y z linerazycji ukladu dynamicznego - tensory na urzadzeniu.
     double *dev_A = nullptr;
     double *dev_b = nullptr;
     double *dev_dx = nullptr;      /// [ A ] * [ dx ] = [ b ]
@@ -517,7 +517,7 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
     ///
 
     /// referencec
-    // graph::Tensor A = graph::Tensor::fromDeviceMem(dev_A, N, N); /// Macierz g³owna ukladu rownan liniowych
+    // graph::Tensor A = graph::Tensor::fromDeviceMem(dev_A, N, N); /// Macierz gï¿½owna ukladu rownan liniowych
     // graph::Tensor Fq; /// [size x size]     Macierz sztywnosci ukladu obiektow zawieszonych na sprezynach.
     // graph::Tensor Wq; /// [coffSize x size]  d(FI)/dq - Jacobian Wiezow
 
@@ -737,6 +737,9 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error)
         /// retrive ComputationFrom device
 
         void *userData = static_cast<void *>(ev[itr]); // local_Computation
+
+
+        // typedef void (CUDART_CB *cudaStreamCallback_t)(cudaStream_t stream, cudaError_t status, void *userData);
 
         /// callback dispatched to special cuda p_thread
         checkCudaStatus(cudaStreamAddCallback(stream, computationResultHandler, userData, 0));

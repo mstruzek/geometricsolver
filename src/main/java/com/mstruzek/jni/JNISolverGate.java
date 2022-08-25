@@ -6,24 +6,18 @@ import com.mstruzek.msketch.solver.SolverStat;
 public class JNISolverGate {
 
     
-    static final int JNI_SUCCESS = 0;
+    public static final int JNI_SUCCESS = 0;
 
-    static final int JNI_ERROR = 1;
+    public static final int JNI_ERROR = 1;
 
 
     static {
 
-        // na testy tylko   --Djni.path=
-        if(OsUtility.isWindows()) {
-
-            System.load("e:\\source\\gsketcherjni\\build\\Debug\\gsketcherjni.dll");
-
-
-        } else {
-
-            System.load("/home/mstruzek/cworkspace/gsketcherjni/build/target/cmake-build/libgsketcherjni.so");
-        }
-
+        /**
+         *
+         *   -Djava.library.path=lib
+         */
+        System.loadLibrary("libgsketcherjni");
     }
 
     /**

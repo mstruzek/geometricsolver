@@ -28,7 +28,7 @@ set(CMAKE_CUDA_ARCHITECTURES 75)
 
 
 
-set(PROJECT_SHARED_LIBRARY gsketcherjni)
+set(PROJECT_SHARED_LIBRARY libgsketcherjni)
 set(PROJECT_TEST_EXECUTABLE gsketcherjnie)
 
 
@@ -47,6 +47,8 @@ endif()
 
 
 find_package(JNI)     #  in this cmake-3.20 settings JNI module is not setting the target JNI::JNI (cmake-3.24)
+
+
 
 
 find_package(CUDAToolkit 11.7)

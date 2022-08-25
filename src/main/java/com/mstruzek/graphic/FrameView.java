@@ -6,6 +6,7 @@ import com.mstruzek.controller.EventType;
 import com.mstruzek.controller.Events;
 import com.mstruzek.msketch.GeometricConstraintType;
 import com.mstruzek.msketch.ModelRegistry;
+import com.mstruzek.msketch.solver.GeometricSolverType;
 
 import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
@@ -45,6 +46,26 @@ public class FrameView extends JFrame {
     public static final String FRAME_TITLE = "GCS GeometricSolver 2009-2022";
     public static final int SOLVER_PANEL_HEIGHT = 140;
     public static final int SOLVER_PANEL_WIDTH = 920;
+
+    /*
+     * Toolbar Actions
+     */
+    public static final String COMMAND_LOAD = "Load";
+    public static final String COMMAND_STORE = "Store";
+    public static final String COMMAND_CLEAR = "Clear";
+    public static final String COMMAND_NORMAL1 = "Normal";
+    public static final String COMMAND_DRAW_LINE = "Draw Line";
+    public static final String COMMAND_DRAW_CIRCLE = "Draw Circle";
+    public static final String COMMAND_DRAW_ARC = "Draw Arc";
+    public static final String COMMAND_DRAW_POINT = "Draw Point";
+    public static final String COMMAND_REFRESH = "REFRESH";
+    public static final String COMMAND_SOLVE = "SOLVE";
+    public static final String COMMAND_REPOS = "Repos";
+    public static final String COMMAND_RELAX = "Relax";
+    public static final String COMMAND_CTRL = "CTRL";
+    public static final String COMMAND_CPU = "CPU";
+    public static final String COMMAND_GPU = "GPU";
+
 
     private Container pane = getContentPane();
 
@@ -286,26 +307,33 @@ public class FrameView extends JFrame {
         consoleScrollPane.scrollRectToVisible(consoleOutput.getVisibleRect());
         redirectStdErrOut();
 
-        SolverStatPanel solverStatPanel  = new SolverStatPanel();
+        SolverStatPanel solverStatPanel = new SolverStatPanel();
         solverStatPanel.setPreferredSize(new Dimension(SOLVER_PANEL_WIDTH, SOLVER_PANEL_HEIGHT));
         right.add(solverStatPanel);
         right.add(consoleScrollPane);
 
         // ToolBar
         JToolBar jToolBar = new JToolBar();
-        JButton dload = new JButton("Load");
-        JButton dstore = new JButton("Store");
-        JButton dclear = new JButton("Clear");
-        JButton dnorm = new JButton("Normal");
-        JButton dline = new JButton("Draw Line");
-        JButton dcircle = new JButton("Draw Circle");
-        JButton darc = new JButton("Draw Arc");
-        JButton dpoint = new JButton("Draw Point");
-        JButton drefresh = new JButton("REFRESH");
-        JButton dsolve = new JButton("SOLVE");
-        JButton dreposition = new JButton("Repos");
-        JButton drelaxe = new JButton("Relax");
-        JButton dctrl = new JButton("CTRL");
+        JButton dload = new JButton(COMMAND_LOAD);
+        JButton dstore = new JButton(COMMAND_STORE);
+        JButton dclear = new JButton(COMMAND_CLEAR);
+        JButton dnorm = new JButton(COMMAND_NORMAL1);
+        JButton dline = new JButton(COMMAND_DRAW_LINE);
+        JButton dcircle = new JButton(COMMAND_DRAW_CIRCLE);
+        JButton darc = new JButton(COMMAND_DRAW_ARC);
+        JButton dpoint = new JButton(COMMAND_DRAW_POINT);
+        JButton drefresh = new JButton(COMMAND_REFRESH);
+        JButton dsolve = new JButton(COMMAND_SOLVE);
+        JButton dreposition = new JButton(COMMAND_REPOS);
+        JButton drelaxe = new JButton(COMMAND_RELAX);
+        JButton dctrl = new JButton(COMMAND_CTRL);
+
+        JRadioButton onCPU = new JRadioButton(COMMAND_CPU, true);
+        JRadioButton onGPU = new JRadioButton(COMMAND_GPU, true);
+
+        onCPU.setActionCommand(COMMAND_CPU);
+        onGPU.setActionCommand(COMMAND_GPU);
+
         dsolve.setBackground(Color.GREEN);
         dctrl.setBackground(Color.CYAN);
 
@@ -406,6 +434,33 @@ public class FrameView extends JFrame {
             });
         });
 
+        ActionListener solverActionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final String actionCommand = e.getActionCommand();
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        final GeometricSolverType solverType = switch (actionCommand) {
+                            case COMMAND_CPU -> GeometricSolverType.CPU_SOLVER;
+                            case COMMAND_GPU -> GeometricSolverType.GPU_SOLVER;
+                            default -> throw new Error("illegal solver action" + e.getActionCommand());
+                        };
+                        controller.setSolverType(solverType);
+                    }
+                });
+            }
+        };
+        onCPU.addActionListener(solverActionListener);
+        onGPU.addActionListener(solverActionListener);
+
+        ButtonGroup solverType = new ButtonGroup();
+        solverType.add(onCPU);
+        solverType.add(onGPU);
+
+        onCPU.setFocusable(false);
+        onGPU.setFocusable(false);
+
 
         // FIXME - wazne dla setFocusable
         dload.setFocusable(false);
@@ -439,6 +494,10 @@ public class FrameView extends JFrame {
         jToolBar.add(dreposition);
         jToolBar.add(drelaxe);
         jToolBar.add(dctrl);
+        jToolBar.addSeparator(new Dimension(20, 1));
+        jToolBar.add(onCPU);
+        jToolBar.add(onGPU);
+
 
         // GLOWNY ROZKLAD TOOLBAR I OKNO
         pane.add(jToolBar, BorderLayout.NORTH);
@@ -473,7 +532,7 @@ public class FrameView extends JFrame {
         });
     }
 
-    private final BlockingQueue<String> messageQueue= new LinkedBlockingQueue<>(64);
+    private final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>(64);
 
     private void updateTextArea(final String text) {
 
@@ -483,14 +542,14 @@ public class FrameView extends JFrame {
             throw new RuntimeException(e);
         }
 
-        if(messageQueue.size() == 0) {
+        if (messageQueue.size() == 0) {
             return;
         }
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
 
-                if(messageQueue.isEmpty())
+                if (messageQueue.isEmpty())
                     return;
 
                 String text = null;
@@ -500,7 +559,7 @@ public class FrameView extends JFrame {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    if(text == null) {
+                    if (text == null) {
                         break;
                     }
                     consoleOutput.append(text);

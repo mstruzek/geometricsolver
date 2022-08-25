@@ -2,6 +2,7 @@ package com.mstruzek.controller;
 
 import com.mstruzek.msketch.GeometricConstraintType;
 import com.mstruzek.msketch.Vector;
+import com.mstruzek.msketch.solver.GeometricSolverType;
 
 /**
  * Interfejs do oddzialywania na Controler(Model)
@@ -50,5 +51,9 @@ public interface ControllerInterface {
      */
     void addConstraint(GeometricConstraintType constraintType, int K, int L, int M, int N, double d);
 
-
+    /**
+     *
+     * @param solverType
+     */
+    void setSolverType(GeometricSolverType solverType);
 }

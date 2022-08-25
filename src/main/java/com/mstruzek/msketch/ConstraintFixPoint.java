@@ -45,6 +45,10 @@ public class ConstraintFixPoint extends Constraint {
         k0_vec = vc;
     }
 
+    public Vector getFixVector() {
+        return k0_vec;
+    }
+
     public String toString() {
         double norm = getNorm();
         return "Constraint-FixPoint" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  , K0 = " + k0_vec + " } \n";

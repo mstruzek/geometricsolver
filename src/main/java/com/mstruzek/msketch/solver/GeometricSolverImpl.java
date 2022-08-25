@@ -52,9 +52,14 @@ public class GeometricSolverImpl implements GeometricSolver {
 
 
     @Override
+    public void initializeDriver() {
+        ///
+    }
+
+    @Override
     public void setup() {
 
-        StateReporter.DebugEnabled = true;
+        StateReporter.DebugEnabled = false;
 
         reporter = StateReporter.getInstance();
 

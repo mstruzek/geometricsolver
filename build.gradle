@@ -34,6 +34,9 @@ task generateCHeader(type:Exec) {
 /// Native Build with CMake
 def nativeSourcePath = projectDir.absolutePath + "/src/main/native/"
 def nativeBuildPath = buildDir.absolutePath + "/target/cmake-build"
+def distributionPath = projectDir.absolutePath + "/lib"
+
+
 
 
 def compileNative = tasks.register("compile-native") {
@@ -55,10 +58,21 @@ def compileNative = tasks.register("compile-native") {
         }
 
         ant.echo(message: "shared lib build")
+
+
+        ant.mkdir(dir: distributionPath)
+
+
+        if (System.properties['os.name'].toLowerCase().contains('win')) {
+            ant.copy(todir:distributionPath, file:  nativeBuildPath + "/Debug/gsketcherjni.dll")
+        } else {
+            ant.copy(todir:distributionPath, file: nativeBuildPath + "/Debug/libgsketcherjni.so")
+        }
+
     }
 }
 
-tasks.compileJava.dependsOn(compileNative)
+// tasks.compileJava.dependsOn(compileNative)
 
 
 def cleanNative = tasks.register("clean-native") {

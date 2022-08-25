@@ -2,10 +2,8 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.controller.EventType;
 import com.mstruzek.controller.Events;
-import com.mstruzek.msketch.solver.GeometricSolver;
-import com.mstruzek.msketch.solver.GeometricSolverImpl;
-import com.mstruzek.msketch.solver.SolverStat;
-import com.mstruzek.msketch.solver.StateReporter;
+import com.mstruzek.msketch.solver.*;
+import com.mstruzek.msketch.solver.jni.GpuGeometricSolverImpl;
 
 import java.util.Random;
 
@@ -18,22 +16,36 @@ import static com.mstruzek.controller.EventType.*;
  */
 public final class Model {
 
-
     private static GeometricSolver geometricSolver;
 
     private Model() {
-        geometricSolver = new GeometricSolverImpl();
     }
 
-    public static void solveSystem() {
-        if (geometricSolver == null) {
-            geometricSolver = new GeometricSolverImpl();
+    public static void solveSystem(GeometricSolverType solverType) {
+
+        boolean rightInstance = switch (solverType) {
+            case CPU_SOLVER -> geometricSolver instanceof GeometricSolverImpl;
+            case GPU_SOLVER -> geometricSolver instanceof GpuGeometricSolverImpl;
+            default -> false;
+        };
+
+        if (!rightInstance) {
+            geometricSolver = switch (solverType) {
+                case CPU_SOLVER -> new GeometricSolverImpl();
+                case GPU_SOLVER -> new GpuGeometricSolverImpl();
+            };
+
+            /*
+             *
+             */
+            geometricSolver.initializeDriver();
         }
 
         final StateReporter reporter = StateReporter.getInstance();
         SolverStat stat = new SolverStat();
 
         geometricSolver.setup();
+
         geometricSolver.solveSystem(stat);
 
         reporter.reportSolverStatistics(stat);
@@ -139,7 +151,7 @@ public final class Model {
                 add(new ConstraintTangency(constId, K, L, M, N));
                 break;
             case CircleTangency:
-                add(new ConstraintCircleTangency(constId, K,L,M,N));
+                add(new ConstraintCircleTangency(constId, K, L, M, N));
                 break;
             case Distance2Points:
                 add(new ConstraintDistance2Points(constId, K, L, parameter));

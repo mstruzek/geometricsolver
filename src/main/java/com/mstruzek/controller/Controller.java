@@ -2,6 +2,7 @@ package com.mstruzek.controller;
 
 import com.mstruzek.graphic.FrameView;
 import com.mstruzek.msketch.*;
+import com.mstruzek.msketch.solver.GeometricSolverType;
 
 import java.io.File;
 import java.util.Set;
@@ -9,6 +10,8 @@ import java.util.TreeMap;
 
 
 public class Controller implements ControllerInterface {
+
+    private GeometricSolverType solverType = GeometricSolverType.CPU_SOLVER;
 
     public Controller() {
     }
@@ -41,6 +44,11 @@ public class Controller implements ControllerInterface {
             e.printStackTrace();
             Events.send(EventType.CONTROLLER_ERROR, new Object[]{e.getMessage()});
         }
+    }
+
+    @Override
+    public void setSolverType(GeometricSolverType solverType) {
+        this.solverType = solverType;
     }
 
     public void writeModelInto(File selectedFile) {
@@ -113,12 +121,12 @@ public class Controller implements ControllerInterface {
     @Override
     public void solveSystem() {
         try {
-            /**
-             *  *************************************
-             *  |    Solve Linear Equation System   |
-             *  *************************************
+            /*
+             * *************************************
+             *     Solve Linear Equation System
+             * *************************************
              */
-            Model.solveSystem();
+            Model.solveSystem(solverType);
 
         } catch (Throwable e) {
             e.printStackTrace();

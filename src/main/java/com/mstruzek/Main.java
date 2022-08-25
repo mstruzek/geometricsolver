@@ -23,7 +23,8 @@ public class Main {
 
         } catch (Throwable e) {
 
-            System.err.println("last error" + JNISolverGate.getLastError());
+            e.printStackTrace();
+//            System.err.println("last error" + JNISolverGate.getLastError());
 
         }
 
