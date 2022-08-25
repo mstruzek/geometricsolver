@@ -37,6 +37,9 @@ public class FrameView extends JFrame {
     public static final int CONSOLE_WIDTH = 920;
     public static final int CONSOLE_OUTPUT_HEIGHT = 420;
 
+
+    public static final Color ON_CPU_COLOR = new Color(0,  181, 245);
+    public static final Color ON_GPU_COLOR = new Color(118,185, 0);
     public static final Color CONSTRAINT_BORDER_COLOR = Color.DARK_GRAY;
     public static final Color CONSTRAINT_PANEL_BACKGROUND_COLOR = new Color(244, 249, 192);
     public static final Color HELP_PANEL_BACKGROUND_COLOR = new Color(100, 255, 100, 50);
@@ -328,11 +331,13 @@ public class FrameView extends JFrame {
         JButton drelaxe = new JButton(COMMAND_RELAX);
         JButton dctrl = new JButton(COMMAND_CTRL);
 
-        JRadioButton onCPU = new JRadioButton(COMMAND_CPU, true);
-        JRadioButton onGPU = new JRadioButton(COMMAND_GPU, true);
-
+        JRadioButton onCPU = new JRadioButton("CPU colt", true);
+        JRadioButton onGPU = new JRadioButton("GPU cuSolver", true);
         onCPU.setActionCommand(COMMAND_CPU);
         onGPU.setActionCommand(COMMAND_GPU);
+        onCPU.setBackground(ON_CPU_COLOR);
+        onGPU.setBackground(ON_GPU_COLOR);
+
 
         dsolve.setBackground(Color.GREEN);
         dctrl.setBackground(Color.CYAN);
@@ -494,8 +499,9 @@ public class FrameView extends JFrame {
         jToolBar.add(dreposition);
         jToolBar.add(drelaxe);
         jToolBar.add(dctrl);
-        jToolBar.addSeparator(new Dimension(20, 1));
+        jToolBar.addSeparator(new Dimension(120, 1));
         jToolBar.add(onCPU);
+        jToolBar.addSeparator(new Dimension(20, 1));
         jToolBar.add(onGPU);
 
 
