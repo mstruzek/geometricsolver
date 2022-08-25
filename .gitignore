@@ -1,3 +1,4 @@
+.gradle/buildOutputCleanup/
 out/
 .gradle/
 _backlog.md
