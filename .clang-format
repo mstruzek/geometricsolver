@@ -1,2 +1,6 @@
-BasedOnStyle: Microsoft
+BasedOnStyle: LLVM
+---
+Language: Cpp
+IndentWidth: 4
+ColumnLimit: 120
 ---

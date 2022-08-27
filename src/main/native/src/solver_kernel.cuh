@@ -28,11 +28,12 @@ struct ComputationState
     double *SV; /// State Vector  [ SV = SV + dx ] , previous task -- "lineage"
     double *dx; /// przyrosty   [ A * dx = b ]
     double *b;
+    double *dev_norm;   ///  eventually synchronized into 'norm field on the host
 
     // geometric structure - effectievly consts
-    int size;      /// wektor stanu
-    int coffSize;  /// wspolczynniki Lagrange
-    int dimension; /// N - dimension = size + coffSize
+    size_t size;      /// wektor stanu
+    size_t coffSize;  /// wspolczynniki Lagrange
+    size_t dimension; /// N - dimension = size + coffSize
 
     graph::Point *points;
     graph::Geometric *geometrics;
@@ -1935,7 +1936,7 @@ __device__ void setHessianTensorConstraintSetVertical(int tID, graph::Constraint
 /// (FI)' - ((dfi/dq)`)/dq
 ///
 ///
-__global__ void EvaluateConstraintHessian(ComputationState *ec, int N)
+__global__ void EvaluateConstraintHessian(ComputationState *ec, size_t N)
 {
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 

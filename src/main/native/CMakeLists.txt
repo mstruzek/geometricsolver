@@ -57,6 +57,7 @@ find_package(CUDAToolkit 11.7)
 add_library(${PROJECT_SHARED_LIBRARY} SHARED 
         src/com_mstruzek_jni_JNISolverGate.cpp
         src/cuerror.cpp
+        src/settings.cpp
         src/geometric_solver.cu
         src/linear_system.cpp )
 

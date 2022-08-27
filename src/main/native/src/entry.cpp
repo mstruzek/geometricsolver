@@ -13,9 +13,8 @@
 #define jni_initDriver                 Java_com_mstruzek_jni_JNISolverGate_initDriver
 #define jni_getLastError               Java_com_mstruzek_jni_JNISolverGate_getLastError
 #define jni_closeDriver                Java_com_mstruzek_jni_JNISolverGate_closeDriver
-#define jni_resetComputationData       Java_com_mstruzek_jni_JNISolverGate_resetComputationData
-#define jni_resetComputationContext    Java_com_mstruzek_jni_JNISolverGate_resetComputationContext
 #define jni_initComputationContext     Java_com_mstruzek_jni_JNISolverGate_initComputationContext
+#define jni_initComputation            Java_com_mstruzek_jni_JNISolverGate_initComputation
 #define jni_solveSystem                Java_com_mstruzek_jni_JNISolverGate_solveSystem
 #define jni_registerPointType          Java_com_mstruzek_jni_JNISolverGate_registerPointType
 #define jni_registerGeometricType      Java_com_mstruzek_jni_JNISolverGate_registerGeometricType
@@ -23,7 +22,11 @@
 #define jni_registerConstraintType     Java_com_mstruzek_jni_JNISolverGate_registerConstraintType
 #define jni_getPointPXCoordinate       Java_com_mstruzek_jni_JNISolverGate_getPointPXCoordinate
 #define jni_getPointPYCoordinate       Java_com_mstruzek_jni_JNISolverGate_getPointPYCoordinate
-#define jni_getPointCoordinateVector   Java_com_mstruzek_jni_JNISolverGate_getPointCoordinateVector
+
+#define jni_destroyComputation         Java_com_mstruzek_jni_JNISolverGate_destroyComputation
+#define jni_destroyComputationContext  Java_com_mstruzek_jni_JNISolverGate_destroyComputationContext
+#define jni__closeDriver               Java_com_mstruzek_jni_JNISolverGate_closeDriver
+
 
 
 // JNI mock implementations
@@ -51,9 +54,9 @@ int main(int argc, char* args[])
     jclass eclass = nullptr;
         
     
-    err = jni_initDriver(&env, eclass);
+    err = jni_initDriver(&env, eclass, 0);
 
-    err = jni_resetComputationData(&env, eclass);
+    err = jni_initComputationContext(&env, eclass);
     
     /// line_1
     err = jni_registerPointType(&env, eclass, 0, -20.0, 20.0);
@@ -79,10 +82,56 @@ int main(int argc, char* args[])
     err = jni_registerConstraintType(&env, eclass, 5, CONSTRAINT_TYPE_ID_CONNECT_2_POINTS, 1, 5, -1, -1, -1, -1, -1);    
 
 
-    err = jni_initComputationContext(&env, eclass);
-
+    err = jni_initComputation(&env, eclass);
 
     err = jni_solveSystem(&env, eclass);
+
+    err = jni_destroyComputation(&env, eclass);
+
+    /// second round 
+        /// line_1
+    err = jni_registerPointType(&env, eclass, 0, -20.0, 20.0);
+    err = jni_registerPointType(&env, eclass, 1, 200.0, 20.0);
+    err = jni_registerPointType(&env, eclass, 2, 600.0, 20.0);
+    err = jni_registerPointType(&env, eclass, 3, 1000.0, 20.0);
+    err = jni_registerConstraintType(&env, eclass, 1, CONSTRAINT_TYPE_ID_FIX_POINT, 0, -1, -1, -1, -1, -20.0, 20.0);
+    err = jni_registerConstraintType(&env, eclass, 2, CONSTRAINT_TYPE_ID_FIX_POINT, 3, -1, -1, -1, -1, 1000.0, 20.0);
+    err = jni_registerGeometricType(&env, eclass, 1, GEOMETRIC_TYPE_ID_LINE, 1, 2, -1, 0, 3, -1, -1);
+    /// line_2
+    err = jni_registerPointType(&env, eclass, 4, 20.0, 0.0);
+    err = jni_registerPointType(&env, eclass, 5, 20.0, 210.0);
+    err = jni_registerPointType(&env, eclass, 6, 20.0, 600.0);
+    err = jni_registerPointType(&env, eclass, 7, 20.0, 800.0);
+    err = jni_registerConstraintType(&env, eclass, 3, CONSTRAINT_TYPE_ID_FIX_POINT, 4, -1, -1, -1, -1, 20.0, 0.0);
+    err = jni_registerConstraintType(&env, eclass, 4, CONSTRAINT_TYPE_ID_FIX_POINT, 7, -1, -1, -1, -1, 20.0, 800.0);
+    err = jni_registerGeometricType(&env, eclass, 2, GEOMETRIC_TYPE_ID_LINE, 5, 6, 4, 7, -1, -1, -1);
+
+    /// constraint(1,5)(Connect2Points)
+    err = jni_registerConstraintType(&env, eclass, 5, CONSTRAINT_TYPE_ID_CONNECT_2_POINTS, 1, 5, -1, -1, -1, -1, -1);    
+    
+    /// 
+    ///  
+    err = jni_initComputation(&env, eclass);
+    err = jni_solveSystem(&env, eclass);
+
+
+    try {
+
+        err = jni_destroyComputation(&env, eclass);
+
+        err = jni_destroyComputationContext(&env, eclass);
+        err = jni_closeDriver(&env, eclass);
+
+
+    } catch (std::exception &e) {
+    
+        printf("eee %s", e.what());
+    }
+
+
+
+
+
 
 
     return 0;
@@ -95,5 +144,5 @@ jclass FindClass_Impl(JNIEnv *env, const char *name)
 
 jint ThrowNew_Impl(JNIEnv *env, jclass clazz, const char *msg)
 {
-    throw new std::logic_error(msg);
+    throw std::logic_error(msg);
 }

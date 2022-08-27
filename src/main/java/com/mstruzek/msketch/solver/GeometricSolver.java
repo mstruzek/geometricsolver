@@ -20,4 +20,9 @@ public interface GeometricSolver {
      */
     SolverStat solveSystem(SolverStat solverStat);
 
+    /**
+     * Close driver and free all resources
+     */
+    void destroyDriver();
+
 }

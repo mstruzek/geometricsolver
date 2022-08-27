@@ -12,7 +12,7 @@ namespace graph
 
 struct ClockNano
 {
-    long operator()()
+    long long operator()()
     {
         auto epoch = std::chrono::high_resolution_clock::now().time_since_epoch();
         return std::chrono::duration_cast<std::chrono::nanoseconds>(epoch).count();
@@ -21,7 +21,7 @@ struct ClockNano
 
 struct ClockMillis
 {
-    long operator()()
+    long long operator()()
     {
         auto epoch = std::chrono::system_clock::now().time_since_epoch();
         return std::chrono::duration_cast<std::chrono::milliseconds>(epoch).count();
@@ -55,14 +55,14 @@ template <typename ClockFactory = ClockMillis> class StopWatch
         accTime += (stopTick - startTick);
     }
 
-    long delta()
+    long long delta()
     {
         return stopTick - startTick;
     }
 
-    long startTick;
-    long stopTick;
-    long accTime;
+    long long startTick;
+    long long stopTick;
+    long long accTime;
 };
 
 } // namespace graph

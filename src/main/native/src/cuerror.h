@@ -7,16 +7,16 @@
 
 
 /// cuBLAS - error handler
-#define checkCublasStatus(status) error::_checkCublasStatus(status, __LINE__, __FILE__)
+#define checkCublasStatus(status) cuda_error::_checkCublasStatus(status, __LINE__, __FILE__)
 
 /// CUDA - error handler
-#define checkCudaStatus(status) error::_checkCudaStatus(status, __LINE__, __FILE__)
+#define checkCudaStatus(status) cuda_error::_checkCudaStatus(status, __LINE__, __FILE__)
 
 /// cuSolver - error handler
-#define checkCuSolverStatus(status) error::_checkCuSolverStatus(status, __LINE__, __FILE__)
+#define checkCuSolverStatus(status) cuda_error::_checkCuSolverStatus(status, __LINE__, __FILE__)
 
 
-namespace error
+namespace cuda_error
 {
 		/// implementations
 

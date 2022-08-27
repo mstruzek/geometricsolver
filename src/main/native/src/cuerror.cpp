@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-namespace error
+namespace cuda_error
 {
 
 void _checkCudaStatus(cudaError_t status, size_t __line__, const char *__file__)

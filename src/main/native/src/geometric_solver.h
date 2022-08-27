@@ -15,9 +15,9 @@ namespace solver {
 struct SolverStat {
         SolverStat() = default;
 
-        long startTime;
-        long stopTime;
-        long timeDelta;
+        long long startTime;
+        long long stopTime;
+        long long timeDelta;
         int size;
         int coefficientArity;
         int dimension;
@@ -29,15 +29,21 @@ struct SolverStat {
         int iterations;
 };
 
+
+/**
+ * 
+ */
+void initComputationContext(cudaError_t *error);
+
 /**
  *  reset all registers containing points, constraints, parameters !
  */
-void resetComputationData(cudaError_t *error);
+void destroyComputation(cudaError_t *error);
 
 /**
  *  workspace - zwolnic pamiec i wyzerowac wskazniki , \\cusolver
  */
-void resetComputationContext(cudaError_t *error);
+void destroyComputationContext(cudaError_t *error);
 
 /**
  * po zarejestrowaniu calego modelu w odpowiadajacych rejestrach , zainicjalizowac pomocnicze macierze
@@ -45,8 +51,16 @@ void resetComputationContext(cudaError_t *error);
  * przygotowac zmienne dla [cusolvera]
  *
  * przeliczenie pozycji absolutnej punktu na macierzy wyjsciowej
+ * 
+ * commitTime --
  */
-void initComputationContext(cudaError_t *error);
+void initComputation(cudaError_t *error);
+
+
+/*
+ * Last commit of structural changes applied into model.
+ */
+long getCommitTime();
 
 /**
  *
@@ -83,9 +97,16 @@ double getPointPYCoordinate(int id);
  *
  */
 void solveSystemOnGPU(SolverStat *stat, cudaError_t *error);
-
                 
-void getPointCoordinateVector(double *state_arr);
+/**
+ * fetch current state vector from last computation context
+ */
+void fillPointCoordinateVector(double *stateVector);
+
+/**
+ * update point coordinates after modifications in java
+ */
+void updatePointCoordinateVector(double *stateVector);
 
 } // namespace solver
 

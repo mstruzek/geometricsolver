@@ -15,7 +15,7 @@ void linear_system_method_cuSolver(double *A, double *b, size_t N, cudaStream_t 
 
 
 /// <summary>
-/// rest cuSolver additional state data
+/// rest cuSolver additional data data
 /// </summary>
 void linear_system_method_cuSolver_reset(cudaStream_t stream);
 

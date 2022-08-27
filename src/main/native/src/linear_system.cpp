@@ -11,7 +11,7 @@
 
 
 #include "cuerror.h"
-
+#include "settings.h"
 
 /// cuda variables
 static cusolverDnHandle_t handle = NULL;
@@ -25,7 +25,7 @@ static double *Workspace;
 /// lu factorization output vector pivot indecies
 static int *devIpiv = nullptr;
 
-/// state from Factorization or Solver
+/// data from Factorization or Solver
 static int *devInfo = nullptr; 
 
 /** przyczyna INT na urzadzenieu __device__ __host__ ! ERROR 700       cudaErrorIllegalAddress */
@@ -39,22 +39,29 @@ static int hInfo;
 
 CU_SOLVER void linear_system_method_cuSolver_reset(cudaStream_t stream)
 {
-
-    // mem release
-    if (Workspace != NULL)
+    /// mem release
+    if (Workspace != nullptr)
     {
         checkCudaStatus(cudaFreeAsync(Workspace, stream));
         checkCudaStatus(cudaFreeAsync(devInfo, stream));
+        checkCudaStatus(cudaFreeAsync(devIpiv, stream));
+        Workspace = nullptr;
+        devInfo = nullptr;
+        devIpiv = nullptr;
+
     }
 
-
-    if (handle != NULL)
+    if (handle != nullptr)
     {
         checkCuSolverStatus(cusolverDnDestroy(handle));
+
+        handle = nullptr;
     }
-    if (cublasHandle != NULL)
+
+    if (cublasHandle != nullptr)
     {
         checkCublasStatus(cublasDestroy(cublasHandle));
+        cublasHandle = nullptr;
     }
 }
 
@@ -71,26 +78,24 @@ CU_SOLVER void linear_system_method_cuSolver_reset(cudaStream_t stream)
 CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cudaStream_t stream)
 {
     //
+    //     LU Solver -  !!    this solver REQUIRMENTS -  "  NxN tensor "
     //
-    //     LU Solver -  !!    this solver REQUIRMENTS -  "  n�n matrix "
+    //     = cusolverDnDgetrf_bufferSize
     //
+    //     = cusolverDnDgetrf
     //
-    //      cusolverDnDgetrf_bufferSize
-    //
-    //      cusolverDnDgetrf
-    //
-    //      cusolverDnDgetrs
-    //
-    //
+    //     = cusolverDnDgetrs
     //
     //
     // Considerations - zapis bezposrednio do zmiennych na urzadzeniu !
 
     // ! blocking - look back
-    lastError = cudaGetLastError();
+    lastError = cudaPeekAtLastError();
     if (lastError != cudaSuccess)
     {
-        printf("[cuSolver]: error solver is not initialized \n");
+        const char *errorName = cudaGetErrorName(lastError);
+        const char *errorStr = cudaGetErrorString(lastError);
+        printf("[cuSolver]: error solver is not initialized, [ %s ] %s \n", errorName, errorStr);
         exit(1);
     }
 
@@ -98,7 +103,7 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
     hInfo = 0;
 
 
-    if (cublasHandle == NULL)
+    if (cublasHandle == nullptr)
     {
         /// # cuBlas context
         checkCublasStatus(cublasCreate(&cublasHandle));
@@ -119,24 +124,26 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
     ///
     checkCuSolverStatus(cusolverDnDgetrf_bufferSize(handle, N, N, A, N, &Lwork));
 
-    if (Lwork > preLwork)
+    if (Lwork > preLwork || Workspace == nullptr)
     {
         // free mem
         checkCudaStatus(cudaFreeAsync(Workspace, stream));
         checkCudaStatus(cudaFreeAsync(devIpiv, stream));
         checkCudaStatus(cudaFreeAsync(devInfo, stream));
 
+        /// prealocate additional buffer before LU factorization 
+        Lwork = (int) (Lwork * settings::get()->CU_SOLVER_LWORK_FACTOR);
+
         checkCudaStatus(cudaMallocAsync((void **)&Workspace, Lwork * sizeof(double), stream));
         checkCudaStatus(cudaMallocAsync((void **)&devIpiv, N * sizeof(double), stream));
         checkCudaStatus(cudaMallocAsync((void **)&devInfo, 1 * sizeof(double), stream));
 
-        printf("[ LU ] workspace attached, 'Lwork' (workspace size)  = %d \n", Lwork);
+        if (settings::get()->DEBUG)
+        {
+            printf("[ LU ] workspace attached, 'Lwork' (workspace size)  = %d \n", Lwork);
+        }        
     }
-
-
-#ifdef CS_DEBUG
-    checkCudaStatus(cudaStreamSynchronize(stream));    
-#endif    
+     
 
     ///
     /// LU factorization    --  P * A = L *U
@@ -148,36 +155,34 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
     /*
 
 
-
-
-
     */
-
+    
     checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, 1 * sizeof(int), cudaMemcpyDeviceToHost, stream));
 
-    checkCudaStatus(cudaStreamSynchronize(stream));
 
-    // !blocking
-    if (hInfo < 0)
+    /// dont check matrix determinant
+    if (settings::get()->DEBUG_CHECK_ARG)
     {
-        printf("[ LU ] error! wrong parameter %d (exclude handle)\n", -hInfo);
-        exit(1);
+        checkCudaStatus(cudaStreamSynchronize(stream));
+
+        // !blocking
+        if (hInfo < 0)
+        {
+            printf("[ LU ] error! wrong parameter %d (exclude handle)\n", -hInfo);
+            exit(1);
+        }
+
+        // !blocking
+        if (hInfo > 0)
+        {
+            printf("[ LU ] error! tensor A is not positively defined ,  diagonal U(i,i) = 0 ,  i ( %d ) \n", hInfo);
+            exit(1);
+        }
     }
 
-    // !blocking
-    if (hInfo > 0)
-    {
-        printf("[ LU ] error! is not positive defined ,  U(i,i) = 0 ,  i( %d ) \n", hInfo);
-        exit(1);
-    }
 
-    if (hInfo == 0)
-    {
-
-#ifdef CS_DEBUG
+    if(settings::get()->DEBUG){
         printf("[ LU ] factorization success ! \n");
-#endif CS_DEBUG
-
     }
 
     ///
@@ -190,55 +195,57 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
     /*
 
 
-
-
-
     */
+
 
     /// inspect computation requirments
     checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, sizeof(int), cudaMemcpyDeviceToHost, stream));
 
 
-    ///  b - is output vector
-
-    checkCudaStatus(cudaStreamSynchronize(stream));
-
-    // !blocking
-    if (hInfo != 0)
+    /// dont check arguments
+    if (settings::get()->DEBUG_CHECK_ARG)
     {
-        printf("[ LU ]! parameter is wrong (not counting handle). %d \n", -hInfo);
-        exit(1);
+        checkCudaStatus(cudaStreamSynchronize(stream));
+
+        ///
+        if (hInfo != 0)
+        {
+            printf("[ LU ]! parameter is wrong (not counting handle). %d \n", -hInfo);
+            exit(1);
+        }
     }
 
+    /// 
+    /// suspected data vector to be presetend in vector b  // B
 
-#ifdef CS_DEBUG
-    if (hInfo == 0)
+    if (settings::get()->DEBUG)
     {
         printf("[ LU ] operation successful ! \n");
 
     }
-#endif
 
-    ///
-    /// suspected state vector to be presetend in vector b
-    /// 
-    ///   B
-    /// 
 }
 
 void linear_system_method_cuBlas_vectorNorm(int n, double *x, double *result, cudaStream_t stream)
-{
+{    
+    double local = 0.0;
 
-    //
-    // checkCublasStatus(cublasSetStream(cublasHandle, stream));
+    if (settings::get()->DEBUG_SOLVER_CONVERGENCE)
+    {     
+        cublasDnrm2(cublasHandle, n, x, 1, &local);        
+        checkCudaStatus(cudaStreamSynchronize(stream));
+        checkCudaStatus(cudaMemcpyAsync(result, &local, sizeof(double), cudaMemcpyHostToDevice));
 
-    double result_host = 0;
-    // Initilize async request
-    cublasDnrm2(cublasHandle, n, x, 1, &result_host);
+        printf("[cublas.norm] constraint evalutated norm  = %e \n", local);
+    }
+    else
+    {
+        /// result MUST be device vector
+        //cublasDnrm2(cublasHandle, n, x, 1, result);
 
-    checkCudaStatus(cudaStreamSynchronize(stream));
+        cublasDnrm2(cublasHandle, n, x, 1, &local);
+        checkCudaStatus(cudaStreamSynchronize(stream));
+        checkCudaStatus(cudaMemcpyAsync(result, &local, sizeof(double), cudaMemcpyHostToDevice));
 
-    printf(" epsilon = %f \n", result_host);
-
-    cudaMemcpy(result, &result_host, 1 * sizeof(double), cudaMemcpyHostToDevice);
+    } 
 }

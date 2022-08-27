@@ -324,6 +324,11 @@ public class GeometricSolverImpl implements GeometricSolver {
         return solverStat;
     }
 
+    @Override
+    public void destroyDriver() {
+
+    }
+
     public static void main(String[] args) {
 
     }

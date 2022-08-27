@@ -30,6 +30,11 @@ public final class Model {
         };
 
         if (!rightInstance) {
+
+            if(geometricSolver != null) {
+                geometricSolver.destroyDriver();
+            }
+
             geometricSolver = switch (solverType) {
                 case CPU_SOLVER -> new GeometricSolverImpl();
                 case GPU_SOLVER -> new GpuGeometricSolverImpl();

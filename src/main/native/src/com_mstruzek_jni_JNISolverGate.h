@@ -11,21 +11,6 @@ extern "C" {
 #define com_mstruzek_jni_JNISolverGate_JNI_SUCCESS 0L
 #undef com_mstruzek_jni_JNISolverGate_JNI_ERROR
 #define com_mstruzek_jni_JNISolverGate_JNI_ERROR 1L
-
-
-
-#define JNI_SUCCESS com_mstruzek_jni_JNISolverGate_JNI_SUCCESS
-#define JNI_ERROR   com_mstruzek_jni_JNISolverGate_JNI_ERROR
-
-
-/*
- * Class:     com_mstruzek_jni_JNISolverGate
- * Method:    initDriver
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initDriver
-  (JNIEnv *, jclass);
-
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
  * Method:    getLastError
@@ -36,27 +21,35 @@ JNIEXPORT jstring JNICALL Java_com_mstruzek_jni_JNISolverGate_getLastError
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
- * Method:    closeDriver
- * Signature: ()I
+ * Method:    setBooleanProperty
+ * Signature: (IZ)I
  */
-JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_closeDriver
-  (JNIEnv *, jclass);
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_setBooleanProperty
+  (JNIEnv *, jclass, jint, jboolean);
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
- * Method:    resetComputationData
- * Signature: ()I
+ * Method:    setLongProperty
+ * Signature: (IJ)I
  */
-JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_resetComputationData
-  (JNIEnv *, jclass);
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_setLongProperty
+  (JNIEnv *, jclass, jint, jlong);
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
- * Method:    resetComputationContext
- * Signature: ()I
+ * Method:    setDoubleProperty
+ * Signature: (ID)I
  */
-JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_resetComputationContext
-  (JNIEnv *, jclass);
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_setDoubleProperty
+  (JNIEnv *, jclass, jint, jdouble);
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    initDriver
+ * Signature: (I)I
+ */
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initDriver
+  (JNIEnv *, jclass, jint);
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
@@ -68,18 +61,10 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initComputationContex
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
- * Method:    solveSystem
- * Signature: ()I
+ * Method:    getCommitTime
+ * Signature: ()J
  */
-JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem
-  (JNIEnv *, jclass);
-
-/*
- * Class:     com_mstruzek_jni_JNISolverGate
- * Method:    getSolverStatistics
- * Signature: ()Lcom/mstruzek/msketch/solver/SolverStat;
- */
-JNIEXPORT jobject JNICALL Java_com_mstruzek_jni_JNISolverGate_getSolverStatistics
+JNIEXPORT jlong JNICALL Java_com_mstruzek_jni_JNISolverGate_getCommitTime
   (JNIEnv *, jclass);
 
 /*
@@ -116,6 +101,46 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerConstraintTyp
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    initComputation
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initComputation
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    solveSystem
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    getSolverStatistics
+ * Signature: ()Lcom/mstruzek/msketch/solver/SolverStat;
+ */
+JNIEXPORT jobject JNICALL Java_com_mstruzek_jni_JNISolverGate_getSolverStatistics
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    fetchStateVector
+ * Signature: ()[D
+ */
+JNIEXPORT jdoubleArray JNICALL Java_com_mstruzek_jni_JNISolverGate_fetchStateVector
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    updateStateVector
+ * Signature: ([D)I
+ */
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateStateVector
+  (JNIEnv *, jclass, jdoubleArray);
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
  * Method:    getPointPXCoordinate
  * Signature: (I)D
  */
@@ -132,10 +157,26 @@ JNIEXPORT jdouble JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointPYCoordina
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
- * Method:    getPointCoordinateVector
- * Signature: ()[D
+ * Method:    destroyComputation
+ * Signature: ()I
  */
-JNIEXPORT jdoubleArray JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointCoordinateVector
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_destroyComputation
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    destroyComputationContext
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_destroyComputationContext
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    closeDriver
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_closeDriver
   (JNIEnv *, jclass);
 
 #ifdef __cplusplus
