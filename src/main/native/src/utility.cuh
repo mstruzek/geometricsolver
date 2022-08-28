@@ -46,10 +46,6 @@ template <typename Ty> void memcpyFromDevice(Ty *dest, Ty *src_device, size_t ar
     checkCudaStatus(cudaMemcpyAsync(dest, src_device, arity * sizeof(Ty), cudaMemcpyDeviceToHost, stream));
 }
 
-template <typename Ty> void freeMem(Ty *dev_ptr) {
-    /// safe free mem
-    checkCudaStatus(cudaFreeAsync(dev_ptr, stream));
-}
 
 template <typename Ty> void freeMem(Ty **dev_ptr) {
     /// safe free mem
@@ -57,9 +53,10 @@ template <typename Ty> void freeMem(Ty **dev_ptr) {
     *dev_ptr = nullptr;
 }
 
-template <typename Ty> void freeHostMem(Ty *ptr) {
+template <typename Ty> void freeHostMem(Ty **ptr) {
     /// safe free mem
     checkCudaStatus(cudaFreeHost(ptr));
+    *ptr = nullptr;
 }
 
 template <typename Ty> void memset(Ty *dev_ptr, int value, size_t size) {

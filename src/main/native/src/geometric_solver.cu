@@ -30,6 +30,8 @@
 
 /// ================== Domain Model  - ( dependent on geometry state change )
 
+// -- przeniescie do structury/classy GpuGeometricSolver {} ~dtor ctor
+
 /// last observed commit time - changed always after registration or post command of `initComputation
 static long long commitTime = 0L;
 
@@ -227,13 +229,13 @@ void destroyComputationContext(cudaError_t *error) {
 
         for (int itr = 0; itr < CMAX; itr++) {
             /// each computation data with its own host Evalution Context
-            utility::freeHostMem(ev[itr]);
+            utility::freeHostMem(&ev[itr]);
         }
 
         for (int itr = 0; itr < CMAX; itr++) {
             /// each computation data with its own device Evalution Context
-            utility::freeMem(dev_ev[itr]);
-            utility::freeMem(dev_norm[itr]);
+            utility::freeMem(&dev_ev[itr]);
+            utility::freeMem(&dev_norm[itr]);
         }
 
         for (int itr = 0; itr < CMAX; itr++) {
@@ -911,6 +913,11 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
         // synchronize -- "adress still const"
         utility::memcpyFromDevice(ev[itr], dev_ev[itr], 1);
 
+        
+        // synchronize dev_norm  - epsilon !!!
+        utility::memcpyFromDevice(&ev[itr]->norm, dev_ev[itr]->dev_norm, 1);
+
+
         /// ============================================================
         ///
         ///         copy DeviceComputation to HostComputation -- addCallback
@@ -997,9 +1004,9 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     stat->constraintDelta = computation->norm;
     stat->convergence = computation->norm < CONVERGENCE_LIMIT;
     stat->iterations = computation->cID;
-    stat->accSolverTime = 0;
-    stat->accEvaluationTime = 0;
-    stat->timeDelta = solverWatch.stopTick - solverWatch.startTick;
+    stat->accSolverTime = solverWatch.delta();
+    stat->accEvaluationTime = solverWatch.delta();
+    stat->timeDelta = solverWatch.delta();
 
     /// w drugiej fazie dopisac => dodatkowo potrzebny per block  __shared__
     /// memory   ORR    L1   fast region memory

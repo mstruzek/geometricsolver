@@ -1,3 +1,5 @@
+// c:\Users\micha\.gradle\gradle.properties
+
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.internal.jvm.Jvm
 
@@ -21,6 +23,7 @@ compileJava {
 dependencies {
     implementation group: 'colt', name: 'colt', version: '1.2.0'
     implementation group: 'gov.nist.math', name: 'jama', version: '1.0.3'
+    implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre'
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
 }
 
@@ -38,39 +41,36 @@ def nativeSourcePath = projectDir.absolutePath + "/src/main/native/"
 def nativeBuildPath = buildDir.absolutePath + "/target/cmake-build"
 def distributionPath = projectDir.absolutePath + "/lib"
 
-
+var outputLibFile = nativeBuildPath + (OperatingSystem.current().isWindows()
+        ? "/Debug/libgsketcherjni.dll"
+        : "/Debug/libgsketcherjni.so")
 
 
 def compileNative = tasks.register("compile-native") {
+    inputs.files(fileTree(nativeSourcePath).matching {
+        include "CMakeLists.txt"
+        include "**/*.cu"
+        include "**/*.cuh"
+        include "**/*.cpp"
+        include "**/*.h"
+    })
+    outputs.file(outputLibFile)
     doLast{
-        ant.echo("compile native with cmake infrastructure")
-
+        ant.echo("compile native shared lib with cmake infrastructure")
         ant.delete(dir: nativeBuildPath)
         ant.mkdir(dir: nativeBuildPath)
-
+        ant.echo("setup compliation build storage")
         ant.exec(dir: nativeBuildPath, failonerror: true, executable: "cmake")  {
             arg (value: nativeSourcePath)
         }
-
-        ant.echo("build directory generated")
-
+        ant.echo("build process")
         ant.exec(dir: nativeBuildPath, failonerror: true, executable: "cmake") {
             arg(value:"--build")
             arg(value: ".")
         }
-
-        ant.echo(message: "shared lib build")
-
-
+        ant.echo(message: "deploy shared lib")
         ant.mkdir(dir: distributionPath)
-
-
-        if (OperatingSystem.current().isWindows()) {
-            ant.copy(todir:distributionPath, file:  nativeBuildPath + "/Debug/libgsketcherjni.dll")
-        } else {
-            ant.copy(todir:distributionPath, file: nativeBuildPath + "/Debug/libgsketcherjni.so")
-        }
-
+        ant.copy(todir:distributionPath, file:  outputLibFile)
     }
 }
 

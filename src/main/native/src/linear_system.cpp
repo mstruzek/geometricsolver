@@ -232,7 +232,7 @@ void linear_system_method_cuBlas_vectorNorm(int n, double *x, double *result, cu
 
     if (settings::get()->DEBUG_SOLVER_CONVERGENCE)
     {     
-        cublasDnrm2(cublasHandle, n, x, 1, &local);        
+        checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, &local));        
         checkCudaStatus(cudaStreamSynchronize(stream));
         checkCudaStatus(cudaMemcpyAsync(result, &local, sizeof(double), cudaMemcpyHostToDevice));
 
@@ -243,9 +243,8 @@ void linear_system_method_cuBlas_vectorNorm(int n, double *x, double *result, cu
         /// result MUST be device vector
         //cublasDnrm2(cublasHandle, n, x, 1, result);
 
-        cublasDnrm2(cublasHandle, n, x, 1, &local);
+        checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, &local));
         checkCudaStatus(cudaStreamSynchronize(stream));
         checkCudaStatus(cudaMemcpyAsync(result, &local, sizeof(double), cudaMemcpyHostToDevice));
-
     } 
 }

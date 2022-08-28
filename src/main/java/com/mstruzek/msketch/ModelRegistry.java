@@ -1,8 +1,12 @@
 package com.mstruzek.msketch;
 
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
+
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.zip.CRC32C;
 
 /**
  * Facade into Java, JNI implementation . All modified states method should forward registration and updates to JNI.
@@ -140,18 +144,25 @@ public class ModelRegistry {
      * @return checksum from model ids
      */
     public static long computationSnapshotId() {
-        CRC32C checksum = new CRC32C();
+        final HashFunction hf = Hashing.adler32();
+        final Hasher hasher = hf.newHasher();
         for (int pointId : ModelRegistry.dbPoint().keySet())
-            checksum.update(pointId);
+            hasher.putInt(pointId);
+        hasher.putInt(DELIMITER);
         for (int geometricId : ModelRegistry.dbPrimitives().keySet())
-            checksum.update(geometricId * 100);
+            hasher.putInt(geometricId);
+        hasher.putInt(DELIMITER);
         for (int constraintId : ModelRegistry.dbConstraint().keySet())
-            checksum.update(constraintId * 1000);
+            hasher.putInt(constraintId);
+        hasher.putInt(DELIMITER);
         for (int parameterId : ModelRegistry.dbParameter().keySet())
-            checksum.update(parameterId * 10000);
-
-        return checksum.getValue();
+            hasher.putInt(parameterId);
+        hasher.putInt(DELIMITER);
+        final HashCode hashCode = hasher.hash();
+        return hashCode.padToLong();
     }
+    public static final int DELIMITER = 0x7C7D;
+
 }
 
 
