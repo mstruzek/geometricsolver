@@ -28,7 +28,7 @@ public class ConstraintParametrizedXFix extends Constraint {
     }
 
     public ConstraintParametrizedXFix(Integer constId, Point K, Parameter parameter, boolean persistent) {
-        super(constId, GeometricConstraintType.ParametrizedXFix, persistent);
+        super(constId, ConstraintType.ParametrizedXFix, persistent);
         this.k_id = K.id;
         this.param_id = parameter.getId();
     }

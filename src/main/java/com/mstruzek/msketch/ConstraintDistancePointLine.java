@@ -34,7 +34,7 @@ public class ConstraintDistancePointLine extends Constraint {
      * @param M       punkt odlegly od prowadzacej
      */
     public ConstraintDistancePointLine(int constId, Point K, Point L, Point M, Parameter param) {
-        super(constId, GeometricConstraintType.DistancePointLine, true);
+        super(constId, ConstraintType.DistancePointLine, true);
         k_id = K.id;
         l_id = L.id;
         m_id = M.id;

@@ -41,7 +41,7 @@ public class ConstraintParametrizedLength extends Constraint {
     }
 
     public ConstraintParametrizedLength(int constId, Point K, Point L, Point M, Point N, Parameter parameter, boolean persistent) {
-        super(constId, GeometricConstraintType.ParametrizedLength, persistent);
+        super(constId, ConstraintType.ParametrizedLength, persistent);
         k_id = K.id;
         l_id = L.id;
         m_id = M.id;

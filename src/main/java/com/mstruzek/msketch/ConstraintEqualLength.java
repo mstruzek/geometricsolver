@@ -47,7 +47,7 @@ public class ConstraintEqualLength extends Constraint {
     }
 
     public ConstraintEqualLength(int constId, Point K, Point L, Point M, Point N, boolean persistent) {
-        super(constId, GeometricConstraintType.EqualLength, persistent);
+        super(constId, ConstraintType.EqualLength, persistent);
         k_id = K.id;
         l_id = L.id;
         m_id = M.id;

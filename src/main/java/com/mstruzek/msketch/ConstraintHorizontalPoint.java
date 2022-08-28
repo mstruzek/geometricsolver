@@ -29,7 +29,7 @@ public class ConstraintHorizontalPoint extends Constraint {
      * @param L       - Vector w ktorym bedzie zafiksowany K
      */
     public ConstraintHorizontalPoint(int constId, Point K, Point L) {
-        super(constId, GeometricConstraintType.HorizontalPoint, true);
+        super(constId, ConstraintType.HorizontalPoint, true);
         //pobierz id
         k_id = K.id;
         l_id = L.id;

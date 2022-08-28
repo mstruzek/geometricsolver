@@ -228,23 +228,15 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
 
 void linear_system_method_cuBlas_vectorNorm(int n, double *x, double *result, cudaStream_t stream)
 {    
-    double local = 0.0;
-
+    checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, result));    
     if (settings::get()->DEBUG_SOLVER_CONVERGENCE)
-    {     
-        checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, &local));        
+    {   
         checkCudaStatus(cudaStreamSynchronize(stream));
-        checkCudaStatus(cudaMemcpyAsync(result, &local, sizeof(double), cudaMemcpyHostToDevice));
-
-        printf("[cublas.norm] constraint evalutated norm  = %e \n", local);
+        printf("[cublas.norm] constraint evalutated norm  = %e \n", *result);
     }
     else
     {
-        /// result MUST be device vector
-        //cublasDnrm2(cublasHandle, n, x, 1, result);
-
-        checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, &local));
-        checkCudaStatus(cudaStreamSynchronize(stream));
-        checkCudaStatus(cudaMemcpyAsync(result, &local, sizeof(double), cudaMemcpyHostToDevice));
+        // blad na cublas RESULT jest lokalny  zawsze 
+        /// checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, result))
     } 
 }

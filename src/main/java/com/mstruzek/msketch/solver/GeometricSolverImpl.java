@@ -4,8 +4,8 @@ import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
 import com.mstruzek.msketch.*;
-import com.mstruzek.msketch.matrix.TensorDouble;
 import com.mstruzek.msketch.matrix.PointUtility;
+import com.mstruzek.msketch.matrix.TensorDouble;
 
 import java.time.Instant;
 import java.util.function.LongSupplier;

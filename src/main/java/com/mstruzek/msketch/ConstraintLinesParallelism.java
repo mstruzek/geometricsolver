@@ -52,7 +52,7 @@ public class ConstraintLinesParallelism extends Constraint {
      * @param N
      */
     public ConstraintLinesParallelism(int constId, Point K, Point L, Vector M, Vector N) {
-        super(constId, GeometricConstraintType.LinesParallelism, true);
+        super(constId, ConstraintType.LinesParallelism, true);
         k_id = K.id;
         l_id = L.id;
         if ((M instanceof Point) && (N instanceof Point)) {

@@ -45,7 +45,7 @@ public class ConstraintAngle2Lines extends Constraint {
      * @param N punkt prostej
      */
     public ConstraintAngle2Lines(Integer constId, Point K, Point L, Point M, Point N, Parameter param) {
-        super(constId, GeometricConstraintType.Angle2Lines, true);
+        super(constId, ConstraintType.Angle2Lines, true);
         k_id = K.id;
         l_id = L.id;
         m_id = M.id;

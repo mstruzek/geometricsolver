@@ -34,7 +34,7 @@ public class ConstraintDistance2Points extends Constraint {
      * @param L
      */
     public ConstraintDistance2Points(int constId, Point K, Point L, Parameter param) {
-        super(constId, GeometricConstraintType.Distance2Points, true);
+        super(constId, ConstraintType.Distance2Points, true);
         k_id = K.id;
         l_id = L.id;
         param_id = param.getId();

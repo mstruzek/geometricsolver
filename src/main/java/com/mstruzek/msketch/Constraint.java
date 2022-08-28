@@ -12,7 +12,7 @@ public abstract class Constraint implements ConstraintInterface {
      */
     protected int constraintId;
 
-    protected GeometricConstraintType constraintType = null;
+    protected ConstraintType constraintType = null;
 
     /**
      * [ false ] - this constraint is normally not visible unless CTRL function applied into layout
@@ -22,7 +22,7 @@ public abstract class Constraint implements ConstraintInterface {
     /*** przesuniecia absolutne punktow wzgledem ukladuw wspolrzednych vectora stanu */
     protected PointLocation po = PointLocation.getInstance();
 
-    public Constraint(Integer constraintId, GeometricConstraintType constraintType, boolean persistent) {
+    public Constraint(Integer constraintId, ConstraintType constraintType, boolean persistent) {
         super();
         this.constraintId = constraintId;
         this.constraintType = constraintType;
@@ -186,7 +186,7 @@ public abstract class Constraint implements ConstraintInterface {
         return constraintId;
     }
 
-    public GeometricConstraintType getConstraintType() {
+    public ConstraintType getConstraintType() {
         return constraintType;
     }
 

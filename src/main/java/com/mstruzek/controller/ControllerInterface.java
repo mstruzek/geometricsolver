@@ -1,6 +1,6 @@
 package com.mstruzek.controller;
 
-import com.mstruzek.msketch.GeometricConstraintType;
+import com.mstruzek.msketch.ConstraintType;
 import com.mstruzek.msketch.Vector;
 import com.mstruzek.msketch.solver.GeometricSolverType;
 
@@ -49,7 +49,7 @@ public interface ControllerInterface {
     /**
      * Dodaj wiez do modelu
      */
-    void addConstraint(GeometricConstraintType constraintType, int K, int L, int M, int N, double d);
+    void addConstraint(ConstraintType constraintType, int K, int L, int M, int N, double d);
 
     /**
      *

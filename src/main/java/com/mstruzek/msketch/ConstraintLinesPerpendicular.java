@@ -41,7 +41,7 @@ public class ConstraintLinesPerpendicular extends Constraint {
      * @param N
      */
     public ConstraintLinesPerpendicular(int constId, Point K, Point L, Vector M, Vector N) {
-        super(constId, GeometricConstraintType.LinesPerpendicular, true);
+        super(constId, ConstraintType.LinesPerpendicular, true);
         k_id = K.id;
         l_id = L.id;
         if ((M instanceof Point) && (N instanceof Point)) {

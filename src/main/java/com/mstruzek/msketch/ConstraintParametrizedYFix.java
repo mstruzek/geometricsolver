@@ -28,7 +28,7 @@ public class ConstraintParametrizedYFix extends Constraint {
     }
 
     public ConstraintParametrizedYFix(Integer constId, Point K, Parameter parameter, boolean persistent) {
-        super(constId, GeometricConstraintType.ParametrizedYFix, persistent);
+        super(constId, ConstraintType.ParametrizedYFix, persistent);
         this.k_id = K.id;
         this.param_id = parameter.getId();
     }

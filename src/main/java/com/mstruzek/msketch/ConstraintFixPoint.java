@@ -31,7 +31,7 @@ public class ConstraintFixPoint extends Constraint {
     }
 
     public ConstraintFixPoint(Integer constId, Point K, boolean persistent) {
-        super(constId, GeometricConstraintType.FixPoint, persistent);
+        super(constId, ConstraintType.FixPoint, persistent);
         this.k_id = K.id;
         this.k0_vec = new Vector(K.getX(), K.getY());
     }

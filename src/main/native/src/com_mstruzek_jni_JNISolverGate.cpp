@@ -408,10 +408,37 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateStateVector(JNI
  * Method:    updateConstraintState
  * Signature: (IDD)I
  */
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    updateConstraintState
+ * Signature: ([I[D[DI)I
+ */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateConstraintState(JNIEnv *env, jclass clazz,
-                                                                                 jint constraintId, jdouble vecX,
-                                                                                 jdouble vecY) {
-    int err = solver::updateConstraintState(constraintId, vecX, vecY);
+                                                                                 jintArray jconstraintId,
+                                                                                 jdoubleArray jvecX, jdoubleArray jvecY,
+                                                                                 jint jsize) {
+    jboolean isCopyc;
+    jboolean isCopyx;
+    jboolean isCopyy;
+    /// acquire pined or copy
+
+    jint *constraintId = env->GetIntArrayElements(jconstraintId, &isCopyc);
+    jdouble *vecX = env->GetDoubleArrayElements(jvecX, &isCopyx);
+    jdouble *vecY = env->GetDoubleArrayElements(jvecY, &isCopyy);
+
+    int err = solver::updateConstraintState((int*)(constraintId), vecX, vecY, jsize);
+
+    if (isCopyc == JNI_TRUE) {
+        env->ReleaseIntArrayElements(jconstraintId, (jint *)constraintId, 0);
+    }
+    if (isCopyx == JNI_TRUE) {
+        env->ReleaseDoubleArrayElements(jvecX, (jdouble *)vecX, 0);
+    }
+    if (isCopyy == JNI_TRUE) {
+        env->ReleaseDoubleArrayElements(jvecY, (jdouble *)vecY, 0);
+    }
+
     if (err != 0) {
         return JNI_ERROR;
     }

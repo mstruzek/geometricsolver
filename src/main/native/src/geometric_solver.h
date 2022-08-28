@@ -111,7 +111,7 @@ void updatePointCoordinateVector(double *stateVector);
 /**
  *  update constraint fixed vectors 
  */
-int updateConstraintState(int constraintId, double  vecX, double vecY);
+int updateConstraintState(int *constraintId, double  *vecX, double *vecY, int size);
 
 } // namespace solver
 

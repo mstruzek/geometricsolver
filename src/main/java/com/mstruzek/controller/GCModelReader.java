@@ -154,7 +154,7 @@ public class GCModelReader implements Closeable {
     public static void processDescriptorConstraint(Matcher iterator) {
 
         int constId = ObjectDeserializer.toInteger(requiredField(iterator, "ID"));
-        GeometricConstraintType constraintType = Enum.valueOf(GeometricConstraintType.class, requiredField(iterator, "TYPE"));
+        ConstraintType constraintType = Enum.valueOf(ConstraintType.class, requiredField(iterator, "TYPE"));
         int vK = ObjectDeserializer.toInteger(requiredField(iterator, "K"));
         int vL = ObjectDeserializer.toInteger(requiredField(iterator, "L"));
         int vM = ObjectDeserializer.toInteger(requiredField(iterator, "M"));

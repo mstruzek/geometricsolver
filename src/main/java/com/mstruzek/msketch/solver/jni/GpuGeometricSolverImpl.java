@@ -7,6 +7,11 @@ import com.mstruzek.msketch.solver.GeometricSolver;
 import com.mstruzek.msketch.solver.SolverStat;
 import com.mstruzek.msketch.solver.StateReporter;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import static java.util.stream.Collectors.toCollection;
+
 public class GpuGeometricSolverImpl implements GeometricSolver {
 
     private StateReporter reporter;
@@ -59,19 +64,19 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         }
 
         long nextComputation = ModelRegistry.computationSnapshotId();
-        if(lastSnapshotId != nextComputation) {
+        if (lastSnapshotId != nextComputation) {
             /*
              *   register model after structural changes
              */
             err = JNISolverGate.destroyComputation();
-            if(err != JNISolverGate.JNI_SUCCESS) {
+            if (err != JNISolverGate.JNI_SUCCESS) {
                 reporter.writeln("[solver/gpu] destroy computation error !");
                 return null;
             }
 
             boolean registered = registerModelOnGPU();
 
-            if(!registered) {
+            if (!registered) {
                 reporter.writeln("[solver/gpu] model registration error !");
                 return null;
             }
@@ -81,7 +86,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
             err = JNISolverGate.initComputation();
 
-            if(err != JNISolverGate.JNI_SUCCESS) {
+            if (err != JNISolverGate.JNI_SUCCESS) {
                 reporter.writeln("[solver/gpu] model computation data initialization error !");
                 return null;
             }
@@ -91,9 +96,8 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         } else {
             /// positional changes
             updateConstraintStates();
+            updateStateVector();
 
-            /// positional changes
-            updateStateVectorAndCommit();
         }
 
         /*
@@ -102,7 +106,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
         err = JNISolverGate.solveSystem();
 
-        if(err!= JNISolverGate.JNI_SUCCESS) {
+        if (err != JNISolverGate.JNI_SUCCESS) {
             reporter.writelnf("[solver/gpu] solver execution failed with error = %s!", JNISolverGate.getLastError());
             return null;
         }
@@ -119,26 +123,38 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
     }
 
 
-
     private void updateConstraintStates() {
-        for (Constraint constraint : ModelRegistry.dbConstraint().values()) {
-            if(constraint instanceof ConstraintFixPoint) {
-                Vector fixVector = ((ConstraintFixPoint) constraint).getFixVector();
-                double vecX = fixVector.getX();
-                double vecY = fixVector.getY();
-                JNISolverGate.updateConstraintState(constraint.getConstraintId(), vecX, vecY);
-            }
+
+        final List<ConstraintFixPoint> constraintsFixed = ModelRegistry.dbConstraint().values().stream()
+            .filter(constraint -> constraint.getConstraintType().equals(ConstraintType.FixPoint))
+            .map(ConstraintFixPoint.class::cast)
+            .collect(toCollection(LinkedList::new));
+
+        final int size = constraintsFixed.size();
+
+        int[] constraintId = new int[size];
+        double[] vecX = new double[size];
+        double[] vecY = new double[size];
+
+        int itr = 0;
+        for (ConstraintFixPoint constraint : constraintsFixed) {
+            Vector fixVector = constraint.getFixVector();
+            constraintId[itr] = constraint.getConstraintId();
+            vecX[itr] = fixVector.getX();
+            vecY[itr] = fixVector.getY();
+            itr++;
         }
+        JNISolverGate.updateConstraintState(constraintId, vecX, vecY, size);
     }
 
-    private void updateStateVectorAndCommit() {
+    private void updateStateVector() {
         double[] stateVector = new double[2 * ModelRegistry.dbPoint().size()];
 
         int itr = 0;
-        for (int pointId: ModelRegistry.dbPoint().keySet()) {
+        for (int pointId : ModelRegistry.dbPoint().keySet()) {
             Point p = ModelRegistry.dbPoint().get(pointId);
-            stateVector[2 * itr  ] = p.getX();
-            stateVector[2 * itr + 1 ] = p.getY();
+            stateVector[2 * itr] = p.getX();
+            stateVector[2 * itr + 1] = p.getY();
             itr++;
         }
 
@@ -151,20 +167,20 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
     public void destroyDriver() {
 
         int error = JNISolverGate.destroyComputation();
-        if(error != JNISolverGate.JNI_SUCCESS) {
+        if (error != JNISolverGate.JNI_SUCCESS) {
             reporter.writelnf("[gpu/solver] destroy computation error !");
         }
 
         error = JNISolverGate.destroyComputationContext();
-        if(error != JNISolverGate.JNI_SUCCESS) {
+        if (error != JNISolverGate.JNI_SUCCESS) {
             reporter.writelnf("[gpu/solver] destroy computation context error !");
         }
 
         error = JNISolverGate.closeDriver();
-        if(error != JNISolverGate.JNI_SUCCESS) {
+        if (error != JNISolverGate.JNI_SUCCESS) {
             reporter.writelnf("[gpu/solver] close driver error !");
         }
-   }
+    }
 
     /**
      * Fetch all computed points according to state vector ordering by Point[ID] property.
@@ -174,9 +190,9 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
     private void fetchGPUComputedPositionsIntoModel() {
         double[] coordinateVector = JNISolverGate.fetchStateVector();
         int itr = 0;
-        for (int pointId: ModelRegistry.dbPoint().keySet()) {
-            double px = coordinateVector[ itr * 2 ];
-            double py = coordinateVector[ itr * 2 + 1];
+        for (int pointId : ModelRegistry.dbPoint().keySet()) {
+            double px = coordinateVector[itr * 2];
+            double py = coordinateVector[itr * 2 + 1];
             ModelRegistry.dbPoint().get(pointId).Vector().setLocation(px, py);
             itr++;
         }

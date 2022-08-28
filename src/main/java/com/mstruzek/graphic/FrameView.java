@@ -4,7 +4,7 @@ import com.mstruzek.controller.ActiveKey;
 import com.mstruzek.controller.Controller;
 import com.mstruzek.controller.EventType;
 import com.mstruzek.controller.Events;
-import com.mstruzek.msketch.GeometricConstraintType;
+import com.mstruzek.msketch.ConstraintType;
 import com.mstruzek.msketch.ModelRegistry;
 import com.mstruzek.msketch.solver.GeometricSolverType;
 
@@ -231,14 +231,14 @@ public class FrameView extends JFrame {
         consDescr.setFocusable(false);
         consDescr.setBackground(HELP_PANEL_BACKGROUND_COLOR);
 
-        final JComboBox combo = new JComboBox(GeometricConstraintType.values());
+        final JComboBox combo = new JComboBox(ConstraintType.values());
         combo.setFocusable(false);
         combo.setPreferredSize(new Dimension(240, -1));
         combo.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JComboBox cb = (JComboBox) e.getSource();
-                GeometricConstraintType what = (GeometricConstraintType) cb.getSelectedItem();
+                ConstraintType what = (ConstraintType) cb.getSelectedItem();
                 consDescr.setText(Objects.requireNonNull(what).getHelp());
                 if (consDescr.getParent() != null) {
                     consDescr.getParent().repaint();
@@ -246,14 +246,14 @@ public class FrameView extends JFrame {
             }
         });
 
-        combo.setSelectedItem(GeometricConstraintType.FixPoint);
+        combo.setSelectedItem(ConstraintType.FixPoint);
 
         JButton constraintButton = new JButton("Add Constraint");
         constraintButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                GeometricConstraintType constraintType = (GeometricConstraintType) combo.getSelectedItem();
+                ConstraintType constraintType = (ConstraintType) combo.getSelectedItem();
 
                 if (constraintType == null) {
                     throw new Error("constraint type invalid !");

@@ -32,7 +32,7 @@ public class ConstraintTangency extends Constraint {
      * @param N       promien okregu = p2
      */
     public ConstraintTangency(int constId, Point K, Point L, Point M, Point N) {
-        super(constId, GeometricConstraintType.Tangency, true);
+        super(constId, ConstraintType.Tangency, true);
         k_id = K.id;
         l_id = L.id;
         m_id = M.id;

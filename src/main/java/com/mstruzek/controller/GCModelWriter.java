@@ -2,7 +2,10 @@ package com.mstruzek.controller;
 
 import com.mstruzek.msketch.*;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
@@ -110,7 +113,7 @@ public class GCModelWriter implements Closeable {
     public void writeConstraints() throws IOException {
         for (Constraint constraint : ModelRegistry.dbConstraint.values().stream().filter(Constraint::isPersistent).toList()) {
             int cID = constraint.getConstraintId();
-            GeometricConstraintType constraintType = constraint.getConstraintType();
+            ConstraintType constraintType = constraint.getConstraintType();
             int K = constraint.getK();
             int L = constraint.getL();
             int M = constraint.getM();

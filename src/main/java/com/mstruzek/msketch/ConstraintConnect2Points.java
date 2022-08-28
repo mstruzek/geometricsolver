@@ -30,7 +30,7 @@ public class ConstraintConnect2Points extends Constraint {
      * @param L       - Vector w ktorym bedzie zafiksowany K
      */
     public ConstraintConnect2Points(int constId, Point K, Point L) {
-        super(constId, GeometricConstraintType.Connect2Points, true);
+        super(constId, ConstraintType.Connect2Points, true);
         k_id = K.id;
         l_id = L.id;
     }

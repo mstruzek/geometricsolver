@@ -40,7 +40,7 @@ public class ConstraintCircleTangency extends Constraint {
      * @param N punkt okregu 2 promien
      */
     public ConstraintCircleTangency(Integer constId, Point K, Point L, Point M, Point N) {
-        super(constId, GeometricConstraintType.CircleTangency, true);
+        super(constId, ConstraintType.CircleTangency, true);
         k_id = K.id;
         l_id = L.id;
         m_id = M.id;

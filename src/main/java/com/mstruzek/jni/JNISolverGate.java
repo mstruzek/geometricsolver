@@ -148,7 +148,7 @@ public class JNISolverGate {
      * @param vecY fixed vector
      * @return
      */
-    public static native int updateConstraintState(int constraintId, double vecX, double vecY);
+    public static native int updateConstraintState(int[] constraintId, double[] vecX, double[] vecY, int size);
 
     /**
      * Read registered point updated PX coordinates from solver computation round.

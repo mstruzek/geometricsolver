@@ -29,7 +29,7 @@ public class ConstraintVerticalPoint extends Constraint {
      * @param L       - Vector w ktorym bedzie zafiksowany K
      */
     public ConstraintVerticalPoint(int constId, Point K, Point L) {
-        super(constId, GeometricConstraintType.VerticalPoint, true);
+        super(constId, ConstraintType.VerticalPoint, true);
         k_id = K.id;
         l_id = L.id;
     }

@@ -483,14 +483,22 @@ void fillPointCoordinateVector(double *stateVector) {
 }
 
 
-int updateConstraintState(int constraintId, double vecX, double vecY) {
-    graph::Constraint *constraint = &constraints[constraintId];
-    if (constraint->constraintTypeId != CONSTRAINT_TYPE_ID_FIX_POINT) {
-        printf("[error] constraint type only supported is ConstraintFixPoint ! \n");
-        return 1;
+int updateConstraintState(int *constraintId, double *vecX, double *vecY, int size) {
+
+    for (int itr = 0; itr < size; itr++) {
+        graph::Constraint *constraint = &constraints[constraintId[itr]];
+
+        if (constraint->constraintTypeId != CONSTRAINT_TYPE_ID_FIX_POINT) {
+            printf("[error] constraint type only supported is ConstraintFixPoint ! \n");
+            return 1;
+        }
+        constraint->vecX = vecX[itr];
+        constraint->vecY = vecY[itr];
     }
-    constraint->vecX = vecX;
-    constraint->vecY = vecY;
+
+    if (d_constraints != nullptr) {
+        utility::memcpyToDevice(&d_constraints, constraints);
+    }
     return 0;   
 }
 
@@ -504,9 +512,7 @@ void updatePointCoordinateVector(double *stateVector) {
     if (d_points != nullptr) {
         utility::memcpyToDevice(&d_points, points);        
     }
-    if (d_constraints != nullptr) {
-        utility::memcpyToDevice(&d_constraints, constraints);
-    }
+
 }
 
 /// <summary>
@@ -519,84 +525,6 @@ void ConstraintGetFullNorm(size_t coffSize, size_t size, double *b, double *resu
     linear_system_method_cuBlas_vectorNorm(static_cast<int>(coffSize), (b + size), result, stream);
 }
 
-__host__ __device__ double *getComputationNormFieldOffset(ComputationState *dev_ev) { return &dev_ev->norm; }
-
-/// ==============================================================================
-///
-///                             debug utility
-///
-/// ==============================================================================
-
-__device__ constexpr const char *WIDEN_DOUBLE_STR_FORMAT = "%26d";
-__device__ constexpr const char *FORMAT_STR_DOUBLE = " %11.2e";
-__device__ constexpr const char *FORMAT_STR_IDX_DOUBLE = "%% %2d  %11.2e \n";
-__device__ constexpr const char *FORMAT_STR_IDX_DOUBLE_E = "%%     %11.2e \n";
-__device__ constexpr const char *FORMAT_STR_DOUBLE_CM = ", %11.2e";
-
-__global__ void stdoutTensorData(ComputationState *ev, size_t rows, size_t cols) {
-    const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
-    const graph::Tensor t = graph::tensorDevMem(ev->A, layout, rows, cols);
-
-    printf("A \n");
-    printf("\n MatrixDouble2 - %d x %d **************************************** \n", t.rows, t.cols);
-
-    /// table header
-    for (int i = 0; i < cols / 2; i++) {
-        printf(WIDEN_DOUBLE_STR_FORMAT, i);
-    }
-    printf("\n");
-
-    /// table data
-
-    for (int i = 0; i < rows; i++) {
-        printf(FORMAT_STR_DOUBLE, t.getValue(i, 0));
-
-        for (int j = 1; j < cols; j++) {
-            printf(FORMAT_STR_DOUBLE_CM, t.getValue(i, j));
-        }
-        if (i < cols - 1)
-            printf("\n");
-    }
-}
-
-__global__ void stdoutRightHandSide(ComputationState *ev, size_t rows) {
-    const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
-    const graph::Tensor b = graph::tensorDevMem(ev->b, layout, rows, 1);
-
-    printf("\n b \n");
-    printf("\n MatrixDouble1 - %d x 1 ****************************************\n", b.rows);
-    printf("\n");
-    /// table data
-
-    for (int i = 0; i < rows; i++) {
-        printf(FORMAT_STR_DOUBLE, b.getValue(i, 0));
-        printf("\n");
-    }
-}
-
-__global__ void stdoutStateVector(ComputationState *ev, size_t rows) {
-    const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
-    const graph::Tensor SV = graph::tensorDevMem(ev->SV, layout, rows, 1);
-
-    printf("\n SV - computation ( %d ) \n", ev->cID);
-    printf("\n MatrixDouble1 - %d x 1 ****************************************\n", SV.rows);
-    printf("\n");
-    /// table data
-
-    for (int i = 0; i < rows; i++) {
-        int pointId = ev->points[i / 2].id;
-        double value = SV.getValue(i, 0);
-        switch (i % 2 == 0) {
-        case 0:
-            printf(FORMAT_STR_IDX_DOUBLE, pointId, value);
-            break;
-        case 1:
-            printf(FORMAT_STR_IDX_DOUBLE_E, value);
-            break;
-        }
-        printf("\n");
-    }
-}
 
 /// <summary>
 /// Computation Round Handler
@@ -906,17 +834,15 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
 
         ///  uzupelnic #Question: Vector B = Fi(q) = 0 przeliczamy jeszce raz !!!
 
-        double *dev_norm = ev[itr]->dev_norm;
-
-        ConstraintGetFullNorm(coffSize, size, dev_b, dev_norm, stream);
 
         // synchronize -- "adress still const"
         utility::memcpyFromDevice(ev[itr], dev_ev[itr], 1);
 
-        
-        // synchronize dev_norm  - epsilon !!!
-        utility::memcpyFromDevice(&ev[itr]->norm, dev_ev[itr]->dev_norm, 1);
 
+        double *host_norm = &ev[itr]->norm;
+
+        ConstraintGetFullNorm(coffSize, size, dev_b, host_norm, stream);
+       
 
         /// ============================================================
         ///

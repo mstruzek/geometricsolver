@@ -142,10 +142,10 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateStateVector
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
  * Method:    updateConstraintState
- * Signature: (IDD)I
+ * Signature: ([I[D[DI)I
  */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateConstraintState
-  (JNIEnv *, jclass, jint, jdouble, jdouble);
+  (JNIEnv *, jclass, jintArray, jdoubleArray, jdoubleArray, jint);
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate

@@ -58,6 +58,86 @@ struct ComputationState
     __host__ __device__ __forceinline__ graph::Parameter *getParameter(int parameterId) const;
 };
 
+
+
+/// ==============================================================================
+///
+///                             debug utility
+///
+/// ==============================================================================
+
+__device__ constexpr const char *WIDEN_DOUBLE_STR_FORMAT = "%26d";
+__device__ constexpr const char *FORMAT_STR_DOUBLE = " %11.2e";
+__device__ constexpr const char *FORMAT_STR_IDX_DOUBLE = "%% %2d  %11.2e \n";
+__device__ constexpr const char *FORMAT_STR_IDX_DOUBLE_E = "%%     %11.2e \n";
+__device__ constexpr const char *FORMAT_STR_DOUBLE_CM = ", %11.2e";
+
+__global__ void stdoutTensorData(ComputationState *ev, size_t rows, size_t cols) {
+    const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
+    const graph::Tensor t = graph::tensorDevMem(ev->A, layout, rows, cols);
+
+    printf("A \n");
+    printf("\n MatrixDouble2 - %d x %d **************************************** \n", t.rows, t.cols);
+
+    /// table header
+    for (int i = 0; i < cols / 2; i++) {
+        printf(WIDEN_DOUBLE_STR_FORMAT, i);
+    }
+    printf("\n");
+
+    /// table data
+
+    for (int i = 0; i < rows; i++) {
+        printf(FORMAT_STR_DOUBLE, t.getValue(i, 0));
+
+        for (int j = 1; j < cols; j++) {
+            printf(FORMAT_STR_DOUBLE_CM, t.getValue(i, j));
+        }
+        if (i < cols - 1)
+            printf("\n");
+    }
+}
+
+__global__ void stdoutRightHandSide(ComputationState *ev, size_t rows) {
+    const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
+    const graph::Tensor b = graph::tensorDevMem(ev->b, layout, rows, 1);
+
+    printf("\n b \n");
+    printf("\n MatrixDouble1 - %d x 1 ****************************************\n", b.rows);
+    printf("\n");
+    /// table data
+
+    for (int i = 0; i < rows; i++) {
+        printf(FORMAT_STR_DOUBLE, b.getValue(i, 0));
+        printf("\n");
+    }
+}
+
+__global__ void stdoutStateVector(ComputationState *ev, size_t rows) {
+    const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
+    const graph::Tensor SV = graph::tensorDevMem(ev->SV, layout, rows, 1);
+
+    printf("\n SV - computation ( %d ) \n", ev->cID);
+    printf("\n MatrixDouble1 - %d x 1 ****************************************\n", SV.rows);
+    printf("\n");
+    /// table data
+
+    for (int i = 0; i < rows; i++) {
+        int pointId = ev->points[i / 2].id;
+        double value = SV.getValue(i, 0);
+        switch (i % 2 == 0) {
+        case 0:
+            printf(FORMAT_STR_IDX_DOUBLE, pointId, value);
+            break;
+        case 1:
+            printf(FORMAT_STR_IDX_DOUBLE_E, value);
+            break;
+        }
+        printf("\n");
+    }
+}
+
+
 ///  ===============================================================================
 
 __host__ __device__ __forceinline__ graph::Vector const &ComputationState::getPoint(int pointId) const

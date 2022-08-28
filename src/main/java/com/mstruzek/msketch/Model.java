@@ -105,7 +105,7 @@ public final class Model {
         }
     }
 
-    public static void addConstraint(GeometricConstraintType constraintType, int K, int L, int M, int N, Double paramValue) {
+    public static void addConstraint(ConstraintType constraintType, int K, int L, int M, int N, Double paramValue) {
         Point pK = null, pL = null, pM = null, pN = null;
         Parameter parameter = null;
         if (K < 0) {
@@ -123,7 +123,7 @@ public final class Model {
         addConstraint(ModelRegistry.nextConstraintId(), constraintType, pK, pL, pM, pN, parameter);
     }
 
-    public static void addConstraint(int constId, GeometricConstraintType constraintType, Point K, Point L, Point M, Point N, Parameter parameter) {
+    public static void addConstraint(int constId, ConstraintType constraintType, Point K, Point L, Point M, Point N, Parameter parameter) {
         switch (constraintType) {
             case Connect2Points:
                 add(new ConstraintConnect2Points(constId, K, L));

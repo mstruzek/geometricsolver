@@ -37,7 +37,7 @@ public class Controller implements ControllerInterface {
     }
 
     @Override
-    public void addConstraint(GeometricConstraintType constraintType, int K, int L, int M, int N, double d) {
+    public void addConstraint(ConstraintType constraintType, int K, int L, int M, int N, double d) {
         try {
             Model.addConstraint(constraintType, K, L, M, N, d);
         } catch (Exception e) {
