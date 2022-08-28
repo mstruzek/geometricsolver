@@ -142,6 +142,15 @@ public class JNISolverGate {
     public static native  int updateStateVector(double[] stateVector);
 
     /**
+     * The only purpose is to set ConstraintFixPoint consts after model relaxation.
+     * @param constraintId constraint id
+     * @param vecX fixed vector
+     * @param vecY fixed vector
+     * @return
+     */
+    public static native int updateConstraintState(int constraintId, double vecX, double vecY);
+
+    /**
      * Read registered point updated PX coordinates from solver computation round.
      * @param id point
      * @return px coordinate x value

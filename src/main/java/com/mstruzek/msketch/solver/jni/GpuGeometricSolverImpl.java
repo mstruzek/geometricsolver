@@ -11,8 +11,6 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
     private StateReporter reporter;
 
-    private long lastCommitTime = 0;
-
     private long lastSnapshotId = Long.MIN_VALUE;
 
     @Override
@@ -43,12 +41,11 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
     @Override
     public void setup() {
-
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG.code, true);
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_A.code, true);
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, true);
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_SV.code, true);
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_SOLVER_CONVERGENCE.code, true);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG.code, false);
+//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_A.code, true);
+//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, true);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_SV.code, false);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_SOLVER_CONVERGENCE.code, false);
     }
 
     @Override
@@ -61,12 +58,11 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
             return null;
         }
 
-        if(lastSnapshotId != computationSnapshotId()) {
+        long nextComputation = ModelRegistry.computationSnapshotId();
+        if(lastSnapshotId != nextComputation) {
             /*
-             *   REGISTER MODEL
+             *   register model after structural changes
              */
-            reporter.writeln("--------------------------------");
-
             err = JNISolverGate.destroyComputation();
             if(err != JNISolverGate.JNI_SUCCESS) {
                 reporter.writeln("[solver/gpu] destroy computation error !");
@@ -90,13 +86,14 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
                 return null;
             }
 
-            lastSnapshotId = computationSnapshotId();
+            lastSnapshotId = nextComputation;
 
         } else {
             /// positional changes
-            /// updateConstraintState(id, vecX, vecY) - ConstraintFixPoint for fixed control points
+            updateConstraintStates();
 
-            updateStateVector();
+            /// positional changes
+            updateStateVectorAndCommit();
         }
 
         /*
@@ -121,7 +118,20 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         return solverStatistics;
     }
 
-    private void updateStateVector() {
+
+
+    private void updateConstraintStates() {
+        for (Constraint constraint : ModelRegistry.dbConstraint().values()) {
+            if(constraint instanceof ConstraintFixPoint) {
+                Vector fixVector = ((ConstraintFixPoint) constraint).getFixVector();
+                double vecX = fixVector.getX();
+                double vecY = fixVector.getY();
+                JNISolverGate.updateConstraintState(constraint.getConstraintId(), vecX, vecY);
+            }
+        }
+    }
+
+    private void updateStateVectorAndCommit() {
         double[] stateVector = new double[2 * ModelRegistry.dbPoint().size()];
 
         int itr = 0;
@@ -132,8 +142,10 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
             itr++;
         }
 
+        /// JNI commit
         JNISolverGate.updateStateVector(stateVector);
     }
+
 
     @Override
     public void destroyDriver() {
@@ -160,41 +172,25 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
      * Data in moved from State Vector of gpu geometric solver.
      */
     private void fetchGPUComputedPositionsIntoModel() {
-        //double[] coordinateVector = JNISolverGate.fetchStateVector();
+        double[] coordinateVector = JNISolverGate.fetchStateVector();
         int itr = 0;
         for (int pointId: ModelRegistry.dbPoint().keySet()) {
-/*
             double px = coordinateVector[ itr * 2 ];
             double py = coordinateVector[ itr * 2 + 1];
-*/
-            double px = JNISolverGate.getPointPXCoordinate(pointId);
-            double py = JNISolverGate.getPointPYCoordinate(pointId);
             ModelRegistry.dbPoint().get(pointId).Vector().setLocation(px, py);
             itr++;
         }
+        /*
+            double px = JNISolverGate.getPointPXCoordinate(pointId);
+            double py = JNISolverGate.getPointPYCoordinate(pointId);
+        */
     }
 
-    private long computationSnapshotId() {
-        long hash = Long.MIN_VALUE;
-        for (Point point : ModelRegistry.dbPoint().values())
-            hash += point.getId();
-        for (GeometricObject geometric : ModelRegistry.dbPrimitives().values())
-            hash += geometric.getPrimitiveId() * 2L;
-        for (Parameter parameter : ModelRegistry.dbParameter().values())
-            hash += parameter.getId() * 4L;
-        for (Constraint constraint : ModelRegistry.dbConstraint().values())
-            hash += constraint.getConstraintId() * 3L;
-
-        return hash;
-    }
 
     /**
      * Register current database model in GPU solver context.
      */
     private boolean registerModelOnGPU() {
-
-        /// read/write current state hash function from id
-
         // register point set
         for (Point point : ModelRegistry.dbPoint().values()) {
             int id = point.getId();

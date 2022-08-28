@@ -18,8 +18,8 @@
 
 #include "cuerror.h"
 #include "geometric_solver.h"
-#include "stop_watch.h"
 #include "settings.h"
+#include "stop_watch.h"
 
 /// GPU common variables
 
@@ -52,7 +52,7 @@ JNIEXPORT jstring JNICALL Java_com_mstruzek_jni_JNISolverGate_getLastError(JNIEn
  * Signature: (IZ)I
  */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_setBooleanProperty(JNIEnv *env, jclass clazz, jint id,
-                                                                              jboolean value) {    
+                                                                              jboolean value) {
     int err = settings::setBooleanProperty(id, value);
     if (err != 0) {
         printf("[settings] bool property unrecognized,  id (%d) value (%d)", id, value);
@@ -90,7 +90,6 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_setDoubleProperty(JNI
     }
     return JNI_SUCCESS;
 }
-
 
 std::string byteHashToString(char bytest[16]) {
     static const char ascii[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
@@ -183,8 +182,7 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initDriver(JNIEnv *en
  * Method:    initComputation
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initComputationContext(JNIEnv *env, jclass clazz) 
-{
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initComputationContext(JNIEnv *env, jclass clazz) {
     solver::initComputationContext(&error);
     if (error != cudaSuccess) {
         printf("[error] init computation data %d  = %s \n", static_cast<int>(error), cudaGetErrorString(error));
@@ -192,7 +190,6 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initComputationContex
     }
     return JNI_SUCCESS;
 }
-
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
@@ -253,7 +250,6 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerConstraintTyp
 
 /// ===================================================================================================================
 
-
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
  * Method:    initComputation
@@ -295,7 +291,6 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem(JNIEnv *e
 }
 
 /// ===================================================================================================================
-
 
 template <typename FieldType>
 void JniSetFieldValue(JNIEnv *env, jclass objClazz, jobject object, const char *const fieldName,
@@ -365,19 +360,25 @@ JNIEXPORT jdoubleArray JNICALL Java_com_mstruzek_jni_JNISolverGate_fetchStateVec
     jboolean isCopy;
     solver::SolverStat &stat = solverStat;
     /// przeinicjalizowac wypelenieni tego vecotr !!
+
     jdoubleArray jStateVector = env->NewDoubleArray(stat.size);
+
     /// acquire pined or copy
     jdouble *stateVector = env->GetDoubleArrayElements(jStateVector, &isCopy);
 
-    /// fetch currect
+    /// update current state
     solver::fillPointCoordinateVector(stateVector);
 
     if (isCopy == JNI_TRUE) {
         env->ReleaseDoubleArrayElements(jStateVector, (double *)stateVector, 0);
-    } else {
-        env->ReleaseDoubleArrayElements(jStateVector, (double *)stateVector, 0);
     }
 
+    jStateVector = (jdoubleArray)env->NewGlobalRef(jStateVector);
+    if (jStateVector == nullptr) {
+        env->ThrowNew(env->FindClass("java/lang/RuntimeException"),
+                      "[global reference] double array  initializatio error");
+        return nullptr;
+    }
     return jStateVector;
 }
 
@@ -389,7 +390,7 @@ JNIEXPORT jdoubleArray JNICALL Java_com_mstruzek_jni_JNISolverGate_fetchStateVec
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateStateVector(JNIEnv *env, jclass clazz,
                                                                              jdoubleArray jStateVector) {
 
-    jboolean isCopy;            
+    jboolean isCopy;
     /// acquire pined or copy
     jdouble *stateVector = env->GetDoubleArrayElements(jStateVector, &isCopy);
 
@@ -398,8 +399,21 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateStateVector(JNI
 
     if (isCopy == JNI_TRUE) {
         env->ReleaseDoubleArrayElements(jStateVector, (double *)stateVector, 0);
-    } else {
-        env->ReleaseDoubleArrayElements(jStateVector, (double *)stateVector, 0);
+    }
+    return JNI_SUCCESS;
+}
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    updateConstraintState
+ * Signature: (IDD)I
+ */
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateConstraintState(JNIEnv *env, jclass clazz,
+                                                                                 jint constraintId, jdouble vecX,
+                                                                                 jdouble vecY) {
+    int err = solver::updateConstraintState(constraintId, vecX, vecY);
+    if (err != 0) {
+        return JNI_ERROR;
     }
     return JNI_SUCCESS;
 }

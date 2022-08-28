@@ -108,6 +108,11 @@ void fillPointCoordinateVector(double *stateVector);
  */
 void updatePointCoordinateVector(double *stateVector);
 
+/**
+ *  update constraint fixed vectors 
+ */
+int updateConstraintState(int constraintId, double  vecX, double vecY);
+
 } // namespace solver
 
 #endif // _GEOMETRIC_SOLVER_H_

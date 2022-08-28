@@ -2,6 +2,7 @@ package com.mstruzek.msketch;
 
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.zip.CRC32C;
 
 /**
  * Facade into Java, JNI implementation . All modified states method should forward registration and updates to JNI.
@@ -90,7 +91,7 @@ public class ModelRegistry {
     @JniModel
     public static void setLocation(Integer pointId, double x, double y) {
         dbPoint.get(pointId).setLocation(x, y);
-        /// ---- update Location in JNI
+
     }
 
     @JniModel
@@ -110,6 +111,7 @@ public class ModelRegistry {
         ModelRegistry.parameterCounter = 0;
         ModelRegistry.primitiveCounter = 0;
         ModelRegistry.pointCounter = 0;
+
     }
 
     @JniModel
@@ -131,4 +133,25 @@ public class ModelRegistry {
     public static void removePrimitives(int primitiveId) {
         dbPrimitives.remove(primitiveId);
     }
+
+    /**
+     * All destructive/constructive changes applied into model.
+     * - changes applied into model ( register/unregister )
+     * @return checksum from model ids
+     */
+    public static long computationSnapshotId() {
+        CRC32C checksum = new CRC32C();
+        for (int pointId : ModelRegistry.dbPoint().keySet())
+            checksum.update(pointId);
+        for (int geometricId : ModelRegistry.dbPrimitives().keySet())
+            checksum.update(geometricId * 100);
+        for (int constraintId : ModelRegistry.dbConstraint().keySet())
+            checksum.update(constraintId * 1000);
+        for (int parameterId : ModelRegistry.dbParameter().keySet())
+            checksum.update(parameterId * 10000);
+
+        return checksum.getValue();
+    }
 }
+
+
