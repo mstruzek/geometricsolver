@@ -46,15 +46,20 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
     @Override
     public void setup() {
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG.code, false);
+
+//         JNISolverGate.setBooleanProperty(JNIDebugCode.SOLVER_INC_HESSIAN.code, true);
+
+//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG.code, true);
+//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_CHECK_ARG.code, true);
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_A.code, true);
-//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, true);
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_SV.code, false);
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_SOLVER_CONVERGENCE.code, false);
+//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, false);
+//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_SV.code, true);
+//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_SOLVER_CONVERGENCE.code, true);
+
     }
 
     @Override
-    public SolverStat solveSystem(SolverStat solverStat) {
+    public SolverStat solveSystem() {
 
         int err = 0; /// JNI_SUCCESS
 
@@ -95,16 +100,26 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
         } else {
             /// positional changes
-            updateConstraintStates();
+            updateConstraintsState();
+            ///
+            updateParametersValues();
+            ///
             updateStateVector();
-
         }
 
         /*
          * -----------------  SOLVER -------------------
          */
 
-        err = JNISolverGate.solveSystem();
+        try {
+
+            err = JNISolverGate.solveSystem();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.flush();
+        }
+
 
         if (err != JNISolverGate.JNI_SUCCESS) {
             reporter.writelnf("[solver/gpu] solver execution failed with error = %s!", JNISolverGate.getLastError());
@@ -123,7 +138,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
     }
 
 
-    private void updateConstraintStates() {
+    private void updateConstraintsState() {
 
         final List<ConstraintFixPoint> constraintsFixed = ModelRegistry.dbConstraint().values().stream()
             .filter(constraint -> constraint.getConstraintType().equals(ConstraintType.FixPoint))
@@ -162,6 +177,18 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         JNISolverGate.updateStateVector(stateVector);
     }
 
+    private void updateParametersValues() {
+        final int size = ModelRegistry.dbParameter().size();
+        double[] value = new double[size];
+        int[] parameterId = new int[size];
+        int itr= 0;
+        for (Parameter parameter : ModelRegistry.dbParameter().values()) {
+            parameterId[itr] = parameter.getId();
+            value[itr] = parameter.getValue();
+            itr++;
+        }
+        JNISolverGate.updateParametersValues(parameterId, value, size);
+    }
 
     @Override
     public void destroyDriver() {

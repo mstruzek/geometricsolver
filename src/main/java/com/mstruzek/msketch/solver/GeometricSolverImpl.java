@@ -8,7 +8,6 @@ import com.mstruzek.msketch.matrix.PointUtility;
 import com.mstruzek.msketch.matrix.TensorDouble;
 
 import java.time.Instant;
-import java.util.function.LongSupplier;
 
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
@@ -27,29 +26,6 @@ public class GeometricSolverImpl implements GeometricSolver {
     private StopWatch accEvoWatch;          /// Accumulated Evaluation Time - for each round [ns]
     private StopWatch accLUWatch;             /// Accumulated LU Solver Time - for each round  [ns]
 
-    public static class StopWatch {
-        private static final LongSupplier nanoClock = System::nanoTime;
-        long startTick;
-        long stopTick;
-        long accTime;
-
-        private StopWatch() {
-        }
-
-        public void startTick() {
-            this.startTick = nanoClock.getAsLong();
-        }
-
-        public void stopTick() {
-            this.stopTick = nanoClock.getAsLong();
-            this.accTime += (stopTick - startTick);
-        }
-
-        public long delta() {
-            return stopTick - startTick;
-        }
-    }
-
 
     @Override
     public void initializeDriver() {
@@ -59,7 +35,7 @@ public class GeometricSolverImpl implements GeometricSolver {
     @Override
     public void setup() {
 
-        StateReporter.DebugEnabled = false;
+        StateReporter.DebugEnabled = true;
 
         reporter = StateReporter.getInstance();
 
@@ -74,7 +50,7 @@ public class GeometricSolverImpl implements GeometricSolver {
 
 
     @Override
-    public SolverStat solveSystem(SolverStat solverStat) {
+    public SolverStat solveSystem() {
 
         final int size;                 /// wektor stanu
         final int coffSize;             /// wspolczynniki Lagrange
@@ -102,6 +78,8 @@ public class GeometricSolverImpl implements GeometricSolver {
         double prevNorm;            /// norma z wczesniejszej iteracji,
         double errorFluctuation;    /// fluktuacja bledu
 
+
+        SolverStat solverStat = new SolverStat();
 
         solverStat.startTime  = Instant.now().toEpochMilli();
         reporter.writeln("#=================== Solver Initialized ===================# ");
@@ -212,8 +190,7 @@ public class GeometricSolverImpl implements GeometricSolver {
 /// Solver LU Single Iteration Step
 
             if (StateReporter.isDebugEnabled()) {
-                reporter.writeln(TensorDouble.writeToString(A));
-
+                //reporter.writeln(TensorDouble.writeToString(A));
                 reporter.writeln(TensorDouble.writeToString(b));
             }
 
@@ -231,14 +208,13 @@ public class GeometricSolverImpl implements GeometricSolver {
 
 /// LU Solver
 
-
-
             LUDecompositionQuick LU = new LUDecompositionQuick();
             LU.decompose(matrix2DA);
 
-            DoubleMatrix2D comLU = LU.getLU();
-            reporter.writeln(TensorDouble.writeToString(TensorDouble.matrixDoubleFrom(comLU)));
-
+            if(StateReporter.isDebugEnabled()) {
+//                TensorDouble tensorLU = TensorDouble.matrixDoubleFrom(LU.getLU());
+//                reporter.writeln(TensorDouble.writeToString(tensorLU));
+            }
 
             if(LU.isNonsingular()) {
                 LU.solve(matrix1Db);
@@ -262,10 +238,10 @@ public class GeometricSolverImpl implements GeometricSolver {
 
             // Lagrange Coefficients
             TensorDouble LC = SV.viewSpan(size, 0, coffSize, 1);
-            if (StateReporter.isDebugEnabled()) {
-                reporter.writeln(TensorDouble.writeToString(LC));
-            }
 
+//            if (StateReporter.isDebugEnabled()) {
+//                reporter.writeln(TensorDouble.writeToString(LC));
+//            }
 
             norm1 = Constraint.getFullNorm();
 
@@ -329,8 +305,5 @@ public class GeometricSolverImpl implements GeometricSolver {
 
     }
 
-    public static void main(String[] args) {
-
-    }
 }
 

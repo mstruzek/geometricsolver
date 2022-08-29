@@ -80,12 +80,12 @@ class Tensor
         if (u.mtype == column_major)
         {
             if (colIntention)
-            { /// verticalu
+            { /// vertical
                 A[u.ld * (u.cffset + offsetCol) + u.rffset + offsetRow + 0] = getVectorX(value);
                 A[u.ld * (u.cffset + offsetCol) + u.rffset + offsetRow + 1] = getVectorY(value);
             }
             else
-            { /// horizontalu
+            { /// horizontal
                 A[u.ld * (u.cffset + offsetCol) + u.rffset + offsetRow] = getVectorX(value);
                 A[u.ld * (u.cffset + offsetCol + 1) + u.rffset + offsetRow] = getVectorY(value);
             }

@@ -113,6 +113,9 @@ void updatePointCoordinateVector(double *stateVector);
  */
 int updateConstraintState(int *constraintId, double  *vecX, double *vecY, int size);
 
+
+int updateParametersValues(int *parameterId, double *value, int size);
+
 } // namespace solver
 
 #endif // _GEOMETRIC_SOLVER_H_

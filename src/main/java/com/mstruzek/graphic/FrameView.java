@@ -308,7 +308,7 @@ public class FrameView extends JFrame {
         consoleScrollPane = new JScrollPane(consoleOutput);
         consoleScrollPane.setPreferredSize(new Dimension(CONSOLE_WIDTH, CONSOLE_OUTPUT_HEIGHT));
         consoleScrollPane.scrollRectToVisible(consoleOutput.getVisibleRect());
-        redirectStdErrOut();
+        //redirectStdErrOut();
 
         SolverStatPanel solverStatPanel = new SolverStatPanel();
         solverStatPanel.setPreferredSize(new Dimension(SOLVER_PANEL_WIDTH, SOLVER_PANEL_HEIGHT));

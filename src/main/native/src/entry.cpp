@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <cstddef>
 
+#include "cuerror.h"
 #include "stop_watch.h"
 
 #include "model_config.h"
@@ -127,10 +128,6 @@ int main(int argc, char* args[])
     
         printf("eee %s", e.what());
     }
-
-
-
-
 
 
 

@@ -47,15 +47,14 @@ public final class Model {
         }
 
         final StateReporter reporter = StateReporter.getInstance();
-        SolverStat stat = new SolverStat();
 
         geometricSolver.setup();
 
-        geometricSolver.solveSystem(stat);
+        final SolverStat solverStat = geometricSolver.solveSystem();
 
-        reporter.reportSolverStatistics(stat);
+        reporter.reportSolverStatistics(solverStat);
 
-        Events.send(EventType.SOLVER_STAT_CHANGE, new Object[]{stat});
+        Events.send(EventType.SOLVER_STAT_CHANGE, new Object[]{solverStat});
     }
 
     public static void addLine(int primitiveId, Vector v1, Vector v2) {

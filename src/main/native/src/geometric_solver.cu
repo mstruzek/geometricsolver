@@ -32,9 +32,6 @@
 
 // -- przeniescie do structury/classy GpuGeometricSolver {} ~dtor ctor
 
-/// last observed commit time - changed always after registration or post command of `initComputation
-static long long commitTime = 0L;
-
 /// points register
 static std::vector<graph::Point> points; /// poLocations id-> point_offset
 
@@ -49,6 +46,9 @@ static std::vector<graph::Parameter> parameters; /// paramLocation id-> param_of
 
 /// Point  Offset in computation matrix [id] -> point offset   ~~ Gather Vectors
 static std::vector<int> pointOffset;
+
+/// Constraint Offset in computation matrix [id] -> constraint offset 
+static std::vector<int> constraintOffset;
 
 /// Parameter Offset mapper from [id] -> parameter offset in reference dest
 static std::vector<int> parameterOffset;
@@ -88,6 +88,8 @@ graph::Parameter *d_parameters = nullptr;
 
 int *d_pointOffset;
 
+int *d_constraintOffset;
+
 int *d_parameterOffset;
 
 /// accumulative offset with geometric size evaluation function
@@ -101,7 +103,7 @@ int *d_accConstraintSize;
 /// ===========================================================
 /// Async Computation - Implicit ref in utility:: namespace
 ///
-static cudaStream_t stream = NULL;
+static cudaStream_t stream = nullptr;
 
 /// cuBlas device norm2
 static double *dev_norm[CMAX] = {NULL};
@@ -109,13 +111,16 @@ static double *dev_norm[CMAX] = {NULL};
 /// Local Computation References
 static ComputationState *ev[CMAX] = {NULL};
 
-/// Device Reference
+/// Device Reference - `synchronized into device` one-way
 static ComputationState *dev_ev[CMAX] = {NULL};
 
 /// === Solver Performance Watchers
 
 /// observation of submited tasks
-static graph::StopWatch<graph::ClockMillis> solverWatch;
+static graph::StopWatchAdapter solverWatch;
+
+/// observation of 
+static graph::StopWatchAdapter evaluationWatch;
 
 /// observation of computation time - single computation run
 static cudaEvent_t computeStart[CMAX] = {nullptr};
@@ -227,9 +232,11 @@ void destroyComputationContext(cudaError_t *error) {
 
     if (stream != nullptr) {
 
+        linear_system_method_cuSolver_reset(stream);
+
         for (int itr = 0; itr < CMAX; itr++) {
             /// each computation data with its own host Evalution Context
-            utility::freeHostMem(&ev[itr]);
+            utility::freeMemHost(&ev[itr]);                       
         }
 
         for (int itr = 0; itr < CMAX; itr++) {
@@ -249,7 +256,7 @@ void destroyComputationContext(cudaError_t *error) {
         }
 
         checkCudaStatus(cudaStreamSynchronize(stream));
-        // implicit object for utility
+        // implicit object for utility        
 
         checkCudaStatus(cudaStreamDestroy(stream));
         stream = nullptr;
@@ -258,34 +265,10 @@ void destroyComputationContext(cudaError_t *error) {
     }
 }
 
-/* JAVA
- *
- * if(lastCommitTime == 0  || getCommitTime() != lastCommitTime) {
- *
- *   // structural changes
- *
- *   destroyComputation()
- *
- *   register_*();
- *   register_*();
- *
- *   initComputation()
- *
- *   lastCommitTime = getCommitTime()
- * }
- *
- * solveSystem()
- *
- * getStats()
- *
- *
- *
- */
-
 /**
  *  Last commit time accessor !!!
  */
-long getCommitTime() { return static_cast<long>(commitTime); }
+long getCommitTime() { return 0L; }
 
 /**
  *
@@ -308,11 +291,15 @@ void initComputation(cudaError_t *error) {
         return;
     }
 
+    evaluationWatch.setStartTick();
+
     if (dev_A != nullptr)
-        return;
+        return;      
+
 
     /// mapping from point Id => point dest offset
     pointOffset = utility::stateOffset(points, [](auto point) { return point->id; });
+    constraintOffset = utility::stateOffset(constraints, [](auto constraint) { return constraint->id; });
     /// this is mapping from Id => parameter dest offset
     parameterOffset = utility::stateOffset(parameters, [](auto parameter) { return parameter->id; });
     /// accumalted position of geometric block
@@ -341,6 +328,7 @@ void initComputation(cudaError_t *error) {
     utility::mallocAsync(&d_parameters, parameters.size());
 
     utility::mallocAsync(&d_pointOffset, pointOffset.size());
+    utility::mallocAsync(&d_constraintOffset, constraintOffset.size());
     utility::mallocAsync(&d_parameterOffset, parameterOffset.size());
     utility::mallocAsync(&d_accGeometricSize, geometrics.size());
     utility::mallocAsync(&d_accConstraintSize, constraints.size());
@@ -352,9 +340,11 @@ void initComputation(cudaError_t *error) {
     utility::memcpyToDevice(&d_parameters, parameters);
 
     // immutables
-    utility::memcpyToDevice(&d_pointOffset, pointOffset.data(), points.size());
-    utility::memcpyToDevice(&d_accGeometricSize, accGeometricSize.data(), geometrics.size());
-    utility::memcpyToDevice(&d_accConstraintSize, accConstraintSize.data(), constraints.size());
+    utility::memcpyToDevice(&d_pointOffset, pointOffset.data(), pointOffset.size());
+    utility::memcpyToDevice(&d_constraintOffset, constraintOffset.data(), constraintOffset.size());
+
+    utility::memcpyToDevice(&d_accGeometricSize, accGeometricSize.data(), accGeometricSize.size());
+    utility::memcpyToDevice(&d_accConstraintSize, accConstraintSize.data(), accConstraintSize.size());
     if (!parameters.empty()) {
         utility::memcpyToDevice(&d_parameterOffset, parameterOffset.data(), parameterOffset.size());
     }
@@ -373,8 +363,6 @@ void initComputation(cudaError_t *error) {
     }
 
     printf("[solver] model stage consistent !\n");
-
-    commitTime = graph::ClockMillis()();
 
     *error = cudaSuccess;
 }
@@ -404,6 +392,7 @@ void destroyComputation(cudaError_t *error) {
     utility::freeMem(&d_parameterOffset);
     utility::freeMem(&d_accGeometricSize);
     utility::freeMem(&d_accConstraintSize);
+    utility::freeMem(&d_constraintOffset);
     utility::freeMem(&d_pointOffset);
 
     utility::freeMem(&d_points);
@@ -412,6 +401,7 @@ void destroyComputation(cudaError_t *error) {
     utility::freeMem(&d_parameters);
 
     pointOffset.clear();
+    constraintOffset.clear();
     parameterOffset.clear();
     accGeometricSize.clear();
     accConstraintSize.clear();
@@ -428,7 +418,6 @@ void destroyComputation(cudaError_t *error) {
  */
 void registerPointType(int id, double px, double py) {
     points.emplace_back(id, px, py);
-    commitTime = graph::ClockMillis()();
 }
 
 /**
@@ -436,7 +425,6 @@ void registerPointType(int id, double px, double py) {
  */
 void registerGeometricType(int id, int geometricTypeId, int p1, int p2, int p3, int a, int b, int c, int d) {
     geometrics.emplace_back(id, geometricTypeId, p1, p2, p3, a, b, c, d);
-    commitTime = graph::ClockMillis()();
 }
 
 /**
@@ -444,7 +432,6 @@ void registerGeometricType(int id, int geometricTypeId, int p1, int p2, int p3, 
  */
 void registerParameterType(int id, double value) {
     parameters.emplace_back(id, value);
-    commitTime = graph::ClockMillis()();
 }
 
 /**
@@ -453,7 +440,6 @@ void registerParameterType(int id, double value) {
 void registerConstraintType(int id, int jconstraintTypeId, int k, int l, int m, int n, int paramId, double vecX,
                             double vecY) {
     constraints.emplace_back(id, jconstraintTypeId, k, l, m, n, paramId, vecX, vecY);
-    commitTime = graph::ClockMillis()();
 }
 
 /**
@@ -485,19 +471,37 @@ void fillPointCoordinateVector(double *stateVector) {
 
 int updateConstraintState(int *constraintId, double *vecX, double *vecY, int size) {
 
-    for (int itr = 0; itr < size; itr++) {
-        graph::Constraint *constraint = &constraints[constraintId[itr]];
+    evaluationWatch.setStartTick();
 
-        if (constraint->constraintTypeId != CONSTRAINT_TYPE_ID_FIX_POINT) {
+    for (int itr = 0; itr < size; itr++) {
+        int cId = constraintId[itr];
+        int offset  = constraintOffset[cId];               
+        graph::Constraint &constraint = constraints[offset];
+
+        if (constraint.constraintTypeId != CONSTRAINT_TYPE_ID_FIX_POINT) {
             printf("[error] constraint type only supported is ConstraintFixPoint ! \n");
             return 1;
         }
-        constraint->vecX = vecX[itr];
-        constraint->vecY = vecY[itr];
+        constraint.vecX = vecX[itr];
+        constraint.vecY = vecY[itr];
     }
 
     if (d_constraints != nullptr) {
         utility::memcpyToDevice(&d_constraints, constraints);
+    }
+    return 0;   
+}
+
+int updateParametersValues(int *parameterId, double *value, int size) {
+    for (int itr = 0; itr < size; itr++) {
+        int pId = parameterId[itr];
+        int offset = parameterOffset[pId];
+        graph::Parameter &parameter = parameters[offset];
+        parameter.value = value[itr];        
+    }
+
+    if (d_parameters != nullptr) {
+        utility::memcpyToDevice(&d_parameters, parameters);
     }
     return 0;   
 }
@@ -512,7 +516,6 @@ void updatePointCoordinateVector(double *stateVector) {
     if (d_points != nullptr) {
         utility::memcpyToDevice(&d_points, points);        
     }
-
 }
 
 /// <summary>
@@ -532,7 +535,6 @@ void ConstraintGetFullNorm(size_t coffSize, size_t size, double *b, double *resu
 /// <param name="userData"></param>
 void computationResultHandler(cudaStream_t stream, cudaError_t status, void *userData) {
     // synchronize on stream
-
     ComputationState *computation = static_cast<ComputationState *>(userData);
 
     // obsluga bledow w strumieniu
@@ -550,12 +552,12 @@ void computationResultHandler(cudaStream_t stream, cudaError_t status, void *use
 
     bool last = computation->cID == (CMAX - 1);
 
-    if (computation->norm < CONVERGENCE_LIMIT || last) {
-        /// update offset
-        // result.store(computation, std::memory_order_seq_cst);
+    const double CONVERGENCE = settings::get()->CU_SOLVER_EPSILON;
+
+    if (computation->norm < CONVERGENCE  || last) {
+        /// update offset        
 
         auto desidreState = static_cast<ComputationState *>(nullptr);
-
         if (result.compare_exchange_strong(desidreState, computation)) {
             condition.notify_one();
         }
@@ -600,6 +602,8 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
     result.store(NULL, std::memory_order_seq_cst);
 
     checkCudaStatus(cudaStreamSynchronize(stream));
+
+    evaluationWatch.setStopTick();        
 
     /// [ Alternative-Option ] cudaHostRegister ( void* ptr, size_t size, unsigned
     /// int  flags ) :: cudaHostRegisterMapped:
@@ -677,6 +681,7 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
         ev[itr]->parameters = d_parameters;
 
         ev[itr]->pointOffset = d_pointOffset;
+        ev[itr]->constraintOffset = d_constraintOffset;
         ev[itr]->parameterOffset = d_parameterOffset;
         ev[itr]->accGeometricSize = d_accGeometricSize;
         ev[itr]->accConstraintSize = d_accConstraintSize;
@@ -751,7 +756,7 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
 
         /// [ SV ]  - right hand site
 
-        /// Fr /// Sily  - F(q) --  .mulitply(-1);
+        /// Fr /// Sily  - F(q) --  !!!!!!!
         EvaluateForceIntensity<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, stream>>>(dev_ev[itr], geometrics.size());
 
         /// check state
@@ -836,6 +841,7 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
 
 
         // synchronize -- "adress still const"
+        /// - not used
         utility::memcpyFromDevice(ev[itr], dev_ev[itr], 1);
 
 
@@ -919,20 +925,25 @@ void solveSystemOnGPU(solver::SolverStat *stat, cudaError_t *error) {
 
     utility::memcpyFromDevice(points, d_points);
 
-    stat->startTime = solverWatch.startTick;
-    stat->stopTime = solverWatch.stopTick;
-    stat->timeDelta = solverWatch.delta();
+    double SOLVER_EPSILON = (settings::get()->CU_SOLVER_EPSILON);
 
+    stat->startTime = solverWatch.getStartTick();
+    stat->stopTime = solverWatch.getStopTick();
+    stat->timeDelta = solverWatch.delta();       
+    
     stat->size = size;
     stat->coefficientArity = coffSize;
     stat->dimension = dimension;
 
-    stat->constraintDelta = computation->norm;
-    stat->convergence = computation->norm < CONVERGENCE_LIMIT;
-    stat->iterations = computation->cID;
+
+    stat->accEvaluationTime = evaluationWatch.delta();  /// !! nasz wewnetrzny allocator pamieci !
     stat->accSolverTime = solverWatch.delta();
-    stat->accEvaluationTime = solverWatch.delta();
-    stat->timeDelta = solverWatch.delta();
+
+    stat->convergence = computation->norm < SOLVER_EPSILON;
+    stat->error = computation->norm;
+    stat->constraintDelta = computation->norm;
+    stat->iterations = computation->cID;
+
 
     /// w drugiej fazie dopisac => dodatkowo potrzebny per block  __shared__
     /// memory   ORR    L1   fast region memory

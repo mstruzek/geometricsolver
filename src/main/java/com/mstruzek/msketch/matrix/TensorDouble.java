@@ -4,6 +4,7 @@ import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import com.mstruzek.msketch.Vector;
 
+import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -17,27 +18,24 @@ import java.util.stream.IntStream;
 public interface TensorDouble {
 
     String DOUBLE_STR_FORMAT = " %11.2e";
-//    String DOUBLE_STR_FORMAT = " %11.8f";
+    //    String DOUBLE_STR_FORMAT = " %11.8f";
     String WIDEN_DOUBLE_STR_FORMAT = "%26s";
 
 
     /**
      * Number of columns
-     *
      * @return
      */
     int width();
 
     /**
      * Number of rows
-     *
      * @return
      */
     int height();
 
     /**
      * Get value at corresponding coordinates.
-     *
      * @param i - row
      * @param j - column
      * @return double value
@@ -46,14 +44,12 @@ public interface TensorDouble {
 
     /**
      * Adds a matrix to another matrix, which should be of the same dimension.
-     *
      * @returns The resulting matrix , actual matrix this
      */
     TensorDouble plus(TensorDouble rhs);
 
     /**
      * Mnozezenie kazdego elementu macierzy przez skalar
-     *
      * @param c skalar
      * @return this
      */
@@ -62,7 +58,6 @@ public interface TensorDouble {
     /**
      * Mnozezenie kazdego elementu macierzy przez skalar
      * zwracana jest kopia , aktualna macierz niezmieniona
-     *
      * @param c skalar
      * @return kopia macierzy aktualnej
      */
@@ -72,7 +67,6 @@ public interface TensorDouble {
      * Mnozezenie kazdego vectora macierzy przez odpowiadajacy  vector columnowy.
      *
      * !! do usuniecia !
-     *
      * @param rhs prawy operand
      * @return
      */
@@ -80,7 +74,6 @@ public interface TensorDouble {
 
     /**
      * Set value at corresponding coordinates.
-     *
      * @param r     row column
      * @param c
      * @param value
@@ -89,7 +82,6 @@ public interface TensorDouble {
 
     /**
      * Add value at corresponding coordinates.
-     *
      * @param r     row column
      * @param c
      * @param value
@@ -99,7 +91,6 @@ public interface TensorDouble {
 
     /**
      * Create a sub view that will reference internal matrix implementation.
-     *
      * @param row
      * @param column
      * @param height
@@ -110,7 +101,6 @@ public interface TensorDouble {
 
     /**
      * Funkcja wstawia macierz mt na dana pozycje w akutalnej macierzy
-     *
      * @param offsetRow poczatkowy wiersz
      * @param offsetCol poczatkowa kolumna
      * @param mt        macierz do wstawienia
@@ -127,7 +117,6 @@ public interface TensorDouble {
      * A.addSubMatrix(0,1,B)= C
      * [a11 a12+b11 a13+b12;
      * a21 a22+b21 a23+b22]
-     *
      * @param offsetRow poczatkowy wiersz
      * @param offsetCol poczatkowa kolumna
      * @param mt        macierz do wstawienia
@@ -138,7 +127,6 @@ public interface TensorDouble {
 
     /**
      * Column oriented sub vector or row oriented vector.
-     *
      * @param r
      * @param c
      * @param vector
@@ -148,14 +136,12 @@ public interface TensorDouble {
     /**
      * Transposes an mxn matrix into an nxm matrix. Each row of the input matrix becomes a column in the
      * output matrix.
-     *
      * @return transposed cloned matrix.
      */
     TensorDouble transpose();
 
     /**
      * Reset matrix fill with constant value.
-     *
      * @param value constant value that reset matrix to.
      * @return this matrix
      */
@@ -163,7 +149,6 @@ public interface TensorDouble {
 
     /**
      * Internal implementation from Colt, MatrixDouble2D, SmallMatrixDouble, ScalarMatrixDouble.
-     *
      * @param clazz
      * @param <T>
      * @return
@@ -217,7 +202,6 @@ public interface TensorDouble {
 
     /**
      * Column Vector ! used mostly for righ-hand side matrix `b of equation  A*x = b
-     *
      * @param rowSize
      * @param initValue
      * @return
@@ -229,7 +213,6 @@ public interface TensorDouble {
 
     /**
      * Wrap usually DenseDoubleMatrix1D into corresponding MatrixDouble adapter.
-     *
      * @param delegate source vector
      * @return
      */
@@ -242,12 +225,10 @@ public interface TensorDouble {
     }
 
 
-
     /**
      * Small rotation  matrix around OZ axis.
      * [    cos(alfa)       -sin(alfa);
      * sin(alfa)        cos(alfa)      ]
-     *
      * @param alfa degrees
      * @return
      */
@@ -272,19 +253,18 @@ public interface TensorDouble {
 
     /**
      * Generates a string that holds organized version of a matrix.
-     *
      * @return array string
      */
     static String toStringData(String format, TensorDouble tensorDouble) {
         StringBuffer str = new StringBuffer();
         for (int i = 0; i < tensorDouble.height(); i++) {
-            String first = String.format(format, tensorDouble.getQuick(i, 0));
+            String first = String.format(Locale.ROOT, format, tensorDouble.getQuick(i, 0));
             str.append(first);
             for (int j = 1; j < tensorDouble.width(); j++) {
-                String cell = String.format("," + format, tensorDouble.getQuick(i, j));
+                String cell = String.format(Locale.ROOT, "," + format, tensorDouble.getQuick(i, j));
                 str.append(cell);
             }
-            if (i < tensorDouble.width() - 1 || tensorDouble.width()==1) str.append("\n");
+            if (i < tensorDouble.width() - 1 || tensorDouble.width() == 1) str.append("\n");
         }
         return str.toString();
     }
@@ -300,7 +280,7 @@ public interface TensorDouble {
             .append("x")
             .append(tensorDouble.width())
             .append("****************************************\n")
-            .append(IntStream.range(0, tensorDouble.width()/2).mapToObj(s -> String.format(WIDEN_DOUBLE_STR_FORMAT, s))
+            .append(IntStream.range(0, tensorDouble.width() / 2).mapToObj(s -> String.format(Locale.ROOT, WIDEN_DOUBLE_STR_FORMAT, s))
                 .collect(Collectors.joining()))
             .append("\n")
             .append(toStringData(DOUBLE_STR_FORMAT, tensorDouble));

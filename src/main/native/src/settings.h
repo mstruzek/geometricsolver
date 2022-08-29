@@ -9,8 +9,7 @@ struct Settings
     bool DEBUG_TENSOR_A             = false;        // 2
     bool DEBUG_TENSOR_B             = false;        // 3
     bool DEBUG_TENSOR_SV            = false;        // 4
-    bool CLOCK_MILLISECONDS         = true;         // 5
-    bool CLOCK_NANOSECONDS          = false;        // 6
+    bool CLOCK_NANOSECONDS          = true;         // 6
     bool SOLVER_INC_HESSIAN         = false;        // 7
     bool DEBUG_SOLVER_CONVERGENCE   = false;        // 8
     bool DEBUG_CHECK_ARG            = false;        // 9
@@ -18,7 +17,8 @@ struct Settings
     size_t GRID_SIZE        = 1;    // 10
     size_t BLOCK_SIZE       = 512;  // 11
 
-    double CU_SOLVER_LWORK_FACTOR = 1.0;            // 21
+    double CU_SOLVER_LWORK_FACTOR   = 1.0;      // 21
+    double CU_SOLVER_EPSILON        = 10.0;     // 22
 };
 
 /**

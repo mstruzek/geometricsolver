@@ -30,9 +30,6 @@ int setBooleanProperty(int id, bool value)
     case 4:
         setting->DEBUG_TENSOR_SV = value; // 4
         break;
-    case 5:
-        setting->CLOCK_MILLISECONDS = value; // 5
-        break;
     case 6:
         setting->CLOCK_NANOSECONDS = value; // 6
         break;
@@ -41,6 +38,9 @@ int setBooleanProperty(int id, bool value)
         break;
     case 8:
         setting->DEBUG_SOLVER_CONVERGENCE = value; // 8
+        break;
+    case 9:
+        setting->DEBUG_CHECK_ARG = value;           // 9
         break;
     default:
         printf("[error] bool property not found , id ( %d ) value( %d ) !!\n", id, value);
@@ -96,6 +96,8 @@ int setDoubleProperty(int id, double value)
     case 21:
         config->CU_SOLVER_LWORK_FACTOR = value;
         break;
+    case 22:
+        config->CU_SOLVER_EPSILON = value;
     default:
         printf("[error] double property not found , id ( %d ) value( %e ) !!\n", id, value);
         return 1;

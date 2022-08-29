@@ -149,6 +149,14 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateConstraintState
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    updateParametersValues
+ * Signature: ([I[DI)I
+ */
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateParametersValues
+  (JNIEnv *, jclass, jintArray, jdoubleArray, jint);
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
  * Method:    getPointPXCoordinate
  * Signature: (I)D
  */

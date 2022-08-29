@@ -31,9 +31,6 @@ static int *devInfo = nullptr;
 /** przyczyna INT na urzadzenieu __device__ __host__ ! ERROR 700       cudaErrorIllegalAddress */
 
 
-/// host infot
-static int hInfo;
-
 /// marker
 #define CU_SOLVER
 
@@ -42,11 +39,9 @@ CU_SOLVER void linear_system_method_cuSolver_reset(cudaStream_t stream)
     /// mem release
     if (Workspace != nullptr)
     {
-        checkCudaStatus(cudaFreeAsync(Workspace, stream));
-        checkCudaStatus(cudaFreeAsync(devInfo, stream));
+        checkCudaStatus(cudaFreeAsync(Workspace, stream));        
         checkCudaStatus(cudaFreeAsync(devIpiv, stream));
         Workspace = nullptr;
-        devInfo = nullptr;
         devIpiv = nullptr;
 
     }
@@ -99,8 +94,11 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
         exit(1);
     }
 
+
+    /// host infot
+    int hInfo = 0;
     /// reset previous errror
-    hInfo = 0;
+    
 
 
     if (cublasHandle == nullptr)
@@ -114,6 +112,10 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
         checkCuSolverStatus(cusolverDnSetStream(handle, stream));
     }
 
+
+    checkCudaStatus(cudaMallocAsync((void **)&devInfo, 1 * sizeof(int), stream));
+
+
     int preLwork = Lwork;
 
     ///
@@ -124,19 +126,23 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
     ///
     checkCuSolverStatus(cusolverDnDgetrf_bufferSize(handle, N, N, A, N, &Lwork));
 
+    checkCudaStatus(cudaPeekAtLastError());
+
+
     if (Lwork > preLwork || Workspace == nullptr)
     {
         // free mem
         checkCudaStatus(cudaFreeAsync(Workspace, stream));
-        checkCudaStatus(cudaFreeAsync(devIpiv, stream));
-        checkCudaStatus(cudaFreeAsync(devInfo, stream));
+        checkCudaStatus(cudaFreeAsync(devIpiv, stream));      
 
         /// prealocate additional buffer before LU factorization 
         Lwork = (int) (Lwork * settings::get()->CU_SOLVER_LWORK_FACTOR);
 
         checkCudaStatus(cudaMallocAsync((void **)&Workspace, Lwork * sizeof(double), stream));
         checkCudaStatus(cudaMallocAsync((void **)&devIpiv, N * sizeof(double), stream));
-        checkCudaStatus(cudaMallocAsync((void **)&devInfo, 1 * sizeof(double), stream));
+
+        if (devInfo == nullptr) {
+        }        
 
         if (settings::get()->DEBUG)
         {
@@ -157,12 +163,13 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
 
     */
     
-    checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, 1 * sizeof(int), cudaMemcpyDeviceToHost, stream));
-
 
     /// dont check matrix determinant
     if (settings::get()->DEBUG_CHECK_ARG)
     {
+
+        checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, 1 * sizeof(int), cudaMemcpyDeviceToHost, stream));
+
         checkCudaStatus(cudaStreamSynchronize(stream));
 
         // !blocking
@@ -198,13 +205,12 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
     */
 
 
-    /// inspect computation requirments
-    checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, sizeof(int), cudaMemcpyDeviceToHost, stream));
-
-
     /// dont check arguments
     if (settings::get()->DEBUG_CHECK_ARG)
     {
+        /// inspect computation requirments
+        checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, sizeof(int), cudaMemcpyDeviceToHost, stream));
+
         checkCudaStatus(cudaStreamSynchronize(stream));
 
         ///
@@ -223,7 +229,8 @@ CU_SOLVER void linear_system_method_cuSolver(double *A, double *b, size_t N, cud
         printf("[ LU ] operation successful ! \n");
 
     }
-
+    
+    checkCudaStatus(cudaFreeAsync(devInfo, stream));
 }
 
 void linear_system_method_cuBlas_vectorNorm(int n, double *x, double *result, cudaStream_t stream)

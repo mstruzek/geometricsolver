@@ -18,7 +18,7 @@ public interface GeometricSolver {
      *
      * @return
      */
-    SolverStat solveSystem(SolverStat solverStat);
+    SolverStat solveSystem();
 
     /**
      * Close driver and free all resources

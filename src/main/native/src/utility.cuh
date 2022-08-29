@@ -3,10 +3,12 @@
 
 #include "cuda_runtime_api.h"
 
-#include "cuerror.h"
 
 #include <memory>
 #include <vector>
+
+#include "cuerror.h"
+
 
 namespace utility {
 
@@ -48,15 +50,17 @@ template <typename Ty> void memcpyFromDevice(Ty *dest, Ty *src_device, size_t ar
 
 
 template <typename Ty> void freeMem(Ty **dev_ptr) {
-    /// safe free mem
-    checkCudaStatus(cudaFreeAsync(*dev_ptr, stream));
-    *dev_ptr = nullptr;
+    if (*dev_ptr != nullptr) {
+        checkCudaStatus(cudaFreeAsync(*dev_ptr, stream));
+        *dev_ptr = nullptr;
+    }
 }
 
-template <typename Ty> void freeHostMem(Ty **ptr) {
-    /// safe free mem
-    checkCudaStatus(cudaFreeHost(ptr));
-    *ptr = nullptr;
+template <typename Ty> void freeMemHost(Ty **ptr) {
+    if (*ptr != nullptr) {
+        checkCudaStatus(cudaFreeHost(*ptr));
+        *ptr = nullptr;
+    }
 }
 
 template <typename Ty> void memset(Ty *dev_ptr, int value, size_t size) {

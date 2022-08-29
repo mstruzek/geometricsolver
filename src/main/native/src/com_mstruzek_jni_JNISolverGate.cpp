@@ -447,6 +447,38 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateConstraintState
 
 /*
  * Class:     com_mstruzek_jni_JNISolverGate
+ * Method:    updateParametersValues
+ * Signature: ([I[DI)I
+ */
+JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateParametersValues
+  (JNIEnv *env, jclass clazz, jintArray jparameterId, jdoubleArray jvalue, jint jsize) {
+
+    jboolean isCopyp;
+    jboolean isCopyv;    
+    /// acquire pined or copy
+
+    jint *parameterId = env->GetIntArrayElements(jparameterId, &isCopyp);
+    jdouble *value = env->GetDoubleArrayElements(jvalue, &isCopyv);
+    
+
+    int err = solver::updateParametersValues((int *)parameterId, value, jsize);
+
+    if (isCopyp == JNI_TRUE) {
+        env->ReleaseIntArrayElements(jparameterId, (jint *)parameterId, 0);
+    }
+    if (isCopyv == JNI_TRUE) {
+        env->ReleaseDoubleArrayElements(jvalue, (jdouble *)value, 0);
+    }
+
+    if (err != 0) {
+        return JNI_ERROR;
+    }
+    return JNI_SUCCESS;
+
+  }
+
+/*
+ * Class:     com_mstruzek_jni_JNISolverGate
  * Method:    getPointPXCoordinate
  * Signature: (I)D
  */

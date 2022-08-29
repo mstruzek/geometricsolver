@@ -44,7 +44,7 @@ public class ConstraintConvergenceTest {
         Constraint constraint = registerConstraint(new ConstraintFixPoint(ModelRegistry.nextConstraintId(), p10));
         p10.setLocation(100.0, 100.0);
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -62,7 +62,7 @@ public class ConstraintConvergenceTest {
         Parameter parameter = registerParameter(new Parameter(nextParameterId(), 120.0)); // fixed X coordinate
         Constraint constraint = registerConstraint(new ConstraintParametrizedXFix(ModelRegistry.nextConstraintId(), p10, parameter));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -81,7 +81,7 @@ public class ConstraintConvergenceTest {
         Parameter parameter = registerParameter(new Parameter(nextParameterId(), 120.0)); // fixed Y coordinate
         Constraint constraint = registerConstraint(new ConstraintParametrizedYFix(ModelRegistry.nextConstraintId(), p10, parameter));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -104,7 +104,7 @@ public class ConstraintConvergenceTest {
         registerGeometric(f20);
         Constraint constraint = registerConstraint(new ConstraintConnect2Points(ModelRegistry.nextConstraintId(), p10, p20));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -129,7 +129,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = registerConstraint(new ConstraintLinesPerpendicular(ModelRegistry.nextConstraintId(), p10, p20, p30, p40));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(2, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -149,7 +149,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = registerConstraint(new ConstraintHorizontal(ModelRegistry.nextConstraintId(), p10, p20));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -169,7 +169,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = registerConstraint(new ConstraintVertical(ModelRegistry.nextConstraintId(), p10, p20));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -194,7 +194,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = registerConstraint(new ConstraintLinesParallelism(ModelRegistry.nextConstraintId(), p10, p20, p30, p40)); /// FIXME HESSIAN "unstable"
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(4, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -219,7 +219,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = registerConstraint(new ConstraintEqualLength(ModelRegistry.nextConstraintId(), p10, p20, p30, p40));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -246,7 +246,7 @@ public class ConstraintConvergenceTest {
         Parameter param = registerParameter(new Parameter(nextParameterId(), 2.5));
         Constraint constraint = registerConstraint(new ConstraintParametrizedLength(ModelRegistry.nextConstraintId(), p10, p20, p30, p40, param));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -267,7 +267,7 @@ public class ConstraintConvergenceTest {
         Parameter param = registerParameter(new Parameter(nextParameterId(), 200.0));
         Constraint constraint = registerConstraint(new ConstraintDistance2Points(ModelRegistry.nextConstraintId(), p10, p20, param));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -293,7 +293,7 @@ public class ConstraintConvergenceTest {
         Parameter param = registerParameter(new Parameter(nextParameterId(), 30.0));// 30deg
         Constraint constraint = registerConstraint(new ConstraintAngle2Lines(ModelRegistry.nextConstraintId(), p10, p20, p30, p40, param));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(2, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -320,7 +320,7 @@ public class ConstraintConvergenceTest {
         Constraint fixedArm = registerConstraint(new ConstraintVertical(ModelRegistry.nextConstraintId(), p10, p20));
         Constraint constraint = registerConstraint(new ConstraintAngle2Lines(ModelRegistry.nextConstraintId(), p10, p20, p30, p40, param));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(3, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -345,7 +345,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = registerConstraint(new ConstraintTangency(ModelRegistry.nextConstraintId(), p10, p20, p30, p40));        /// Macierz Hessian'a ?!!
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(20, solverStat.iterations);
         Assert.assertTrue(!solverStat.convergence);
@@ -370,7 +370,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = registerConstraint(new ConstraintCircleTangency(ModelRegistry.nextConstraintId(), p10, p20, p30, p40));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         Assert.assertEquals(0, solverStat.iterations);
         Assert.assertTrue(solverStat.convergence);
@@ -399,7 +399,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = registerConstraint(new ConstraintDistancePointLine(ModelRegistry.nextConstraintId(), p10, p20, p30, param));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
 
         /* no Hessian implementations evaluation into closing equation */
@@ -427,7 +427,7 @@ public class ConstraintConvergenceTest {
 
         Constraint constraint = registerConstraint(new ConstraintTangency(ModelRegistry.nextConstraintId(), p10, p20, p30, p40));
 
-        geometricSolver.solveSystem(solverStat);
+        geometricSolver.solveSystem();
 
         TensorDouble tensorDouble = TensorDouble.matrix2D(1, ModelRegistry.dbPoint.size() * 2, 0.0);
         constraint.getJacobian(tensorDouble);

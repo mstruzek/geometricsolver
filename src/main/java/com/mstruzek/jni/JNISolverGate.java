@@ -151,6 +151,15 @@ public class JNISolverGate {
     public static native int updateConstraintState(int[] constraintId, double[] vecX, double[] vecY, int size);
 
     /**
+     * Update parameter set corresponding values.
+     * @param parameterId
+     * @param value
+     * @param size
+     * @return
+     */
+    public static native int updateParametersValues(int[] parameterId, double[] value, int size);
+
+    /**
      * Read registered point updated PX coordinates from solver computation round.
      * @param id point
      * @return px coordinate x value
