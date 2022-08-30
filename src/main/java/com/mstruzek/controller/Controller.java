@@ -5,6 +5,7 @@ import com.mstruzek.msketch.*;
 import com.mstruzek.msketch.solver.GeometricSolverType;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -64,18 +65,40 @@ public class Controller implements ControllerInterface {
          *  into GCM file (Geometric Constraint Model - file suffixed with *.gcm extension)
          */
 
-        try (GCModelWriter modelWriter = new GCModelWriter(selectedFile)) {
+        String absolutePath = selectedFile.getAbsolutePath();
+        String fileExtension = absolutePath.substring(absolutePath.lastIndexOf("."));
 
-            modelWriter.writeHeader();
-            modelWriter.writePoints();
-            modelWriter.writeGeometricObjects();
-            modelWriter.writeParameters();
-            modelWriter.writeConstraints();
-            modelWriter.writeClose();
+        switch (fileExtension) {
+            case ".cpp":
+                try (var modelWriter = new CppModelWriter(selectedFile)) {
+                    modelWriter.writeHeader();
+                    modelWriter.writePoints();
+                    modelWriter.writeGeometricObjects();
+                    modelWriter.writeParameters();
+                    modelWriter.writeConstraints();
+                    modelWriter.writeClose();
+                } catch (Exception e) {
+                    Reporter.notify("[error] write model into file : " + selectedFile, e);
+                    throw new Error(e);
+                }
+                break;
 
-        } catch (Exception e) {
-            Reporter.notify("[error] write model into file : " + selectedFile, e);
-            throw new Error(e);
+            case ".gcm":
+                try (var modelWriter = new GCModelWriter(selectedFile)) {
+                    modelWriter.writeHeader();
+                    modelWriter.writePoints();
+                    modelWriter.writeGeometricObjects();
+                    modelWriter.writeParameters();
+                    modelWriter.writeConstraints();
+                    modelWriter.writeClose();
+                } catch (Exception e) {
+                    Reporter.notify("[error] write model into file : " + selectedFile, e);
+                    throw new Error(e);
+                }
+                break;
+
+        default:
+                throw new Error("[error] no handler function for file output extension");
         }
     }
 

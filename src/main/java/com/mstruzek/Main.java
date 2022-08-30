@@ -1,10 +1,5 @@
 package com.mstruzek;
 
-import com.mstruzek.jni.JNISolverGate;
-import com.mstruzek.msketch.solver.SolverStat;
-
-import java.text.DecimalFormatSymbols;
-import java.time.LocalTime;
 import java.util.Locale;
 
 import static java.lang.System.out;

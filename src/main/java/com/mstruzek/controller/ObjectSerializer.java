@@ -3,14 +3,19 @@ package com.mstruzek.controller;
 import com.mstruzek.msketch.ConstraintType;
 import com.mstruzek.msketch.GeometricType;
 
+import java.util.Locale;
+
+
 public class ObjectSerializer {
 
+    private static final Locale locale = Locale.ROOT;
+
     static public String writeToString(int value) {
-        return Integer.toString(value);
+        return String.format(locale, "%d", value);
     }
 
     static public String writeToString(double value) {
-        return Double.toString(value);
+        return String.format(locale, "%e", value);
     }
 
     static public String writeToString(ConstraintType constraintType) {
