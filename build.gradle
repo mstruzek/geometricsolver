@@ -46,9 +46,23 @@ var outputLibFile = nativeBuildPath + (OperatingSystem.current().isWindows()
         : "/Debug/libgsketcherjni.so")
 
 
-def compileNative = tasks.register("compile-native") {
+tasks.register("compileNativeSetup") {
     inputs.files(fileTree(nativeSourcePath).matching {
         include "CMakeLists.txt"
+    })
+    outputs.file(file(nativeBuildPath + "CMakeLists.txt"))
+    doLast {
+        ant.delete(dir: nativeBuildPath)
+        ant.mkdir(dir: nativeBuildPath)
+        ant.exec(dir: nativeBuildPath, failonerror: true, executable: "cmake")  {
+            arg (value: nativeSourcePath)
+        }
+    }
+}
+
+
+tasks.register("compileNative") {
+    inputs.files(fileTree(nativeSourcePath).matching {
         include "**/*.cu"
         include "**/*.cuh"
         include "**/*.cpp"
@@ -56,13 +70,6 @@ def compileNative = tasks.register("compile-native") {
     })
     outputs.file(outputLibFile)
     doLast{
-        ant.echo("compile native shared lib with cmake infrastructure")
-        ant.delete(dir: nativeBuildPath)
-        ant.mkdir(dir: nativeBuildPath)
-        ant.echo("setup compliation build storage")
-        ant.exec(dir: nativeBuildPath, failonerror: true, executable: "cmake")  {
-            arg (value: nativeSourcePath)
-        }
         ant.echo("build process")
         ant.exec(dir: nativeBuildPath, failonerror: true, executable: "cmake") {
             arg(value:"--build")
@@ -74,16 +81,18 @@ def compileNative = tasks.register("compile-native") {
     }
 }
 
-// tasks.compileJava.dependsOn(compileNative)
+tasks.compileNative.dependsOn(tasks.compileNativeSetup)
+
+tasks.compileJava.dependsOn(tasks.compileNative)
 
 
-def cleanNative = tasks.register("clean-native") {
+tasks.register("cleanNative") {
     doLast {
         ant.delete(dir: nativeBuildPath)
     }
 }
 
-tasks.clean.dependsOn(cleanNative)
+tasks.clean.dependsOn(tasks.cleanNative)
 
 
 
