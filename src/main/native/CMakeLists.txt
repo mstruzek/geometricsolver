@@ -62,7 +62,7 @@ add_library(${PROJECT_SHARED_LIBRARY} SHARED
         src/gpu_geometric_solver.cpp
         src/gpu_computation_context.cpp
         src/gpu_computation.cu
-        src/linear_system.cpp )
+        src/gpu_linear_system.cpp )
 
 
 target_include_directories(${PROJECT_SHARED_LIBRARY} PUBLIC     

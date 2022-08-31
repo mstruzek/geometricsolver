@@ -374,7 +374,7 @@ JNIEXPORT jdoubleArray JNICALL Java_com_mstruzek_jni_JNISolverGate_fetchStateVec
     solver::SolverStat &stat = solverStat;
     /// przeinicjalizowac wypelenieni tego vecotr !!
 
-    jdoubleArray jStateVector = env->NewDoubleArray(stat.size);
+    jdoubleArray jStateVector = env->NewDoubleArray(static_cast<jsize>(stat.size));
 
     /// acquire pined or copy
     jdouble *stateVector = env->GetDoubleArrayElements(jStateVector, &isCopy);

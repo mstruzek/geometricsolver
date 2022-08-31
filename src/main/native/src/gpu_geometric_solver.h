@@ -11,6 +11,7 @@
 
 #include "gpu_computation_context.h"
 #include "gpu_computation.h"
+#include "gpu_linear_system.h"
 
 
 #define CONVERGENCE_LIMIT 10e-5
@@ -72,6 +73,9 @@ class GPUGeometricSolver {
     std::shared_ptr<GPUComputation> getComputation();
 
   private:
+
+    cudaStream_t stream = nullptr;
+
     std::vector<graph::Point> points;
 
     std::vector<graph::Geometric> geometrics;
@@ -80,10 +84,11 @@ class GPUGeometricSolver {
 
     std::vector<graph::Parameter> parameters;
 
-    std::shared_ptr<GPUComputationContext> _cc;
+    std::shared_ptr<GPUComputationContext> _computationContext;
 
     std::shared_ptr<GPUComputation> _computation;
-
+    
+    std::shared_ptr<GPULinearSystem> _linearSystem;
 };
 
 

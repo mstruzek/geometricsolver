@@ -1,24 +1,42 @@
 #include "gpu_geometric_solver.h"
 
-#include "linear_system.h"
 #include "model_config.h"
 
+#include "cuerror.h"
 
 namespace solver {
 
 ///=================================================================
 
-GPUGeometricSolver::GPUGeometricSolver() : _cc(std::make_shared<GPUComputationContext>()) {}
+GPUGeometricSolver::GPUGeometricSolver() {
+
+    // main computation stream shared with CuSolver, cuBlas
+    cudaStreamCreate(&stream);
+
+    cudaError_t error = cudaPeekAtLastError();
+    if (error != cudaSuccess) {
+        const char *errorName = cudaGetErrorName(error);
+        const char *errorStr = cudaGetErrorString(error);
+        printf("[cuSolver]: stream with given error , [ %s ] %s \n", errorName, errorStr);
+        exit(1);
+    }
+
+    /// Linear system solver
+    _linearSystem = std::make_shared<GPULinearSystem>(stream);
+
+    ///  Computation Context
+    _computationContext = (std::make_shared<GPUComputationContext>(stream));
+}
 
 GPUGeometricSolver::~GPUGeometricSolver() {
 
     if (_computation) {
         _computation.reset();
     }
-    
-    if (_cc) {
-        _cc.reset();
-    }
+
+    _linearSystem.reset();
+
+    _computationContext.reset();
 }
 
 /**
@@ -51,14 +69,13 @@ void GPUGeometricSolver::initComputation(cudaError_t *error) {
 
     long computationId = 0L;
 
-    _computation = std::make_shared<GPUComputation>(computationId, _cc, std::move(points), std::move(geometrics),
-                                                    std::move(constraints), std::move(parameters));
+    _computation =
+        std::make_shared<GPUComputation>(computationId, stream, _linearSystem, _computationContext, std::move(points),
+                                         std::move(geometrics), std::move(constraints), std::move(parameters));
     *error = cudaPeekAtLastError();
 }
 
-void GPUGeometricSolver::destroyComputation(cudaError_t *error) {
-    _computation.reset();
-}
+void GPUGeometricSolver::destroyComputation(cudaError_t *error) { _computation.reset(); }
 
 /**
  * @brief  setup all matricies for computation and prepare kernel stream  intertwined with cusolver
@@ -68,11 +85,10 @@ void GPUGeometricSolver::solveSystemOnGPU(SolverStat *stat, cudaError_t *error) 
 
     if (_computation) {
         _computation->solveSystem(stat, error);
-    }   
+    }
 };
 
 std::shared_ptr<GPUComputation> GPUGeometricSolver::getComputation() { return _computation; }
-
 
 } // namespace solver
 

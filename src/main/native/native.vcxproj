@@ -93,7 +93,7 @@
     <ClCompile Include="src\model.cpp" />
     <ClCompile Include="src\settings.cpp" />
     <ClCompile Include="src\cuerror.cpp" />
-    <ClCompile Include="src\linear_system.cpp" />
+    <ClCompile Include="src\gpu_linear_system.cpp" />
     <ClInclude Include="src\computation_state.cuh" />
     <ClCompile Include="src\gpu_geometric_solver.cpp">
       <FileType>Document</FileType>
@@ -113,7 +113,7 @@
     <ClInclude Include="src\settings.h" />
     <ClInclude Include="src\cuerror.h" />
     <ClInclude Include="src\gpu_geometric_solver.h" />
-    <ClInclude Include="src\linear_system.h" />
+    <ClInclude Include="src\gpu_linear_system.h" />
     <ClInclude Include="src\model.cuh" />
     <ClInclude Include="src\model_config.h" />
     <ClInclude Include="src\solver_kernel.cuh" />

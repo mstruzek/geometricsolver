@@ -6,72 +6,62 @@
 
 namespace solver {
 
-GPUComputationContext::GPUComputationContext() {
+GPUComputationContext::GPUComputationContext(cudaStream_t stream) : stream(stream) {
     // initialize all static cuda context - no direct or indirect dependent on geometric model.
 
-    if (stream == nullptr) {
-        // implicit in utility::
-        checkCudaStatus(cudaStreamCreate(&stream));
 
-        for (int itr = 0; itr < CMAX; itr++) {
-            // #observations
-            checkCudaStatus(cudaEventCreate(&prepStart[itr]));
-            checkCudaStatus(cudaEventCreate(&prepStop[itr]));
-            checkCudaStatus(cudaEventCreate(&computeStart[itr]));
-            checkCudaStatus(cudaEventCreate(&computeStop[itr]));
-            checkCudaStatus(cudaEventCreate(&solverStart[itr]));
-            checkCudaStatus(cudaEventCreate(&solverStop[itr]));
-        }
+    for (int itr = 0; itr < CMAX; itr++) {
+        // #observations
+        checkCudaStatus(cudaEventCreate(&prepStart[itr]));
+        checkCudaStatus(cudaEventCreate(&prepStop[itr]));
+        checkCudaStatus(cudaEventCreate(&computeStart[itr]));
+        checkCudaStatus(cudaEventCreate(&computeStop[itr]));
+        checkCudaStatus(cudaEventCreate(&solverStart[itr]));
+        checkCudaStatus(cudaEventCreate(&solverStop[itr]));
+    }
 
-        for (int itr = 0; itr < CMAX; itr++) {
-            /// each computation data with its own device Evalution Context
-            utility::mallocAsync(&dev_ev[itr], 1, stream);
-            utility::mallocAsync(&dev_norm[itr], 1, stream);
-        }
+    for (int itr = 0; itr < CMAX; itr++) {
+        /// each computation data with its own device Evalution Context
+        utility::mallocAsync(&dev_ev[itr], 1, stream);
+        utility::mallocAsync(&dev_norm[itr], 1, stream);
+    }
 
-        for (int itr = 0; itr < CMAX; itr++) {
-            /// each computation data with its own host Evalution Context
-            utility::mallocHost(&ev[itr], 1);
-        }
+    for (int itr = 0; itr < CMAX; itr++) {
+        /// each computation data with its own host Evalution Context
+        utility::mallocHost(&ev[itr], 1);
     }
 }
 
 GPUComputationContext::~GPUComputationContext() {
 
-    if (stream != nullptr) {
+    // !!! linear_system_method_cuSolver_reset(stream);
 
-        // !!! linear_system_method_cuSolver_reset(stream);
-
-        for (int itr = 0; itr < CMAX; itr++) {
-            /// each computation data with its own host Evalution Context
-            utility::freeMemHost(&ev[itr]);
-        }
-
-        for (int itr = 0; itr < CMAX; itr++) {
-            /// each computation data with its own device Evalution Context
-            utility::freeAsync(dev_ev[itr], stream);
-            utility::freeAsync(dev_norm[itr], stream);
-        }
-
-        for (int itr = 0; itr < CMAX; itr++) {
-            // #observations
-            checkCudaStatus(cudaEventDestroy(prepStart[itr]));
-            checkCudaStatus(cudaEventDestroy(prepStop[itr]));
-            checkCudaStatus(cudaEventDestroy(computeStart[itr]));
-            checkCudaStatus(cudaEventDestroy(computeStop[itr]));
-            checkCudaStatus(cudaEventDestroy(solverStart[itr]));
-            checkCudaStatus(cudaEventDestroy(solverStop[itr]));
-        }
-
-        checkCudaStatus(cudaStreamSynchronize(stream));
-        // implicit object for utility
-
-        checkCudaStatus(cudaStreamDestroy(stream));
-        stream = nullptr;
+    for (int itr = 0; itr < CMAX; itr++) {
+        /// each computation data with its own host Evalution Context
+        utility::freeMemHost(&ev[itr]);
     }
-}
 
-cudaStream_t GPUComputationContext::get_stream() const { return stream; }
+    for (int itr = 0; itr < CMAX; itr++) {
+        /// each computation data with its own device Evalution Context
+        utility::freeAsync(dev_ev[itr], stream);
+        utility::freeAsync(dev_norm[itr], stream);
+    }
+
+    for (int itr = 0; itr < CMAX; itr++) {
+        // #observations
+        checkCudaStatus(cudaEventDestroy(prepStart[itr]));
+        checkCudaStatus(cudaEventDestroy(prepStop[itr]));
+        checkCudaStatus(cudaEventDestroy(computeStart[itr]));
+        checkCudaStatus(cudaEventDestroy(computeStop[itr]));
+        checkCudaStatus(cudaEventDestroy(solverStart[itr]));
+        checkCudaStatus(cudaEventDestroy(solverStop[itr]));
+    }
+
+    checkCudaStatus(cudaStreamSynchronize(stream));
+    // implicit object for utility
+
+    checkCudaStatus(cudaStreamDestroy(stream));
+}
 
 double *GPUComputationContext::get_dev_norm(size_t itr) { return dev_norm[itr]; }
 

@@ -8,31 +8,31 @@
 
 #include "utility.cuh"
 #include "solver_kernel.cuh"
-#include "linear_system.h"
 
 namespace solver {
 
 /// ====================
 
-GPUComputation::GPUComputation(long computationId, std::shared_ptr<GPUComputationContext> _cc,
-                               std::vector<graph::Point> &&_points, std::vector<graph::Geometric> &&_geometrics,
-                               std::vector<graph::Constraint> &&_constraints, std::vector<graph::Parameter> &&_parameters)
-    : computationId(computationId), cc(_cc), stream(_cc->get_stream()), points(std::move(_points)),
-      geometrics(std::move(_geometrics)), constraints(std::move(_constraints)), parameters(std::move(_parameters)) {
-    if (points.size() == 0) {
+GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::shared_ptr<GPULinearSystem> linearSystem,
+                               std::shared_ptr<GPUComputationContext> cc, std::vector<graph::Point> &&points,
+                               std::vector<graph::Geometric> &&geometrics, std::vector<graph::Constraint> &&constraints,
+                               std::vector<graph::Parameter> &&parameters)
+    : computationId(computationId), _linearSystem(linearSystem), _cc(cc), _stream(stream), _points(std::move(points)),
+      _geometrics(std::move(geometrics)), _constraints(std::move(constraints)), _parameters(std::move(parameters)) {
+    if (_points.size() == 0) {
         printf("empty solution space, add some geometric types\n");
         *error = cudaSuccess;
         return;
     }
 
     // model aggreate for const immutable data
-    if (points.size() == 0) {
+    if (_points.size() == 0) {
         printf("[solver] - empty evaluation space model\n");
         *error = cudaSuccess;
         return;
     }
 
-    if (constraints.size() == 0) {
+    if (_constraints.size() == 0) {
         printf("[solver] - no constraint configuration applied onto model\n");
         *error = cudaSuccess;
         return;
@@ -57,24 +57,24 @@ GPUComputation::GPUComputation(long computationId, std::shared_ptr<GPUComputatio
 void GPUComputation::preInitializeData() {
 
     /// mapping from point Id => point dest offset
-    pointOffset = utility::stateOffset(points, [](auto point) { return point->id; });
+    pointOffset = utility::stateOffset(_points, [](auto point) { return point->id; });
 
-    constraintOffset = utility::stateOffset(constraints, [](auto constraint) { return constraint->id; });
+    constraintOffset = utility::stateOffset(_constraints, [](auto constraint) { return constraint->id; });
 
     /// this is mapping from Id => parameter dest offset
-    parameterOffset = utility::stateOffset(parameters, [](auto parameter) { return parameter->id; });
+    parameterOffset = utility::stateOffset(_parameters, [](auto parameter) { return parameter->id; });
 
     /// accumalted position of geometric block
-    accGeometricSize = utility::accumalatedValue(geometrics, graph::geometricSetSize);
+    accGeometricSize = utility::accumalatedValue(_geometrics, graph::geometricSetSize);
 
     /// accumulated position of constrain block
-    accConstraintSize = utility::accumalatedValue(constraints, graph::constraintSize);
+    accConstraintSize = utility::accumalatedValue(_constraints, graph::constraintSize);
 
     /// `A` tensor internal structure dimensions
-    size = std::accumulate(geometrics.begin(), geometrics.end(), 0,
+    size = std::accumulate(_geometrics.begin(), _geometrics.end(), 0,
                            [](auto acc, auto const &geometric) { return acc + graph::geometricSetSize(geometric); });
 
-    coffSize = std::accumulate(constraints.begin(), constraints.end(), 0, [](auto acc, auto const &constraint) {
+    coffSize = std::accumulate(_constraints.begin(), _constraints.end(), 0, [](auto acc, auto const &constraint) {
         return acc + graph::constraintSize(constraint);
     });
 
@@ -88,49 +88,46 @@ void GPUComputation::memcpyComputationToDevice() {
     /// ============================================================
 
     /// const data in computation
-    utility::mallocAsync(&d_points, points.size(), stream);
-    utility::mallocAsync(&d_geometrics, geometrics.size(), stream);
-    utility::mallocAsync(&d_constraints, constraints.size(), stream);
-    utility::mallocAsync(&d_parameters, parameters.size(), stream);
+    utility::mallocAsync(&d_points, _points.size(), _stream);
+    utility::mallocAsync(&d_geometrics, _geometrics.size(), _stream);
+    utility::mallocAsync(&d_constraints, _constraints.size(), _stream);
+    utility::mallocAsync(&d_parameters, _parameters.size(), _stream);
 
-    utility::mallocAsync(&d_pointOffset, pointOffset.size(), stream);
-    utility::mallocAsync(&d_constraintOffset, constraintOffset.size(), stream);
-    utility::mallocAsync(&d_parameterOffset, parameterOffset.size(), stream);
-    utility::mallocAsync(&d_accGeometricSize, geometrics.size(), stream);
-    utility::mallocAsync(&d_accConstraintSize, constraints.size(), stream);
+    utility::mallocAsync(&d_pointOffset, pointOffset.size(), _stream);
+    utility::mallocAsync(&d_constraintOffset, constraintOffset.size(), _stream);
+    utility::mallocAsync(&d_parameterOffset, parameterOffset.size(), _stream);
+    utility::mallocAsync(&d_accGeometricSize, _geometrics.size(), _stream);
+    utility::mallocAsync(&d_accConstraintSize, _constraints.size(), _stream);
 
     // immutables -
-    utility::memcpyAsync(&d_points, points, stream);
-    utility::memcpyAsync(&d_geometrics, geometrics, stream);
-    utility::memcpyAsync(&d_constraints, constraints, stream);
-    utility::memcpyAsync(&d_parameters, parameters, stream);
+    utility::memcpyAsync(&d_points, _points, _stream);
+    utility::memcpyAsync(&d_geometrics, _geometrics, _stream);
+    utility::memcpyAsync(&d_constraints, _constraints, _stream);
+    utility::memcpyAsync(&d_parameters, _parameters, _stream);
 
     // immutables
-    utility::memcpyAsync(&d_pointOffset, pointOffset.data(), pointOffset.size(), stream);
-    utility::memcpyAsync(&d_constraintOffset, constraintOffset.data(), constraintOffset.size(), stream);
+    utility::memcpyAsync(&d_pointOffset, pointOffset.data(), pointOffset.size(), _stream);
+    utility::memcpyAsync(&d_constraintOffset, constraintOffset.data(), constraintOffset.size(), _stream);
 
-    utility::memcpyAsync(&d_accGeometricSize, accGeometricSize.data(), accGeometricSize.size(), stream);
-    utility::memcpyAsync(&d_accConstraintSize, accConstraintSize.data(), accConstraintSize.size(), stream);
-    if (!parameters.empty()) {
-        utility::memcpyAsync(&d_parameterOffset, parameterOffset.data(), parameterOffset.size(), stream);
+    utility::memcpyAsync(&d_accGeometricSize, accGeometricSize.data(), accGeometricSize.size(), _stream);
+    utility::memcpyAsync(&d_accConstraintSize, accConstraintSize.data(), accConstraintSize.size(), _stream);
+    if (!_parameters.empty()) {
+        utility::memcpyAsync(&d_parameterOffset, parameterOffset.data(), parameterOffset.size(), _stream);
     }
 
     size_t N = dimension;
     ///
     ///  [ GPU ] tensors `A` `x` `dx` `b`  ------------------------
     ///
-    utility::mallocAsync(&dev_A, N * N, stream);
-    utility::mallocAsync(&dev_b, N, stream);
-    utility::mallocAsync(&dev_dx, N, stream);
+    utility::mallocAsync(&dev_A, N * N, _stream);
+    utility::mallocAsync(&dev_b, N, _stream);
+    utility::mallocAsync(&dev_dx, N, _stream);
 
     for (int itr = 0; itr < CMAX; itr++) {
         /// each computation data with its own StateVector
-        utility::mallocAsync(&dev_SV[itr], N, stream);
+        utility::mallocAsync(&dev_SV[itr], N, _stream);
     }
 }
-
-// std::function/ std::bind  does not provide reference to raw C pointer
-static GPUComputation *_registerComputation;
 
 void GPUComputation::computationResultHandlerDelegate(cudaStream_t stream, cudaError_t status, void *userData) {
     if (_registerComputation) {
@@ -175,18 +172,15 @@ void GPUComputation::computationResultHandler(cudaStream_t stream, cudaError_t s
     // synchronize with stream next computation
 }
 
-void ConstraintGetFullNorm(size_t coffSize, size_t size, double *b, double *result, cudaStream_t stream) {
-    linear_system_method_cuBlas_vectorNorm(static_cast<int>(coffSize), (b + size), result, stream);
-}
-
-
-
 void GPUComputation::checkStreamNoError() {
     if (settings::get()->DEBUG_CHECK_ARG) {
-        checkCudaStatus(cudaStreamSynchronize(stream));
+        checkCudaStatus(cudaStreamSynchronize(_stream));
         checkCudaStatus(cudaPeekAtLastError());
     }
 }
+
+
+GPUComputation *GPUComputation::_registerComputation = nullptr;
 
 void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     ///
@@ -198,8 +192,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     ///   --- data-dest lineage memcpy(deviceToDevice)
     ///
 
-    // register C-function reference delegate
-    _registerComputation = this;
+    // register C-function reference delegate - registerForDelegation(this) / unregisterFromDelegation(this)
+    GPUComputation::_registerComputation = this;
 
     //- fill in A , b, SV
 
@@ -216,7 +210,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     /// prepare local offset context
     result.store(NULL, std::memory_order_seq_cst);
 
-    checkCudaStatus(cudaStreamSynchronize(stream));
+    checkCudaStatus(cudaStreamSynchronize(_stream));
 
     evaluationWatch.setStopTick();
 
@@ -246,19 +240,19 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         /// preinitialize data vector
         if (itr == 0) {
             /// SV - State Vector
-            CopyIntoStateVector<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, stream>>>(dev_SV[0], d_points, size);
+            CopyIntoStateVector<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_SV[0], d_points, size);
 
             /// SV -> setup Lagrange multipliers  -
-            utility::memsetAsync(dev_SV[0] + size, 0, coffSize, stream);
+            utility::memsetAsync(dev_SV[0] + size, 0, coffSize, _stream);
         } else {
             checkCudaStatus(
-                cudaMemcpyAsync(dev_SV[itr], dev_SV[itr - 1], N * sizeof(double), cudaMemcpyDeviceToDevice, stream));
+                cudaMemcpyAsync(dev_SV[itr], dev_SV[itr - 1], N * sizeof(double), cudaMemcpyDeviceToDevice, _stream));
         }
 
         ///  Host Context - with references to device
 
-        ComputationStateData **ev = cc->ev;
-        ComputationStateData **dev_ev = cc->dev_ev;
+        ComputationStateData **ev = _cc->ev;
+        ComputationStateData **dev_ev = _cc->dev_ev;
 
         // computation data;
         ev[itr]->cID = itr;
@@ -266,7 +260,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         ev[itr]->A = dev_A;
         ev[itr]->b = dev_b;
         ev[itr]->dx = dev_dx;
-        ev[itr]->dev_norm = cc->get_dev_norm(itr);
+        ev[itr]->dev_norm = _cc->get_dev_norm(itr);
 
         // geometric structure
         ev[itr]->size = size;
@@ -289,30 +283,30 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         ///
         /// tu chce snapshot transfer
 
-        utility::memcpyAsync(&dev_ev[itr], ev[itr], 1, stream);
+        utility::memcpyAsync(&dev_ev[itr], ev[itr], 1, _stream);
 
         // #observation
-        cc->recordComputeStart(itr);
+        _cc->recordComputeStart(itr);
 
-        cc->recordPrepStart(itr);
+        _cc->recordPrepStart(itr);
 
         /// # KERNEL_PRE
 
         // if (itr > 0) {
         /// zerujemy macierz A      !!!!! second buffer
-        utility::memsetAsync(dev_A, 0, N * N, stream); // --- ze wzgledu na addytywnosc
-                                                       //}
+        utility::memsetAsync(dev_A, 0, N * N, _stream); // --- ze wzgledu na addytywnosc
+                                                        //}
 
         /// macierz `A
         /// Cooficients Stiffnes Matrix
-        ComputeStiffnessMatrix<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, stream>>>(dev_ev[itr], geometrics.size());
+        ComputeStiffnessMatrix<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
         checkStreamNoError();
 
         /// [ cuda / error ] 701 : cuda API failed 701,
         /// cudaErrorLaunchOutOfResources  = too many resources requested for launch
         //
         if (settings::get()->SOLVER_INC_HESSIAN) {
-            EvaluateConstraintHessian<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, stream>>>(dev_ev[itr], constraints.size());
+            EvaluateConstraintHessian<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
         }
         checkStreamNoError();
 
@@ -322,8 +316,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix
         */
 
-        size_t dimBlock = constraints.size();
-        EvaluateConstraintJacobian<<<ST_DIM_GRID, dimBlock, Ns, stream>>>(dev_ev[itr], constraints.size());
+        unsigned int dimBlock = static_cast<unsigned int>(_constraints.size());
+        EvaluateConstraintJacobian<<<ST_DIM_GRID, dimBlock, Ns, _stream>>>(dev_ev[itr], _constraints.size());
         checkStreamNoError();
         /*
             Transposed Jacobian - Uperr Tensor Slice
@@ -331,7 +325,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             --- (Wq)'; /// Jq' = (d(Fi)/dq)' --- transposed - write without
            intermediary matrix
         */
-        EvaluateConstraintTRJacobian<<<ST_DIM_GRID, dimBlock, Ns, stream>>>(dev_ev[itr], constraints.size());
+        EvaluateConstraintTRJacobian<<<ST_DIM_GRID, dimBlock, Ns, _stream>>>(dev_ev[itr], _constraints.size());
         checkStreamNoError();
 
         /// Tworzymy Macierz dest SV dest `b
@@ -339,53 +333,55 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         /// [ SV ]  - right hand site
 
         /// Fr /// Sily  - F(q) --  !!!!!!!
-        EvaluateForceIntensity<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, stream>>>(dev_ev[itr], geometrics.size());
+        EvaluateForceIntensity<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
         checkStreamNoError();
 
         /// Fi / Wiezy  - Fi(q)
-        EvaluateConstraintValue<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, stream>>>(dev_ev[itr], constraints.size());
+        EvaluateConstraintValue<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
         checkStreamNoError();
 
         if (settings::get()->DEBUG_TENSOR_A) {
-            stdoutTensorData<<<GRID_DBG, 1, Ns, stream>>>(dev_ev[itr], N, N);
-            checkCudaStatus(cudaStreamSynchronize(stream));
+            stdoutTensorData<<<GRID_DBG, 1, Ns, _stream>>>(dev_ev[itr], N, N);
+            checkCudaStatus(cudaStreamSynchronize(_stream));
         }
 
         if (settings::get()->DEBUG_TENSOR_B) {
-            stdoutRightHandSide<<<GRID_DBG, 1, Ns, stream>>>(dev_ev[itr], N);
-            checkCudaStatus(cudaStreamSynchronize(stream));
+            stdoutRightHandSide<<<GRID_DBG, 1, Ns, _stream>>>(dev_ev[itr], N);
+            checkCudaStatus(cudaStreamSynchronize(_stream));
         }
 
-        cc->recordPrepStop(itr);
+        _cc->recordPrepStop(itr);
 
+        _cc->recordSolverStart(itr);
         /// ======== DENSE - CuSolver LINER SYSTEM equation CuSolver    === START
 
-        cc->recordSolverStart(itr);
-
-        linear_system_method_cuSolver(dev_A, dev_b, N, stream);
-
-        cc->recordSolverStop(itr);
+        _linearSystem->solveLinearEquation(dev_A, dev_b, N);
 
         /// ======== LINER SYSTEM equation CuSolver    === STOP
+        _cc->recordSolverStop(itr);
 
         /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ]
-        StateVectorAddDifference<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(dev_SV[itr], dev_b, N);
+        StateVectorAddDifference<<<DIM_GRID, DIM_BLOCK, Ns, _stream>>>(dev_SV[itr], dev_b, N);
         checkStreamNoError();
         // print actual state vector single kernel
 
         if (settings::get()->DEBUG_TENSOR_SV) {
-            stdoutStateVector<<<GRID_DBG, 1, Ns, stream>>>(dev_ev[itr], N);
-            checkCudaStatus(cudaStreamSynchronize(stream));
+            stdoutStateVector<<<GRID_DBG, 1, Ns, _stream>>>(dev_ev[itr], N);
+            checkCudaStatus(cudaStreamSynchronize(_stream));
         }
         checkStreamNoError();
 
         ///  uzupelnic #Question: Vector B = Fi(q) = 0 przeliczamy jeszce raz !!!
         // - not used !!!
-        utility::memcpyFromDevice(ev[itr], dev_ev[itr], 1, stream);
+        utility::memcpyFromDevice(ev[itr], dev_ev[itr], 1, _stream);
 
         double *host_norm = &ev[itr]->norm;
 
-        ConstraintGetFullNorm(coffSize, size, dev_b, host_norm, stream);
+        //
+        ///  ConstraintGetFullNorm
+        //
+        _linearSystem->vectorNorm(static_cast<int>(coffSize), (dev_b + size), host_norm);
+
         checkStreamNoError();
         /// ============================================================
         ///   copy DeviceComputation to HostComputation -- addCallback
@@ -393,9 +389,9 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         void *userData = static_cast<void *>(ev[itr]); // local_Computation
 
-        checkCudaStatus(cudaStreamAddCallback(stream, GPUComputation::computationResultHandlerDelegate, userData, 0));
+        checkCudaStatus(cudaStreamAddCallback(_stream, GPUComputation::computationResultHandlerDelegate, userData, 0));
 
-        cc->recordComputeStop(itr);
+        _cc->recordComputeStop(itr);
 
         itr++;
     }
@@ -417,35 +413,20 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     // STATE VECTOR offset
     // oczekuje strumienia ale nie kopiujemy danych
 
-    checkCudaStatus(cudaStreamSynchronize(stream));
+    checkCudaStatus(cudaStreamSynchronize(_stream));
 
     // unregister C-function reference delegate
-    _registerComputation = nullptr;
+    GPUComputation::_registerComputation = nullptr;
+
 
     if (settings::get()->DEBUG) {
 
-        long long solutionDelta = solverWatch.delta();
-
-        printf("\n");
-        printf("===================================================\n");
-        printf("\n");
-        printf("solution time delta [ns]        ( %zd )\n", solutionDelta);
-        printf("\n");
-        printf("===================================================\n");
-        printf("comp ID                         ( %d )\n", computation->cID);
-        printf("computation norm                ( %e )\n", computation->norm);
-        printf("\n");
-        printf("computation size                ( %zd )\n", computation->size);
-        printf("computation coffSize            ( %zd )\n", computation->coffSize);
-        printf("computation dimension           ( %zd )\n", computation->dimension);
-        printf("\n");
-        printf("===================================================\n");
-        printf("\n");
+        reportThisResult(computation);
     }
 
-    CopyFromStateVector<<<DIM_GRID, DIM_BLOCK, Ns, stream>>>(d_points, computation->SV, size);
+    CopyFromStateVector<<<DIM_GRID, DIM_BLOCK, Ns, _stream>>>(d_points, computation->SV, size);
 
-    utility::memcpyFromDevice(points, d_points, stream);
+    utility::memcpyFromDevice(_points, d_points, _stream);
 
     double SOLVER_EPSILON = (settings::get()->CU_SOLVER_EPSILON);
 
@@ -467,26 +448,46 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
     /// Evaluation data for  device  - CONST DATE for in process execution
 
-    checkCudaStatus(cudaStreamSynchronize(stream));
+    checkCudaStatus(cudaStreamSynchronize(_stream));
 
     *error = cudaGetLastError();
 }
 
+void GPUComputation::reportThisResult(ComputationStateData *computation) {
+    long long solutionDelta = solverWatch.delta();
+
+    printf("\n");
+    printf("===================================================\n");
+    printf("\n");
+    printf("solution time delta [ns]        ( %zd )\n", solutionDelta);
+    printf("\n");
+    printf("===================================================\n");
+    printf("comp ID                         ( %d )\n", computation->cID);
+    printf("computation norm                ( %e )\n", computation->norm);
+    printf("\n");
+    printf("computation size                ( %zd )\n", computation->size);
+    printf("computation coffSize            ( %zd )\n", computation->coffSize);
+    printf("computation dimension           ( %zd )\n", computation->dimension);
+    printf("\n");
+    printf("===================================================\n");
+    printf("\n");
+}
+
 double GPUComputation::getPointPXCoordinate(int id) {
     int offset = pointOffset[id];
-    double px = points[offset].x;
+    double px = _points[offset].x;
     return px;
 }
 
 double GPUComputation::getPointPYCoordinate(int id) {
     int offset = pointOffset[id];
-    double py = points[offset].y;
+    double py = _points[offset].y;
     return py;
 }
 
 void GPUComputation::fillPointCoordinateVector(double *stateVector) {
-    for (size_t i = 0, size = points.size(); i < size; i++) {
-        graph::Point &p = points[i];
+    for (size_t i = 0, size = _points.size(); i < size; i++) {
+        graph::Point &p = _points[i];
         stateVector[2 * i] = p.x;
         stateVector[2 * i + 1] = p.y;
     }
@@ -499,7 +500,7 @@ int GPUComputation::updateConstraintState(int constraintId[], double vecX[], dou
     for (int itr = 0; itr < size; itr++) {
         int cId = constraintId[itr];
         int offset = constraintOffset[cId];
-        graph::Constraint &constraint = constraints[offset];
+        graph::Constraint &constraint = _constraints[offset];
 
         if (constraint.constraintTypeId != CONSTRAINT_TYPE_ID_FIX_POINT) {
             printf("[error] constraint type only supported is ConstraintFixPoint ! \n");
@@ -510,7 +511,7 @@ int GPUComputation::updateConstraintState(int constraintId[], double vecX[], dou
     }
 
     if (d_constraints != nullptr) {
-        utility::memcpyAsync(&d_constraints, constraints, stream);
+        utility::memcpyAsync(&d_constraints, _constraints, _stream);
     }
     return 0;
 }
@@ -519,25 +520,25 @@ int GPUComputation::updateParametersValues(int parameterId[], double value[], in
     for (int itr = 0; itr < size; itr++) {
         int pId = parameterId[itr];
         int offset = parameterOffset[pId];
-        graph::Parameter &parameter = parameters[offset];
+        graph::Parameter &parameter = _parameters[offset];
         parameter.value = value[itr];
     }
 
     if (d_parameters != nullptr) {
-        utility::memcpyAsync(&d_parameters, parameters, stream);
+        utility::memcpyAsync(&d_parameters, _parameters, _stream);
     }
     return 0;
 }
 
 void GPUComputation::updatePointCoordinateVector(double stateVector[]) {
-    for (size_t i = 0, size = points.size(); i < size; i++) {
-        graph::Point &p = points[i];
+    for (size_t i = 0, size = _points.size(); i < size; i++) {
+        graph::Point &p = _points[i];
         p.x = stateVector[2 * i];
         p.y = stateVector[2 * i + 1];
     }
 
     if (d_points != nullptr) {
-        utility::memcpyAsync(&d_points, points, stream);
+        utility::memcpyAsync(&d_points, _points, _stream);
     }
 }
 
@@ -548,23 +549,23 @@ GPUComputation::~GPUComputation() {
     /// at least one solver computation
 
     for (int itr = 0; itr < CMAX; itr++) {
-        utility::freeAsync(dev_SV[itr], stream);
+        utility::freeAsync(dev_SV[itr], _stream);
     }
 
-    utility::freeAsync(dev_A, stream);
-    utility::freeAsync(dev_b, stream);
-    utility::freeAsync(dev_dx, stream);
+    utility::freeAsync(dev_A, _stream);
+    utility::freeAsync(dev_b, _stream);
+    utility::freeAsync(dev_dx, _stream);
 
-    utility::freeAsync(d_parameterOffset, stream);
-    utility::freeAsync(d_accGeometricSize, stream);
-    utility::freeAsync(d_accConstraintSize, stream);
-    utility::freeAsync(d_constraintOffset, stream);
-    utility::freeAsync(d_pointOffset, stream);
+    utility::freeAsync(d_parameterOffset, _stream);
+    utility::freeAsync(d_accGeometricSize, _stream);
+    utility::freeAsync(d_accConstraintSize, _stream);
+    utility::freeAsync(d_constraintOffset, _stream);
+    utility::freeAsync(d_pointOffset, _stream);
 
-    utility::freeAsync(d_points, stream);
-    utility::freeAsync(d_geometrics, stream);
-    utility::freeAsync(d_constraints, stream);
-    utility::freeAsync(d_parameters, stream);
+    utility::freeAsync(d_points, _stream);
+    utility::freeAsync(d_geometrics, _stream);
+    utility::freeAsync(d_constraints, _stream);
+    utility::freeAsync(d_parameters, _stream);
 }
 
 } // namespace solver

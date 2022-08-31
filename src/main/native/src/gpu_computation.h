@@ -3,19 +3,17 @@
 #include <memory>
 #include <vector>
 
+#include <atomic>
 #include <condition_variable>
 #include <mutex>
-#include <atomic>
 
-
+#include "gpu_computation_context.h"
+#include "gpu_linear_system.h"
 #include "model.cuh"
 #include "solver_stat.h"
-#include "gpu_computation_context.h"
 
 namespace solver {
 
-
- 
 /// Domain Model  - ( dependent on geometry state change )
 class GPUComputation {
 
@@ -29,7 +27,8 @@ class GPUComputation {
      *
      * commitTime --
      */
-    GPUComputation(long computationId, std::shared_ptr<GPUComputationContext> cc, std::vector<graph::Point> &&points,
+    GPUComputation(long computationId, cudaStream_t stream, std::shared_ptr<GPULinearSystem> linearSystem,
+                   std::shared_ptr<GPUComputationContext> cc, std::vector<graph::Point> &&points,
                    std::vector<graph::Geometric> &&geometrics, std::vector<graph::Constraint> &&constraints,
                    std::vector<graph::Parameter> &&parameters);
 
@@ -82,15 +81,21 @@ class GPUComputation {
 
     void checkStreamNoError();
 
+    void reportThisResult(ComputationStateData *computation);
 
-    static void computationResultHandlerDelegate(cudaStream_t stream, cudaError_t status, void *userData);  
+    static void computationResultHandlerDelegate(cudaStream_t stream, cudaError_t status, void *userData);
+
+    // std::function/ std::bind  does not provide reference to raw C pointer
+    static GPUComputation *_registerComputation;
 
   private:
     long computationId; /// snapshotId
 
-    std::shared_ptr<GPUComputationContext> cc;
+    std::shared_ptr<GPUComputationContext> _cc;
 
-    cudaStream_t stream;
+    std::shared_ptr<GPULinearSystem> _linearSystem;
+
+    cudaStream_t _stream;
 
     cudaError_t *error;
 
@@ -105,16 +110,16 @@ class GPUComputation {
 
   private:
     /// points register poLocations id-> point_offset
-    std::vector<graph::Point> points;
+    std::vector<graph::Point> _points;
 
     /// geometricc register
-    std::vector<graph::Geometric> geometrics;
+    std::vector<graph::Geometric> _geometrics;
 
     /// constraints register
-    std::vector<graph::Constraint> constraints;
+    std::vector<graph::Constraint> _constraints;
 
     /// parameters register -- paramLocation id-> param_offset
-    std::vector<graph::Parameter> parameters;
+    std::vector<graph::Parameter> _parameters;
 
     /// Point  Offset in computation matrix [id] -> point offset   ~~ Gather Vectors
     std::vector<int> pointOffset;
@@ -181,17 +186,18 @@ class GPUComputation {
     /// number of bytes - kernel shared memory
     const unsigned int Ns = 0;
 
+
     /// grid size
-    const size_t DIM_GRID = 1;
-    const size_t GRID_DBG = 1;
+    const unsigned int DIM_GRID = 1;
+    const unsigned int GRID_DBG = 1;
 
     /// https://docs.nvidia.com/cuda/turing-tuning-guide/index.html#sm-occupancy
     /// thread block size
-    const size_t DIM_BLOCK = 512;
+    const unsigned int DIM_BLOCK = 512;
 
     // The maximum registers per thread is 255.
     // CUDAdrv.MAX_THREADS_PER_BLOCK, which is good, ( 1024 )
     // "if your kernel uses many registers, it also limits the amount of threads you can use."
 };
 
-} // namespace solver;
+} // namespace solver

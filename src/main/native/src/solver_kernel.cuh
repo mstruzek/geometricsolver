@@ -540,7 +540,7 @@ __device__ void setForceIntensity_Arc(int row, graph::Geometric const *geometric
 /// Evaluate Force Intensity ==============================================================
 ///
 
-__global__ void EvaluateForceIntensity(ComputationStateData *csv, int N)
+__global__ void EvaluateForceIntensity(ComputationStateData *csv, size_t N)
 {
     ComputationState *ec = static_cast<ComputationState *>(csv);
 
@@ -905,7 +905,7 @@ __device__ void setValueConstraintSetVertical(int row, graph::Constraint const *
 ///
 /// Evaluate Constraint Value =============================================================
 ///
-__global__ void EvaluateConstraintValue(ComputationStateData *csv, int N)
+__global__ void EvaluateConstraintValue(ComputationStateData *csv, size_t N)
 {
     ComputationState *ec = static_cast<ComputationState *>(csv);
 
@@ -1510,7 +1510,7 @@ __global__ void EvaluateConstraintJacobian(ComputationStateData *csv, size_t N)
 /// (FI)' - (dfi/dq)'   tr-transponowane - upper slice matrix  of A
 ///
 ///
-__global__ void EvaluateConstraintTRJacobian(ComputationStateData *csv, int N)
+__global__ void EvaluateConstraintTRJacobian(ComputationStateData *csv, size_t N)
 {
 
     ComputationState *ec = static_cast<ComputationState *>(csv);

@@ -18,14 +18,13 @@ namespace solver {
 class GPUComputationContext {
 
   public:
-    GPUComputationContext();
+    GPUComputationContext(cudaStream_t stream);
 
     /**
      *  workspace - zwolnic pamiec i wyzerowac wskazniki , \\cusolver
      */
     ~GPUComputationContext();
 
-    cudaStream_t get_stream() const;
 
     double *get_dev_norm(size_t itr);
 
