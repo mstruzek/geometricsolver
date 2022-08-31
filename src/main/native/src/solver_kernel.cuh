@@ -7,57 +7,11 @@
 
 #include "model.cuh"
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846 // pi
-#endif
+#include "computation_state.cuh"
+
 
 /// KERNEL#
 ///
-/// -  HostComputation , DeviceComputation
-///
-
-///  ===============================================================================
-
-struct ComputationState
-{
-    int cID;     /// computatio unique id
-    int info;    /// device variable cuBlas
-    double norm; ///  cublasDnrm2(...)
-
-    double *A;
-    double *SV; /// State Vector  [ SV = SV + dx ] , previous task -- "lineage"
-    double *dx; /// przyrosty   [ A * dx = b ]
-    double *b;
-    double *dev_norm;   ///  eventually synchronized into 'norm field on the host
-
-    // geometric structure - effectievly consts
-    size_t size;      /// wektor stanu
-    size_t coffSize;  /// wspolczynniki Lagrange
-    size_t dimension; /// N - dimension = size + coffSize
-
-    graph::Point *points;
-    graph::Geometric *geometrics;
-    graph::Constraint *constraints;
-    graph::Parameter *parameters;
-
-    const int *pointOffset;       /// ---
-    const int *constraintOffset;  /// --- 
-    const int *parameterOffset;   /// paramater offs from given ID
-    const int *accGeometricSize;  /// accumulative offs with geometric size evaluation function
-    const int *accConstraintSize; /// accumulative offs with constraint size evaluation function
-
-    __host__ __device__ __forceinline__ graph::Vector const &getPoint(int pointId) const;
-
-    __host__ __device__ __forceinline__ double getLagrangeMultiplier(int constraintId) const;
-
-    __host__ __device__ __forceinline__ graph::Point const &getPointRef(int pointId) const;
-
-    __host__ __device__ __forceinline__ graph::Geometric *getGeometricObject(int geometricId) const;
-
-    __host__ __device__ __forceinline__ graph::Constraint *getConstraint(int constraintId) const;
-
-    __host__ __device__ __forceinline__ graph::Parameter *getParameter(int parameterId) const;
-};
 
 
 
@@ -73,7 +27,10 @@ __device__ constexpr const char *FORMAT_STR_IDX_DOUBLE = "%% %2d  %11.2e \n";
 __device__ constexpr const char *FORMAT_STR_IDX_DOUBLE_E = "%%     %11.2e \n";
 __device__ constexpr const char *FORMAT_STR_DOUBLE_CM = ", %11.2e";
 
-__global__ void stdoutTensorData(ComputationState *ev, size_t rows, size_t cols) {
+__global__ void stdoutTensorData(ComputationStateData *csv, size_t rows, size_t cols) {
+
+    ComputationState *ev = static_cast<ComputationState *>(csv);
+
     const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
     const graph::Tensor t = graph::tensorDevMem(ev->A, layout, rows, cols);
 
@@ -99,7 +56,10 @@ __global__ void stdoutTensorData(ComputationState *ev, size_t rows, size_t cols)
     }
 }
 
-__global__ void stdoutRightHandSide(ComputationState *ev, size_t rows) {
+__global__ void stdoutRightHandSide(ComputationStateData *csv, size_t rows) {
+
+    ComputationState *ev = static_cast<ComputationState *>(csv);
+
     const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
     const graph::Tensor b = graph::tensorDevMem(ev->b, layout, rows, 1);
 
@@ -114,7 +74,10 @@ __global__ void stdoutRightHandSide(ComputationState *ev, size_t rows) {
     }
 }
 
-__global__ void stdoutStateVector(ComputationState *ev, size_t rows) {
+__global__ void stdoutStateVector(ComputationStateData *csv, size_t rows) {
+
+    ComputationState *ev = static_cast<ComputationState *>(csv);
+
     const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
     const graph::Tensor SV = graph::tensorDevMem(ev->SV, layout, rows, 1);
 
@@ -139,50 +102,6 @@ __global__ void stdoutStateVector(ComputationState *ev, size_t rows) {
 }
 
 
-///  ===============================================================================
-
-__host__ __device__ __forceinline__ graph::Vector const &ComputationState::getPoint(int pointId) const
-{
-    int offset = pointOffset[pointId];
-    graph::Vector *vector;
-    *((void **)&vector) = &SV[offset * 2];
-    return *vector;
-}
-
-__host__ __device__ __forceinline__ double ComputationState::getLagrangeMultiplier(int constraintId) const
-{
-    int multiOffset = accConstraintSize[constraintId];
-    return SV[size + multiOffset];
-}
-
-__host__ __device__ __forceinline__ graph::Point const &ComputationState::getPointRef(int pointId) const
-{
-    int offset = pointOffset[pointId];
-    return points[offset];
-}
-
-__host__ __device__ __forceinline__ graph::Geometric *ComputationState::getGeometricObject(int geometricId) const
-{
-    /// geometricId is associated with `threadIdx
-    return static_cast<graph::Geometric *>(&geometrics[geometricId]);
-}
-
-__host__ __device__ __forceinline__ graph::Constraint *ComputationState::getConstraint(int constraintId) const
-{
-    /// constraintId is associated with `threadIdx
-    return static_cast<graph::Constraint *>(&constraints[constraintId]);
-}
-
-__host__ __device__ __forceinline__ graph::Parameter *ComputationState::getParameter(int parameterId) const
-{
-    int offset = parameterOffset[parameterId];
-    return static_cast<graph::Parameter *>(&parameters[offset]);
-}
-
-__host__ __device__ __forceinline__ double toRadians(double value)
-{
-    return (M_PI / 180.0) * value;
-}
 
 ///  ===============================================================================
 
@@ -253,8 +172,10 @@ __device__ void setStiffnessMatrix_Arc(int rc, graph::Tensor &mt);
  * @param ec
  * @return __global__
  */
-__global__ void ComputeStiffnessMatrix(ComputationState *ec, int N)
-{
+__global__ void ComputeStiffnessMatrix(ComputationStateData *csv, size_t N) {
+
+    ComputationState *ec = static_cast<ComputationState *>(csv);
+
     /// actually max single block with 1024 threads
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -619,8 +540,10 @@ __device__ void setForceIntensity_Arc(int row, graph::Geometric const *geometric
 /// Evaluate Force Intensity ==============================================================
 ///
 
-__global__ void EvaluateForceIntensity(ComputationState *ec, int N)
+__global__ void EvaluateForceIntensity(ComputationStateData *csv, int N)
 {
+    ComputationState *ec = static_cast<ComputationState *>(csv);
+
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
     /// unpack tensor for evaluation
@@ -982,8 +905,10 @@ __device__ void setValueConstraintSetVertical(int row, graph::Constraint const *
 ///
 /// Evaluate Constraint Value =============================================================
 ///
-__global__ void EvaluateConstraintValue(ComputationState *ec, int N)
+__global__ void EvaluateConstraintValue(ComputationStateData *csv, int N)
 {
+    ComputationState *ec = static_cast<ComputationState *>(csv);
+
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
     const graph::Layout layout = graph::defaultColumnMajor(ec->dimension, ec->size, 0);
@@ -1498,8 +1423,9 @@ __device__ void setJacobianConstraintSetVertical(int tID, graph::Constraint cons
 /// 
 ///
 ///
-__global__ void EvaluateConstraintJacobian(ComputationState *ec, int N)
+__global__ void EvaluateConstraintJacobian(ComputationStateData *csv, size_t N)
 {
+    ComputationState *ec = static_cast<ComputationState *>(csv);
 
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -1584,8 +1510,10 @@ __global__ void EvaluateConstraintJacobian(ComputationState *ec, int N)
 /// (FI)' - (dfi/dq)'   tr-transponowane - upper slice matrix  of A
 ///
 ///
-__global__ void EvaluateConstraintTRJacobian(ComputationState *ec, int N)
+__global__ void EvaluateConstraintTRJacobian(ComputationStateData *csv, int N)
 {
+
+    ComputationState *ec = static_cast<ComputationState *>(csv);
 
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -2017,8 +1945,11 @@ __device__ void setHessianTensorConstraintSetVertical(int tID, graph::Constraint
 /// (FI)' - ((dfi/dq)`)/dq
 ///
 ///
-__global__ void EvaluateConstraintHessian(ComputationState *ec, size_t N)
+__global__ void EvaluateConstraintHessian(ComputationStateData *csv, size_t N)
 {
+
+    ComputationState *ec = static_cast<ComputationState *>(csv);
+
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
     /// unpack tensor for evaluation

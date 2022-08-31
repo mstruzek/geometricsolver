@@ -98,6 +98,7 @@ int setDoubleProperty(int id, double value)
         break;
     case 22:
         config->CU_SOLVER_EPSILON = value;
+        break;
     default:
         printf("[error] double property not found , id ( %d ) value( %e ) !!\n", id, value);
         return 1;

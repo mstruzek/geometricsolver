@@ -90,10 +90,16 @@
     <CudaCompile Include="kernel.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </CudaCompile>
+    <ClCompile Include="src\model.cpp" />
     <ClCompile Include="src\settings.cpp" />
     <ClCompile Include="src\cuerror.cpp" />
     <ClCompile Include="src\linear_system.cpp" />
-    <CudaCompile Include="src\geometric_solver.cu" />
+    <ClInclude Include="src\computation_state.cuh" />
+    <ClCompile Include="src\gpu_geometric_solver.cpp">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Include="src\gpu_computation_context.cpp" />
+    <CudaCompile Include="src\gpu_computation.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\com_mstruzek_jni_JNISolverGate.cpp" />
@@ -101,13 +107,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\com_mstruzek_jni_JNISolverGate.h" />
+    <ClInclude Include="src\computation_state_data.h" />
+    <ClInclude Include="src\gpu_computation.h" />
+    <ClInclude Include="src\gpu_computation_context.h" />
     <ClInclude Include="src\settings.h" />
     <ClInclude Include="src\cuerror.h" />
-    <ClInclude Include="src\geometric_solver.h" />
+    <ClInclude Include="src\gpu_geometric_solver.h" />
     <ClInclude Include="src\linear_system.h" />
     <ClInclude Include="src\model.cuh" />
     <ClInclude Include="src\model_config.h" />
     <ClInclude Include="src\solver_kernel.cuh" />
+    <ClInclude Include="src\solver_stat.h" />
     <ClInclude Include="src\stop_watch.h" />
     <ClInclude Include="src\utility.cuh" />
   </ItemGroup>

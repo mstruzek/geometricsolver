@@ -18,42 +18,35 @@ template <typename Ty> void mallocHost(Ty **dest, size_t size) {
     // * - - The device pointer to the memory may be obtained by calling * ::cudaHostGetDevicePointer()
 }
 
-template <typename Ty> void mallocAsync(Ty **dest, size_t size) {
+template <typename Ty> void mallocAsync(Ty **dest, size_t size, cudaStream_t stream) {
     checkCudaStatus(cudaMallocAsync((void **)dest, size * sizeof(Ty), stream));
 }
 
-template <typename Ty> void memcpyToDevice(Ty **dest_device, const Ty *const &vector, size_t size) {
+template <typename Ty>
+void memcpyAsync(Ty **dest_device, const Ty *const &vector, size_t size, cudaStream_t stream) {
     /// transfer into new allocation host_vector
     checkCudaStatus(cudaMemcpyAsync(*dest_device, vector, size * sizeof(Ty), cudaMemcpyHostToDevice, stream));
 }
 
-template <typename Ty> void memcpyToDevice(Ty **dest_device, std::vector<Ty> const &vector) {
+template <typename Ty> void memcpyAsync(Ty **dest_device, std::vector<Ty> const &vector, cudaStream_t stream) {
     /// memcpy to device
-    memcpyToDevice(dest_device, vector.data(), vector.size());
+    memcpyAsync(dest_device, vector.data(), vector.size(), stream);
 }
 
-template <typename Ty> void mallocToDevice(Ty **dev_ptr, size_t size) {
-    /// safe malloc
-    checkCudaStatus(cudaMallocAsync((void **)dev_ptr, size, stream));
-}
-
-template <typename Ty> void memcpyFromDevice(std::vector<Ty> &vector, Ty *src_device) {
+template <typename Ty> void memcpyFromDevice(std::vector<Ty> &vector, Ty *src_device, cudaStream_t stream) {
     /// transfer into new allocation host_vector
     checkCudaStatus(
         cudaMemcpyAsync(vector.data(), src_device, vector.size() * sizeof(Ty), cudaMemcpyDeviceToHost, stream));
 }
 
-template <typename Ty> void memcpyFromDevice(Ty *dest, Ty *src_device, size_t arity) {
+template <typename Ty> void memcpyFromDevice(Ty *dest, Ty *src_device, size_t size, cudaStream_t stream) {
     /// transfer into new allocation
-    checkCudaStatus(cudaMemcpyAsync(dest, src_device, arity * sizeof(Ty), cudaMemcpyDeviceToHost, stream));
+    checkCudaStatus(cudaMemcpyAsync(dest, src_device, size * sizeof(Ty), cudaMemcpyDeviceToHost, stream));
 }
 
 
-template <typename Ty> void freeMem(Ty **dev_ptr) {
-    if (*dev_ptr != nullptr) {
-        checkCudaStatus(cudaFreeAsync(*dev_ptr, stream));
-        *dev_ptr = nullptr;
-    }
+template <typename Ty> void freeAsync(Ty *dev_ptr, cudaStream_t stream) {
+    if (dev_ptr != nullptr) checkCudaStatus(cudaFreeAsync(dev_ptr, stream));    
 }
 
 template <typename Ty> void freeMemHost(Ty **ptr) {
@@ -63,7 +56,7 @@ template <typename Ty> void freeMemHost(Ty **ptr) {
     }
 }
 
-template <typename Ty> void memset(Ty *dev_ptr, int value, size_t size) {
+template <typename Ty> void memsetAsync(Ty *dev_ptr, int value, size_t size, cudaStream_t stream) {
     ///
     checkCudaStatus(cudaMemsetAsync(dev_ptr, value, size * sizeof(Ty), stream));
 }

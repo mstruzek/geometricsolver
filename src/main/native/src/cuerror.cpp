@@ -1,5 +1,7 @@
 #include "cuerror.h"
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <stdexcept>
 #include <string.h>
 namespace cuda_error

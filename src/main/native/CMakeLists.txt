@@ -58,7 +58,10 @@ add_library(${PROJECT_SHARED_LIBRARY} SHARED
         src/com_mstruzek_jni_JNISolverGate.cpp
         src/cuerror.cpp
         src/settings.cpp
-        src/geometric_solver.cu
+        src/model.cpp
+        src/gpu_geometric_solver.cpp
+        src/gpu_computation_context.cpp
+        src/gpu_computation.cu
         src/linear_system.cpp )
 
 

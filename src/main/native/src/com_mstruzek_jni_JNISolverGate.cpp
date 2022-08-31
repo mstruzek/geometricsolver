@@ -16,8 +16,9 @@
 #include <type_traits>
 #include <vector>
 
+#include "gpu_geometric_solver.h"
+
 #include "cuerror.h"
-#include "geometric_solver.h"
 #include "settings.h"
 #include "stop_watch.h"
 
@@ -29,7 +30,10 @@ static cudaError_t error;
 /// solver computation stat received from last computation
 static solver::SolverStat solverStat = {};
 
-/*
+
+std::shared_ptr<solver::GPUGeometricSolver> _geometricSolver;
+
+                      /*
  * Class:     com_mstruzek_jni_JNISolverGate
  * Method:    getLastError
  * Signature: ()Ljava/lang/String;
@@ -183,7 +187,12 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initDriver(JNIEnv *en
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initComputationContext(JNIEnv *env, jclass clazz) {
-    solver::initComputationContext(&error);
+
+    if (!_geometricSolver) {
+        _geometricSolver = std::make_shared<solver::GPUGeometricSolver>();
+    }    
+
+    error = cudaPeekAtLastError();
     if (error != cudaSuccess) {
         printf("[error] init computation data %d  = %s \n", static_cast<int>(error), cudaGetErrorString(error));
         return JNI_ERROR;
@@ -197,7 +206,7 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initComputationContex
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_com_mstruzek_jni_JNISolverGate_getCommitTime(JNIEnv *env, jclass clazz) {
-    return (jlong)solver::getCommitTime();
+    return (jlong)0L; /// deprecated
 }
 
 /*
@@ -207,7 +216,8 @@ JNIEXPORT jlong JNICALL Java_com_mstruzek_jni_JNISolverGate_getCommitTime(JNIEnv
  */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerPointType(JNIEnv *env, jclass clazz, jint id,
                                                                              jdouble px, jdouble py) {
-    solver::registerPointType(id, px, py);
+
+    _geometricSolver->registerPointType(id, px, py);
     return JNI_SUCCESS;
 }
 
@@ -220,7 +230,7 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerGeometricType
                                                                                  jint geometricTypeId, jint p1, jint p2,
                                                                                  jint p3, jint a, jint b, jint c,
                                                                                  jint d) {
-    solver::registerGeometricType(id, geometricTypeId, p1, p2, p3, a, b, c, d);
+    _geometricSolver->registerGeometricType(id, geometricTypeId, p1, p2, p3, a, b, c, d);
     return JNI_SUCCESS;
 }
 
@@ -231,7 +241,7 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerGeometricType
  */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerParameterType(JNIEnv *env, jclass clazz, jint id,
                                                                                  jdouble value) {
-    solver::registerParameterType(id, value);
+    _geometricSolver->registerParameterType(id, value);
     return JNI_SUCCESS;
 }
 
@@ -244,7 +254,7 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerConstraintTyp
                                                                                   jint jconstraintTypeId, jint k,
                                                                                   jint l, jint m, jint n, jint paramId,
                                                                                   jdouble vecX, jdouble vecY) {
-    solver::registerConstraintType(id, jconstraintTypeId, k, l, m, n, paramId, vecX, vecY);
+    _geometricSolver->registerConstraintType(id, jconstraintTypeId, k, l, m, n, paramId, vecX, vecY);
     return JNI_SUCCESS;
 }
 
@@ -256,7 +266,9 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_registerConstraintTyp
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initComputation(JNIEnv *env, jclass clazz) {
-    solver::initComputation(&error);
+
+    
+    _geometricSolver->initComputation(&error);
     if (error != cudaSuccess) {
         printf("[error] init computation context %d  = %s \n", static_cast<int>(error), cudaGetErrorString(error));
         return JNI_ERROR;
@@ -272,11 +284,12 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_initComputation(JNIEn
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_solveSystem(JNIEnv *env, jclass clazz) {
     int err = 0;
     try {
-        /// <summary>
-        /// Initialize main computation on GPU - standard linearized Newton-Raphson
+        ///
+        /// Initialize main computation on GPU 
         /// method.
-        /// </summary>
-        solver::solveSystemOnGPU(&solverStat, &error);
+        ///
+        _geometricSolver->solveSystemOnGPU(&solverStat, &error);
+
     } catch (const std::exception &e) {
         printf("[error] exception  = %s \n", e.what());
         env->ThrowNew(env->FindClass("java/lang/RuntimeException"), e.what());
@@ -366,9 +379,10 @@ JNIEXPORT jdoubleArray JNICALL Java_com_mstruzek_jni_JNISolverGate_fetchStateVec
     /// acquire pined or copy
     jdouble *stateVector = env->GetDoubleArrayElements(jStateVector, &isCopy);
 
-    /// update current state
-    solver::fillPointCoordinateVector(stateVector);
+    /// update current state    
 
+    _geometricSolver->getComputation()->fillPointCoordinateVector(stateVector);
+    
     if (isCopy == JNI_TRUE) {
         env->ReleaseDoubleArrayElements(jStateVector, (double *)stateVector, 0);
     }
@@ -395,7 +409,7 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateStateVector(JNI
     jdouble *stateVector = env->GetDoubleArrayElements(jStateVector, &isCopy);
 
     /// update current state
-    solver::updatePointCoordinateVector(stateVector);
+    _geometricSolver->getComputation()->updatePointCoordinateVector(stateVector);
 
     if (isCopy == JNI_TRUE) {
         env->ReleaseDoubleArrayElements(jStateVector, (double *)stateVector, 0);
@@ -427,7 +441,7 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateConstraintState
     jdouble *vecX = env->GetDoubleArrayElements(jvecX, &isCopyx);
     jdouble *vecY = env->GetDoubleArrayElements(jvecY, &isCopyy);
 
-    int err = solver::updateConstraintState((int*)(constraintId), vecX, vecY, jsize);
+    int err = _geometricSolver->getComputation()->updateConstraintState((int *)(constraintId), vecX, vecY, jsize);
 
     if (isCopyc == JNI_TRUE) {
         env->ReleaseIntArrayElements(jconstraintId, (jint *)constraintId, 0);
@@ -461,7 +475,7 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateParametersValue
     jdouble *value = env->GetDoubleArrayElements(jvalue, &isCopyv);
     
 
-    int err = solver::updateParametersValues((int *)parameterId, value, jsize);
+    int err = _geometricSolver->getComputation()->updateParametersValues((int *)parameterId, value, jsize);
 
     if (isCopyp == JNI_TRUE) {
         env->ReleaseIntArrayElements(jparameterId, (jint *)parameterId, 0);
@@ -483,7 +497,7 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_updateParametersValue
  * Signature: (I)D
  */
 JNIEXPORT jdouble JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointPXCoordinate(JNIEnv *env, jclass clazz, jint id) {
-    double px = solver::getPointPXCoordinate(id);
+    double px = _geometricSolver->getComputation()->getPointPXCoordinate(id);
     return (jdouble)px;
 }
 
@@ -493,7 +507,7 @@ JNIEXPORT jdouble JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointPXCoordina
  * Signature: (I)D
  */
 JNIEXPORT jdouble JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointPYCoordinate(JNIEnv *env, jclass clazz, jint id) {
-    double py = solver::getPointPYCoordinate(id);
+    double py = _geometricSolver->getComputation()->getPointPYCoordinate(id);
     return (jdouble)py;
 }
 
@@ -503,7 +517,7 @@ JNIEXPORT jdouble JNICALL Java_com_mstruzek_jni_JNISolverGate_getPointPYCoordina
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_destroyComputation(JNIEnv *env, jclass clazz) {
-    solver::destroyComputation(&error);
+    _geometricSolver->destroyComputation(&error);
     if (error != cudaSuccess) {
         printf("[error] init computation data %d  = %s \n", static_cast<int>(error), cudaGetErrorString(error));
         return JNI_ERROR;
@@ -517,8 +531,10 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_destroyComputation(JN
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_destroyComputationContext(JNIEnv *env, jclass clazz) {
-    /// workspace - zwolnic pamiec i wyzerowac wskazniki , \\cusolver
-    solver::destroyComputationContext(&error);
+    
+    _geometricSolver.reset();
+
+    error = cudaPeekAtLastError();
     if (error != cudaSuccess) {
         printf("[error] reset computation context %d  = %s \n", static_cast<int>(error), cudaGetErrorString(error));
         return JNI_ERROR;
@@ -532,6 +548,11 @@ JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_destroyComputationCon
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_com_mstruzek_jni_JNISolverGate_closeDriver(JNIEnv *env, jclass clazz) {
+
+    if (_geometricSolver) {
+        _geometricSolver.reset();
+    }    
+
     error = cudaDeviceReset();
     if (error != cudaSuccess) {
         printf("driver  error %d  = %s \n", static_cast<int>(error), cudaGetErrorString(error));
