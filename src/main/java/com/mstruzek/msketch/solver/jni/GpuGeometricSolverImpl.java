@@ -187,7 +187,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         final int size = ModelRegistry.dbParameter().size();
         double[] value = new double[size];
         int[] parameterId = new int[size];
-        int itr= 0;
+        int itr = 0;
         for (Parameter parameter : ModelRegistry.dbParameter().values()) {
             parameterId[itr] = parameter.getId();
             value[itr] = parameter.getValue();
@@ -221,21 +221,19 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
      * Data in moved from State Vector of gpu geometric solver.
      */
     private void fetchGPUComputedPositionsIntoModel() {
-//        double[] coordinateVector = JNISolverGate.fetchStateVector();
+        double[] coordinateVector = JNISolverGate.fetchStateVector();
         int itr = 0;
         for (int pointId : ModelRegistry.dbPoint().keySet()) {
-/*
             double px = coordinateVector[itr * 2];
             double py = coordinateVector[itr * 2 + 1];
-*/
-            double px = JNISolverGate.getPointPXCoordinate(pointId);
-            double py = JNISolverGate.getPointPYCoordinate(pointId);
-
             ModelRegistry.dbPoint().get(pointId).Vector().setLocation(px, py);
             itr++;
         }
         /*
-        */
+         *  double px = JNISolverGate.getPointPXCoordinate(pointId);
+         *  double py = JNISolverGate.getPointPYCoordinate(pointId);
+         *
+         */
     }
 
 
