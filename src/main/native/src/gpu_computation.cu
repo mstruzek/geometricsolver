@@ -270,10 +270,10 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         ev[itr]->coffSize = coffSize;
         ev[itr]->dimension = dimension = N;
 
-        ev[itr]->points = d_points;
-        ev[itr]->geometrics = d_geometrics;
-        ev[itr]->constraints = d_constraints;
-        ev[itr]->parameters = d_parameters;
+        ev[itr]->points = NVector<graph::Point>(d_points, _points.size());
+        ev[itr]->geometrics = NVector<graph::Geometric>(d_geometrics, _geometrics.size());
+        ev[itr]->constraints = NVector<graph::Constraint>(d_constraints,_constraints.size());
+        ev[itr]->parameters = NVector<graph::Parameter>(d_parameters, _parameters.size());
 
         ev[itr]->pointOffset = d_pointOffset;
         ev[itr]->geometricOffset = d_geometricOffset;
@@ -300,52 +300,60 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         // if (itr > 0) {
         /// zerujemy macierz A      !!!!! second buffer
         utility::memsetAsync(dev_A, 0, N * N, _stream); // --- ze wzgledu na addytywnosc
-                                                        //}
+       
+        if (!settings::get()->DEBUG_KERNEL) {
 
-        /// macierz `A
-        /// Cooficients Stiffnes Matrix
-        ComputeStiffnessMatrix<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
-        checkStreamNoError();
+            BuildComputationMatrix<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size(),
+                                                                               _constraints.size());
 
-        /// [ cuda / error ] 701 : cuda API failed 701,
-        /// cudaErrorLaunchOutOfResources  = too many resources requested for launch
-        //
-        if (settings::get()->SOLVER_INC_HESSIAN) {
-            ST_DIM_BLOCK = _constraints.size();
-            EvaluateConstraintHessian<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+        } else {
+
+            /// macierz `A
+            /// Cooficients Stiffnes Matrix
+            ComputeStiffnessMatrix<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
+            checkStreamNoError();
+
+            /// [ cuda / error ] 701 : cuda API failed 701,
+            /// cudaErrorLaunchOutOfResources  = too many resources requested for launch
+            //
+            if (settings::get()->SOLVER_INC_HESSIAN) {
+                EvaluateConstraintHessian<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+            }
+            checkStreamNoError();
+
+            /*
+                Lower Tensor Slice
+
+                --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix
+            */
+
+            EvaluateConstraintJacobian<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+            checkStreamNoError();
+            /*
+                Transposed Jacobian - Uperr Tensor Slice
+
+                --- (Wq)'; /// Jq' = (d(Fi)/dq)' --- transposed - write without
+               intermediary matrix
+            */
+
+            EvaluateConstraintTRJacobian<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+            checkStreamNoError();
+
+            /// Tworzymy Macierz dest SV dest `b
+
+            /// [ SV ]  - right hand site
+
+            /// Fr /// Sily  - F(q) --  !!!!!!!
+            EvaluateForceIntensity<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
+            checkStreamNoError();
+
+            /// Fi / Wiezy  - Fi(q)
+            EvaluateConstraintValue<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+            checkStreamNoError();
         }
-        checkStreamNoError();
 
-        /*
-            Lower Tensor Slice
+/// 
 
-            --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix
-        */
-
-
-        EvaluateConstraintJacobian<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
-        checkStreamNoError();
-        /*
-            Transposed Jacobian - Uperr Tensor Slice
-
-            --- (Wq)'; /// Jq' = (d(Fi)/dq)' --- transposed - write without
-           intermediary matrix
-        */
-
-        EvaluateConstraintTRJacobian<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
-        checkStreamNoError();
-
-        /// Tworzymy Macierz dest SV dest `b
-
-        /// [ SV ]  - right hand site
-
-        /// Fr /// Sily  - F(q) --  !!!!!!!
-        EvaluateForceIntensity<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
-        checkStreamNoError();
-
-        /// Fi / Wiezy  - Fi(q)
-        EvaluateConstraintValue<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
-        checkStreamNoError();
 
         if (settings::get()->DEBUG_TENSOR_A) {
             stdoutTensorData<<<GRID_DBG, 1, Ns, _stream>>>(dev_ev[itr], N, N);
@@ -368,7 +376,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         _cc->recordSolverStop(itr);
 
         /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ]
-        StateVectorAddDifference<<<DIM_GRID, N, Ns, _stream>>>(dev_SV[itr], dev_b, N);
+        StateVectorAddDifference<<<DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_SV[itr], dev_b, N);
         checkStreamNoError();
         // print actual state vector single kernel
 
@@ -434,7 +442,9 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
     ///
     /// UWAGA !!! 3 dni poszukiwania bledu -  "smigamy po allokacjach"
-    ///
+    /// 
+    ///     uVector operator[]() { IF DEBUG bound check for  illegal access }
+    /// 
     CopyFromStateVector<<<DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(d_points, computation->SV, _points.size());
 
     utility::memcpyFromDevice(_points, d_points, _stream);

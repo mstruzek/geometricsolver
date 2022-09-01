@@ -20,23 +20,23 @@ struct ComputationState : public ComputationStateData {
         return SV[size + multiOffset];
     }
 
-    __host__ __device__  graph::Point const &getPointRef(int pointId) const {
-        int offset = pointOffset[pointId];
+    __host__ __device__  graph::Point const &getPointRef(int pointId) {
+        const size_t offset = pointOffset[pointId];
         return points[offset];
     }
 
-    __host__ __device__  graph::Geometric *getGeometricObject(int geometricId) const {
-        int offset = geometricOffset[geometricId];
+    __host__ __device__  graph::Geometric *getGeometricObject(int geometricId){
+        const size_t offset = geometricOffset[geometricId];
         return &geometrics[offset];
     }
 
-    __host__ __device__ graph::Constraint *getConstraint(int constraintId) const {
-        int offset = constraintOffset[constraintId];
+    __host__ __device__ graph::Constraint *getConstraint(int constraintId) {
+        const size_t offset = constraintOffset[constraintId];
         return &constraints[offset];
     }
 
-    __host__ __device__ graph::Parameter *getParameter(int parameterId) const {
-        int offset = parameterOffset[parameterId];
+    __host__ __device__ graph::Parameter *getParameter(int parameterId) {
+        const size_t offset = parameterOffset[parameterId];
         return &parameters[offset];
     }
 

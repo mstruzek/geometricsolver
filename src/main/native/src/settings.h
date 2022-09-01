@@ -6,6 +6,7 @@ namespace settings
 struct Settings
 {
     bool DEBUG                      = false;        // 0
+    bool DEBUG_KERNEL               = false;        // 1
     bool DEBUG_TENSOR_A             = false;        // 2
     bool DEBUG_TENSOR_B             = false;        // 3
     bool DEBUG_TENSOR_SV            = false;        // 4
@@ -15,7 +16,7 @@ struct Settings
     bool DEBUG_CHECK_ARG            = false;        // 9
 
     unsigned int GRID_SIZE          = 1;    // 10
-    unsigned int BLOCK_SIZE         = 512; // 11
+    unsigned int BLOCK_SIZE         = 128; // 11
 
     double CU_SOLVER_LWORK_FACTOR   = 1.0;      // 21
     double CU_SOLVER_EPSILON        = 10.0;     // 22

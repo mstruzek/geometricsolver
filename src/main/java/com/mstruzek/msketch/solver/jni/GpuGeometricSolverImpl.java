@@ -53,11 +53,11 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
     @Override
     public void setup() {
 
-//         JNISolverGate.setBooleanProperty(JNIDebugCode.SOLVER_INC_HESSIAN.code, true);
 
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG.code, true);
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_CHECK_ARG.code, true);
-//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_A.code, true);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_CHECK_ARG.code, false);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_A.code, false);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.SOLVER_INC_HESSIAN.code, true);
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, false);
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_SV.code, true);
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_SOLVER_CONVERGENCE.code, true);

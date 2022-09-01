@@ -10,6 +10,39 @@
 
 #include "model_config.h"
 
+
+#undef NVECTOR_DEBUG
+
+template <typename TObject> class NVector {
+
+  public:
+    __device__ __host__ NVector(TObject *data, size_t size) : _data(data), _size(size) {}
+
+    __device__ __host__ NVector(const NVector &right) { 
+        *this = right;
+    };
+
+    __device__ __host__ NVector &operator=(const NVector<TObject> &right) {
+        _data = right._data;
+        _size = right._size;
+        return *this;
+    };
+
+    __device__ __host__ TObject &operator[](const size_t idx) {
+#ifdef NVECTOR_DEBUG
+        if (idx >= _size)
+            printf("illegal memmory access : mem (%p)  , id ( %zu )\n", _data , idx);
+#endif
+        return _data[idx];
+    }
+
+  private:
+    size_t _size;
+
+    TObject *_data;
+};
+
+
 namespace graph
 {
 

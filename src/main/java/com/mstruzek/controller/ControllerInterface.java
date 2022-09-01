@@ -56,4 +56,6 @@ public interface ControllerInterface {
      * @param solverType
      */
     void setSolverType(GeometricSolverType solverType);
+
+    void shutdown();
 }

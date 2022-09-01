@@ -23,6 +23,14 @@ public final class Model {
     private Model() {
     }
 
+    public static void shutdown() {
+
+        if(geometricSolver != null) {
+            geometricSolver.destroyDriver();
+        }
+    }
+
+
     public static void solveSystem(GeometricSolverType solverType) {
         if(geometricSolver != null && geometricSolver.solverType() != solverType) {
             geometricSolver.destroyDriver();
@@ -203,4 +211,5 @@ public final class Model {
         double untenseY = point.getY() + scale * (random.nextDouble() - 0.5) * point.getY();
         point.setLocation(untenseX, untenseY);
     }
+
 }

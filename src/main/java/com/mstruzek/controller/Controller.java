@@ -52,6 +52,11 @@ public class Controller implements ControllerInterface {
         this.solverType = solverType;
     }
 
+    @Override
+    public void shutdown() {
+        Model.shutdown();
+    }
+
     public void writeModelInto(File selectedFile) {
         /*
          * Persist state :

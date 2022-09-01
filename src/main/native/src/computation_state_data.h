@@ -36,10 +36,10 @@ struct ComputationStateData {
     /// N - dimension = size + coffSize
     size_t dimension; 
 
-    graph::Point *points;
-    graph::Geometric *geometrics;
-    graph::Constraint *constraints;
-    graph::Parameter *parameters;
+    NVector<graph::Point> points;
+    NVector<graph::Geometric> geometrics;
+    NVector<graph::Constraint> constraints;
+    NVector<graph::Parameter> parameters;
 
     int *pointOffset;       
 

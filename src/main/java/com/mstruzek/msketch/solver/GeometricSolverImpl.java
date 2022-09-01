@@ -40,7 +40,7 @@ public class GeometricSolverImpl implements GeometricSolver {
     @Override
     public void setup() {
 
-        StateReporter.DebugEnabled = true;
+        StateReporter.DebugEnabled = false;
 
         reporter = StateReporter.getInstance();
 
@@ -195,8 +195,8 @@ public class GeometricSolverImpl implements GeometricSolver {
 /// Solver LU Single Iteration Step
 
             if (StateReporter.isDebugEnabled()) {
-                //reporter.writeln(TensorDouble.writeToString(A));
-                reporter.writeln(TensorDouble.writeToString(b));
+                reporter.writeln(TensorDouble.writeToString(A));
+//                reporter.writeln(TensorDouble.writeToString(b));
             }
 
             DoubleMatrix2D matrix2DA = MatrixDoubleUtility.toSparse(A);

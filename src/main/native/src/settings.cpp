@@ -19,16 +19,19 @@ int setBooleanProperty(int id, bool value)
     switch (id)
     {
     case 0:
-        setting->DEBUG = value;          // 0
+        setting->DEBUG = value;             // 0
+        break;
+    case 1:
+        setting->DEBUG_KERNEL = value;      // 1     
         break;
     case 2:
-        setting->DEBUG_TENSOR_A = value; // 2
+        setting->DEBUG_TENSOR_A = value;    // 2
         break;
     case 3:
-        setting->DEBUG_TENSOR_B = value; // 3
+        setting->DEBUG_TENSOR_B = value;    // 3
         break;
     case 4:
-        setting->DEBUG_TENSOR_SV = value; // 4
+        setting->DEBUG_TENSOR_SV = value;   // 4
         break;
     case 6:
         setting->CLOCK_NANOSECONDS = value; // 6

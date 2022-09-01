@@ -12,5 +12,14 @@ public class AppBootstrap {
         Controller controller = new Controller();
 
         new FrameView(controller);
+
+
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                controller.shutdown();
+            }
+        }));
     }
 }
