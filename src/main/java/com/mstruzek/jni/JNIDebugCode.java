@@ -9,6 +9,10 @@ public enum JNIDebugCode {
 
     /**
      * production kernel = true
+     *
+     * if production kernel thread-Id addressing is horizontal in single dispatch kernel,
+     *
+     * otherwise in order computation on the  single stream.
      */
     KERNEL_PRE(1),
 

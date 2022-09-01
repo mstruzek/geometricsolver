@@ -1,0 +1,58 @@
+#--signature: GeometricConstraintSolver  2009-2022
+#--file-format: V1
+
+#--definition-begin: 
+
+Descriptor(Point) ID(1)    PX(3.824711e+02) PY(2.041769e+02);
+Descriptor(Point) ID(2)    PX(3.824711e+02) PY(6.688410e+02);
+Descriptor(Point) ID(5)    PX(3.824711e+02) PY(6.688410e+02);
+Descriptor(Point) ID(6)    PX(8.591988e+02) PY(6.688410e+02);
+Descriptor(Point) ID(9)    PX(5.203074e+02) PY(5.310047e+02);
+Descriptor(Point) ID(10)   PX(6.471859e+02) PY(5.848629e+02);
+Descriptor(Point) ID(13)   PX(3.824711e+02) PY(2.041769e+02);
+Descriptor(Point) ID(14)   PX(8.591988e+02) PY(6.688410e+02);
+Descriptor(Point) ID(17)   PX(8.591988e+02) PY(6.688410e+02);
+Descriptor(Point) ID(18)   PX(1.403435e+03) PY(1.042530e+02);
+Descriptor(Point) ID(21)   PX(8.591988e+02) PY(6.688410e+02);
+Descriptor(Point) ID(22)   PX(1.403435e+03) PY(6.688410e+02);
+Descriptor(Point) ID(25)   PX(1.403435e+03) PY(6.688410e+02);
+Descriptor(Point) ID(26)   PX(1.403435e+03) PY(1.292702e+03);
+Descriptor(Point) ID(29)   PX(1.403435e+03) PY(6.688410e+02);
+Descriptor(Point) ID(30)   PX(1.403435e+03) PY(1.042530e+02);
+Descriptor(Point) ID(33)   PX(1.241118e+03) PY(5.065234e+02);
+Descriptor(Point) ID(34)   PX(1.212299e+03) PY(3.467846e+02);
+
+Descriptor(GeometricObject) ID(0)    TYPE(Line)     P1(1)    P2(2)    P3(-1);
+Descriptor(GeometricObject) ID(1)    TYPE(Line)     P1(5)    P2(6)    P3(-1);
+Descriptor(GeometricObject) ID(2)    TYPE(Circle)   P1(9)    P2(10)   P3(-1);
+Descriptor(GeometricObject) ID(3)    TYPE(Line)     P1(13)   P2(14)   P3(-1);
+Descriptor(GeometricObject) ID(4)    TYPE(Line)     P1(17)   P2(18)   P3(-1);
+Descriptor(GeometricObject) ID(5)    TYPE(Line)     P1(21)   P2(22)   P3(-1);
+Descriptor(GeometricObject) ID(6)    TYPE(Line)     P1(25)   P2(26)   P3(-1);
+Descriptor(GeometricObject) ID(7)    TYPE(Line)     P1(29)   P2(30)   P3(-1);
+Descriptor(GeometricObject) ID(8)    TYPE(Circle)   P1(33)   P2(34)   P3(-1);
+
+
+Descriptor(Constraint) ID(8)    TYPE(Tangency)           K(13)    L(14)    M(9)     N(10)    PARAM(-1);
+Descriptor(Constraint) ID(9)    TYPE(Tangency)           K(1)     L(2)     M(9)     N(10)    PARAM(-1);
+Descriptor(Constraint) ID(10)   TYPE(Tangency)           K(5)     L(6)     M(9)     N(10)    PARAM(-1);
+Descriptor(Constraint) ID(11)   TYPE(SetVertical)        K(1)     L(2)     M(0)     N(0)     PARAM(-1);
+Descriptor(Constraint) ID(12)   TYPE(SetHorizontal)      K(5)     L(6)     M(0)     N(0)     PARAM(-1);
+Descriptor(Constraint) ID(13)   TYPE(Connect2Points)     K(6)     L(14)    M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(14)   TYPE(Connect2Points)     K(1)     L(13)    M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(15)   TYPE(Connect2Points)     K(2)     L(5)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(24)   TYPE(SetVertical)        K(30)    L(29)    M(0)     N(0)     PARAM(-1);
+Descriptor(Constraint) ID(25)   TYPE(SetHorizontal)      K(21)    L(22)    M(0)     N(0)     PARAM(-1);
+Descriptor(Constraint) ID(26)   TYPE(SetVertical)        K(25)    L(26)    M(0)     N(0)     PARAM(-1);
+Descriptor(Constraint) ID(27)   TYPE(Connect2Points)     K(18)    L(30)    M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(28)   TYPE(Connect2Points)     K(17)    L(21)    M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(29)   TYPE(Connect2Points)     K(22)    L(29)    M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(30)   TYPE(Connect2Points)     K(22)    L(25)    M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(33)   TYPE(Tangency)           K(18)    L(17)    M(33)    N(34)    PARAM(-1);
+Descriptor(Constraint) ID(34)   TYPE(Tangency)           K(30)    L(29)    M(33)    N(34)    PARAM(-1);
+Descriptor(Constraint) ID(35)   TYPE(Tangency)           K(21)    L(22)    M(33)    N(34)    PARAM(-1);
+Descriptor(Constraint) ID(36)   TYPE(Connect2Points)     K(6)     L(17)    M(-1)    N(-1)    PARAM(-1);
+
+
+#--definition-end: 
+

@@ -307,7 +307,10 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             /*
             *  Matrix A, b vector production kernel
             */
-            BuildComputationMatrix<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size(),
+            /// computation threads requirments
+            unsigned int TRDS = 3 * _geometrics.size() + 3 * _constraints.size();
+            unsigned int BLOCK_DIM = (TRDS + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
+            BuildComputationMatrix<<<BLOCK_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size(),
                                                                                _constraints.size());
 
         } else {  
@@ -359,6 +362,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         }
 
 /// 
+        _cc->recordPrepStop(itr);
 
 
         if (settings::get()->DEBUG_TENSOR_A) {
@@ -371,7 +375,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             checkCudaStatus(cudaStreamSynchronize(_stream));
         }
 
-        _cc->recordPrepStop(itr);
+
 
         _cc->recordSolverStart(itr);
         /// ======== DENSE - CuSolver LINER SYSTEM equation CuSolver    === START

@@ -162,12 +162,11 @@ __device__ void setStiffnessMatrix_Arc(int rc, graph::Tensor &mt);
  * @param ec
  * @return __global__
  */
-__device__ void ComputeStiffnessMatrix_Impl(ComputationStateData *ecdata, size_t N) {
+__device__ void ComputeStiffnessMatrix_Impl(int tID, ComputationStateData *ecdata, size_t N) {
 
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
 
     /// actually max single block with 1024 threads
-    int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
     const graph::Layout layout = graph::defaultColumnMajor(ec->dimension, 0, 0);
 
@@ -213,7 +212,12 @@ __global__ void ComputeStiffnessMatrix(ComputationStateData *ecdata, size_t N) {
     /// <param name="ecdata"></param>
     /// <param name="N"></param>
     /// <returns></returns>
-    ComputeStiffnessMatrix_Impl(ecdata, N);
+    /// 
+    
+    /// From Kernel Reference Addressing 
+    int tID = blockDim.x * blockIdx.x + threadIdx.x;
+    
+    ComputeStiffnessMatrix_Impl(tID, ecdata, N);
 }
 
 
@@ -528,10 +532,8 @@ __device__ void setForceIntensity_Arc(int row, graph::Geometric const *geometric
 /// Evaluate Force Intensity ==============================================================
 ///
 
-__device__ void EvaluateForceIntensity_Impl(ComputationStateData *ecdata, size_t N) {
+__device__ void EvaluateForceIntensity_Impl(int tID, ComputationStateData *ecdata, size_t N) {
     ComputationState *ec = (ComputationState *)ecdata;
-
-    int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
     /// unpack tensor for evaluation
 
@@ -574,13 +576,12 @@ __device__ void EvaluateForceIntensity_Impl(ComputationStateData *ecdata, size_t
 }
 
 __global__ void EvaluateForceIntensity(ComputationStateData *ecdata, size_t N) {
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="ecdata"></param>
-    /// <param name="N"></param>
-    /// <returns></returns>
-    EvaluateForceIntensity_Impl(ecdata, N);
+    
+    /// Kernel Reference Addressing
+    int tId = blockDim.x * blockIdx.x + threadIdx.x;
+    ///
+    EvaluateForceIntensity_Impl(tId, ecdata, N);
+    ///
 }
 
 ///
@@ -883,10 +884,9 @@ __device__ void setValueConstraintSetVertical(int row, graph::Constraint const *
 ///
 /// Evaluate Constraint Value =============================================================
 ///
-__device__ void EvaluateConstraintValue_Impl(ComputationStateData *ecdata, size_t N) {
-    ComputationState *ec = static_cast<ComputationState *>(ecdata);
+__device__ void EvaluateConstraintValue_Impl(int tID, ComputationStateData *ecdata, size_t N) {
 
-    int tID = blockDim.x * blockIdx.x + threadIdx.x;
+    ComputationState *ec = static_cast<ComputationState *>(ecdata);
 
     const graph::Layout layout = graph::defaultColumnMajor(ec->dimension, ec->size, 0);
     /// unpack tensor for evaluation
@@ -957,13 +957,11 @@ __device__ void EvaluateConstraintValue_Impl(ComputationStateData *ecdata, size_
 }
 
 __global__ void EvaluateConstraintValue(ComputationStateData *ecdata, size_t N) {
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="ecdata"></param>
-    /// <param name="N"></param>
-    /// <returns></returns>
-    EvaluateConstraintValue_Impl(ecdata, N);
+    /// Kernel Reference Addressing
+    int tId = blockDim.x * blockIdx.x + threadIdx.x;
+    ///
+    EvaluateConstraintValue_Impl(tId, ecdata, N);
+    ///
 }
 
 ///
@@ -1391,10 +1389,8 @@ __device__ void setJacobianConstraintSetVertical(int tID, graph::Constraint cons
 ///
 ///
 ///
-__device__ void EvaluateConstraintJacobian_Impl(ComputationStateData *ecdata, size_t N) {
+__device__ void EvaluateConstraintJacobian_Impl(int tID, ComputationStateData *ecdata, size_t N) {
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
-
-    int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
     /// unpack tensor for evaluation
     /// COLUMN_ORDER - tensor A
@@ -1467,13 +1463,11 @@ __device__ void EvaluateConstraintJacobian_Impl(ComputationStateData *ecdata, si
 
 __global__ void EvaluateConstraintJacobian(ComputationStateData *ecdata, size_t N) {
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="ecdata"></param>
-    /// <param name="N"></param>
-    /// <returns></returns>
-    EvaluateConstraintJacobian_Impl(ecdata, N);
+    /// Kernel Reference Addressing
+    int tId = blockDim.x * blockIdx.x + threadIdx.x;
+    ///
+    EvaluateConstraintJacobian_Impl(tId, ecdata, N);
+    ///
 }
 
 ///
@@ -1484,11 +1478,9 @@ __global__ void EvaluateConstraintJacobian(ComputationStateData *ecdata, size_t 
 /// (FI)' - (dfi/dq)'   tr-transponowane - upper slice matrix  of A
 ///
 ///
-__device__ void EvaluateConstraintTRJacobian_Impl(ComputationStateData *ecdata, size_t N) {
+__device__ void EvaluateConstraintTRJacobian_Impl(int tID, ComputationStateData *ecdata, size_t N) {
 
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
-
-    int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
     /// unpack tensor for evaluation
     /// COLUMN_ORDER - tensor A
@@ -1563,13 +1555,11 @@ __device__ void EvaluateConstraintTRJacobian_Impl(ComputationStateData *ecdata, 
 
 __global__ void EvaluateConstraintTRJacobian(ComputationStateData *ecdata, size_t N) {
     
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="ecdata"></param>
-    /// <param name="N"></param>
-    /// <returns></returns>
-    EvaluateConstraintTRJacobian_Impl(ecdata, N);
+    /// Kernel Reference Addressing
+    int tId = blockDim.x * blockIdx.x + threadIdx.x;
+    ///
+    EvaluateConstraintTRJacobian_Impl(tId, ecdata, N);
+    ///
 
 }
 
@@ -1913,11 +1903,9 @@ __device__ void setHessianTensorConstraintSetVertical(int tID, graph::Constraint
 /// (FI)' - ((dfi/dq)`)/dq
 ///
 ///
-__device__ void EvaluateConstraintHessian_Impl(ComputationStateData *ecdata, size_t N) {
+__device__ void EvaluateConstraintHessian_Impl(int tID, ComputationStateData *ecdata, size_t N) {
 
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
-
-    int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
     /// unpack tensor for evaluation
     /// COLUMN_ORDER - tensor A
@@ -1990,75 +1978,91 @@ __device__ void EvaluateConstraintHessian_Impl(ComputationStateData *ecdata, siz
 }
 
 __global__ void EvaluateConstraintHessian(ComputationStateData *ecdata, size_t N) {
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="ecdata"></param>
-    /// <param name="N"></param>
-    /// <returns></returns>
-    EvaluateConstraintHessian_Impl(ecdata, N);
+    /// Kernel Reference Addressing
+    int tId = blockDim.x * blockIdx.x + threadIdx.x;
+    ///
+    EvaluateConstraintHessian_Impl(tId, ecdata, N);
+    ///
 }
 
 
 __global__ void BuildComputationMatrix(ComputationStateData *ecdata, size_t geometricN, size_t constraintN) {
+        
+    int lowerBound = 0;
+    int upperBound = 0;
 
-//A
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="ecdata"></param>
-    /// <param name="geometricN"></param>
-    /// <param name="constraintN"></param>
-    /// <returns></returns>
-    ComputeStiffnessMatrix_Impl(ecdata, geometricN);
+    /// From Computation Horizontal Addressing 
+    int tId = blockDim.x * blockIdx.x + threadIdx.x;
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="ecdata"></param>
-    /// <param name="geometricN"></param>
-    /// <param name="constraintN"></param>
-    /// <returns></returns>
-    EvaluateConstraintHessian_Impl(ecdata, constraintN);
+/// = A
+  
+    lowerBound = 0;
+    upperBound = geometricN;  
+    if (lowerBound <= tId && tId < geometricN) {
+        ///
+        /// 
+        ComputeStiffnessMatrix_Impl(tId - lowerBound, ecdata, geometricN);        
+        /// 
+        return;
+    }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="ecdata"></param>
-    /// <param name="geometricN"></param>
-    /// <param name="constraintN"></param>
-    /// <returns></returns>
-    EvaluateConstraintJacobian_Impl(ecdata, constraintN);
     
+    lowerBound = geometricN;
+    upperBound = geometricN + geometricN;
+    if (lowerBound <= tId && tId < upperBound) {
+        ///
+        ///
+        EvaluateConstraintHessian_Impl(tId - lowerBound, ecdata, geometricN);
+        /// 
+        return;
+    }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="ecdata"></param>
-    /// <param name="geometricN"></param>
-    /// <param name="constraintN"></param>
-    /// <returns></returns>
-    EvaluateConstraintTRJacobian_Impl(ecdata, constraintN);
+        
+    lowerBound = geometricN + geometricN;
+    upperBound = geometricN + geometricN + constraintN;
 
-/// B
+    if (lowerBound <= tId && tId < upperBound) {
+        ///
+        ///
+        EvaluateConstraintJacobian_Impl(tId - lowerBound, ecdata, constraintN);
+        /// 
+        return;
+    }
+  
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="ecdata"></param>
-    /// <param name="geometricN"></param>
-    /// <param name="constraintN"></param>
-    /// <returns></returns>
-    EvaluateForceIntensity_Impl(ecdata, geometricN);
+    lowerBound = geometricN + geometricN + constraintN;
+    upperBound = geometricN + geometricN + constraintN + constraintN;
+
+    if (lowerBound <= tId && tId < upperBound) {
+        ///
+        ///
+        EvaluateConstraintTRJacobian_Impl(tId - lowerBound, ecdata, constraintN);
+        /// 
+        return;
+    }
+
+/// =  B  
+
+    lowerBound = geometricN + geometricN + constraintN + constraintN;
+    upperBound = geometricN + geometricN + constraintN + constraintN + geometricN;
+    if (lowerBound <= tId && tId < upperBound) {
+        ///
+        ///
+        EvaluateForceIntensity_Impl(tId - lowerBound, ecdata, geometricN);
+        /// 
+        return;
+    }
     
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="ecdata"></param>
-    /// <param name="geometricN"></param>
-    /// <param name="constraintN"></param>
-    /// <returns></returns>
-    EvaluateConstraintValue_Impl(ecdata, constraintN);
+    lowerBound = geometricN + geometricN + constraintN + constraintN + geometricN;
+    upperBound = geometricN + geometricN + constraintN + constraintN + geometricN + constraintN;
+    if (lowerBound <= tId && tId < upperBound) {
+        ///
+        ///        
+        EvaluateConstraintValue_Impl(tId - lowerBound, ecdata, constraintN);
+        /// 
+        return;
+    }
+
 }
 
 #endif // #ifndef _SOLVER_KERNEL_CUH_
