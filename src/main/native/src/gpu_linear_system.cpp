@@ -85,6 +85,8 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N ) {
         checkCudaStatus(cudaMallocAsync((void **)&Workspace, Lwork * sizeof(double), _stream));
         checkCudaStatus(cudaMallocAsync((void **)&devIpiv, N * sizeof(double), _stream));
 
+        checkCudaStatus(cudaStreamSynchronize(_stream));
+
         if (settings::get()->DEBUG) {
             printf("[ LU ] workspace attached, 'Lwork' (workspace size)  = %d \n", Lwork);
         }
@@ -155,6 +157,7 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N ) {
 }
 
 void GPULinearSystem::vectorNorm(int n, double *x, double *result) {
+
 
     checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, result));
 

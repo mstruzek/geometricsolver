@@ -8,7 +8,7 @@ namespace settings
 /// singletone object
 static Settings data = {};
 
-Settings const *get()
+Settings *get()
 {
     return &data;
 }

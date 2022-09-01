@@ -28,7 +28,7 @@ public class GCModelReader implements Closeable {
     private static final String DESCRIPTOR_PARAMETER = "Parameter";
     private static final String DESCRIPTOR_CONSTRAINT = "Constraint";
 
-    private final Pattern STRUCT_FIELD_VALUE = Pattern.compile("([a-zA-Z0-9]+)\\(([a-zA-Z0-9\\.\\-]+)\\)");
+    private final Pattern STRUCT_FIELD_VALUE = Pattern.compile("([a-zA-Z0-9]+)\\(([a-zA-Z0-9\\.\\-\\+]+)\\)");
 
     private BufferedReader buff;
 

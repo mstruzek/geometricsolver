@@ -97,7 +97,7 @@ class GPUComputation {
 
     cudaStream_t _stream;
 
-    cudaError_t *error;
+    cudaError_t error;
 
     /// mechanism for escaped data from computation tail -- first conveged computation contex or last invalid
     std::condition_variable condition;
@@ -123,6 +123,8 @@ class GPUComputation {
 
     /// Point  Offset in computation matrix [id] -> point offset   ~~ Gather Vectors
     std::vector<int> pointOffset;
+    
+    std::vector<int> geometricOffset;
 
     /// Constraint Offset in computation matrix [id] -> constraint offset
     std::vector<int> constraintOffset;
@@ -154,7 +156,8 @@ class GPUComputation {
     double *dev_dx = nullptr;
 
     /// STATE VECTOR  -- lineage
-    double *dev_SV[CMAX] = {NULL};
+    std::vector<double *> dev_SV;
+    
 
     /// Evaluation data for  device  - CONST DATE for in process execution
 
@@ -164,6 +167,7 @@ class GPUComputation {
     graph::Parameter *d_parameters = nullptr;
 
     int *d_pointOffset;
+    int *d_geometricOffset;
     int *d_constraintOffset;
     int *d_parameterOffset;
 

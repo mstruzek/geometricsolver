@@ -2,6 +2,7 @@
 
 #include "cuda_runtime_api.h"
 
+#include <vector>
 #include "computation_state_data.h"
 #include "stop_watch.h"
 
@@ -9,8 +10,6 @@
 #define CMAX 20
 
 namespace solver {
-
-
 
 /*
  * == = Solver Structural Data - (no dependency on model geometry or constraints)
@@ -24,7 +23,6 @@ class GPUComputationContext {
      *  workspace - zwolnic pamiec i wyzerowac wskazniki , \\cusolver
      */
     ~GPUComputationContext();
-
 
     double *get_dev_norm(size_t itr);
 
@@ -44,13 +42,13 @@ class GPUComputationContext {
 
   public:
     /// cuBlas device norm2
-    double *dev_norm[CMAX] = {nullptr};
+    std::vector<double *> dev_norm;
 
     /// Local Computation References
-    ComputationStateData *ev[CMAX] = {nullptr};
+    std::vector<ComputationStateData *> ev;
 
     /// Device Reference - `synchronized into device` one-way
-    ComputationStateData *dev_ev[CMAX] = {nullptr};
+    std::vector<ComputationStateData *> dev_ev;
 
   private:
     cudaStream_t stream = nullptr;
@@ -64,17 +62,16 @@ class GPUComputationContext {
     graph::StopWatchAdapter evaluationWatch;
 
     /// observation of computation time - single computation run
-    cudaEvent_t computeStart[CMAX] = {nullptr};
-    cudaEvent_t computeStop[CMAX] = {nullptr};
+    std::vector<cudaEvent_t> computeStart;
+    std::vector<cudaEvent_t> computeStop;
 
     /// observation of matrices  preperations
-    cudaEvent_t prepStart[CMAX] = {nullptr};
-    cudaEvent_t prepStop[CMAX] = {nullptr};
+    std::vector<cudaEvent_t> prepStart;
+    std::vector<cudaEvent_t> prepStop;
 
     /// observation of accumalated cuSolver method
-    cudaEvent_t solverStart[CMAX] = {nullptr};
-    cudaEvent_t solverStop[CMAX] = {nullptr};
+    std::vector<cudaEvent_t> solverStart;
+    std::vector<cudaEvent_t> solverStop;
 };
-
 
 } // namespace solver

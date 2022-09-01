@@ -75,7 +75,9 @@ void GPUGeometricSolver::initComputation(cudaError_t *error) {
     *error = cudaPeekAtLastError();
 }
 
-void GPUGeometricSolver::destroyComputation(cudaError_t *error) { _computation.reset(); }
+void GPUGeometricSolver::destroyComputation(cudaError_t *error) { 
+    _computation.reset(); 
+}
 
 /**
  * @brief  setup all matricies for computation and prepare kernel stream  intertwined with cusolver

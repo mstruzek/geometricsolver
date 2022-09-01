@@ -27,6 +27,7 @@ void _checkCuSolverStatus(cusolverStatus_t status, size_t __line__, const char *
     if (status != CUSOLVER_STATUS_SUCCESS)
     {
         const char *format = "[ CuSolver / error ] %s#%d : CuSolver API failed with status %d \n";
+        
         size_t len = strlen(format) + strlen(__file__) + 12;
         std::string message(len, ' ');
         sprintf(message.data(), format, __file__, (int)__line__, status);

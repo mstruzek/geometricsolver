@@ -140,15 +140,15 @@ __global__ void CopyFromStateVector(graph::Point *points, double *SV, size_t siz
 }
 
 /// <summary>
-/// accumulate difference from newton-raphson method;  SV[] = SV[] + b;
+/// accumulate difference from newton-raphson method;  SV[] = SV[] + dx;
 /// </summary>
-__global__ void StateVectorAddDifference(double *SV, double *b, size_t N)
+__global__ void StateVectorAddDifference(double *SV, double *dx, size_t N)
 {
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
     if (tID < N)
     {
-        SV[2 * tID + 0] = SV[2 * tID + 0] + b[2 * tID + 0];
-        SV[2 * tID + 1] = SV[2 * tID + 1] + b[2 * tID + 1];
+        SV[2 * tID + 0] = SV[2 * tID + 0] + dx[2 * tID + 0];
+        SV[2 * tID + 1] = SV[2 * tID + 1] + dx[2 * tID + 1];
     }
 }
 
@@ -542,7 +542,7 @@ __device__ void setForceIntensity_Arc(int row, graph::Geometric const *geometric
 
 __global__ void EvaluateForceIntensity(ComputationStateData *csv, size_t N)
 {
-    ComputationState *ec = static_cast<ComputationState *>(csv);
+    ComputationState *ec = (ComputationState *)csv;
 
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 

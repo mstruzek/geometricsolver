@@ -41,17 +41,19 @@ struct ComputationStateData {
     graph::Constraint *constraints;
     graph::Parameter *parameters;
 
-    const int *pointOffset;       
+    int *pointOffset;       
 
-    const int *constraintOffset;  
+    int *geometricOffset;
+
+    int *constraintOffset;  
 
     /// paramater offs from given ID
-    const int *parameterOffset;   
+    int *parameterOffset;   
 
     /// accumulative offs with geometric size evaluation function
-    const int *accGeometricSize;  
+    int *accGeometricSize;  
 
     /// accumulative offs with constraint size evaluation function
-    const int *accConstraintSize; 
+    int *accConstraintSize; 
 };
 

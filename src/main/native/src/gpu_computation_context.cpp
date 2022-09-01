@@ -9,6 +9,17 @@ namespace solver {
 GPUComputationContext::GPUComputationContext(cudaStream_t stream) : stream(stream) {
     // initialize all static cuda context - no direct or indirect dependent on geometric model.
 
+    dev_norm = std::vector<double*>(CMAX, nullptr);
+    ev = std::vector<ComputationStateData*>(CMAX, nullptr);
+    dev_ev = std::vector<ComputationStateData *>(CMAX, nullptr);
+
+    computeStart = std::vector<cudaEvent_t>(CMAX, nullptr);
+    computeStop = std::vector<cudaEvent_t>(CMAX, nullptr);        
+    prepStart = std::vector<cudaEvent_t>(CMAX, nullptr);
+    prepStop = std::vector<cudaEvent_t>(CMAX, nullptr);        
+    solverStart = std::vector<cudaEvent_t>(CMAX, nullptr);
+    solverStop = std::vector<cudaEvent_t>(CMAX, nullptr);
+
 
     for (int itr = 0; itr < CMAX; itr++) {
         // #observations

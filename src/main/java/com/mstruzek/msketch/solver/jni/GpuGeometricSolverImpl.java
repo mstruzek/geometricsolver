@@ -56,7 +56,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 //         JNISolverGate.setBooleanProperty(JNIDebugCode.SOLVER_INC_HESSIAN.code, true);
 
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG.code, true);
-//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_CHECK_ARG.code, true);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_CHECK_ARG.code, true);
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_A.code, true);
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, false);
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_SV.code, true);
@@ -221,17 +221,20 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
      * Data in moved from State Vector of gpu geometric solver.
      */
     private void fetchGPUComputedPositionsIntoModel() {
-        double[] coordinateVector = JNISolverGate.fetchStateVector();
+//        double[] coordinateVector = JNISolverGate.fetchStateVector();
         int itr = 0;
         for (int pointId : ModelRegistry.dbPoint().keySet()) {
+/*
             double px = coordinateVector[itr * 2];
             double py = coordinateVector[itr * 2 + 1];
+*/
+            double px = JNISolverGate.getPointPXCoordinate(pointId);
+            double py = JNISolverGate.getPointPYCoordinate(pointId);
+
             ModelRegistry.dbPoint().get(pointId).Vector().setLocation(px, py);
             itr++;
         }
         /*
-            double px = JNISolverGate.getPointPXCoordinate(pointId);
-            double py = JNISolverGate.getPointPYCoordinate(pointId);
         */
     }
 

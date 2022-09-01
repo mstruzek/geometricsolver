@@ -2,12 +2,12 @@
 
 #include "cuda_runtime_api.h"
 
-#include <typeinfo>
-#include <numeric>
 #include <functional>
+#include <numeric>
+#include <typeinfo>
 
-#include "utility.cuh"
 #include "solver_kernel.cuh"
+#include "utility.cuh"
 
 namespace solver {
 
@@ -21,27 +21,26 @@ GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::sha
       _geometrics(std::move(geometrics)), _constraints(std::move(constraints)), _parameters(std::move(parameters)) {
     if (_points.size() == 0) {
         printf("empty solution space, add some geometric types\n");
-        *error = cudaSuccess;
+        error = cudaSuccess;
         return;
     }
 
     // model aggreate for const immutable data
     if (_points.size() == 0) {
         printf("[solver] - empty evaluation space model\n");
-        *error = cudaSuccess;
+        error = cudaSuccess;
         return;
     }
 
     if (_constraints.size() == 0) {
         printf("[solver] - no constraint configuration applied onto model\n");
-        *error = cudaSuccess;
+        error = cudaSuccess;
         return;
     }
 
     evaluationWatch.setStartTick();
 
-    if (dev_A != nullptr)
-        return;
+    dev_SV = std::vector<double *>(CMAX, 0);
 
     /// setup all dependent structure for device , accSize or accOffset
     preInitializeData();
@@ -58,6 +57,8 @@ void GPUComputation::preInitializeData() {
 
     /// mapping from point Id => point dest offset
     pointOffset = utility::stateOffset(_points, [](auto point) { return point->id; });
+
+    geometricOffset = utility::stateOffset(_geometrics, [](auto geometric) { return geometric->id; });
 
     constraintOffset = utility::stateOffset(_constraints, [](auto constraint) { return constraint->id; });
 
@@ -94,10 +95,11 @@ void GPUComputation::memcpyComputationToDevice() {
     utility::mallocAsync(&d_parameters, _parameters.size(), _stream);
 
     utility::mallocAsync(&d_pointOffset, pointOffset.size(), _stream);
+    utility::mallocAsync(&d_geometricOffset, geometricOffset.size(), _stream);
     utility::mallocAsync(&d_constraintOffset, constraintOffset.size(), _stream);
     utility::mallocAsync(&d_parameterOffset, parameterOffset.size(), _stream);
-    utility::mallocAsync(&d_accGeometricSize, _geometrics.size(), _stream);
-    utility::mallocAsync(&d_accConstraintSize, _constraints.size(), _stream);
+    utility::mallocAsync(&d_accGeometricSize, accGeometricSize.size(), _stream);
+    utility::mallocAsync(&d_accConstraintSize, accConstraintSize.size(), _stream);
 
     // immutables -
     utility::memcpyAsync(&d_points, _points, _stream);
@@ -107,6 +109,7 @@ void GPUComputation::memcpyComputationToDevice() {
 
     // immutables
     utility::memcpyAsync(&d_pointOffset, pointOffset.data(), pointOffset.size(), _stream);
+    utility::memcpyAsync(&d_geometricOffset, geometricOffset.data(), geometricOffset.size(), _stream);
     utility::memcpyAsync(&d_constraintOffset, constraintOffset.data(), constraintOffset.size(), _stream);
 
     utility::memcpyAsync(&d_accGeometricSize, accGeometricSize.data(), accGeometricSize.size(), _stream);
@@ -179,7 +182,6 @@ void GPUComputation::checkStreamNoError() {
     }
 }
 
-
 GPUComputation *GPUComputation::_registerComputation = nullptr;
 
 void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
@@ -202,8 +204,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     /// !!!  max(max(points.size(), geometrics.size()), constraints.size());
 
     /// default kernel settings
-    const unsigned int ST_DIM_GRID = settings::get()->GRID_SIZE;
-    const unsigned int ST_DIM_BLOCK = settings::get()->BLOCK_SIZE;
+    unsigned int ST_DIM_GRID = settings::get()->GRID_SIZE;
+    unsigned int ST_DIM_BLOCK = settings::get()->BLOCK_SIZE;
 
     solverWatch.setStartTick();
 
@@ -240,6 +242,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         /// preinitialize data vector
         if (itr == 0) {
             /// SV - State Vector
+
             CopyIntoStateVector<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_SV[0], d_points, size);
 
             /// SV -> setup Lagrange multipliers  -
@@ -251,8 +254,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         ///  Host Context - with references to device
 
-        ComputationStateData **ev = _cc->ev;
-        ComputationStateData **dev_ev = _cc->dev_ev;
+        std::vector<ComputationStateData *> &ev = _cc->ev;
+        std::vector<ComputationStateData *> &dev_ev = _cc->dev_ev;
 
         // computation data;
         ev[itr]->cID = itr;
@@ -273,6 +276,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         ev[itr]->parameters = d_parameters;
 
         ev[itr]->pointOffset = d_pointOffset;
+        ev[itr]->geometricOffset = d_geometricOffset;
         ev[itr]->constraintOffset = d_constraintOffset;
         ev[itr]->parameterOffset = d_parameterOffset;
         ev[itr]->accGeometricSize = d_accGeometricSize;
@@ -284,6 +288,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         /// tu chce snapshot transfer
 
         utility::memcpyAsync(&dev_ev[itr], ev[itr], 1, _stream);
+        checkCudaStatus(cudaStreamSynchronize(_stream));
 
         // #observation
         _cc->recordComputeStart(itr);
@@ -306,6 +311,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         /// cudaErrorLaunchOutOfResources  = too many resources requested for launch
         //
         if (settings::get()->SOLVER_INC_HESSIAN) {
+            ST_DIM_BLOCK = _constraints.size();
             EvaluateConstraintHessian<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
         }
         checkStreamNoError();
@@ -316,8 +322,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix
         */
 
-        unsigned int dimBlock = static_cast<unsigned int>(_constraints.size());
-        EvaluateConstraintJacobian<<<ST_DIM_GRID, dimBlock, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+
+        EvaluateConstraintJacobian<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
         checkStreamNoError();
         /*
             Transposed Jacobian - Uperr Tensor Slice
@@ -325,7 +331,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             --- (Wq)'; /// Jq' = (d(Fi)/dq)' --- transposed - write without
            intermediary matrix
         */
-        EvaluateConstraintTRJacobian<<<ST_DIM_GRID, dimBlock, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+
+        EvaluateConstraintTRJacobian<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
         checkStreamNoError();
 
         /// Tworzymy Macierz dest SV dest `b
@@ -361,7 +368,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         _cc->recordSolverStop(itr);
 
         /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ]
-        StateVectorAddDifference<<<DIM_GRID, DIM_BLOCK, Ns, _stream>>>(dev_SV[itr], dev_b, N);
+        StateVectorAddDifference<<<DIM_GRID, N, Ns, _stream>>>(dev_SV[itr], dev_b, N);
         checkStreamNoError();
         // print actual state vector single kernel
 
@@ -372,7 +379,9 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         checkStreamNoError();
 
         ///  uzupelnic #Question: Vector B = Fi(q) = 0 przeliczamy jeszce raz !!!
-        // - not used !!!
+        /// - not used !!! !!
+        ///
+        ///
         utility::memcpyFromDevice(ev[itr], dev_ev[itr], 1, _stream);
 
         double *host_norm = &ev[itr]->norm;
@@ -418,13 +427,15 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     // unregister C-function reference delegate
     GPUComputation::_registerComputation = nullptr;
 
-
     if (settings::get()->DEBUG) {
 
         reportThisResult(computation);
     }
 
-    CopyFromStateVector<<<DIM_GRID, DIM_BLOCK, Ns, _stream>>>(d_points, computation->SV, size);
+    ///
+    /// UWAGA !!! 3 dni poszukiwania bledu -  "smigamy po allokacjach"
+    ///
+    CopyFromStateVector<<<DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(d_points, computation->SV, _points.size());
 
     utility::memcpyFromDevice(_points, d_points, _stream);
 
@@ -560,6 +571,7 @@ GPUComputation::~GPUComputation() {
     utility::freeAsync(d_accGeometricSize, _stream);
     utility::freeAsync(d_accConstraintSize, _stream);
     utility::freeAsync(d_constraintOffset, _stream);
+    utility::freeAsync(d_geometricOffset, _stream);
     utility::freeAsync(d_pointOffset, _stream);
 
     utility::freeAsync(d_points, _stream);
