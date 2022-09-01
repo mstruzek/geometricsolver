@@ -2,8 +2,10 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.controller.EventType;
 import com.mstruzek.controller.Events;
-import com.mstruzek.msketch.solver.*;
-import com.mstruzek.msketch.solver.jni.GpuGeometricSolverImpl;
+import com.mstruzek.msketch.solver.GeometricSolver;
+import com.mstruzek.msketch.solver.GeometricSolverType;
+import com.mstruzek.msketch.solver.SolverStat;
+import com.mstruzek.msketch.solver.StateReporter;
 
 import java.util.Random;
 
@@ -22,36 +24,20 @@ public final class Model {
     }
 
     public static void solveSystem(GeometricSolverType solverType) {
-
-        boolean rightInstance = switch (solverType) {
-            case CPU_SOLVER -> geometricSolver instanceof GeometricSolverImpl;
-            case GPU_SOLVER -> geometricSolver instanceof GpuGeometricSolverImpl;
-            default -> false;
-        };
-
-        if (!rightInstance) {
-
-            if(geometricSolver != null) {
-                geometricSolver.destroyDriver();
-            }
-
-            geometricSolver = switch (solverType) {
-                case CPU_SOLVER -> new GeometricSolverImpl();
-                case GPU_SOLVER -> new GpuGeometricSolverImpl();
-            };
-
-            /*
-             *
-             */
+        if(geometricSolver != null && geometricSolver.solverType() != solverType) {
+            geometricSolver.destroyDriver();
+            geometricSolver = null;
+        }
+        if(geometricSolver == null) {
+            geometricSolver = GeometricSolver.createInstance(solverType);
             geometricSolver.initializeDriver();
         }
-
-        final StateReporter reporter = StateReporter.getInstance();
 
         geometricSolver.setup();
 
         final SolverStat solverStat = geometricSolver.solveSystem();
 
+        final StateReporter reporter = StateReporter.getInstance();
         reporter.reportSolverStatistics(solverStat);
 
         Events.send(EventType.SOLVER_STAT_CHANGE, new Object[]{solverStat});

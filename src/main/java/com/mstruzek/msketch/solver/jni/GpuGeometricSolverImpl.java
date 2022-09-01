@@ -4,6 +4,7 @@ import com.mstruzek.jni.JNIDebugCode;
 import com.mstruzek.jni.JNISolverGate;
 import com.mstruzek.msketch.*;
 import com.mstruzek.msketch.solver.GeometricSolver;
+import com.mstruzek.msketch.solver.GeometricSolverType;
 import com.mstruzek.msketch.solver.SolverStat;
 import com.mstruzek.msketch.solver.StateReporter;
 
@@ -17,6 +18,11 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
     private StateReporter reporter;
 
     private long lastSnapshotId = Long.MIN_VALUE;
+
+    @Override
+    public GeometricSolverType solverType() {
+        return GeometricSolverType.GPU_SOLVER;
+    }
 
     @Override
     public void initializeDriver() {

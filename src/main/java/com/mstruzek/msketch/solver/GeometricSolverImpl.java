@@ -28,6 +28,11 @@ public class GeometricSolverImpl implements GeometricSolver {
 
 
     @Override
+    public GeometricSolverType solverType() {
+        return GeometricSolverType.CPU_SOLVER;
+    }
+
+    @Override
     public void initializeDriver() {
         ///
     }
