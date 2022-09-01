@@ -25,9 +25,9 @@ __device__ constexpr const char *FORMAT_STR_IDX_DOUBLE = "%% %2d  %11.2e \n";
 __device__ constexpr const char *FORMAT_STR_IDX_DOUBLE_E = "%%     %11.2e \n";
 __device__ constexpr const char *FORMAT_STR_DOUBLE_CM = ", %11.2e";
 
-__global__ void stdoutTensorData(ComputationStateData *csv, size_t rows, size_t cols) {
+__global__ void stdoutTensorData(ComputationStateData *ecdata, size_t rows, size_t cols) {
 
-    ComputationState *ev = static_cast<ComputationState *>(csv);
+    ComputationState *ev = static_cast<ComputationState *>(ecdata);
 
     const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
     const graph::Tensor t = graph::tensorDevMem(ev->A, layout, rows, cols);
@@ -41,7 +41,7 @@ __global__ void stdoutTensorData(ComputationStateData *csv, size_t rows, size_t 
     }
     printf("\n");
 
-    /// table data
+    /// table ecdata
 
     for (int i = 0; i < rows; i++) {
         printf(FORMAT_STR_DOUBLE, t.getValue(i, 0));
@@ -54,9 +54,9 @@ __global__ void stdoutTensorData(ComputationStateData *csv, size_t rows, size_t 
     }
 }
 
-__global__ void stdoutRightHandSide(ComputationStateData *csv, size_t rows) {
+__global__ void stdoutRightHandSide(ComputationStateData *ecdata, size_t rows) {
 
-    ComputationState *ev = static_cast<ComputationState *>(csv);
+    ComputationState *ev = static_cast<ComputationState *>(ecdata);
 
     const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
     const graph::Tensor b = graph::tensorDevMem(ev->b, layout, rows, 1);
@@ -64,7 +64,7 @@ __global__ void stdoutRightHandSide(ComputationStateData *csv, size_t rows) {
     printf("\n b \n");
     printf("\n MatrixDouble1 - %d x 1 ****************************************\n", b.rows);
     printf("\n");
-    /// table data
+    /// table ecdata
 
     for (int i = 0; i < rows; i++) {
         printf(FORMAT_STR_DOUBLE, b.getValue(i, 0));
@@ -72,9 +72,9 @@ __global__ void stdoutRightHandSide(ComputationStateData *csv, size_t rows) {
     }
 }
 
-__global__ void stdoutStateVector(ComputationStateData *csv, size_t rows) {
+__global__ void stdoutStateVector(ComputationStateData *ecdata, size_t rows) {
 
-    ComputationState *ev = static_cast<ComputationState *>(csv);
+    ComputationState *ev = static_cast<ComputationState *>(ecdata);
 
     const graph::Layout layout = graph::defaultColumnMajor(rows, 0, 0);
     const graph::Tensor SV = graph::tensorDevMem(ev->SV, layout, rows, 1);
@@ -82,7 +82,7 @@ __global__ void stdoutStateVector(ComputationStateData *csv, size_t rows) {
     printf("\n SV - computation ( %d ) \n", ev->cID);
     printf("\n MatrixDouble1 - %d x 1 ****************************************\n", SV.rows);
     printf("\n");
-    /// table data
+    /// table ecdata
 
     for (int i = 0; i < rows; i++) {
         int pointId = ev->points[i / 2].id;
@@ -162,9 +162,9 @@ __device__ void setStiffnessMatrix_Arc(int rc, graph::Tensor &mt);
  * @param ec
  * @return __global__
  */
-__device__ void ComputeStiffnessMatrix_Impl(ComputationStateData *csv, size_t N) {
+__device__ void ComputeStiffnessMatrix_Impl(ComputationStateData *ecdata, size_t N) {
 
-    ComputationState *ec = static_cast<ComputationState *>(csv);
+    ComputationState *ec = static_cast<ComputationState *>(ecdata);
 
     /// actually max single block with 1024 threads
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
@@ -206,14 +206,14 @@ __device__ void ComputeStiffnessMatrix_Impl(ComputationStateData *csv, size_t N)
     return;
 }
 
-__global__ void ComputeStiffnessMatrix(ComputationStateData *csv, size_t N) { 
+__global__ void ComputeStiffnessMatrix(ComputationStateData *ecdata, size_t N) {
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="csv"></param>
+    /// <param name="ecdata"></param>
     /// <param name="N"></param>
     /// <returns></returns>
-    ComputeStiffnessMatrix_Impl(csv, N); 
+    ComputeStiffnessMatrix_Impl(ecdata, N);
 }
 
 
@@ -528,8 +528,8 @@ __device__ void setForceIntensity_Arc(int row, graph::Geometric const *geometric
 /// Evaluate Force Intensity ==============================================================
 ///
 
-__device__ void EvaluateForceIntensity_Impl(ComputationStateData *csv, size_t N) {
-    ComputationState *ec = (ComputationState *)csv;
+__device__ void EvaluateForceIntensity_Impl(ComputationStateData *ecdata, size_t N) {
+    ComputationState *ec = (ComputationState *)ecdata;
 
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -573,14 +573,14 @@ __device__ void EvaluateForceIntensity_Impl(ComputationStateData *csv, size_t N)
     return;
 }
 
-__global__ void EvaluateForceIntensity(ComputationStateData *csv, size_t N) { 
+__global__ void EvaluateForceIntensity(ComputationStateData *ecdata, size_t N) {
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="csv"></param>
+    /// <param name="ecdata"></param>
     /// <param name="N"></param>
     /// <returns></returns>
-    EvaluateForceIntensity_Impl(csv, N); 
+    EvaluateForceIntensity_Impl(ecdata, N);
 }
 
 ///
@@ -883,8 +883,8 @@ __device__ void setValueConstraintSetVertical(int row, graph::Constraint const *
 ///
 /// Evaluate Constraint Value =============================================================
 ///
-__device__ void EvaluateConstraintValue_Impl(ComputationStateData *csv, size_t N) {
-    ComputationState *ec = static_cast<ComputationState *>(csv);
+__device__ void EvaluateConstraintValue_Impl(ComputationStateData *ecdata, size_t N) {
+    ComputationState *ec = static_cast<ComputationState *>(ecdata);
 
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -956,14 +956,14 @@ __device__ void EvaluateConstraintValue_Impl(ComputationStateData *csv, size_t N
     }
 }
 
-__global__ void EvaluateConstraintValue(ComputationStateData *csv, size_t N) { 
+__global__ void EvaluateConstraintValue(ComputationStateData *ecdata, size_t N) {
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="csv"></param>
+    /// <param name="ecdata"></param>
     /// <param name="N"></param>
     /// <returns></returns>
-    EvaluateConstraintValue_Impl(csv, N); 
+    EvaluateConstraintValue_Impl(ecdata, N);
 }
 
 ///
@@ -1391,8 +1391,8 @@ __device__ void setJacobianConstraintSetVertical(int tID, graph::Constraint cons
 ///
 ///
 ///
-__device__ void EvaluateConstraintJacobian_Impl(ComputationStateData *csv, size_t N) {
-    ComputationState *ec = static_cast<ComputationState *>(csv);
+__device__ void EvaluateConstraintJacobian_Impl(ComputationStateData *ecdata, size_t N) {
+    ComputationState *ec = static_cast<ComputationState *>(ecdata);
 
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -1465,15 +1465,15 @@ __device__ void EvaluateConstraintJacobian_Impl(ComputationStateData *csv, size_
     }
 }
 
-__global__ void EvaluateConstraintJacobian(ComputationStateData *csv, size_t N) {
+__global__ void EvaluateConstraintJacobian(ComputationStateData *ecdata, size_t N) {
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="csv"></param>
+    /// <param name="ecdata"></param>
     /// <param name="N"></param>
     /// <returns></returns>
-    EvaluateConstraintJacobian_Impl(csv, N);
+    EvaluateConstraintJacobian_Impl(ecdata, N);
 }
 
 ///
@@ -1484,9 +1484,9 @@ __global__ void EvaluateConstraintJacobian(ComputationStateData *csv, size_t N) 
 /// (FI)' - (dfi/dq)'   tr-transponowane - upper slice matrix  of A
 ///
 ///
-__device__ void EvaluateConstraintTRJacobian_Impl(ComputationStateData *csv, size_t N) {
+__device__ void EvaluateConstraintTRJacobian_Impl(ComputationStateData *ecdata, size_t N) {
 
-    ComputationState *ec = static_cast<ComputationState *>(csv);
+    ComputationState *ec = static_cast<ComputationState *>(ecdata);
 
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -1561,15 +1561,15 @@ __device__ void EvaluateConstraintTRJacobian_Impl(ComputationStateData *csv, siz
 }
 
 
-__global__ void EvaluateConstraintTRJacobian(ComputationStateData *csv, size_t N) {
+__global__ void EvaluateConstraintTRJacobian(ComputationStateData *ecdata, size_t N) {
     
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="csv"></param>
+    /// <param name="ecdata"></param>
     /// <param name="N"></param>
     /// <returns></returns>
-    EvaluateConstraintTRJacobian_Impl(csv, N);
+    EvaluateConstraintTRJacobian_Impl(ecdata, N);
 
 }
 
@@ -1913,9 +1913,9 @@ __device__ void setHessianTensorConstraintSetVertical(int tID, graph::Constraint
 /// (FI)' - ((dfi/dq)`)/dq
 ///
 ///
-__device__ void EvaluateConstraintHessian_Impl(ComputationStateData *csv, size_t N) {
+__device__ void EvaluateConstraintHessian_Impl(ComputationStateData *ecdata, size_t N) {
 
-    ComputationState *ec = static_cast<ComputationState *>(csv);
+    ComputationState *ec = static_cast<ComputationState *>(ecdata);
 
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -1989,76 +1989,76 @@ __device__ void EvaluateConstraintHessian_Impl(ComputationStateData *csv, size_t
     }
 }
 
-__global__ void EvaluateConstraintHessian(ComputationStateData *csv, size_t N) {
+__global__ void EvaluateConstraintHessian(ComputationStateData *ecdata, size_t N) {
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="csv"></param>
+    /// <param name="ecdata"></param>
     /// <param name="N"></param>
     /// <returns></returns>
-    EvaluateConstraintHessian_Impl(csv, N);
+    EvaluateConstraintHessian_Impl(ecdata, N);
 }
 
 
-__global__ void BuildComputationMatrix(ComputationStateData *csv, size_t geometricN, size_t constraintN) {
+__global__ void BuildComputationMatrix(ComputationStateData *ecdata, size_t geometricN, size_t constraintN) {
 
 //A
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="csv"></param>
+    /// <param name="ecdata"></param>
     /// <param name="geometricN"></param>
     /// <param name="constraintN"></param>
     /// <returns></returns>
-    ComputeStiffnessMatrix_Impl(csv, geometricN);
+    ComputeStiffnessMatrix_Impl(ecdata, geometricN);
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="csv"></param>
+    /// <param name="ecdata"></param>
     /// <param name="geometricN"></param>
     /// <param name="constraintN"></param>
     /// <returns></returns>
-    EvaluateConstraintHessian_Impl(csv, constraintN);
+    EvaluateConstraintHessian_Impl(ecdata, constraintN);
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="csv"></param>
+    /// <param name="ecdata"></param>
     /// <param name="geometricN"></param>
     /// <param name="constraintN"></param>
     /// <returns></returns>
-    EvaluateConstraintJacobian_Impl(csv, constraintN);
+    EvaluateConstraintJacobian_Impl(ecdata, constraintN);
     
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="csv"></param>
+    /// <param name="ecdata"></param>
     /// <param name="geometricN"></param>
     /// <param name="constraintN"></param>
     /// <returns></returns>
-    EvaluateConstraintTRJacobian_Impl(csv, constraintN);
+    EvaluateConstraintTRJacobian_Impl(ecdata, constraintN);
 
 /// B
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="csv"></param>
+    /// <param name="ecdata"></param>
     /// <param name="geometricN"></param>
     /// <param name="constraintN"></param>
     /// <returns></returns>
-    EvaluateForceIntensity_Impl(csv, geometricN);
+    EvaluateForceIntensity_Impl(ecdata, geometricN);
     
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="csv"></param>
+    /// <param name="ecdata"></param>
     /// <param name="geometricN"></param>
     /// <param name="constraintN"></param>
     /// <returns></returns>
-    EvaluateConstraintValue_Impl(csv, constraintN);
+    EvaluateConstraintValue_Impl(ecdata, constraintN);
 }
 
 #endif // #ifndef _SOLVER_KERNEL_CUH_
