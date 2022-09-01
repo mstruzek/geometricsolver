@@ -22,7 +22,7 @@ int setBooleanProperty(int id, bool value)
         setting->DEBUG = value;             // 0
         break;
     case 1:
-        setting->DEBUG_KERNEL = value;      // 1     
+        setting->KERNEL_PRE = value;      // 1     
         break;
     case 2:
         setting->DEBUG_TENSOR_A = value;    // 2

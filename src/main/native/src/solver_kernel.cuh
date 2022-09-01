@@ -2003,9 +2003,6 @@ __global__ void EvaluateConstraintHessian(ComputationStateData *csv, size_t N) {
 __global__ void BuildComputationMatrix(ComputationStateData *csv, size_t geometricN, size_t constraintN) {
 
 //A
-    __syncthreads();
-
-
     /// <summary>
     /// 
     /// </summary>
@@ -2044,7 +2041,6 @@ __global__ void BuildComputationMatrix(ComputationStateData *csv, size_t geometr
     EvaluateConstraintTRJacobian_Impl(csv, constraintN);
 
 /// B
-    __syncthreads();
 
     /// <summary>
     /// 

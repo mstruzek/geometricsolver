@@ -6,7 +6,7 @@ namespace settings
 struct Settings
 {
     bool DEBUG                      = false;        // 0
-    bool DEBUG_KERNEL               = false;        // 1
+    bool KERNEL_PRE                 = true;        // 1
     bool DEBUG_TENSOR_A             = false;        // 2
     bool DEBUG_TENSOR_B             = false;        // 3
     bool DEBUG_TENSOR_SV            = false;        // 4

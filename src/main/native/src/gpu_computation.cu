@@ -301,12 +301,18 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         /// zerujemy macierz A      !!!!! second buffer
         utility::memsetAsync(dev_A, 0, N * N, _stream); // --- ze wzgledu na addytywnosc
        
-        if (!settings::get()->DEBUG_KERNEL) {
+        if (settings::get()->KERNEL_PRE) {
 
+
+            /*
+            *  Matrix A, b vector production kernel
+            */
             BuildComputationMatrix<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size(),
                                                                                _constraints.size());
 
-        } else {
+        } else {  
+
+            /// BEBUG - KERNEL
 
             /// macierz `A
             /// Cooficients Stiffnes Matrix
