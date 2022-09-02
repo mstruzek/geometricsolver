@@ -1,0 +1,249 @@
+#--signature: GeometricConstraintSolver  2009-2022
+#--file-format: V1
+
+#--definition-begin: 
+
+Descriptor(Point) ID(1)    PX(0.000000e+00) PY(-5.000000e+01);
+Descriptor(Point) ID(2)    PX(0.000000e+00) PY(0.000000e+00);
+Descriptor(Point) ID(5)    PX(-5.000000e+01) PY(0.000000e+00);
+Descriptor(Point) ID(6)    PX(0.000000e+00) PY(0.000000e+00);
+
+Descriptor(GeometricObject) ID(1)    TYPE(Line)     P1(1)    P2(2)    P3(-1);
+Descriptor(GeometricObject) ID(2)    TYPE(Line)     P1(5)    P2(6)    P3(-1);
+Descriptor(Constraint) ID(4)   TYPE(Connect2Points)     K(6)     L(2)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(9)    PX(5.000000e+01) PY(-5.000000e+01);
+Descriptor(Point) ID(10)    PX(5.000000e+01) PY(0.000000e+00);
+Descriptor(Point) ID(13)    PX(0.000000e+00) PY(0.000000e+00);
+Descriptor(Point) ID(14)    PX(5.000000e+01) PY(0.000000e+00);
+
+Descriptor(GeometricObject) ID(3)    TYPE(Line)     P1(9)    P2(10)    P3(-1);
+Descriptor(GeometricObject) ID(4)    TYPE(Line)     P1(13)    P2(14)    P3(-1);
+Descriptor(Constraint) ID(9)   TYPE(Connect2Points)     K(14)     L(10)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(10)   TYPE(Connect2Points)     K(13)     L(6)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(17)    PX(1.000000e+02) PY(-5.000000e+01);
+Descriptor(Point) ID(18)    PX(1.000000e+02) PY(0.000000e+00);
+Descriptor(Point) ID(21)    PX(5.000000e+01) PY(0.000000e+00);
+Descriptor(Point) ID(22)    PX(1.000000e+02) PY(0.000000e+00);
+
+Descriptor(GeometricObject) ID(5)    TYPE(Line)     P1(17)    P2(18)    P3(-1);
+Descriptor(GeometricObject) ID(6)    TYPE(Line)     P1(21)    P2(22)    P3(-1);
+Descriptor(Constraint) ID(15)   TYPE(Connect2Points)     K(22)     L(18)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(16)   TYPE(Connect2Points)     K(21)     L(14)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(25)    PX(1.500000e+02) PY(-5.000000e+01);
+Descriptor(Point) ID(26)    PX(1.500000e+02) PY(0.000000e+00);
+Descriptor(Point) ID(29)    PX(1.000000e+02) PY(0.000000e+00);
+Descriptor(Point) ID(30)    PX(1.500000e+02) PY(0.000000e+00);
+
+Descriptor(GeometricObject) ID(7)    TYPE(Line)     P1(25)    P2(26)    P3(-1);
+Descriptor(GeometricObject) ID(8)    TYPE(Line)     P1(29)    P2(30)    P3(-1);
+Descriptor(Constraint) ID(21)   TYPE(Connect2Points)     K(30)     L(26)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(22)   TYPE(Connect2Points)     K(29)     L(22)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(33)    PX(2.000000e+02) PY(-5.000000e+01);
+Descriptor(Point) ID(34)    PX(2.000000e+02) PY(0.000000e+00);
+Descriptor(Point) ID(37)    PX(1.500000e+02) PY(0.000000e+00);
+Descriptor(Point) ID(38)    PX(2.000000e+02) PY(0.000000e+00);
+
+Descriptor(GeometricObject) ID(9)    TYPE(Line)     P1(33)    P2(34)    P3(-1);
+Descriptor(GeometricObject) ID(10)    TYPE(Line)     P1(37)    P2(38)    P3(-1);
+Descriptor(Constraint) ID(27)   TYPE(Connect2Points)     K(38)     L(34)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(28)   TYPE(Connect2Points)     K(37)     L(30)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(41)    PX(0.000000e+00) PY(0.000000e+00);
+Descriptor(Point) ID(42)    PX(0.000000e+00) PY(5.000000e+01);
+Descriptor(Point) ID(45)    PX(-5.000000e+01) PY(5.000000e+01);
+Descriptor(Point) ID(46)    PX(0.000000e+00) PY(5.000000e+01);
+
+Descriptor(GeometricObject) ID(11)    TYPE(Line)     P1(41)    P2(42)    P3(-1);
+Descriptor(GeometricObject) ID(12)    TYPE(Line)     P1(45)    P2(46)    P3(-1);
+Descriptor(Constraint) ID(33)   TYPE(Connect2Points)     K(46)     L(42)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(34)   TYPE(Connect2Points)     K(41)     L(2)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(49)    PX(5.000000e+01) PY(0.000000e+00);
+Descriptor(Point) ID(50)    PX(5.000000e+01) PY(5.000000e+01);
+Descriptor(Point) ID(53)    PX(0.000000e+00) PY(5.000000e+01);
+Descriptor(Point) ID(54)    PX(5.000000e+01) PY(5.000000e+01);
+
+Descriptor(GeometricObject) ID(13)    TYPE(Line)     P1(49)    P2(50)    P3(-1);
+Descriptor(GeometricObject) ID(14)    TYPE(Line)     P1(53)    P2(54)    P3(-1);
+Descriptor(Constraint) ID(39)   TYPE(Connect2Points)     K(54)     L(50)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(40)   TYPE(Connect2Points)     K(49)     L(10)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(41)   TYPE(Connect2Points)     K(53)     L(46)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(57)    PX(1.000000e+02) PY(0.000000e+00);
+Descriptor(Point) ID(58)    PX(1.000000e+02) PY(5.000000e+01);
+Descriptor(Point) ID(61)    PX(5.000000e+01) PY(5.000000e+01);
+Descriptor(Point) ID(62)    PX(1.000000e+02) PY(5.000000e+01);
+
+Descriptor(GeometricObject) ID(15)    TYPE(Line)     P1(57)    P2(58)    P3(-1);
+Descriptor(GeometricObject) ID(16)    TYPE(Line)     P1(61)    P2(62)    P3(-1);
+Descriptor(Constraint) ID(46)   TYPE(Connect2Points)     K(62)     L(58)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(47)   TYPE(Connect2Points)     K(57)     L(18)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(48)   TYPE(Connect2Points)     K(61)     L(54)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(65)    PX(1.500000e+02) PY(0.000000e+00);
+Descriptor(Point) ID(66)    PX(1.500000e+02) PY(5.000000e+01);
+Descriptor(Point) ID(69)    PX(1.000000e+02) PY(5.000000e+01);
+Descriptor(Point) ID(70)    PX(1.500000e+02) PY(5.000000e+01);
+
+Descriptor(GeometricObject) ID(17)    TYPE(Line)     P1(65)    P2(66)    P3(-1);
+Descriptor(GeometricObject) ID(18)    TYPE(Line)     P1(69)    P2(70)    P3(-1);
+Descriptor(Constraint) ID(53)   TYPE(Connect2Points)     K(70)     L(66)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(54)   TYPE(Connect2Points)     K(65)     L(26)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(55)   TYPE(Connect2Points)     K(69)     L(62)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(73)    PX(2.000000e+02) PY(0.000000e+00);
+Descriptor(Point) ID(74)    PX(2.000000e+02) PY(5.000000e+01);
+Descriptor(Point) ID(77)    PX(1.500000e+02) PY(5.000000e+01);
+Descriptor(Point) ID(78)    PX(2.000000e+02) PY(5.000000e+01);
+
+Descriptor(GeometricObject) ID(19)    TYPE(Line)     P1(73)    P2(74)    P3(-1);
+Descriptor(GeometricObject) ID(20)    TYPE(Line)     P1(77)    P2(78)    P3(-1);
+Descriptor(Constraint) ID(60)   TYPE(Connect2Points)     K(78)     L(74)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(61)   TYPE(Connect2Points)     K(73)     L(34)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(62)   TYPE(Connect2Points)     K(77)     L(70)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(81)    PX(0.000000e+00) PY(5.000000e+01);
+Descriptor(Point) ID(82)    PX(0.000000e+00) PY(1.000000e+02);
+Descriptor(Point) ID(85)    PX(-5.000000e+01) PY(1.000000e+02);
+Descriptor(Point) ID(86)    PX(0.000000e+00) PY(1.000000e+02);
+
+Descriptor(GeometricObject) ID(21)    TYPE(Line)     P1(81)    P2(82)    P3(-1);
+Descriptor(GeometricObject) ID(22)    TYPE(Line)     P1(85)    P2(86)    P3(-1);
+Descriptor(Constraint) ID(67)   TYPE(Connect2Points)     K(86)     L(82)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(68)   TYPE(Connect2Points)     K(81)     L(42)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(89)    PX(5.000000e+01) PY(5.000000e+01);
+Descriptor(Point) ID(90)    PX(5.000000e+01) PY(1.000000e+02);
+Descriptor(Point) ID(93)    PX(0.000000e+00) PY(1.000000e+02);
+Descriptor(Point) ID(94)    PX(5.000000e+01) PY(1.000000e+02);
+
+Descriptor(GeometricObject) ID(23)    TYPE(Line)     P1(89)    P2(90)    P3(-1);
+Descriptor(GeometricObject) ID(24)    TYPE(Line)     P1(93)    P2(94)    P3(-1);
+Descriptor(Constraint) ID(73)   TYPE(Connect2Points)     K(94)     L(90)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(74)   TYPE(Connect2Points)     K(89)     L(50)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(75)   TYPE(Connect2Points)     K(93)     L(86)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(97)    PX(1.000000e+02) PY(5.000000e+01);
+Descriptor(Point) ID(98)    PX(1.000000e+02) PY(1.000000e+02);
+Descriptor(Point) ID(101)    PX(5.000000e+01) PY(1.000000e+02);
+Descriptor(Point) ID(102)    PX(1.000000e+02) PY(1.000000e+02);
+
+Descriptor(GeometricObject) ID(25)    TYPE(Line)     P1(97)    P2(98)    P3(-1);
+Descriptor(GeometricObject) ID(26)    TYPE(Line)     P1(101)    P2(102)    P3(-1);
+Descriptor(Constraint) ID(80)   TYPE(Connect2Points)     K(102)     L(98)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(81)   TYPE(Connect2Points)     K(97)     L(58)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(82)   TYPE(Connect2Points)     K(101)     L(94)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(105)    PX(1.500000e+02) PY(5.000000e+01);
+Descriptor(Point) ID(106)    PX(1.500000e+02) PY(1.000000e+02);
+Descriptor(Point) ID(109)    PX(1.000000e+02) PY(1.000000e+02);
+Descriptor(Point) ID(110)    PX(1.500000e+02) PY(1.000000e+02);
+
+Descriptor(GeometricObject) ID(27)    TYPE(Line)     P1(105)    P2(106)    P3(-1);
+Descriptor(GeometricObject) ID(28)    TYPE(Line)     P1(109)    P2(110)    P3(-1);
+Descriptor(Constraint) ID(87)   TYPE(Connect2Points)     K(110)     L(106)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(88)   TYPE(Connect2Points)     K(105)     L(66)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(89)   TYPE(Connect2Points)     K(109)     L(102)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(113)    PX(2.000000e+02) PY(5.000000e+01);
+Descriptor(Point) ID(114)    PX(2.000000e+02) PY(1.000000e+02);
+Descriptor(Point) ID(117)    PX(1.500000e+02) PY(1.000000e+02);
+Descriptor(Point) ID(118)    PX(2.000000e+02) PY(1.000000e+02);
+
+Descriptor(GeometricObject) ID(29)    TYPE(Line)     P1(113)    P2(114)    P3(-1);
+Descriptor(GeometricObject) ID(30)    TYPE(Line)     P1(117)    P2(118)    P3(-1);
+Descriptor(Constraint) ID(94)   TYPE(Connect2Points)     K(118)     L(114)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(95)   TYPE(Connect2Points)     K(113)     L(74)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(96)   TYPE(Connect2Points)     K(117)     L(110)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(121)    PX(0.000000e+00) PY(1.000000e+02);
+Descriptor(Point) ID(122)    PX(0.000000e+00) PY(1.500000e+02);
+Descriptor(Point) ID(125)    PX(-5.000000e+01) PY(1.500000e+02);
+Descriptor(Point) ID(126)    PX(0.000000e+00) PY(1.500000e+02);
+
+Descriptor(GeometricObject) ID(31)    TYPE(Line)     P1(121)    P2(122)    P3(-1);
+Descriptor(GeometricObject) ID(32)    TYPE(Line)     P1(125)    P2(126)    P3(-1);
+Descriptor(Constraint) ID(101)   TYPE(Connect2Points)     K(126)     L(122)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(102)   TYPE(Connect2Points)     K(121)     L(82)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(129)    PX(5.000000e+01) PY(1.000000e+02);
+Descriptor(Point) ID(130)    PX(5.000000e+01) PY(1.500000e+02);
+Descriptor(Point) ID(133)    PX(0.000000e+00) PY(1.500000e+02);
+Descriptor(Point) ID(134)    PX(5.000000e+01) PY(1.500000e+02);
+
+Descriptor(GeometricObject) ID(33)    TYPE(Line)     P1(129)    P2(130)    P3(-1);
+Descriptor(GeometricObject) ID(34)    TYPE(Line)     P1(133)    P2(134)    P3(-1);
+Descriptor(Constraint) ID(107)   TYPE(Connect2Points)     K(134)     L(130)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(108)   TYPE(Connect2Points)     K(129)     L(90)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(109)   TYPE(Connect2Points)     K(133)     L(126)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(137)    PX(1.000000e+02) PY(1.000000e+02);
+Descriptor(Point) ID(138)    PX(1.000000e+02) PY(1.500000e+02);
+Descriptor(Point) ID(141)    PX(5.000000e+01) PY(1.500000e+02);
+Descriptor(Point) ID(142)    PX(1.000000e+02) PY(1.500000e+02);
+
+Descriptor(GeometricObject) ID(35)    TYPE(Line)     P1(137)    P2(138)    P3(-1);
+Descriptor(GeometricObject) ID(36)    TYPE(Line)     P1(141)    P2(142)    P3(-1);
+Descriptor(Constraint) ID(114)   TYPE(Connect2Points)     K(142)     L(138)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(115)   TYPE(Connect2Points)     K(137)     L(98)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(116)   TYPE(Connect2Points)     K(141)     L(134)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(145)    PX(1.500000e+02) PY(1.000000e+02);
+Descriptor(Point) ID(146)    PX(1.500000e+02) PY(1.500000e+02);
+Descriptor(Point) ID(149)    PX(1.000000e+02) PY(1.500000e+02);
+Descriptor(Point) ID(150)    PX(1.500000e+02) PY(1.500000e+02);
+
+Descriptor(GeometricObject) ID(37)    TYPE(Line)     P1(145)    P2(146)    P3(-1);
+Descriptor(GeometricObject) ID(38)    TYPE(Line)     P1(149)    P2(150)    P3(-1);
+Descriptor(Constraint) ID(121)   TYPE(Connect2Points)     K(150)     L(146)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(122)   TYPE(Connect2Points)     K(145)     L(106)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(123)   TYPE(Connect2Points)     K(149)     L(142)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(153)    PX(2.000000e+02) PY(1.000000e+02);
+Descriptor(Point) ID(154)    PX(2.000000e+02) PY(1.500000e+02);
+Descriptor(Point) ID(157)    PX(1.500000e+02) PY(1.500000e+02);
+Descriptor(Point) ID(158)    PX(2.000000e+02) PY(1.500000e+02);
+
+Descriptor(GeometricObject) ID(39)    TYPE(Line)     P1(153)    P2(154)    P3(-1);
+Descriptor(GeometricObject) ID(40)    TYPE(Line)     P1(157)    P2(158)    P3(-1);
+Descriptor(Constraint) ID(128)   TYPE(Connect2Points)     K(158)     L(154)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(129)   TYPE(Connect2Points)     K(153)     L(114)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(130)   TYPE(Connect2Points)     K(157)     L(150)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(161)    PX(0.000000e+00) PY(1.500000e+02);
+Descriptor(Point) ID(162)    PX(0.000000e+00) PY(2.000000e+02);
+Descriptor(Point) ID(165)    PX(-5.000000e+01) PY(2.000000e+02);
+Descriptor(Point) ID(166)    PX(0.000000e+00) PY(2.000000e+02);
+
+Descriptor(GeometricObject) ID(41)    TYPE(Line)     P1(161)    P2(162)    P3(-1);
+Descriptor(GeometricObject) ID(42)    TYPE(Line)     P1(165)    P2(166)    P3(-1);
+Descriptor(Constraint) ID(135)   TYPE(Connect2Points)     K(166)     L(162)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(136)   TYPE(Connect2Points)     K(161)     L(122)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(169)    PX(5.000000e+01) PY(1.500000e+02);
+Descriptor(Point) ID(170)    PX(5.000000e+01) PY(2.000000e+02);
+Descriptor(Point) ID(173)    PX(0.000000e+00) PY(2.000000e+02);
+Descriptor(Point) ID(174)    PX(5.000000e+01) PY(2.000000e+02);
+
+Descriptor(GeometricObject) ID(43)    TYPE(Line)     P1(169)    P2(170)    P3(-1);
+Descriptor(GeometricObject) ID(44)    TYPE(Line)     P1(173)    P2(174)    P3(-1);
+Descriptor(Constraint) ID(141)   TYPE(Connect2Points)     K(174)     L(170)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(142)   TYPE(Connect2Points)     K(169)     L(130)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(143)   TYPE(Connect2Points)     K(173)     L(166)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(177)    PX(1.000000e+02) PY(1.500000e+02);
+Descriptor(Point) ID(178)    PX(1.000000e+02) PY(2.000000e+02);
+Descriptor(Point) ID(181)    PX(5.000000e+01) PY(2.000000e+02);
+Descriptor(Point) ID(182)    PX(1.000000e+02) PY(2.000000e+02);
+
+Descriptor(GeometricObject) ID(45)    TYPE(Line)     P1(177)    P2(178)    P3(-1);
+Descriptor(GeometricObject) ID(46)    TYPE(Line)     P1(181)    P2(182)    P3(-1);
+Descriptor(Constraint) ID(148)   TYPE(Connect2Points)     K(182)     L(178)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(149)   TYPE(Connect2Points)     K(177)     L(138)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(150)   TYPE(Connect2Points)     K(181)     L(174)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(185)    PX(1.500000e+02) PY(1.500000e+02);
+Descriptor(Point) ID(186)    PX(1.500000e+02) PY(2.000000e+02);
+Descriptor(Point) ID(189)    PX(1.000000e+02) PY(2.000000e+02);
+Descriptor(Point) ID(190)    PX(1.500000e+02) PY(2.000000e+02);
+
+Descriptor(GeometricObject) ID(47)    TYPE(Line)     P1(185)    P2(186)    P3(-1);
+Descriptor(GeometricObject) ID(48)    TYPE(Line)     P1(189)    P2(190)    P3(-1);
+Descriptor(Constraint) ID(155)   TYPE(Connect2Points)     K(190)     L(186)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(156)   TYPE(Connect2Points)     K(185)     L(146)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(157)   TYPE(Connect2Points)     K(189)     L(182)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Point) ID(193)    PX(2.000000e+02) PY(1.500000e+02);
+Descriptor(Point) ID(194)    PX(2.000000e+02) PY(2.000000e+02);
+Descriptor(Point) ID(197)    PX(1.500000e+02) PY(2.000000e+02);
+Descriptor(Point) ID(198)    PX(2.000000e+02) PY(2.000000e+02);
+
+Descriptor(GeometricObject) ID(49)    TYPE(Line)     P1(193)    P2(194)    P3(-1);
+Descriptor(GeometricObject) ID(50)    TYPE(Line)     P1(197)    P2(198)    P3(-1);
+Descriptor(Constraint) ID(162)   TYPE(Connect2Points)     K(198)     L(194)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(163)   TYPE(Connect2Points)     K(193)     L(154)     M(-1)    N(-1)    PARAM(-1);
+Descriptor(Constraint) ID(164)   TYPE(Connect2Points)     K(197)     L(190)     M(-1)    N(-1)    PARAM(-1);
+
+
+#--definition-end: 
+

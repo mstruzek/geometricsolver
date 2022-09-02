@@ -83,7 +83,7 @@ tasks.register("compileNative") {
 
 tasks.compileNative.dependsOn(tasks.compileNativeSetup)
 
-tasks.compileJava.dependsOn(tasks.compileNative)
+// tasks.compileJava.dependsOn(tasks.compileNative)
 
 
 tasks.register("cleanNative") {

@@ -2,6 +2,7 @@ package com.mstruzek.jni;
 
 public enum JNIDebugCode {
 
+
     /**
      * additional debug messages from solver routine
      */
@@ -78,7 +79,14 @@ public enum JNIDebugCode {
 
     public final int code;
 
+    public static class Decision {
+        public static final boolean YES = true;
+        public static final boolean NO = false;
+    }
+
+
     JNIDebugCode(int code) {
         this.code = code;
     }
+
 }

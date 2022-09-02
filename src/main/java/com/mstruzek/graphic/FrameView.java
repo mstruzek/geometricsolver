@@ -15,6 +15,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Objects;
@@ -346,8 +347,9 @@ public class FrameView extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JFileChooser jFileChooser = new JFileChooser();
+                jFileChooser.setCurrentDirectory(new File("e:\\source\\gsketcher\\data\\"));
                 jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", "gcm"));
-                int response = jFileChooser.showSaveDialog(null);
+                int response = jFileChooser.showOpenDialog(null);
                 if (response == JFileChooser.APPROVE_OPTION) {
                     controller.readModelFrom(jFileChooser.getSelectedFile());
                 }
@@ -358,6 +360,7 @@ public class FrameView extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JFileChooser jFileChooser = new JFileChooser();
+                jFileChooser.setCurrentDirectory(new File("e:\\source\\gsketcher\\data\\"));
                 jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", "gcm"));
                 int response = jFileChooser.showSaveDialog(null);
                 if (response == JFileChooser.APPROVE_OPTION) {

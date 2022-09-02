@@ -11,6 +11,8 @@ import com.mstruzek.msketch.solver.StateReporter;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.mstruzek.jni.JNIDebugCode.Decision.NO;
+import static com.mstruzek.jni.JNIDebugCode.Decision.YES;
 import static java.util.stream.Collectors.toCollection;
 
 public class GpuGeometricSolverImpl implements GeometricSolver {
@@ -50,25 +52,27 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         reporter.writeln(" [ GPU ] driver connection success");
     }
 
+
     @Override
     public void setup() {
 
 
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG.code, false);
 
+        JNISolverGate.setBooleanProperty(JNIDebugCode.KERNEL_PRE.code, NO);
+
+
         JNISolverGate.setDoubleProperty(JNIDebugCode.CU_SOLVER_EPSILON.code, 10e-2);
+        JNISolverGate.setLongProperty(JNIDebugCode.GRID_SIZE.code, 4); // NOT_USED
+        JNISolverGate.setLongProperty(JNIDebugCode.BLOCK_SIZE.code, 512);
 
-        JNISolverGate.setBooleanProperty(JNIDebugCode.KERNEL_PRE.code, true);
-
-
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_CHECK_ARG.code, false);
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_A.code, false);
-        JNISolverGate.setBooleanProperty(JNIDebugCode.SOLVER_INC_HESSIAN.code, true);
-
+        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_CHECK_ARG.code, NO);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_A.code, NO);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.SOLVER_INC_HESSIAN.code, NO);
 
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, false);
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_SV.code, true);
-//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_SOLVER_CONVERGENCE.code, true);
+//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_SOLVER_CONVERGENCE.code, YES);
 
     }
 
