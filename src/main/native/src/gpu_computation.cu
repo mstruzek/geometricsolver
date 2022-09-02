@@ -376,8 +376,23 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         }
 
 
-
         _cc->recordSolverStart(itr);
+
+        ///  uzupelnic #Question: Vector B = Fi(q) = 0 przeliczamy jeszce raz !!!
+        /// - not used !!! !!
+        ///
+        ///
+        /// utility::memcpyFromDevice(ev[itr], dev_ev[itr], 1, _stream);
+
+        double *host_norm = &ev[itr]->norm;
+
+        //
+        ///  ConstraintGetFullNorm
+        //
+        _linearSystem->vectorNorm(static_cast<int>(coffSize), (dev_b + size), host_norm);
+
+        checkStreamNoError();
+                
         /// ======== DENSE - CuSolver LINER SYSTEM equation CuSolver    === START
 
         _linearSystem->solveLinearEquation(dev_A, dev_b, N);
@@ -396,20 +411,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         }
         checkStreamNoError();
 
-        ///  uzupelnic #Question: Vector B = Fi(q) = 0 przeliczamy jeszce raz !!!
-        /// - not used !!! !!
-        ///
-        ///
-        utility::memcpyFromDevice(ev[itr], dev_ev[itr], 1, _stream);
 
-        double *host_norm = &ev[itr]->norm;
-
-        //
-        ///  ConstraintGetFullNorm
-        //
-        _linearSystem->vectorNorm(static_cast<int>(coffSize), (dev_b + size), host_norm);
-
-        checkStreamNoError();
         /// ============================================================
         ///   copy DeviceComputation to HostComputation -- addCallback
         /// ============================================================
