@@ -2,12 +2,14 @@ package com.mstruzek.msketch.solver;
 
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
+import cern.colt.matrix.impl.SparseDoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
 import com.mstruzek.msketch.*;
 import com.mstruzek.msketch.matrix.PointUtility;
 import com.mstruzek.msketch.matrix.TensorDouble;
 
 import java.time.Instant;
+import java.util.concurrent.*;
 
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
@@ -27,6 +29,8 @@ public class GeometricSolverImpl implements GeometricSolver {
     private StopWatch accLUWatch;             /// Accumulated LU Solver Time - for each round  [ns]
 
 
+    private ExecutorService executorService;
+
     @Override
     public GeometricSolverType solverType() {
         return GeometricSolverType.CPU_SOLVER;
@@ -35,6 +39,11 @@ public class GeometricSolverImpl implements GeometricSolver {
     @Override
     public void initializeDriver() {
         ///
+        if (executorService == null) {
+//            executorService = Executors.newSingleThreadExecutor();
+            executorService = Executors.newWorkStealingPool();
+        }
+
     }
 
     @Override
@@ -86,7 +95,7 @@ public class GeometricSolverImpl implements GeometricSolver {
 
         SolverStat solverStat = new SolverStat();
 
-        solverStat.startTime  = Instant.now().toEpochMilli();
+        solverStat.startTime = Instant.now().toEpochMilli();
         reporter.writeln("#=================== Solver Initialized ===================# ");
         reporter.writeln("");
 
@@ -122,6 +131,12 @@ public class GeometricSolverImpl implements GeometricSolver {
         // - reference locations for Jacobian and Hessian evaluation !
         PointLocation.setup();
 
+
+        /**
+         * Executor - Scheduler - A scheduler , B scheduler - ForkJoinPoll
+         */
+
+
         A = TensorDouble.matrix2D(dimension, dimension, 0.0);
         Fq = TensorDouble.matrix2D(size, size, 0.0);
 
@@ -156,36 +171,47 @@ public class GeometricSolverImpl implements GeometricSolver {
 
             accEvoWatch.startTick();
 
-            /// zerujemy macierz A
-            A.reset(0.0);
 
 /// Tworzymy Macierz vector b vector `b
 
-            GeometricObject.evaluateForceVector(Fr);                 /// Sily  - F(q)
-            Constraint.evaluateConstraintVector(Fi);             /// Wiezy  - Fi(q)
-            // b.setSubMatrix(0,0, (Fr));
-            // b.setSubMatrix(size,0, (Fi));
-            b.mulitply(-1);
+            Future<DoubleMatrix1D> tensorBTask = executorService.submit(() -> {
+
+                GeometricObject.evaluateForceVector(Fr);                 /// Sily  - F(q)
+
+                Constraint.evaluateConstraintVector(Fi);             /// Wiezy  - Fi(q)
+
+                b.mulitply(-1);
+
+                DoubleMatrix1D matrix1Db = MatrixDoubleUtility.toDenseVector(b);
+                return matrix1Db;
+            });
 
 /// macierz `A
 
+            Future<DoubleMatrix2D> tensorATask = executorService.submit(() -> {
+                /// zerujemy macierz A
+                A.reset(0.0);
 
-            /// JACOBIAN
-            Constraint.getFullJacobian(Wq);                     /// Jq = d(Fi)/dq
+                /// JACOBIAN
+                Constraint.getFullJacobian(Wq);                     /// Jq = d(Fi)/dq
 
-            if (StateReporter.isDebugEnabled()) {
+                if (StateReporter.isDebugEnabled()) {
 //                reporter.writeln(MatrixDouble.writeToString(Wq));
-            }
+                }
 
-            Hs.reset(0.0);
+                Hs.reset(0.0);
 
-            Constraint.getFullHessian(Hs, SV, size);
+                Constraint.getFullHessian(Hs, SV, size);
 
-            A.setSubMatrix(0, 0, Fq);                   /// procedure SET
-            A.plusSubMatrix(0, 0, Hs);                   /// procedure ADD
+                A.setSubMatrix(0, 0, Fq);                   /// procedure SET
+                A.plusSubMatrix(0, 0, Hs);                   /// procedure ADD
 
-            A.setSubMatrix(size, 0, Wq);
-            A.setSubMatrix(0, size, Wq.transpose());
+                A.setSubMatrix(size, 0, Wq);
+                A.setSubMatrix(0, size, Wq.transpose());
+
+                DoubleMatrix2D tensorA = MatrixDoubleUtility.toSparse(A);
+                return tensorA;
+            });
 
             /*
              *  LU Decomposition  -- Colt Linear Equation Solver
@@ -194,13 +220,25 @@ public class GeometricSolverImpl implements GeometricSolver {
              */
 /// Solver LU Single Iteration Step
 
+            DoubleMatrix2D matrix2DA = null;
+            DoubleMatrix1D matrix1Db = null;
+
+            try {
+                matrix1Db = tensorBTask.get();
+
+                matrix2DA = tensorATask.get();
+
+            } catch (InterruptedException | ExecutionException e) {
+                reporter.writelnf(" [error] tensor calculation pre processing ! %s",  e.getMessage());
+                e.printStackTrace(System.out);
+                solverStat.convergence = false;
+                return solverStat;
+            }
+
             if (StateReporter.isDebugEnabled()) {
                 reporter.writeln(TensorDouble.writeToString(A));
 //                reporter.writeln(TensorDouble.writeToString(b));
             }
-
-            DoubleMatrix2D matrix2DA = MatrixDoubleUtility.toSparse(A);
-            DoubleMatrix1D matrix1Db = MatrixDoubleUtility.toDenseVector(b);
 
             accEvoWatch.stopTick();
 
@@ -216,12 +254,12 @@ public class GeometricSolverImpl implements GeometricSolver {
             LUDecompositionQuick LU = new LUDecompositionQuick();
             LU.decompose(matrix2DA);
 
-            if(StateReporter.isDebugEnabled()) {
+            if (StateReporter.isDebugEnabled()) {
 //                TensorDouble tensorLU = TensorDouble.matrixDoubleFrom(LU.getLU());
 //                reporter.writeln(TensorDouble.writeToString(tensorLU));
             }
 
-            if(LU.isNonsingular()) {
+            if (LU.isNonsingular()) {
                 LU.solve(matrix1Db);
             } else {
                 reporter.writeln("nonsingular : " + LU.isNonsingular());
@@ -308,6 +346,17 @@ public class GeometricSolverImpl implements GeometricSolver {
     @Override
     public void destroyDriver() {
 
+        if (executorService == null) {
+            return;
+        }
+
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(1000, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            executorService = null;
+            throw new RuntimeException(e);
+        }
     }
 
 }
