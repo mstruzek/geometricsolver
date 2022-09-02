@@ -23,4 +23,11 @@ public class StopWatch {
     public long delta() {
         return stopTick - startTick;
     }
+
+    public void reset(){
+        this.stopTick = 0;
+        this.startTick = 0;
+        this.accTime = 0;
+
+    }
 }

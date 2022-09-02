@@ -24,9 +24,9 @@ public class GeometricSolverImpl implements GeometricSolver {
 
     private StateReporter reporter;
 
-    private StopWatch solverWatch;          /// Solver start/stop                            [ns]
-    private StopWatch accEvoWatch;          /// Accumulated Evaluation Time - for each round [ns]
-    private StopWatch accLUWatch;             /// Accumulated LU Solver Time - for each round  [ns]
+    private StopWatch solverWatch = new StopWatch();          /// Solver start/stop                            [ns]
+    private StopWatch accEvoWatch = new StopWatch();          /// Accumulated Evaluation Time - for each round [ns]
+    private StopWatch accLUWatch = new StopWatch();             /// Accumulated LU Solver Time - for each round  [ns]
 
 
     private ExecutorService executorService;
@@ -43,7 +43,6 @@ public class GeometricSolverImpl implements GeometricSolver {
 //            executorService = Executors.newSingleThreadExecutor();
             executorService = Executors.newWorkStealingPool();
         }
-
     }
 
     @Override
@@ -53,13 +52,12 @@ public class GeometricSolverImpl implements GeometricSolver {
 
         reporter = StateReporter.getInstance();
 
-        solverWatch = new StopWatch();
-        accEvoWatch = new StopWatch();
-        accLUWatch = new StopWatch();
+        solverWatch.reset();
+        accEvoWatch.reset();
+        accLUWatch.reset();
 
 //        Default Matrix Creator for middle matrices !
 //        MatrixDoubleCreator.setInstance(ColtMatrixCreator.INSTANCE);  // [ #[ #[ HEAVY ]# ]# ]
-
     }
 
 
@@ -266,7 +264,6 @@ public class GeometricSolverImpl implements GeometricSolver {
                 solverStat.convergence = false;
                 return solverStat;
             }
-
 
             accLUWatch.stopTick();
 
