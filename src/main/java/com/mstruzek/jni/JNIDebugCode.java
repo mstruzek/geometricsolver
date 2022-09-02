@@ -69,7 +69,12 @@ public enum JNIDebugCode {
     /**
      * This is  workspace size multiplier factor.( the main reason is for less re-allocations )
      */
-    CU_SOLVER_LWORK_FACTOR(21);
+    CU_SOLVER_LWORK_FACTOR(21),
+
+    /**
+     * solution Epsilon : 10e-5
+     */
+    CU_SOLVER_EPSILON(22);
 
     public final int code;
 

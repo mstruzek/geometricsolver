@@ -55,11 +55,17 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
 
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG.code, false);
+
+        JNISolverGate.setDoubleProperty(JNIDebugCode.CU_SOLVER_EPSILON.code, 10e-2);
+
         JNISolverGate.setBooleanProperty(JNIDebugCode.KERNEL_PRE.code, true);
+
 
         JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_CHECK_ARG.code, false);
         JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_A.code, false);
         JNISolverGate.setBooleanProperty(JNIDebugCode.SOLVER_INC_HESSIAN.code, true);
+
+
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, false);
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_SV.code, true);
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_SOLVER_CONVERGENCE.code, true);

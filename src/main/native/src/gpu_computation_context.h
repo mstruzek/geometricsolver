@@ -39,6 +39,12 @@ class GPUComputationContext {
     void recordSolverStop(size_t itr);
 
     void info_solver_version() const;
+        
+    long long getAccPrepTime(int itrBound); 
+
+    long long getAccSolverTime(int itrBound); 
+
+    long long getAccComputeTime(int itrBound); 
 
   public:
     /// cuBlas device norm2

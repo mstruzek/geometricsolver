@@ -312,7 +312,11 @@ void JniSetFieldValue(JNIEnv *env, jclass objClazz, jobject object, const char *
         env->SetDoubleField(object, env->GetFieldID(objClazz, fieldName, "D"), sourceField);
     } else if constexpr (std::is_same<FieldType, long>::value) {
         env->SetLongField(object, env->GetFieldID(objClazz, fieldName, "J"), sourceField);
+    } else if constexpr (std::is_same<FieldType, long long>::value) {
+        env->SetLongField(object, env->GetFieldID(objClazz, fieldName, "J"), sourceField);
     } else if constexpr (std::is_same<FieldType, int>::value) {
+        env->SetIntField(object, env->GetFieldID(objClazz, fieldName, "I"), sourceField);
+    } else if constexpr (std::is_same<FieldType, size_t>::value) {
         env->SetIntField(object, env->GetFieldID(objClazz, fieldName, "I"), sourceField);
     } else if constexpr (std::is_same<FieldType, bool>::value) {
         env->SetBooleanField(object, env->GetFieldID(objClazz, fieldName, "Z"), sourceField);

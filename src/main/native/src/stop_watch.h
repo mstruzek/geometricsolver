@@ -67,6 +67,11 @@ class StopWatchAdapter {
         millis.setStopTick();
     }
 
+    void reset() { 
+        nanos.reset();
+        millis.reset();
+    }
+
     long long delta() {
         return (settings::get()->CLOCK_NANOSECONDS) ? nanos.delta() : millis.delta();
     }

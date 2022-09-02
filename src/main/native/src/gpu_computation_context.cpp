@@ -1,7 +1,8 @@
 #include "gpu_computation_context.h"
 
-#include "cuerror.h"
+#include <algorithm>
 
+#include "cuerror.h"
 #include "utility.cuh"
 
 namespace solver {
@@ -9,17 +10,16 @@ namespace solver {
 GPUComputationContext::GPUComputationContext(cudaStream_t stream) : stream(stream) {
     // initialize all static cuda context - no direct or indirect dependent on geometric model.
 
-    dev_norm = std::vector<double*>(CMAX, nullptr);
-    ev = std::vector<ComputationStateData*>(CMAX, nullptr);
+    dev_norm = std::vector<double *>(CMAX, nullptr);
+    ev = std::vector<ComputationStateData *>(CMAX, nullptr);
     dev_ev = std::vector<ComputationStateData *>(CMAX, nullptr);
 
     computeStart = std::vector<cudaEvent_t>(CMAX, nullptr);
-    computeStop = std::vector<cudaEvent_t>(CMAX, nullptr);        
+    computeStop = std::vector<cudaEvent_t>(CMAX, nullptr);
     prepStart = std::vector<cudaEvent_t>(CMAX, nullptr);
-    prepStop = std::vector<cudaEvent_t>(CMAX, nullptr);        
+    prepStop = std::vector<cudaEvent_t>(CMAX, nullptr);
     solverStart = std::vector<cudaEvent_t>(CMAX, nullptr);
     solverStop = std::vector<cudaEvent_t>(CMAX, nullptr);
-
 
     for (int itr = 0; itr < CMAX; itr++) {
         // #observations
@@ -89,21 +89,66 @@ void GPUComputationContext::info_solver_version() const {
 }
 
 void GPUComputationContext::recordComputeStart(size_t itr) {
+    ///
     checkCudaStatus(cudaEventRecord(computeStart[itr], stream));
 }
 
 void GPUComputationContext::recordComputeStop(size_t itr) {
+    ///
     checkCudaStatus(cudaEventRecord(computeStop[itr], stream));
 }
 
-void GPUComputationContext::recordPrepStart(size_t itr) { checkCudaStatus(cudaEventRecord(prepStart[itr], stream)); }
+void GPUComputationContext::recordPrepStart(size_t itr) {
+    ///
+    checkCudaStatus(cudaEventRecord(prepStart[itr], stream));
+}
 
-void GPUComputationContext::recordPrepStop(size_t itr) { checkCudaStatus(cudaEventRecord(prepStop[itr], stream)); }
+void GPUComputationContext::recordPrepStop(size_t itr) {
+    ///
+    checkCudaStatus(cudaEventRecord(prepStop[itr], stream));
+}
 
 void GPUComputationContext::recordSolverStart(size_t itr) {
+    ///
     checkCudaStatus(cudaEventRecord(solverStart[itr], stream));
 }
 
-void GPUComputationContext::recordSolverStop(size_t itr) { checkCudaStatus(cudaEventRecord(solverStop[itr], stream)); }
+void GPUComputationContext::recordSolverStop(size_t itr) {
+    ///
+    checkCudaStatus(cudaEventRecord(solverStop[itr], stream));
+}
+
+long long GPUComputationContext::getAccPrepTime(int itrBound) {
+    float acc_millis = 0.0;
+    float milliseconds;
+    for (int itr = 0; itr <= itrBound; itr++) {
+        checkCudaStatus(cudaEventSynchronize(prepStop[itr]));
+        checkCudaStatus(cudaEventElapsedTime(&milliseconds, prepStart[itr], prepStop[itr]));
+        acc_millis = acc_millis + milliseconds;
+    }
+    return (long long)(10e6 * acc_millis);
+}
+
+long long GPUComputationContext::getAccSolverTime(int itrBound) {
+    float acc_millis = 0.0;
+    float milliseconds;
+    for (int itr = 0; itr <= itrBound; itr++) {
+        checkCudaStatus(cudaEventSynchronize(solverStop[itr]));
+        checkCudaStatus(cudaEventElapsedTime(&milliseconds, solverStart[itr], solverStop[itr]));
+        acc_millis = acc_millis + milliseconds;
+    }
+    return (long long)(10e6 * acc_millis);
+}
+
+long long GPUComputationContext::getAccComputeTime(int itrBound) {
+    float acc_millis = 0.0;
+    float milliseconds;
+    for (int itr = 0; itr <= itrBound; itr++) {
+        checkCudaStatus(cudaEventSynchronize(computeStop[itr]));
+        checkCudaStatus(cudaEventElapsedTime(&milliseconds, computeStart[itr], computeStop[itr]));
+        acc_millis = acc_millis + milliseconds;
+    }
+    return (long long)(10e6 * acc_millis);
+}
 
 } // namespace solver

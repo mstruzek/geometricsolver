@@ -179,10 +179,10 @@ class GPUComputation {
     /// Solver Performance Watchers
   private:
     ///
-    /// observation of submited tasks
+    /// observation of submited tasks - HOST timer
     graph::StopWatchAdapter solverWatch;
 
-    /// observation of matrix evaluation
+    /// observation of matrix evaluation - HOST timer
     graph::StopWatchAdapter evaluationWatch;
 
     /// Kernel configurations - settings::get() D.3.1.1. Device-Side Kernel Launch - kernel default shared memory,

@@ -240,6 +240,9 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     ///
     while (itr < CMAX) {
         /// preinitialize data vector
+        
+        _cc->recordComputeStart(itr);
+
         if (itr == 0) {
             /// SV - State Vector
 
@@ -287,19 +290,23 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         ///
         /// tu chce snapshot transfer
 
-        utility::memcpyAsync(&dev_ev[itr], ev[itr], 1, _stream);
-        checkCudaStatus(cudaStreamSynchronize(_stream));
+        utility::memcpyAsync(&dev_ev[itr], ev[itr], 1, _stream);       
+        checkStreamNoError();
+
 
         // #observation
-        _cc->recordComputeStart(itr);
+        
 
         _cc->recordPrepStart(itr);
 
         /// # KERNEL_PRE
 
         // if (itr > 0) {
+        
         /// zerujemy macierz A      !!!!! second buffer
         utility::memsetAsync(dev_A, 0, N * N, _stream); // --- ze wzgledu na addytywnosc
+
+
        
         if (settings::get()->KERNEL_PRE) {
 
@@ -315,6 +322,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         } else {  
 
+            
             /// BEBUG - KERNEL
 
             /// macierz `A
@@ -463,16 +471,18 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
     double SOLVER_EPSILON = (settings::get()->CU_SOLVER_EPSILON);
 
+    int iter = computation->cID;
+
     stat->startTime = solverWatch.getStartTick();
     stat->stopTime = solverWatch.getStopTick();
-    stat->timeDelta = solverWatch.delta();
+    stat->timeDelta = _cc->getAccComputeTime(iter); /// solverWatch.delta() + evaluationWatch.delta();
 
     stat->size = size;
     stat->coefficientArity = coffSize;
     stat->dimension = dimension;
 
-    stat->accEvaluationTime = evaluationWatch.delta(); /// !! nasz wewnetrzny allocator pamieci !
-    stat->accSolverTime = solverWatch.delta();
+    stat->accEvaluationTime  = _cc->getAccPrepTime(iter); // evaluationWatch.delta(); /// !! nasz wewnetrzny allocator pamieci !    
+    stat->accSolverTime = _cc->getAccSolverTime(iter);  // solverWatch.delta();
 
     stat->convergence = computation->norm < SOLVER_EPSILON;
     stat->error = computation->norm;
@@ -482,6 +492,10 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     /// Evaluation data for  device  - CONST DATE for in process execution
 
     checkCudaStatus(cudaStreamSynchronize(_stream));
+
+    solverWatch.reset();
+    evaluationWatch.reset();
+
 
     *error = cudaGetLastError();
 }
