@@ -1988,6 +1988,9 @@ __global__ void EvaluateConstraintHessian(ComputationStateData *ecdata, size_t N
 
 __global__ void BuildComputationMatrix(ComputationStateData *ecdata, size_t geometricN, size_t constraintN) {
         
+
+    /// alignment-up to ??? 32 threads - single SMP - 1024 threads 32 x 32
+
     int lowerBound = 0;
     int upperBound = 0;
 

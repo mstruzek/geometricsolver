@@ -383,10 +383,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             checkCudaStatus(cudaStreamSynchronize(_stream));
         }
 
-
-        _cc->recordSolverStart(itr);
-
-        ///  uzupelnic #Question: Vector B = Fi(q) = 0 przeliczamy jeszce raz !!!
+                ///  uzupelnic #Question: Vector B = Fi(q) = 0 przeliczamy jeszce raz !!!
         /// - not used !!! !!
         ///
         ///
@@ -400,18 +397,31 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         _linearSystem->vectorNorm(static_cast<int>(coffSize), (dev_b + size), host_norm);
 
         checkStreamNoError();
+
+
+        _cc->recordSolverStart(itr);
+
                 
         /// ======== DENSE - CuSolver LINER SYSTEM equation CuSolver    === START
 
         _linearSystem->solveLinearEquation(dev_A, dev_b, N);
 
         /// ======== LINER SYSTEM equation CuSolver    === STOP
-        _cc->recordSolverStop(itr);
+        
 
-        /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ]
-        StateVectorAddDifference<<<DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_SV[itr], dev_b, N);
+        /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ] // :: SAXPY
+        /// StateVectorAddDifference<<<DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_SV[itr], dev_b, N);
+
+
+        /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ] // :: SAXPY
+        const double alpha = 1.0;
+        _linearSystem->cublasAPIDaxpy(N, &alpha, dev_b, 1, dev_SV[itr], 1);
+
+        
         checkStreamNoError();
         // print actual state vector single kernel
+
+        _cc->recordSolverStop(itr);
 
         if (settings::get()->DEBUG_TENSOR_SV) {
             stdoutStateVector<<<GRID_DBG, 1, Ns, _stream>>>(dev_ev[itr], N);
@@ -450,7 +460,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     // STATE VECTOR offset
     // oczekuje strumienia ale nie kopiujemy danych
 
-    checkCudaStatus(cudaStreamSynchronize(_stream));
+    // checkCudaStatus(cudaStreamSynchronize(_stream));
 
     // unregister C-function reference delegate
     GPUComputation::_registerComputation = nullptr;
@@ -466,8 +476,6 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     ///     uVector operator[]() { IF DEBUG bound check for  illegal access }
     /// 
     CopyFromStateVector<<<DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(d_points, computation->SV, _points.size());
-
-    utility::memcpyFromDevice(_points, d_points, _stream);
 
     double SOLVER_EPSILON = (settings::get()->CU_SOLVER_EPSILON);
 
@@ -491,11 +499,9 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
     /// Evaluation data for  device  - CONST DATE for in process execution
 
-    checkCudaStatus(cudaStreamSynchronize(_stream));
 
     solverWatch.reset();
-    evaluationWatch.reset();
-
+    evaluationWatch.reset();    
 
     *error = cudaGetLastError();
 }
@@ -533,6 +539,11 @@ double GPUComputation::getPointPYCoordinate(int id) {
 }
 
 void GPUComputation::fillPointCoordinateVector(double *stateVector) {
+
+    utility::memcpyFromDevice(_points, d_points, _stream);
+    
+    checkCudaStatus(cudaStreamSynchronize(_stream));
+    
     for (size_t i = 0, size = _points.size(); i < size; i++) {
         graph::Point &p = _points[i];
         stateVector[2 * i] = p.x;

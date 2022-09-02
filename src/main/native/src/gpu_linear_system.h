@@ -35,6 +35,19 @@ class GPULinearSystem {
     /// <param name="result"></param>
     void vectorNorm(int n, double *x, double *result);
 
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="n"></param>
+    /// <param name="alpha"></param>
+    /// <param name="x"></param>
+    /// <param name="incx"></param>
+    /// <param name="y"></param>
+    /// <param name="incy"></param>
+    void cublasAPIDaxpy(int n, const double *alpha, const double *x, int incx, double *y, int incy);
+
+    ///
     ~GPULinearSystem();
 
   private:

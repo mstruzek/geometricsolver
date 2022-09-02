@@ -122,7 +122,6 @@ long long GPUComputationContext::getAccPrepTime(int itrBound) {
     float acc_millis = 0.0;
     float milliseconds;
     for (int itr = 0; itr <= itrBound; itr++) {
-        checkCudaStatus(cudaEventSynchronize(prepStop[itr]));
         checkCudaStatus(cudaEventElapsedTime(&milliseconds, prepStart[itr], prepStop[itr]));
         acc_millis = acc_millis + milliseconds;
     }
@@ -133,7 +132,6 @@ long long GPUComputationContext::getAccSolverTime(int itrBound) {
     float acc_millis = 0.0;
     float milliseconds;
     for (int itr = 0; itr <= itrBound; itr++) {
-        checkCudaStatus(cudaEventSynchronize(solverStop[itr]));
         checkCudaStatus(cudaEventElapsedTime(&milliseconds, solverStart[itr], solverStop[itr]));
         acc_millis = acc_millis + milliseconds;
     }
@@ -144,7 +142,6 @@ long long GPUComputationContext::getAccComputeTime(int itrBound) {
     float acc_millis = 0.0;
     float milliseconds;
     for (int itr = 0; itr <= itrBound; itr++) {
-        checkCudaStatus(cudaEventSynchronize(computeStop[itr]));
         checkCudaStatus(cudaEventElapsedTime(&milliseconds, computeStart[itr], computeStop[itr]));
         acc_millis = acc_millis + milliseconds;
     }

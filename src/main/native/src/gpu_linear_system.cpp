@@ -7,14 +7,12 @@
 
 namespace solver {
 
-
 ///
 /// Visualt Studio Communit ; > Debug > Wlasciwosci Debugowania > Debugowanie > Srodowisko:
 ///
 ///         CUSOLVERDN_LOG_LEVEL=5
 ///         CUSOLVERDN_LOG_MASK = 16
 ///
-
 
 GPULinearSystem::GPULinearSystem(cudaStream_t _stream) : _stream(_stream) {
 
@@ -37,10 +35,9 @@ GPULinearSystem::GPULinearSystem(cudaStream_t _stream) : _stream(_stream) {
     checkCuSolverStatus(cusolverDnSetStream(handle, _stream));
 
     checkCudaStatus(cudaMallocAsync((void **)&devInfo, 1 * sizeof(int), _stream));
-
 }
 
-void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N ) {
+void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
     //
     //     LU Solver -  !!    this solver REQUIRMENTS -  "  NxN tensor "
     //
@@ -48,7 +45,7 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N ) {
     //
     //     - cusolverDnDgetrf
     //
-    //     - cusolverDnDgetrs    
+    //     - cusolverDnDgetrs
     //
     // Considerations - zapis bezposrednio do zmiennych na urzadzeniu !
     //
@@ -78,7 +75,7 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N ) {
         checkCudaStatus(cudaFreeAsync(devIpiv, _stream));
 
         ///  !!!!Remark: getrf uses fastest implementation with large workspace of size m*n
-        
+
         /// prealocate additional buffer before LU factorization
         Lwork = (int)(Lwork * settings::get()->CU_SOLVER_LWORK_FACTOR);
 
@@ -109,11 +106,11 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N ) {
     /// dont check matrix determinant
     if (settings::get()->DEBUG_CHECK_ARG) {
         checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, 1 * sizeof(int), cudaMemcpyDeviceToHost, _stream));
-        checkCudaStatus(cudaStreamSynchronize(_stream));        
+        checkCudaStatus(cudaStreamSynchronize(_stream));
         if (hInfo < 0) {
             printf("[ LU ] error! wrong parameter %d (exclude handle)\n", -hInfo);
             exit(1);
-        }        
+        }
         if (hInfo > 0) {
             printf("[ LU ] error! tensor A is not positively defined ,  diagonal U(i,i) = 0 ,  i ( %d ) \n", hInfo);
             exit(1);
@@ -153,11 +150,9 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N ) {
     if (settings::get()->DEBUG) {
         printf("[ LU ] operation successful ! \n");
     }
-
 }
 
 void GPULinearSystem::vectorNorm(int n, double *x, double *result) {
-
 
     checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, result));
 
@@ -170,15 +165,25 @@ void GPULinearSystem::vectorNorm(int n, double *x, double *result) {
     }
 }
 
+void GPULinearSystem::cublasAPIDaxpy(int n, const double *alpha, const double *x, int incx, double *y, int incy) {
+
+    checkCublasStatus(::cublasDaxpy(cublasHandle, n, alpha, x, incx, y, incy));
+
+    if (settings::get()->DEBUG_SOLVER_CONVERGENCE) {
+        checkCudaStatus(cudaStreamSynchronize(_stream));
+        printf("[cublas.norm] cublasDaxpy \n");
+    }
+}
+
 GPULinearSystem::~GPULinearSystem() {
 
     checkCudaStatus(cudaFreeAsync(Workspace, _stream));
     checkCudaStatus(cudaFreeAsync(devIpiv, _stream));
     checkCudaStatus(cudaFreeAsync(devInfo, _stream));
 
-    checkCuSolverStatus(cusolverDnDestroy(handle));   
-    
-    checkCublasStatus(cublasDestroy(cublasHandle));    
+    checkCuSolverStatus(cusolverDnDestroy(handle));
+
+    checkCublasStatus(cublasDestroy(cublasHandle));
 }
 
 } // namespace solver
