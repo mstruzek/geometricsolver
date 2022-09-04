@@ -57,11 +57,11 @@ public class ConstraintParametrizedLength extends Constraint {
     @Override
     public void getJacobian(TensorDouble mts) {
         TensorDouble mt = mts;
-        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
-        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
-        double lk = LK.length();
-        double nm = NM.length();
-        double d = (param_id != -1) ? ModelRegistry.dbParameter.get(param_id).getValue() : 1.0;
+        final Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        final Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
+        final double lk = LK.length();
+        final double nm = NM.length();
+        final double d = (param_id != -1) ? ModelRegistry.dbParameter.get(param_id).getValue() : 1.0;
         int j;
 
         //k
@@ -88,17 +88,15 @@ public class ConstraintParametrizedLength extends Constraint {
 
     @Override
     public TensorDouble getValue() {
-        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
-        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
-        double d = (param_id != -1) ? ModelRegistry.dbParameter.get(param_id).getValue() : 1.0;
-        double value = d * LK.length() - NM.length();
+        final Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        final Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
+        final double d = (param_id != -1) ? ModelRegistry.dbParameter.get(param_id).getValue() : 1.0;
+        final double value = d * LK.length() - NM.length();
         return TensorDouble.scalar(value);
     }
 
     @Override
-    public TensorDouble getHessian(double lagrange) {
-        /// bez Hessianu zbierznosc ponizje 1e-10 przy pierwszej iteracji
-        return null;
+    public void getHessian(TensorDouble mt, double lagrange) {
     }
 
     @Override

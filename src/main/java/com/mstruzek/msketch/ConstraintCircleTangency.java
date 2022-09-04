@@ -54,18 +54,18 @@ public class ConstraintCircleTangency extends Constraint {
 
     @Override
     public TensorDouble getValue() {
-        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
-        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
-        Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
+        final Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        final Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
+        final Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
         return TensorDouble.scalar(LK.length() + NM.length() - MK.length());
     }
 
     @Override
     public void getJacobian(TensorDouble mts) {
         TensorDouble mt = mts;
-        Vector vLK = dbPoint.get(l_id).minus(dbPoint.get(k_id)).unit();
-        Vector vNM = dbPoint.get(n_id).minus(dbPoint.get(m_id)).unit();
-        Vector vMK = dbPoint.get(m_id).minus(dbPoint.get(k_id)).unit();
+        final Vector vLK = dbPoint.get(l_id).minus(dbPoint.get(k_id)).unit();
+        final Vector vNM = dbPoint.get(n_id).minus(dbPoint.get(m_id)).unit();
+        final Vector vMK = dbPoint.get(m_id).minus(dbPoint.get(k_id)).unit();
         int j;
         //k
         j = po.get (k_id);
@@ -87,8 +87,7 @@ public class ConstraintCircleTangency extends Constraint {
     }
 
     @Override
-    public TensorDouble getHessian(double lagrange) {
-        return null;
+    public void getHessian(TensorDouble mt, double lagrange) {
     }
 
     @Override

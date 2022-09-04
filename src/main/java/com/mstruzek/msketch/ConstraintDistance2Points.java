@@ -48,7 +48,7 @@ public class ConstraintDistance2Points extends Constraint {
 
     @Override
     public void getJacobian(TensorDouble mts) {
-        Vector LKu = dbPoint.get(l_id).Vector().minus(dbPoint.get(k_id)).unit();
+        final Vector LKu = dbPoint.get(l_id).Vector().minus(dbPoint.get(k_id)).unit();
         TensorDouble mt = mts;
         int j = 0;
         //k
@@ -66,13 +66,12 @@ public class ConstraintDistance2Points extends Constraint {
 
     @Override
     public TensorDouble getValue() {
-        double value = dbPoint.get(l_id).minus(dbPoint.get(k_id)).length() - ModelRegistry.dbParameter.get(param_id).getValue();
+        final double value = dbPoint.get(l_id).minus(dbPoint.get(k_id)).length() - ModelRegistry.dbParameter.get(param_id).getValue();
         return TensorDouble.scalar(value);
     }
 
     @Override
-    public TensorDouble getHessian(double lagrange) {
-        return null;
+    public void getHessian(TensorDouble mt, double lagrange) {
     }
 
     @Override
@@ -107,7 +106,7 @@ public class ConstraintDistance2Points extends Constraint {
 
     @Override
     public double getNorm() {
-        TensorDouble md = getValue();
+        final TensorDouble md = getValue();
         return md.getQuick(0, 0);
     }
 }

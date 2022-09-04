@@ -65,7 +65,7 @@ public class ConstraintLinesParallelism extends Constraint {
     }
 
     public String toString() {
-        double norm = getNorm();
+        final double norm = getNorm();
         if (m == null && n == null)
             return "Constraint-LinesParallelism" + constraintId + "*s" + size() + " = " + norm + " { K =" + dbPoint.get(k_id) + "  ,L =" + dbPoint.get(l_id) + " ,M =" + dbPoint.get(m_id) + ",N =" + dbPoint.get(n_id) + "} \n";
         else {
@@ -75,7 +75,7 @@ public class ConstraintLinesParallelism extends Constraint {
 
     @Override
     public TensorDouble getValue() {
-        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        final Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
         if ((m == null) && (n == null)) {
             double value = LK.cross(dbPoint.get(n_id).minus(dbPoint.get(m_id)));
             return TensorDouble.scalar(value);
@@ -90,8 +90,8 @@ public class ConstraintLinesParallelism extends Constraint {
         TensorDouble mt = mts;
         int i;
         if ((m == null) && (n == null)) {
-            Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
-            Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+            final Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
+            final Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
             //k
             i = po.get(k_id);
             mt.setVector(0, i * 2, NM.pivot());
@@ -106,7 +106,7 @@ public class ConstraintLinesParallelism extends Constraint {
             mt.setVector(0, i * 2, LK.pivot());
 
         } else {
-            Vector NM = n.minus(m);
+            final Vector NM = n.minus(m);
             //k
             i = po.get(k_id);
             mt.setVector(0, i * 2, NM.pivot());
@@ -128,11 +128,12 @@ public class ConstraintLinesParallelism extends Constraint {
     }
 
     @Override
-    public TensorDouble getHessian(double lagrange) {
-        /// macierz NxN
-        TensorDouble mt = TensorDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-        final TensorDouble R = TensorDouble.rotation(90 + 180).mulitply(lagrange);     /// R
-        final TensorDouble Rm = TensorDouble.rotation(90).mulitply(lagrange);          /// Rm = -R
+    public void getHessian(TensorDouble mt, double lagrange) {
+
+        final double L = lagrange;
+
+        final TensorDouble R = TensorDouble.rotation(90 + 180).mulitply(L);     /// R
+        final TensorDouble Rm = TensorDouble.rotation(90).mulitply(L);          /// Rm = -R
         int i;
         int j;
         if ((m == null) && (n == null)) {
@@ -177,11 +178,8 @@ public class ConstraintLinesParallelism extends Constraint {
             j = po.get(l_id);
             mt.plusSubMatrix(2 * i, 2 * j, Rm);
 
-            return mt;
-        } else {
-            // HESSIAN ZERO //m,n - vectory
-            return null;
         }
+        // HESSIAN ZERO //m,n - vectory
     }
 
     @Override
@@ -216,10 +214,11 @@ public class ConstraintLinesParallelism extends Constraint {
 
     @Override
     public double getNorm() {
-        Vector LK = dbPoint.get(k_id).minus(dbPoint.get(l_id));
-        TensorDouble mt = getValue();
+        final Vector LK = dbPoint.get(k_id).minus(dbPoint.get(l_id));
+        final TensorDouble mt = getValue();
         if ((m == null) && (n == null)) {
-            return mt.getQuick(0, 0) / LK.length() / dbPoint.get(m_id).minus(dbPoint.get(n_id)).length();
+            final Vector MN = dbPoint.get(m_id).minus(dbPoint.get(n_id));
+            return mt.getQuick(0, 0) / LK.length() / MN.length();
         } else {
             return mt.getQuick(0, 0) / LK.length() / (m.minus(n)).length();
         }

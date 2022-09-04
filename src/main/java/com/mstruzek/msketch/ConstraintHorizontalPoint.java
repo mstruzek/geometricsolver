@@ -58,13 +58,12 @@ public class ConstraintHorizontalPoint extends Constraint {
 
     @Override
     public TensorDouble getValue() {
-        double value = dbPoint.get(k_id).getX() - dbPoint.get(l_id).getX();
+        final double value = dbPoint.get(k_id).getX() - dbPoint.get(l_id).getX();
         return TensorDouble.scalar(value);
     }
 
     @Override
-    public TensorDouble getHessian(double lagrange) {
-        return null;
+    public void getHessian(TensorDouble mt, double lagrange) {
     }
 
     @Override

@@ -8,7 +8,6 @@ import static com.mstruzek.msketch.ModelRegistry.dbPoint;
  * Klasa reprezentujaca wiez prosopadlosci pomiedzy dwoma wektorami
  * skladajacymi sie z 4 punktow
  * lub 2 punktow i jednego FixLine
- *
  * @author root
  */
 public class ConstraintLinesPerpendicular extends Constraint {
@@ -33,7 +32,6 @@ public class ConstraintLinesPerpendicular extends Constraint {
      * 2 punktami i FixLine(czyli 2 wektory)
      * rownanie tego wiezu to (K-L)'*(M-N) = 0
      * iloczyn skalarny
-     *
      * @param constId
      * @param K
      * @param L
@@ -68,18 +66,24 @@ public class ConstraintLinesPerpendicular extends Constraint {
         TensorDouble mt = mts;
         int j = 0;
         if ((m == null) && (n == null)) {
+
+            final Vector MN = dbPoint.get(m_id).Vector().minus(dbPoint.get(n_id));
+            final Vector KL = dbPoint.get(k_id).Vector().minus(dbPoint.get(l_id));
+
             /// K
             j = po.get(k_id);
-            mt.setVector(0, j * 2, dbPoint.get(m_id).Vector().minus(dbPoint.get(n_id)));
+
+            mt.setVector(0, j * 2, MN);
             /// L
             j = po.get(l_id);
-            mt.setVector(0, j * 2, dbPoint.get(m_id).Vector().minus(dbPoint.get(n_id)).product(-1.0));
+            mt.setVector(0, j * 2, MN.product(-1.0));
             /// M
             j = po.get(m_id);
-            mt.setVector(0, j * 2, dbPoint.get(k_id).Vector().minus(dbPoint.get(l_id)));
+
+            mt.setVector(0, j * 2, KL);
             /// N
             j = po.get(n_id);
-            mt.setVector(0, j * 2, dbPoint.get(k_id).Vector().minus(dbPoint.get(l_id)).product(-1.0));
+            mt.setVector(0, j * 2, KL.product(-1.0));
 
         } else {
             /// K
@@ -105,20 +109,26 @@ public class ConstraintLinesPerpendicular extends Constraint {
     @Override
     public TensorDouble getValue() {
         if ((m == null) && (n == null)) {
-            double value = (dbPoint.get(k_id).minus(dbPoint.get(l_id))).product(dbPoint.get(m_id).minus(dbPoint.get(n_id)));
+            final Vector KL = dbPoint.get(k_id).minus(dbPoint.get(l_id));
+            final Vector MN = dbPoint.get(m_id).minus(dbPoint.get(n_id));
+            final double value = KL.product(MN);
             return TensorDouble.scalar(value);
         } else {
-            double value = (dbPoint.get(k_id).minus(dbPoint.get(l_id))).product(m.minus(n));
+            final Vector KL = dbPoint.get(k_id).minus(dbPoint.get(l_id));
+            final double value = KL.product(m.minus(n));
             return TensorDouble.scalar(value);
         }
     }
 
     @Override
-    public TensorDouble getHessian(double lagrange) {
+    public void getHessian(TensorDouble mt, double lagrange) {
         /// macierz NxN
-        TensorDouble mt = TensorDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-        TensorDouble I = TensorDouble.identity(2, 1.0 * lagrange);
-        TensorDouble Im = TensorDouble.identity(2, 1.0 * lagrange);
+
+        final double L = lagrange;
+
+        final TensorDouble I = TensorDouble.identity(2, 1.0 * L);
+        final TensorDouble Im = TensorDouble.identity(2, 1.0 * L);
+
         int i;
         int j;
         if ((m == null) && (n == null)) {
@@ -126,49 +136,46 @@ public class ConstraintLinesPerpendicular extends Constraint {
             /// K,M
             i = po.get(k_id);
             j = po.get(m_id);
-            mt.setSubMatrix(2 * i, 2 * j, I);
+            mt.plusSubMatrix(2 * i, 2 * j, I);
 
             /// K,N
             i = po.get(k_id);
             j = po.get(n_id);
-            mt.setSubMatrix(2 * i, 2 * j, Im);
+            mt.plusSubMatrix(2 * i, 2 * j, Im);
 
             /// L,M
             i = po.get(l_id);
             j = po.get(m_id);
-            mt.setSubMatrix(2 * i, 2 * j, Im);
+            mt.plusSubMatrix(2 * i, 2 * j, Im);
 
             /// L,N
             i = po.get(l_id);
             j = po.get(n_id);
-            mt.setSubMatrix(2 * i, 2 * j, I);
+            mt.plusSubMatrix(2 * i, 2 * j, I);
 
             /// M,K
             i = po.get(m_id);
             j = po.get(k_id);
-            mt.setSubMatrix(2 * i, 2 * j, I);
+            mt.plusSubMatrix(2 * i, 2 * j, I);
 
             /// M,L
             i = po.get(m_id);
             j = po.get(l_id);
-            mt.setSubMatrix(2 * i, 2 * j, Im);
+            mt.plusSubMatrix(2 * i, 2 * j, Im);
 
             /// N,K
             i = po.get(n_id);
             j = po.get(k_id);
-            mt.setSubMatrix(2 * i, 2 * j, Im);
+            mt.plusSubMatrix(2 * i, 2 * j, Im);
 
             /// N,L
             i = po.get(n_id);
             j = po.get(l_id);
-            mt.setSubMatrix(2 * i, 2 * j, I);
+            mt.plusSubMatrix(2 * i, 2 * j, I);
 
-            return mt;
-        } else {
-            /// m,n - vectory
-            /// HESSIAN ZERO
-            return null;
         }
+        /// m,n - vectory
+        /// HESSIAN ZERO
     }
 
     @Override
@@ -203,10 +210,11 @@ public class ConstraintLinesPerpendicular extends Constraint {
 
     @Override
     public double getNorm() {
-        Vector vKL = dbPoint.get(k_id).minus(dbPoint.get(l_id));
+        final Vector vKL = dbPoint.get(k_id).minus(dbPoint.get(l_id));
         TensorDouble mt = getValue();
         if ((m == null) && (n == null)) {
-            return mt.getQuick(0, 0) / vKL.length() / dbPoint.get(m_id).minus(dbPoint.get(n_id)).length();
+            final Vector MN = dbPoint.get(m_id).minus(dbPoint.get(n_id));
+            return mt.getQuick(0, 0) / vKL.length() / MN.length();
         } else {
             return mt.getQuick(0, 0) / vKL.length() / (m.minus(n)).length();
         }

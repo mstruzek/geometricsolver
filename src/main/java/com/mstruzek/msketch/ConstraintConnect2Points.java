@@ -64,8 +64,7 @@ public class ConstraintConnect2Points extends Constraint {
     }
 
     @Override
-    public TensorDouble getHessian(double lagrange) {
-        return null;
+    public void getHessian(TensorDouble mt, double lagrange) {
     }
 
     @Override
@@ -100,7 +99,7 @@ public class ConstraintConnect2Points extends Constraint {
 
     @Override
     public double getNorm() {
-        TensorDouble md = getValue();
+        final TensorDouble md = getValue();
         return Math.sqrt(md.getQuick(0, 0) * md.getQuick(0, 0) + md.getQuick(1, 0) * md.getQuick(1, 0));
     }
 

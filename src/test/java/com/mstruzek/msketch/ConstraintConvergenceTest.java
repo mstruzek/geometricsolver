@@ -434,7 +434,7 @@ public class ConstraintConvergenceTest {
 
         out.println(tensorDouble.toString());
 
-        TensorDouble hessian = constraint.getHessian(1.0);
+        TensorDouble hessian = constraint.getHessian(, 1.0);
         if(hessian != null){
             out.println(TensorDouble.writeToString(hessian));
         }

@@ -48,18 +48,18 @@ public class ConstraintDistancePointLine extends Constraint {
 
     @Override
     public TensorDouble getValue() {
-        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
-        Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
-        double d = ModelRegistry.dbParameter.get(param_id).getValue();
-        double value = LK.cross(MK)  -  d * LK.length();
+        final Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        final Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
+        final double d = ModelRegistry.dbParameter.get(param_id).getValue();
+        final double value = LK.cross(MK)  -  d * LK.length();
         return TensorDouble.scalar(value);
     }
 
     @Override
     public void getJacobian(TensorDouble mts) {
-        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
-        Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
-        double d = ModelRegistry.dbParameter.get(param_id).getValue(); /// parameter value
+        final Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        final Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
+        final double d = ModelRegistry.dbParameter.get(param_id).getValue(); /// parameter value
         TensorDouble mt = mts;
         int j;
         //k
@@ -88,20 +88,22 @@ public class ConstraintDistancePointLine extends Constraint {
 
     @Override
     @InstabilityBehavior(description = "equations `or Lagrange multiplier , update definition from jacobian equations !!")
-    public TensorDouble getHessian(double lagrange) {
+    public void getHessian(TensorDouble mt, double lagrange) {
+
         if(true)
-            return null;
+            return;
+
+        final double L = lagrange;
 
         /// macierz NxN
-        TensorDouble mt = TensorDouble.matrix2D(dbPoint.size() * 2, dbPoint.size() * 2, 0.0);
-        Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
-        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
-        Vector ML = dbPoint.get(m_id).minus(dbPoint.get(l_id));
-        double d = ModelRegistry.dbParameter.get(param_id).getValue();
-        TensorDouble R = TensorDouble.matrixR();
-        TensorDouble D = TensorDouble.diagonal(2, 2 * d * d);
-        TensorDouble Dm = TensorDouble.diagonal(2, -2 * d * d);
-        double SC = MK.product(LK.pivot()); ///
+        final Vector MK = dbPoint.get(m_id).minus(dbPoint.get(k_id));
+        final Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        final Vector ML = dbPoint.get(m_id).minus(dbPoint.get(l_id));
+        final double d = ModelRegistry.dbParameter.get(param_id).getValue();
+        final TensorDouble R = TensorDouble.matrixR();
+        final TensorDouble D = TensorDouble.diagonal(2, 2 * d * d);
+        final TensorDouble Dm = TensorDouble.diagonal(2, -2 * d * d);
+        final double SC = MK.product(LK.pivot()); ///
         TensorDouble mat;
         int i;
         int j;
@@ -110,58 +112,55 @@ public class ConstraintDistancePointLine extends Constraint {
         i = po.get(k_id);
         j = po.get(k_id);
         mat = ML.pivot().cartesian(MK.pivot().minus(LK.pivot())).mulitply(2).plus(Dm);
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat.mulitply(L));
 
         //k,l
         i = po.get(k_id);
         j = po.get(l_id);
         mat = R.multiplyC(-2.0 * SC).plus(ML.pivot().cartesian(MK).multiply(R).mulitply(2.0)).plus(D);
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat.mulitply(L));
 
         //k,m
         i = po.get(k_id);
         j = po.get(m_id);
         mat = R.multiplyC(2 * SC).plus(ML.pivot().cartesian(LK.pivot()).mulitply(2.0));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat.mulitply(L));
 
         //l,k
         i = po.get(l_id);
         j = po.get(k_id);
         mat = R.multiplyC(2 * SC).plus(MK.pivot().cartesian(ML.pivot()).mulitply(-2.0)).plus(D);
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat.mulitply(L));
 
         //l,l
         i = po.get(l_id);
         j = po.get(l_id);
         mat = MK.pivot().cartesian(MK.pivot()).mulitply(2.0).plus(Dm);
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat.mulitply(L));
 
         //l,m
         i = po.get(l_id);
         j = po.get(m_id);
         mat = R.multiplyC(-2.0 * SC).plus(MK.pivot().cartesian(LK.pivot()).mulitply(-2.0));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat.mulitply(L));
 
         //m,k
         i = po.get(m_id);
         j = po.get(k_id);
         mat = R.multiplyC(-2.0 * SC).plus(LK.pivot().cartesian(MK.pivot()).mulitply(-2.0));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat.mulitply(L));
 
         //m,l
         i = po.get(m_id);
         j = po.get(l_id);
         mat = R.multiplyC(2.0 * SC).plus(LK.pivot().cartesian(MK.pivot()).mulitply(-2.0));
-        mt.setSubMatrix(2 * i, 2 * j, mat);
+        mt.plusSubMatrix(2 * i, 2 * j, mat.mulitply(L));
 
         //m,m
         i = po.get(m_id);
         j = po.get(m_id);
         mat = LK.pivot().cartesian(LK.pivot()).mulitply(2.0);
-        mt.setSubMatrix(2 * i, 2 * j, mat);
-
-        // \\\\\\\ \\\\\\ HESSIAN
-        return mt.mulitply(lagrange);
+        mt.plusSubMatrix(2 * i, 2 * j, mat.mulitply(L));
     }
 
     @Override

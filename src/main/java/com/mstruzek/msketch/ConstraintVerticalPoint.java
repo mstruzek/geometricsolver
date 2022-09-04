@@ -63,8 +63,7 @@ public class ConstraintVerticalPoint extends Constraint {
     }
 
     @Override
-    public TensorDouble getHessian(double lagrange) {
-        return null;
+    public void getHessian(TensorDouble mt, double lagrange) {
     }
 
     @Override

@@ -61,8 +61,8 @@ public class ConstraintEqualLength extends Constraint {
 
     @Override
     public void getJacobian(TensorDouble mts) {
-        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id)).unit();
-        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id)).unit();
+        final Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id)).unit();
+        final Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id)).unit();
         TensorDouble mt = mts;
         int j;
         //k
@@ -86,15 +86,14 @@ public class ConstraintEqualLength extends Constraint {
 
     @Override
     public TensorDouble getValue() {
-        Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
-        Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
-        double value = LK.length() - NM.length();
+        final Vector LK = dbPoint.get(l_id).minus(dbPoint.get(k_id));
+        final Vector NM = dbPoint.get(n_id).minus(dbPoint.get(m_id));
+        final double value = LK.length() - NM.length();
         return TensorDouble.scalar(value);
     }
 
     @Override
-    public TensorDouble getHessian(double lagrange) {
-        return null;
+    public void getHessian(TensorDouble mt, double lagrange) {
     }
 
     @Override
@@ -129,7 +128,7 @@ public class ConstraintEqualLength extends Constraint {
 
     @Override
     public double getNorm() {
-        TensorDouble md = getValue();
+        final TensorDouble md = getValue();
         return md.getQuick(0, 0);
     }
 

@@ -34,7 +34,6 @@ public abstract class Constraint implements ConstraintInterface {
      * Funkcja zwraca WARTOSC WIEZU w postaci skalaru ,przypadek dla Constraint.size=1
      * lub Vectora kolumnowego gdy size=2;
      * bedziemy uzywac podczas sprawdzania czy wiez jest wyzerowany
-     *
      * @return macierz albo 1x1 albo 2x1;
      */
     public abstract TensorDouble getValue();
@@ -42,14 +41,12 @@ public abstract class Constraint implements ConstraintInterface {
     /**
      * Funkcja zwraca Jacobian w postaci wektora wierszowego gdy Constraint.size=1,
      * lub dwa wektory wierszowe gdy size=2;
-     *
      * @param mts write computed jacobian into matrix span.
      */
     public abstract void getJacobian(TensorDouble mts);
 
     /**
      * Funkcja zwraca norme danego wiezu
-     *
      * @return
      */
     public abstract double getNorm();
@@ -57,7 +54,6 @@ public abstract class Constraint implements ConstraintInterface {
     /**
      * Funkcja zwraca true jesli Jacobian jest staly
      * ,jezeli tak jest to Hessian = 0
-     *
      * @return
      */
     public abstract boolean isJacobianConstant();
@@ -68,11 +64,10 @@ public abstract class Constraint implements ConstraintInterface {
      * Jedyny  wiez o size=2 czyli ConstraintConnect2Point ma staly
      * Jacobian zatem nie ma Hessianu
      */
-    public abstract TensorDouble getHessian(double lagrange);
+    public abstract void getHessian(TensorDouble mt, double lagrange);
 
     /**
      * Funkcja zwraca true jesli Hessian jest staly
-     *
      * @return
      */
     public abstract boolean isHessianConst();
@@ -81,7 +76,6 @@ public abstract class Constraint implements ConstraintInterface {
      * Podaje nam ile mnoznikow lagrange'a posiada dany wiez
      * 1 lub 2 co rownowazne jest temu ile wierszy bedzie mial wynik z funkcji
      * getJacobian lub getValue
-     *
      * @return
      */
     public int size() {
@@ -92,7 +86,6 @@ public abstract class Constraint implements ConstraintInterface {
 
     /**
      * Zwraca calkowit� ilosc mnoznikow lagrange'a od wszystkich wiezow
-     *
      * @return
      */
     public static int allLagrangeCoffSize() {
@@ -106,7 +99,6 @@ public abstract class Constraint implements ConstraintInterface {
 
     /**
      * Funkcja zwraca Jakobian ze wszystkich wiezow
-     *
      * @param mt
      * @return macierz ,jakobian wiezow d(Wiezy)/dq
      */
@@ -122,7 +114,6 @@ public abstract class Constraint implements ConstraintInterface {
     /**
      * Funkcja zwraca prawe strony , czyli wartosci wszystkich wiezow
      * w wektorze kolumnowym
-     *
      * @param mt
      * @return
      */
@@ -136,7 +127,6 @@ public abstract class Constraint implements ConstraintInterface {
 
     /**
      * Funkcja zwraca calkowita norme dla wszystkich wiezow
-     *
      * @return
      */
     public static double getFullNorm() {
@@ -150,36 +140,38 @@ public abstract class Constraint implements ConstraintInterface {
 
     /**
      * Funkcja zwraca macierz hessianu dla wszystkich wiezow d(Jak'*a)/dq * ( gdzie  a -  Lagrange coefficient )
-     *
-     * @param hs   Full  HESSIAN
+     * @param mt   Full  HESSIAN
      * @param sv   wektor stanu x i w dolnej czesci wektor z  mnoznikami lagrange'a
      * @param size liczebnosc prymitywnych punktow
      * @return
      */
-    public static TensorDouble getFullHessian(TensorDouble hs, TensorDouble sv, int size) {
+    public static TensorDouble getFullHessian(TensorDouble mt, TensorDouble sv, int size) {
 
-        int offset;             //licznik mnoznikow lagrange'a
-        double lagrange;        //wartosc aktualnego mnoznika
+        int offset;             // licznik mnoznikow lagrange'a
+        double lagrange;        // wartosc aktualnego mnoznika
         TensorDouble conHs;
 
         offset = 0;
         for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
 
             if (!constraint.isJacobianConstant()) {
-                /// pierwsza pochodna po wektorze stanu jest nie const, tak wiec Hessian do przeliczenia
+
+                /*
+                 * pierwsza pochodna po wektorze stanu jest nie const, tak wiec Hessian do przeliczenia
+                 */
                 lagrange = sv.getQuick(size + offset, 0);
-                ///
-                ///   Hessian - dla tego wiezu liczony na cala macierz !
-                ///     TODO  !!!!   langrange ===????
-                conHs = constraint.getHessian(lagrange);
-                if (conHs != null) {
-                    hs.plus((conHs));
-                }
+
+                /*
+                 * Evaluate hessian from constraint context and Lagrange coefficient.
+                 */
+                constraint.getHessian(mt, lagrange);
             }
-            //zwiekszamy aktualny mnoznik Lagrage'a
+            /*
+             *  zwiekszamy aktualny mnoznik Lagrage'a
+             */
             offset += constraint.size();
         }
-        return hs;
+        return mt;
     }
 
     public int getConstraintId() {
