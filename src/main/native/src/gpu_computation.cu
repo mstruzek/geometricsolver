@@ -11,6 +11,43 @@
 
 namespace solver {
 
+/// <summary>
+/// Kernel Dynamic Computation Characteristisc
+/// </summary>
+template <
+    size_t T_ELEMENTS_PER_THREAD = 4, 
+    size_t T_DIM_BLOCK = 512> 
+class KernelTraits {
+
+  public:
+    /// Expected number of elements executed in one kernel thread
+    const unsigned ELEMENTS_PER_THREAD = T_ELEMENTS_PER_THREAD;
+
+    /// Expected block dimension default value
+    const unsigned BLOCK_DIM_DEFAULT = T_DIM_BLOCK;
+
+    /// total number of elements to process in kernel execution
+    const unsigned container_size;
+
+    /// align-up on elements per thread variable
+    const unsigned aligned_container_size =
+        ((unsigned)container_size + ELEMENTS_PER_THREAD - 1) / ELEMENTS_PER_THREAD * ELEMENTS_PER_THREAD;
+
+    /// absolut number of kernel threads in execution process
+    const unsigned block_underflow = aligned_container_size / ELEMENTS_PER_THREAD;
+
+    /// Computed Grid Dimension
+    const unsigned GRID_DIM = (block_underflow + BLOCK_DIM_DEFAULT - 1) / BLOCK_DIM_DEFAULT;
+
+    /// Computed Block Dimension
+    const unsigned BLOCK_DIM = (GRID_DIM == 1) ? block_underflow : BLOCK_DIM_DEFAULT;
+
+    KernelTraits(unsigned int _container_size) : container_size(_container_size) {}
+
+    KernelTraits(size_t _container_size) : KernelTraits(static_cast<unsigned int>(_container_size)) {}
+};
+
+
 /// ====================
 
 GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::shared_ptr<GPULinearSystem> linearSystem,
@@ -186,6 +223,8 @@ void GPUComputation::checkStreamNoError() {
 
 GPUComputation *GPUComputation::_registerComputation = nullptr;
 
+
+
 void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     ///
     /// Concept -> Consideration -> ::"ingest stream and observe" fetch first converged
@@ -252,14 +291,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             /// SV - State Vector
 
             const size_t POINTS_PER_THREAD = 4;
-            unsigned point_size = ((unsigned)_points.size() + POINTS_PER_THREAD - 1) / POINTS_PER_THREAD * POINTS_PER_THREAD;
-            unsigned batch = point_size / POINTS_PER_THREAD;
-            unsigned K_GRID_DIM = (batch + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
-            unsigned DIM_BLOCK = ST_DIM_BLOCK;
-            if (K_GRID_DIM == 1) { 
-                DIM_BLOCK = batch;
-            }
-            CopyIntoStateVector<POINTS_PER_THREAD><<<K_GRID_DIM, DIM_BLOCK, Ns, _stream>>>(dev_SV[0], d_points, _points.size());
+            KernelTraits<POINTS_PER_THREAD, 512> kt(_points.size());                                               
+            CopyIntoStateVector<POINTS_PER_THREAD><<<kt.GRID_DIM, kt.BLOCK_DIM, Ns, _stream>>>(dev_SV[0], d_points, _points.size());
 
             /// SV -> setup Lagrange multipliers  -
             utility::memsetAsync(dev_SV[0] + size, 0, coffSize, _stream);
@@ -334,12 +367,12 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         unsigned G_GRID_DIM = (static_cast<unsigned>(_geometrics.size()) + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
         unsigned C_GRID_DIM = (static_cast<unsigned>(_constraints.size()) + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
 
-        /// -------------------- GRAPH_CAPTURE - BEGIN ------------------------------------------------------------------------ /// ///
+        /// -------------------- GRAPH_CAPTURE - BEGIN
+        /// ------------------------------------------------------------------------ /// ///
         ///
-        /// 
-        /// 
-        
-        
+        ///
+        ///
+
         if (settings::get()->STREAM_CAPTURING) {
 
             /// stream caputure capability
@@ -391,7 +424,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         ///
         ///
-        /// -------------------- GRAPH_CAPTURE - END   ------------------------------------------------------------------------ /// ///        
+        /// -------------------- GRAPH_CAPTURE - END
+        /// ------------------------------------------------------------------------ /// ///
         if (settings::get()->STREAM_CAPTURING) {
 
             /// stream caputure capability
@@ -419,12 +453,12 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
                 // error message parameters are unused here.
 
                 cudaGraphNode_t pErrorNode = NULL;
-                
+
                 const size_t bufferSize = 128;
                 char pLogBuffer[bufferSize] = {};
-                
+
                 checkCudaStatus(cudaGraphInstantiate(&graphExec, graph, &pErrorNode, pLogBuffer, bufferSize));
-                                               
+
                 if (pErrorNode != NULL) {
                     pLogBuffer[bufferSize - 1] = '\0';
                     printf("[error/graph] graph instantation error %s \n", pLogBuffer);
@@ -433,12 +467,11 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             //
             checkCudaStatus(cudaGraphDestroy(graph));
 
-            /// --------------------------  GRAPH_EXECUTION ---------------------------------------------- /// ///        
+            /// --------------------------  GRAPH_EXECUTION ---------------------------------------------- /// ///
             checkCudaStatus(cudaGraphLaunch(graphExec, _stream));
 
             // checkCudaStatus(cudaStreamSynchronize(_stream)); ////          ?????
         }
-        
 
         ///
         _cc->recordPrepStop(itr);
@@ -546,15 +579,11 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     ///
     ///     uVector operator[]() { IF DEBUG bound check for  illegal access }
     ///
-    const size_t POINTS_PER_THREAD = 4;
-    unsigned point_size = ((unsigned)_points.size() + POINTS_PER_THREAD - 1) / POINTS_PER_THREAD * POINTS_PER_THREAD;
-    unsigned batch = point_size / POINTS_PER_THREAD;
-    unsigned K_GRID_DIM = (batch + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
-    unsigned DIM_BLOCK = ST_DIM_BLOCK;
-    if (K_GRID_DIM == 1) { 
-        DIM_BLOCK = batch;
-    }
-    CopyFromStateVector<POINTS_PER_THREAD><<<K_GRID_DIM, DIM_BLOCK, Ns, _stream>>>(d_points, computation->SV, _points.size());
+    
+
+    const size_t POINTS_PER_THREAD = 4;       
+    KernelTraits<POINTS_PER_THREAD, 512> kt(_points.size());   
+    CopyFromStateVector<POINTS_PER_THREAD><<<kt.GRID_DIM, kt.BLOCK_DIM, Ns, _stream>>>(d_points, computation->SV, _points.size());
 
     utility::memcpyFromDevice(_points, d_points, _stream);
 
@@ -570,7 +599,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     stat->coefficientArity = coffSize;
     stat->dimension = dimension;
 
-    stat->accEvaluationTime = _cc->getAccPrepTime(iter);             // evaluationWatch.delta(); /// !! nasz wewnetrzny allocator pamieci !
+    stat->accEvaluationTime =
+        _cc->getAccPrepTime(iter);             // evaluationWatch.delta(); /// !! nasz wewnetrzny allocator pamieci !
     stat->accSolverTime = solverWatch.delta(); // _cc->getAccSolverTime(iter);
 
     stat->convergence = computation->norm < SOLVER_EPSILON;

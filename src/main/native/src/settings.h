@@ -16,8 +16,8 @@ struct Settings
     bool DEBUG_CHECK_ARG            = false;        /// 9
     bool STREAM_CAPTURING           = false;        /// 100
 
-    unsigned int GRID_SIZE          = 1;            /// 10
-    unsigned int BLOCK_SIZE         = 512;          /// 11
+    unsigned GRID_SIZE              = 1;            /// 10
+    unsigned BLOCK_SIZE             = 512;          /// 11
 
     double CU_SOLVER_LWORK_FACTOR   = 1.0;          /// 21
     double CU_SOLVER_EPSILON        = 10.0;         /// 22
