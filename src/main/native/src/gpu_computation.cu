@@ -206,8 +206,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     /// !!!  max(max(points.size(), geometrics.size()), constraints.size());
 
     /// default kernel settings
-    unsigned int ST_DIM_GRID = settings::get()->GRID_SIZE;
-    unsigned int ST_DIM_BLOCK = settings::get()->BLOCK_SIZE;
+    unsigned ST_DIM_GRID = settings::get()->GRID_SIZE;
+    unsigned ST_DIM_BLOCK = settings::get()->BLOCK_SIZE;
 
     solverWatch.setStartTick();
 
@@ -251,7 +251,15 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         if (itr == 0) {
             /// SV - State Vector
 
-            CopyIntoStateVector<<<ST_DIM_GRID, ST_DIM_BLOCK, Ns, _stream>>>(dev_SV[0], d_points, size);
+            const size_t POINTS_PER_THREAD = 4;
+            unsigned point_size = ((unsigned)_points.size() + POINTS_PER_THREAD - 1) / POINTS_PER_THREAD * POINTS_PER_THREAD;
+            unsigned batch = point_size / POINTS_PER_THREAD;
+            unsigned K_GRID_DIM = (batch + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
+            unsigned DIM_BLOCK = ST_DIM_BLOCK;
+            if (K_GRID_DIM == 1) { 
+                DIM_BLOCK = batch;
+            }
+            CopyIntoStateVector<POINTS_PER_THREAD><<<K_GRID_DIM, DIM_BLOCK, Ns, _stream>>>(dev_SV[0], d_points, _points.size());
 
             /// SV -> setup Lagrange multipliers  -
             utility::memsetAsync(dev_SV[0] + size, 0, coffSize, _stream);
@@ -323,12 +331,14 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         /// BEBUG - KERNEL
 
-        unsigned int G_GRID_DIM = (_geometrics.size() + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
-        unsigned int C_GRID_DIM = (_constraints.size() + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
+        unsigned G_GRID_DIM = (static_cast<unsigned>(_geometrics.size()) + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
+        unsigned C_GRID_DIM = (static_cast<unsigned>(_constraints.size()) + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
 
         /// -------------------- GRAPH_CAPTURE - BEGIN ------------------------------------------------------------------------ /// ///
         ///
         /// 
+        /// 
+        
         
         if (settings::get()->STREAM_CAPTURING) {
 
@@ -471,7 +481,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ] // :: SAXPY
         const double alpha = 1.0;
-        _linearSystem->cublasAPIDaxpy(_points.size() * 2, &alpha, dev_b, 1, dev_SV[itr], 1);
+        int point_size = 2 * static_cast<int>(_points.size());
+        _linearSystem->cublasAPIDaxpy(point_size, &alpha, dev_b, 1, dev_SV[itr], 1);
 
         checkStreamNoError();
         // print actual state vector single kernel
@@ -535,8 +546,15 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     ///
     ///     uVector operator[]() { IF DEBUG bound check for  illegal access }
     ///
-    unsigned int K_GRID_DIM = (_points.size() + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
-    CopyFromStateVector<<<K_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(d_points, computation->SV, _points.size());
+    const size_t POINTS_PER_THREAD = 4;
+    unsigned point_size = ((unsigned)_points.size() + POINTS_PER_THREAD - 1) / POINTS_PER_THREAD * POINTS_PER_THREAD;
+    unsigned batch = point_size / POINTS_PER_THREAD;
+    unsigned K_GRID_DIM = (batch + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
+    unsigned DIM_BLOCK = ST_DIM_BLOCK;
+    if (K_GRID_DIM == 1) { 
+        DIM_BLOCK = batch;
+    }
+    CopyFromStateVector<POINTS_PER_THREAD><<<K_GRID_DIM, DIM_BLOCK, Ns, _stream>>>(d_points, computation->SV, _points.size());
 
     utility::memcpyFromDevice(_points, d_points, _stream);
 

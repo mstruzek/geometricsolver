@@ -11,8 +11,6 @@
 
 /// KERNEL#
 
-
-
 /// ==============================================================================
 ///
 ///                             debug utility
@@ -109,11 +107,29 @@ __global__ void stdoutStateVector(ComputationStateData *ecdata, size_t rows) {
 /// </summary>
 /// <param name="ec"></param>
 /// <returns></returns>
+
+template <size_t POINTS_PER_THREAD = 4>
 __global__ void CopyIntoStateVector(double *SV, graph::Point *points, size_t size) {
-    int tID = blockDim.x * blockIdx.x + threadIdx.x;
-    if (tID < size) {
-        SV[2 * tID + 0] = points[tID].x;
-        SV[2 * tID + 1] = points[tID].y;
+    int tId = blockDim.x * blockIdx.x + threadIdx.x;
+
+    int pId = tId * POINTS_PER_THREAD;
+
+    if (( pId + POINTS_PER_THREAD) < size) { /// standard case
+#pragma unroll
+        for (int p = 0; p < POINTS_PER_THREAD; ++p) {
+            int idx = pId + p;
+            SV[2 * idx + 0] = points[idx].x;
+            SV[2 * idx + 1] = points[idx].y;
+        }
+
+    } else { /// edge case
+        for (int p = 0; p < POINTS_PER_THREAD; ++p) {
+            int idx = pId + p;
+            if (idx < size) {
+                SV[2 * idx + 0] = points[idx].x;
+                SV[2 * idx + 1] = points[idx].y;
+            }
+        }
     }
 }
 
@@ -122,16 +138,35 @@ __global__ void CopyIntoStateVector(double *SV, graph::Point *points, size_t siz
 /// </summary>
 /// <param name="ec"></param>
 /// <returns></returns>
+///
+template <size_t POINTS_PER_THREAD = 4> /// amortyzacja wzgledem inicjalizacji kernel a rejestrem watku
 __global__ void CopyFromStateVector(graph::Point *points, double *SV, size_t size) {
-    int tID = blockDim.x * blockIdx.x + threadIdx.x;
-    if (tID < size) {
-        graph::Point *point = &points[tID];
-        point->x = SV[2 * tID + 0];
-        point->y = SV[2 * tID + 1];
+
+    int tId = blockDim.x * blockIdx.x + threadIdx.x;
+    int pId = tId * POINTS_PER_THREAD;
+
+    if (pId + POINTS_PER_THREAD < size) { ///  standard case        
+#pragma unroll
+        for (int p = 0; p < POINTS_PER_THREAD; ++p) {
+            int idx = pId + p;
+            graph::Point *point = &points[idx];
+            point->x = SV[2 * idx + 0];
+            point->y = SV[2 * idx + 1];
+        }
+    } else { ///  edge case
+        
+        for (int p = 0; p < POINTS_PER_THREAD; ++p) {
+            int idx = pId + p;
+            if (idx < size) {
+                graph::Point *point = &points[idx];
+                point->x = SV[2 * idx + 0];
+                point->y = SV[2 * idx + 1];
+            }
+        }
     }
 }
 
-/// <summary> CUB -- ELEMNTS_PER_THREAD ?? 
+/// <summary> CUB -- ELEMNTS_PER_THREAD ??
 /// accumulate difference from newton-raphson method;  SV[] = SV[] + dx;
 /// </summary>
 __global__ void StateVectorAddDifference(double *SV, double *dx, size_t N) {
@@ -207,20 +242,18 @@ __device__ void ComputeStiffnessMatrix_Impl(int tID, ComputationStateData *ecdat
 
 __global__ void ComputeStiffnessMatrix(ComputationStateData *ecdata, size_t N) {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <param name="ecdata"></param>
     /// <param name="N"></param>
     /// <returns></returns>
-    /// 
-    
-    /// From Kernel Reference Addressing 
+    ///
+
+    /// From Kernel Reference Addressing
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
-    
+
     ComputeStiffnessMatrix_Impl(tID, ecdata, N);
 }
-
-
 
 /// -1 * b from equation reduction
 __device__ __constant__ constexpr double SPRING_LOW = CONSTS_SPRING_STIFFNESS_LOW;
@@ -576,7 +609,7 @@ __device__ void EvaluateForceIntensity_Impl(int tID, ComputationStateData *ecdat
 }
 
 __global__ void EvaluateForceIntensity(ComputationStateData *ecdata, size_t N) {
-    
+
     /// Kernel Reference Addressing
     int tId = blockDim.x * blockIdx.x + threadIdx.x;
     ///
@@ -1552,15 +1585,13 @@ __device__ void EvaluateConstraintTRJacobian_Impl(int tID, ComputationStateData 
     }
 }
 
-
 __global__ void EvaluateConstraintTRJacobian(ComputationStateData *ecdata, size_t N) {
-    
+
     /// Kernel Reference Addressing
     int tId = blockDim.x * blockIdx.x + threadIdx.x;
     ///
     EvaluateConstraintTRJacobian_Impl(tId, ecdata, N);
     ///
-
 }
 
 ///
@@ -1984,7 +2015,5 @@ __global__ void EvaluateConstraintHessian(ComputationStateData *ecdata, size_t N
     EvaluateConstraintHessian_Impl(tId, ecdata, N);
     ///
 }
-
-
 
 #endif // #ifndef _SOLVER_KERNEL_CUH_
