@@ -56,10 +56,9 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
     @Override
     public void setup() {
 
-
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG.code, false);
 
-        JNISolverGate.setBooleanProperty(JNIDebugCode.KERNEL_PRE.code, NO);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.STREAM_CAPTURING.code, YES);
 
 
         JNISolverGate.setDoubleProperty(JNIDebugCode.CU_SOLVER_EPSILON.code, 10e-2);

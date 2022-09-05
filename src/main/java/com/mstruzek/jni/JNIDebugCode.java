@@ -75,7 +75,12 @@ public enum JNIDebugCode {
     /**
      * solution Epsilon : 10e-5
      */
-    CU_SOLVER_EPSILON(22);
+    CU_SOLVER_EPSILON(22),
+
+    /**
+     * Stream Capturing Capabilities
+     */
+    STREAM_CAPTURING(100);
 
     public final int code;
 

@@ -42,11 +42,11 @@ template <typename ClockFactory = ClockMillis> class StopWatch {
         accTime += (stopTick - startTick);
     }
 
-    long long delta() const { return stopTick - startTick; }
+    __int64 delta() const { return stopTick - startTick; }
 
-    long long startTick;
-    long long stopTick;
-    long long accTime;
+    __int64 startTick;
+    __int64 stopTick;
+    __int64 accTime;
 };
 
 class StopWatchAdapter {
@@ -72,15 +72,15 @@ class StopWatchAdapter {
         millis.reset();
     }
 
-    long long delta() {
+    __int64 delta() {
         return (settings::get()->CLOCK_NANOSECONDS) ? nanos.delta() : millis.delta();
     }
 
-    long long getStartTick() const {
+    __int64 getStartTick() const {
         return (settings::get()->CLOCK_NANOSECONDS) ? nanos.startTick :  millis.startTick;
     }
 
-    long long getStopTick() const { 
+    __int64 getStopTick() const { 
         return (settings::get()->CLOCK_NANOSECONDS) ? nanos.stopTick : millis.stopTick;
     }
 

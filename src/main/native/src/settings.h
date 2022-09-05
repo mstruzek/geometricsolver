@@ -5,21 +5,22 @@ namespace settings
 
 struct Settings
 {
-    bool DEBUG                      = false;        // 0
-    bool KERNEL_PRE                 = true;        // 1
-    bool DEBUG_TENSOR_A             = false;        // 2
-    bool DEBUG_TENSOR_B             = false;        // 3
-    bool DEBUG_TENSOR_SV            = false;        // 4
-    bool CLOCK_NANOSECONDS          = true;         // 6
-    bool SOLVER_INC_HESSIAN         = false;        // 7
-    bool DEBUG_SOLVER_CONVERGENCE   = false;        // 8
-    bool DEBUG_CHECK_ARG            = false;        // 9
+    bool DEBUG                      = false;        /// 0
+    bool KERNEL_PRE                 = true;         /// 1
+    bool DEBUG_TENSOR_A             = false;        /// 2
+    bool DEBUG_TENSOR_B             = false;        /// 3
+    bool DEBUG_TENSOR_SV            = false;        /// 4
+    bool CLOCK_NANOSECONDS          = true;         /// 6
+    bool SOLVER_INC_HESSIAN         = false;        /// 7
+    bool DEBUG_SOLVER_CONVERGENCE   = false;        /// 8
+    bool DEBUG_CHECK_ARG            = false;        /// 9
+    bool STREAM_CAPTURING           = false;        /// 100
 
-    unsigned int GRID_SIZE          = 1;    // 10
-    unsigned int BLOCK_SIZE         = 512; // 11
+    unsigned int GRID_SIZE          = 1;            /// 10
+    unsigned int BLOCK_SIZE         = 512;          /// 11
 
-    double CU_SOLVER_LWORK_FACTOR   = 1.0;      // 21
-    double CU_SOLVER_EPSILON        = 10.0;     // 22
+    double CU_SOLVER_LWORK_FACTOR   = 1.0;          /// 21
+    double CU_SOLVER_EPSILON        = 10.0;         /// 22
 };
 
 /**

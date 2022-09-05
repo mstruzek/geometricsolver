@@ -62,10 +62,12 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
 
     int preLwork = Lwork;
 
+
+    int dN = (int)N;
     ///
     /// LU - calculate the size of work buffers needed.
     ///
-    checkCuSolverStatus(cusolverDnDgetrf_bufferSize(handle, N, N, A, N, &Lwork));
+    checkCuSolverStatus(cusolverDnDgetrf_bufferSize(handle, dN, dN, A, dN, &Lwork));
 
     checkCudaStatus(cudaPeekAtLastError());
 
@@ -80,7 +82,7 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
         Lwork = (int)(Lwork * settings::get()->CU_SOLVER_LWORK_FACTOR);
 
         checkCudaStatus(cudaMallocAsync((void **)&Workspace, Lwork * sizeof(double), _stream));
-        checkCudaStatus(cudaMallocAsync((void **)&devIpiv, N * sizeof(double), _stream));
+        checkCudaStatus(cudaMallocAsync((void **)&devIpiv, dN * sizeof(double), _stream));
 
         checkCudaStatus(cudaStreamSynchronize(_stream));
 
@@ -94,7 +96,7 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
     ///
     ///     P - permutation vector
     ///
-    checkCuSolverStatus(cusolverDnDgetrf(handle, N, N, A, N, Workspace, devIpiv, devInfo));
+    checkCuSolverStatus(cusolverDnDgetrf(handle, dN, dN, A, dN, Workspace, devIpiv, devInfo));
 
     /*
 

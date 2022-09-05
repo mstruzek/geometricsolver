@@ -235,6 +235,9 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
     int itr = 0;
 
+    // stream capturing
+    cudaGraphExec_t graphExec = NULL;
+
     /// #########################################################################
     ///
     /// idea - zapelniamy strumien w calym zakresie rozwiazania do CMAX -- i
@@ -242,7 +245,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     ///
     while (itr < CMAX) {
         /// preinitialize data vector
-        
+
         _cc->recordComputeStart(itr);
 
         if (itr == 0) {
@@ -277,7 +280,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         ev[itr]->points = NVector<graph::Point>(d_points, _points.size());
         ev[itr]->geometrics = NVector<graph::Geometric>(d_geometrics, _geometrics.size());
-        ev[itr]->constraints = NVector<graph::Constraint>(d_constraints,_constraints.size());
+        ev[itr]->constraints = NVector<graph::Constraint>(d_constraints, _constraints.size());
         ev[itr]->parameters = NVector<graph::Parameter>(d_parameters, _parameters.size());
 
         ev[itr]->pointOffset = d_pointOffset;
@@ -292,95 +295,143 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         ///
         /// tu chce snapshot transfer
 
-        utility::memcpyAsync(&dev_ev[itr], ev[itr], 1, _stream);       
+        utility::memcpyAsync(&dev_ev[itr], ev[itr], 1, _stream);
         checkStreamNoError();
 
-        
         //  -----SYNC
         checkCudaStatus(cudaStreamSynchronize(_stream));
 
         // #observation
-        
 
         _cc->recordPrepStart(itr);
 
         /// # KERNEL_PRE
 
         // if (itr > 0) {
-        
+
         /// zerujemy macierz A      !!!!! second buffer
         utility::memsetAsync(dev_A, 0, N * N, _stream); // --- ze wzgledu na addytywnosc
 
+        //
 
-       
-        if (settings::get()->KERNEL_PRE) {
+        /*
+         *  Cuda Graph Capturing - Mechanism
+         */
+        cudaGraph_t graph;
+        cudaGraphExecUpdateResult updateResult;
+        cudaGraphNode_t errorNode;
 
+        /// BEBUG - KERNEL
 
-            /*
-            *  Matrix A, b vector production kernel -  Question ?
-            */
-            /// computation threads requirments
-            unsigned int TRDS = 3 * _geometrics.size() + 3 * _constraints.size();
-            unsigned int K_GRID_DIM = (TRDS + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
-            BuildComputationMatrix<<<K_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size(),
-                                                                               _constraints.size());
+        unsigned int G_GRID_DIM = (_geometrics.size() + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
+        unsigned int C_GRID_DIM = (_constraints.size() + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
 
-        } else {  
+        /// -------------------- GRAPH_CAPTURE - BEGIN ------------------------------------------------------------------------ /// ///
+        ///
+        /// 
+        
+        if (settings::get()->STREAM_CAPTURING) {
 
-            
-            /// BEBUG - KERNEL
-
-            unsigned int G_GRID_DIM = (_geometrics.size() + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
-            unsigned int C_GRID_DIM = (_constraints.size() + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
-
-
-            /// macierz `A
-            /// Cooficients Stiffnes Matrix
-            ComputeStiffnessMatrix<<<G_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
-            checkStreamNoError();
-
-            /// [ cuda / error ] 701 : cuda API failed 701,
-            /// cudaErrorLaunchOutOfResources  = too many resources requested for launch
-            //
-            if (settings::get()->SOLVER_INC_HESSIAN) {
-                EvaluateConstraintHessian<<<C_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
-            }
-            checkStreamNoError();
-
-            /*
-                Lower Tensor Slice
-
-                --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix
-            */
-
-            EvaluateConstraintJacobian<<<C_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
-            checkStreamNoError();
-            /*
-                Transposed Jacobian - Uperr Tensor Slice
-
-                --- (Wq)'; /// Jq' = (d(Fi)/dq)' --- transposed - write without
-               intermediary matrix
-            */
-
-            EvaluateConstraintTRJacobian<<<C_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
-            checkStreamNoError();
-
-            /// Tworzymy Macierz dest SV dest `b
-
-            /// [ SV ]  - right hand site
-
-            /// Fr /// Sily  - F(q) --  !!!!!!!
-            EvaluateForceIntensity<<<G_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
-            checkStreamNoError();
-
-            /// Fi / Wiezy  - Fi(q)
-            EvaluateConstraintValue<<<C_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
-            checkStreamNoError();
+            /// stream caputure capability
+            checkCudaStatus(cudaStreamBeginCapture(_stream, cudaStreamCaptureModeGlobal));
         }
 
-/// 
-        _cc->recordPrepStop(itr);
+        /// macierz `A
+        /// Cooficients Stiffnes Matrix
+        ComputeStiffnessMatrix<<<G_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
+        checkStreamNoError();
 
+        /// [ cuda / error ] 701 : cuda API failed 701,
+        /// cudaErrorLaunchOutOfResources  = too many resources requested for launch
+        //
+        if (settings::get()->SOLVER_INC_HESSIAN) {
+            EvaluateConstraintHessian<<<C_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+        }
+        checkStreamNoError();
+
+        /*
+            Lower Tensor Slice
+
+            --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix
+        */
+
+        EvaluateConstraintJacobian<<<C_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+        checkStreamNoError();
+        /*
+            Transposed Jacobian - Uperr Tensor Slice
+
+            --- (Wq)'; /// Jq' = (d(Fi)/dq)' --- transposed - write without
+           intermediary matrix
+        */
+
+        EvaluateConstraintTRJacobian<<<C_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+        checkStreamNoError();
+
+        /// Tworzymy Macierz dest SV dest `b
+
+        /// [ SV ]  - right hand site
+
+        /// Fr /// Sily  - F(q) --  !!!!!!!
+        EvaluateForceIntensity<<<G_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
+        checkStreamNoError();
+
+        /// Fi / Wiezy  - Fi(q)
+        EvaluateConstraintValue<<<C_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+        checkStreamNoError();
+
+        ///
+        ///
+        /// -------------------- GRAPH_CAPTURE - END   ------------------------------------------------------------------------ /// ///        
+        if (settings::get()->STREAM_CAPTURING) {
+
+            /// stream caputure capability
+            checkCudaStatus(cudaStreamEndCapture(_stream, &graph));
+
+            // If we've already instantiated the graph, try to update it directly
+            // and avoid the instantiation overhead
+            if (graphExec != NULL) {
+                // If the graph fails to update, errorNode will be set to the
+                // node causing the failure and updateResult will be set to a
+                // reason code.
+                cudaGraphExecUpdate(graphExec, graph, &errorNode, &updateResult);
+            }
+
+            // Instantiate during the first iteration or whenever the update
+            // fails for any reason
+            if (graphExec == NULL || updateResult != cudaGraphExecUpdateSuccess) {
+
+                // If a previous update failed, destroy the cudaGraphExec_t
+                // before re-instantiating it
+                if (graphExec != NULL) {
+                    checkCudaStatus(cudaGraphExecDestroy(graphExec));
+                }
+                // Instantiate graphExec from graph. The error node and
+                // error message parameters are unused here.
+
+                cudaGraphNode_t pErrorNode = NULL;
+                
+                const size_t bufferSize = 128;
+                char pLogBuffer[bufferSize] = {};
+                
+                checkCudaStatus(cudaGraphInstantiate(&graphExec, graph, &pErrorNode, pLogBuffer, bufferSize));
+                                               
+                if (pErrorNode != NULL) {
+                    pLogBuffer[bufferSize - 1] = '\0';
+                    printf("[error/graph] graph instantation error %s \n", pLogBuffer);
+                }
+            }
+            //
+            checkCudaStatus(cudaGraphDestroy(graph));
+
+            /// --------------------------  GRAPH_EXECUTION ---------------------------------------------- /// ///        
+            checkCudaStatus(cudaGraphLaunch(graphExec, _stream));
+
+            // checkCudaStatus(cudaStreamSynchronize(_stream)); ////          ?????
+        }
+        
+
+        ///
+        _cc->recordPrepStop(itr);
 
         if (settings::get()->DEBUG_TENSOR_A) {
             stdoutTensorData<<<GRID_DBG, 1, Ns, _stream>>>(dev_ev[itr], N, N);
@@ -392,7 +443,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             checkCudaStatus(cudaStreamSynchronize(_stream));
         }
 
-                ///  uzupelnic #Question: Vector B = Fi(q) = 0 przeliczamy jeszce raz !!!
+        ///  uzupelnic #Question: Vector B = Fi(q) = 0 przeliczamy jeszce raz !!!
         /// - not used !!! !!
         ///
         ///
@@ -406,27 +457,22 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         _linearSystem->vectorNorm(static_cast<int>(coffSize), (dev_b + size), host_norm);
         checkStreamNoError();
 
-
         _cc->recordSolverStart(itr);
 
-                
         /// ======== DENSE - CuSolver LINER SYSTEM equation CuSolver    === START
 
         _linearSystem->solveLinearEquation(dev_A, dev_b, N);
 
         /// ======== LINER SYSTEM equation CuSolver    === STOP
-        
 
         /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ] // :: SAXPY
-        //unsigned int P_GRID_DIM = (_points.size()  + ST_DIM_BLOCK - 1 )/ ST_DIM_BLOCK;
-        //StateVectorAddDifference<<<P_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_SV[itr], dev_b, _points.size());
-
+        // unsigned int P_GRID_DIM = (_points.size()  + ST_DIM_BLOCK - 1 )/ ST_DIM_BLOCK;
+        // StateVectorAddDifference<<<P_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_SV[itr], dev_b, _points.size());
 
         /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ] // :: SAXPY
         const double alpha = 1.0;
         _linearSystem->cublasAPIDaxpy(_points.size() * 2, &alpha, dev_b, 1, dev_SV[itr], 1);
 
-        
         checkStreamNoError();
         // print actual state vector single kernel
 
@@ -438,7 +484,6 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         }
         checkStreamNoError();
 
-
         /// ============================================================
         ///   copy DeviceComputation to HostComputation -- addCallback
         /// ============================================================
@@ -448,7 +493,6 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         checkCudaStatus(cudaStreamAddCallback(_stream, GPUComputation::computationResultHandlerDelegate, userData, 0));
 
         _cc->recordComputeStop(itr);
-
 
         if (result.load(std::memory_order_seq_cst) != nullptr) {
 
@@ -488,15 +532,13 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
     ///
     /// UWAGA !!! 3 dni poszukiwania bledu -  "smigamy po allokacjach"
-    /// 
+    ///
     ///     uVector operator[]() { IF DEBUG bound check for  illegal access }
-    /// 
+    ///
     unsigned int K_GRID_DIM = (_points.size() + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
     CopyFromStateVector<<<K_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(d_points, computation->SV, _points.size());
 
     utility::memcpyFromDevice(_points, d_points, _stream);
-
-    
 
     double SOLVER_EPSILON = (settings::get()->CU_SOLVER_EPSILON);
 
@@ -510,9 +552,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     stat->coefficientArity = coffSize;
     stat->dimension = dimension;
 
-    stat->accEvaluationTime  = _cc->getAccPrepTime(iter); // evaluationWatch.delta(); /// !! nasz wewnetrzny allocator pamieci !    
-    stat->accSolverTime = solverWatch.delta(); // _cc->getAccSolverTime(iter);  
-       
+    stat->accEvaluationTime = _cc->getAccPrepTime(iter);             // evaluationWatch.delta(); /// !! nasz wewnetrzny allocator pamieci !
+    stat->accSolverTime = solverWatch.delta(); // _cc->getAccSolverTime(iter);
 
     stat->convergence = computation->norm < SOLVER_EPSILON;
     stat->error = computation->norm;
@@ -524,7 +565,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     checkCudaStatus(cudaStreamSynchronize(_stream));
 
     solverWatch.reset();
-    evaluationWatch.reset();    
+    evaluationWatch.reset();
 
     *error = cudaGetLastError();
 }
@@ -562,7 +603,7 @@ double GPUComputation::getPointPYCoordinate(int id) {
 }
 
 void GPUComputation::fillPointCoordinateVector(double *stateVector) {
-    
+
     for (size_t i = 0, size = _points.size(); i < size; i++) {
         graph::Point &p = _points[i];
         stateVector[2 * i] = p.x;

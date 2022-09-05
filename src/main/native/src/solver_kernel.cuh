@@ -131,7 +131,7 @@ __global__ void CopyFromStateVector(graph::Point *points, double *SV, size_t siz
     }
 }
 
-/// <summary>
+/// <summary> CUB -- ELEMNTS_PER_THREAD ?? 
 /// accumulate difference from newton-raphson method;  SV[] = SV[] + dx;
 /// </summary>
 __global__ void StateVectorAddDifference(double *SV, double *dx, size_t N) {
@@ -1986,86 +1986,5 @@ __global__ void EvaluateConstraintHessian(ComputationStateData *ecdata, size_t N
 }
 
 
-__global__ void BuildComputationMatrix(ComputationStateData *ecdata, size_t geometricN, size_t constraintN) {
-        
-
-    /// alignment-up to ??? 32 threads - single SMP - 1024 threads 32 x 32
-
-    int lowerBound = 0;
-    int upperBound = 0;
-
-    /// From Computation Horizontal Addressing 
-    int tId = blockDim.x * blockIdx.x + threadIdx.x;
-
-/// = A
-  
-    lowerBound = 0;
-    upperBound = geometricN;  
-    if (lowerBound <= tId && tId < geometricN) {
-        ///
-        /// 
-        ComputeStiffnessMatrix_Impl(tId - lowerBound, ecdata, geometricN);        
-        /// 
-        return;
-    }
-
-    
-    lowerBound = geometricN;
-    upperBound = geometricN + geometricN;
-    if (lowerBound <= tId && tId < upperBound) {
-        ///
-        ///
-        EvaluateConstraintHessian_Impl(tId - lowerBound, ecdata, geometricN);
-        /// 
-        return;
-    }
-
-        
-    lowerBound = geometricN + geometricN;
-    upperBound = geometricN + geometricN + constraintN;
-
-    if (lowerBound <= tId && tId < upperBound) {
-        ///
-        ///
-        EvaluateConstraintJacobian_Impl(tId - lowerBound, ecdata, constraintN);
-        /// 
-        return;
-    }
-  
-
-    lowerBound = geometricN + geometricN + constraintN;
-    upperBound = geometricN + geometricN + constraintN + constraintN;
-
-    if (lowerBound <= tId && tId < upperBound) {
-        ///
-        ///
-        EvaluateConstraintTRJacobian_Impl(tId - lowerBound, ecdata, constraintN);
-        /// 
-        return;
-    }
-
-/// =  B  
-
-    lowerBound = geometricN + geometricN + constraintN + constraintN;
-    upperBound = geometricN + geometricN + constraintN + constraintN + geometricN;
-    if (lowerBound <= tId && tId < upperBound) {
-        ///
-        ///
-        EvaluateForceIntensity_Impl(tId - lowerBound, ecdata, geometricN);
-        /// 
-        return;
-    }
-    
-    lowerBound = geometricN + geometricN + constraintN + constraintN + geometricN;
-    upperBound = geometricN + geometricN + constraintN + constraintN + geometricN + constraintN;
-    if (lowerBound <= tId && tId < upperBound) {
-        ///
-        ///        
-        EvaluateConstraintValue_Impl(tId - lowerBound, ecdata, constraintN);
-        /// 
-        return;
-    }
-
-}
 
 #endif // #ifndef _SOLVER_KERNEL_CUH_
