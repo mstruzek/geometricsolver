@@ -356,17 +356,18 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         //
 
         /*
-         *  Cuda Graph Capturing - Mechanism
+         *  =============== Graph Capturing Mechanism ===============  //
          */
         cudaGraph_t graph;
         cudaGraphExecUpdateResult updateResult;
         cudaGraphNode_t errorNode;
+                
+        const unsigned BLOCK_DIM = 512;
+        const size_t OBJECTS_PER_THREAD = 1;
+        const KernelTraits<OBJECTS_PER_THREAD, BLOCK_DIM> geoKt(_geometrics.size());
+        const KernelTraits<OBJECTS_PER_THREAD, BLOCK_DIM> conKt(_constraints.size());
 
-        /// BEBUG - KERNEL
-
-        unsigned G_GRID_DIM = (static_cast<unsigned>(_geometrics.size()) + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
-        unsigned C_GRID_DIM = (static_cast<unsigned>(_constraints.size()) + ST_DIM_BLOCK - 1) / ST_DIM_BLOCK;
-
+        
         /// -------------------- GRAPH_CAPTURE - BEGIN
         /// ------------------------------------------------------------------------ /// ///
         ///
@@ -381,14 +382,16 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         /// macierz `A
         /// Cooficients Stiffnes Matrix
-        ComputeStiffnessMatrix<<<G_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
+        
+        ComputeStiffnessMatrix<<<geoKt.GRID_DIM, geoKt.BLOCK_DIM, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
         checkStreamNoError();
 
         /// [ cuda / error ] 701 : cuda API failed 701,
         /// cudaErrorLaunchOutOfResources  = too many resources requested for launch
         //
         if (settings::get()->SOLVER_INC_HESSIAN) {
-            EvaluateConstraintHessian<<<C_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+            EvaluateConstraintHessian<<<conKt.GRID_DIM, conKt.BLOCK_DIM, Ns, _stream>>>(dev_ev[itr],
+                                                                                        _constraints.size());
         }
         checkStreamNoError();
 
@@ -398,7 +401,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix
         */
 
-        EvaluateConstraintJacobian<<<C_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+        EvaluateConstraintJacobian<<<conKt.GRID_DIM, conKt.BLOCK_DIM, Ns, _stream>>>(dev_ev[itr], _constraints.size());
         checkStreamNoError();
         /*
             Transposed Jacobian - Uperr Tensor Slice
@@ -407,7 +410,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
            intermediary matrix
         */
 
-        EvaluateConstraintTRJacobian<<<C_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+        EvaluateConstraintTRJacobian<<<conKt.GRID_DIM, conKt.BLOCK_DIM, Ns, _stream>>>(dev_ev[itr],
+                                                                                       _constraints.size());
         checkStreamNoError();
 
         /// Tworzymy Macierz dest SV dest `b
@@ -415,11 +419,11 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         /// [ SV ]  - right hand site
 
         /// Fr /// Sily  - F(q) --  !!!!!!!
-        EvaluateForceIntensity<<<G_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
+        EvaluateForceIntensity<<<geoKt.GRID_DIM, geoKt.BLOCK_DIM, Ns, _stream>>>(dev_ev[itr], _geometrics.size());
         checkStreamNoError();
 
         /// Fi / Wiezy  - Fi(q)
-        EvaluateConstraintValue<<<C_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_ev[itr], _constraints.size());
+        EvaluateConstraintValue<<<conKt.GRID_DIM, conKt.BLOCK_DIM, Ns, _stream>>>(dev_ev[itr], _constraints.size());
         checkStreamNoError();
 
         ///
