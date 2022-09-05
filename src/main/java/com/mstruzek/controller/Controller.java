@@ -3,9 +3,9 @@ package com.mstruzek.controller;
 import com.mstruzek.graphic.FrameView;
 import com.mstruzek.msketch.*;
 import com.mstruzek.msketch.solver.GeometricSolverType;
+import com.mstruzek.msketch.solver.SolverStat;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -121,6 +121,9 @@ public class Controller implements ControllerInterface {
             Reporter.notify("[error] read model from file : " + selectedFile, e);
             throw new Error(e);
         }
+
+        final SolverStat stats = ModelRegistry.modelDefaultStats();
+        Events.send(EventType.SOLVER_STAT_CHANGE, new Object[]{stats});
     }
 
     private void updateModelConsistency() {

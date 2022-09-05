@@ -4,6 +4,7 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import com.mstruzek.msketch.solver.SolverStat;
 
 import java.util.Set;
 import java.util.TreeMap;
@@ -163,6 +164,18 @@ public class ModelRegistry {
     }
     public static final int DELIMITER = 0x7C7D;
 
+    public static SolverStat modelDefaultStats() {
+        SolverStat solverStat = new SolverStat();
+        int  size = ModelRegistry.dbPoint.size() * 2;
+        int coffSize = Constraint.allLagrangeCoffSize();
+        int dimension = size + coffSize;
+
+        solverStat.size = size;
+        solverStat.coefficientArity = coffSize;
+        solverStat.dimension = dimension;
+        return solverStat;
+
+    }
 }
 
 
