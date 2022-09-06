@@ -108,26 +108,30 @@ __global__ void stdoutStateVector(ComputationStateData *ecdata, size_t rows) {
 /// <param name="ec"></param>
 /// <returns></returns>
 
-template <size_t POINTS_PER_THREAD = 4>
-__global__ void CopyIntoStateVector(double *SV, graph::Point *points, size_t size) {
-    int tId = blockDim.x * blockIdx.x + threadIdx.x;
+template <size_t ELEMENTS_PER_THREAD = 4>
+__global__ void CopyIntoStateVector(
+    double *SV, graph::Point *points, size_t size) {
+    const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
+    const unsigned offset = threadId * ELEMENTS_PER_THREAD;
+    const unsigned upper_limit = offset + ELEMENTS_PER_THREAD;
 
-    int pId = tId * POINTS_PER_THREAD;
+    if (upper_limit < size) { 
 
-    if (( pId + POINTS_PER_THREAD) < size) { /// standard case
 #pragma unroll
-        for (int p = 0; p < POINTS_PER_THREAD; ++p) {
-            int idx = pId + p;
-            SV[2 * idx + 0] = points[idx].x;
-            SV[2 * idx + 1] = points[idx].y;
+        for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
+            const unsigned IDX = offset + T;
+            SV[2 * IDX + 0] = points[IDX].x;
+            SV[2 * IDX + 1] = points[IDX].y;
         }
 
-    } else { /// edge case
-        for (int p = 0; p < POINTS_PER_THREAD; ++p) {
-            int idx = pId + p;
-            if (idx < size) {
-                SV[2 * idx + 0] = points[idx].x;
-                SV[2 * idx + 1] = points[idx].y;
+    } else { 
+        const unsigned REMAINDER = size - offset;                
+        
+        for (int T = 0; T < REMAINDER; ++T) {
+            const unsigned IDX = offset + T;
+            if (IDX < size) {
+                SV[2 * IDX + 0] = points[IDX].x;
+                SV[2 * IDX + 1] = points[IDX].y;
             }
         }
     }
@@ -139,28 +143,31 @@ __global__ void CopyIntoStateVector(double *SV, graph::Point *points, size_t siz
 /// <param name="ec"></param>
 /// <returns></returns>
 ///
-template <size_t POINTS_PER_THREAD = 4> /// amortyzacja wzgledem inicjalizacji kernel a rejestrem watku
-__global__ void CopyFromStateVector(graph::Point *points, double *SV, size_t size) {
+template <size_t ELEMENTS_PER_THREAD = 4> /// amortyzacja wzgledem inicjalizacji kernel a rejestrem watku
+__global__ void CopyFromStateVector(
+    graph::Point *points, double *SV, size_t size) {
+    const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
+    const unsigned offset = threadId * ELEMENTS_PER_THREAD;
+    const unsigned upper_limit = offset + ELEMENTS_PER_THREAD;
 
-    int tId = blockDim.x * blockIdx.x + threadIdx.x;
-    int pId = tId * POINTS_PER_THREAD;
+    if (upper_limit < size) { ///  standard case
 
-    if (pId + POINTS_PER_THREAD < size) { ///  standard case        
 #pragma unroll
-        for (int p = 0; p < POINTS_PER_THREAD; ++p) {
-            int idx = pId + p;
-            graph::Point *point = &points[idx];
-            point->x = SV[2 * idx + 0];
-            point->y = SV[2 * idx + 1];
+        for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
+            const unsigned IDX = offset + T;
+            graph::Point *point = &points[IDX];
+            point->x = SV[2 * IDX + 0];
+            point->y = SV[2 * IDX + 1];
         }
-    } else { ///  edge case
-        
-        for (int p = 0; p < POINTS_PER_THREAD; ++p) {
-            int idx = pId + p;
-            if (idx < size) {
-                graph::Point *point = &points[idx];
-                point->x = SV[2 * idx + 0];
-                point->y = SV[2 * idx + 1];
+    } else { 
+        const unsigned REMAINDER = size - offset;     
+
+        for (int T = 0; T < REMAINDER; ++T) {
+            const unsigned IDX = offset + T;
+            if (IDX < size) {
+                graph::Point *point = &points[IDX];
+                point->x = SV[2 * IDX + 0];
+                point->y = SV[2 * IDX + 1];
             }
         }
     }
@@ -169,11 +176,31 @@ __global__ void CopyFromStateVector(graph::Point *points, double *SV, size_t siz
 /// <summary> CUB -- ELEMNTS_PER_THREAD ??
 /// accumulate difference from newton-raphson method;  SV[] = SV[] + dx;
 /// </summary>
+template <size_t ELEMENTS_PER_THREAD = 4> 
 __global__ void StateVectorAddDifference(double *SV, double *dx, size_t N) {
-    int tID = blockDim.x * blockIdx.x + threadIdx.x;
-    if (tID < N) {
-        SV[2 * tID + 0] = SV[2 * tID + 0] + dx[2 * tID + 0];
-        SV[2 * tID + 1] = SV[2 * tID + 1] + dx[2 * tID + 1];
+    const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
+    const unsigned offset = threadId * ELEMENTS_PER_THREAD;
+    const unsigned upper_limit = offset + ELEMENTS_PER_THREAD;
+
+    if (upper_limit < N) {
+
+#pragma unroll
+        for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
+            const unsigned IDX = offset + T;
+            SV[2 * IDX + 0] += dx[2 * IDX + 0];
+            SV[2 * IDX + 1] += dx[2 * IDX + 1];
+        }
+
+    } else {
+        const unsigned REMAINDER = N - offset;
+
+        for (int T = 0; T < REMAINDER; ++T) {
+            const unsigned IDX = offset + T;
+            if (IDX < N ) {
+                SV[2 * IDX + 0] += dx[2 * IDX + 0];
+                SV[2 * IDX + 1] += dx[2 * IDX + 1];
+            }
+        }
     }
 }
 
