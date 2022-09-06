@@ -120,32 +120,32 @@ void GPUComputationContext::recordSolverStop(size_t itr) {
 
 long long GPUComputationContext::getAccPrepTime(int itrBound) {
     float acc_millis = 0.0;
-    float milliseconds;
+    float milliseconds = 0.0;
     for (int itr = 0; itr <= itrBound; itr++) {
         checkCudaStatus(cudaEventElapsedTime(&milliseconds, prepStart[itr], prepStop[itr]));
         acc_millis = acc_millis + milliseconds;
     }
-    return (long long)(10e6 * acc_millis);
+    return (long long)(acc_millis);
 }
 
 long long GPUComputationContext::getAccSolverTime(int itrBound) {
-    float acc_millis = 0.0;
-    float milliseconds;
+    float acc_millis = 0.0;    
     for (int itr = 0; itr <= itrBound; itr++) {
+        float milliseconds = 0.0;
         checkCudaStatus(cudaEventElapsedTime(&milliseconds, solverStart[itr], solverStop[itr]));
         acc_millis = acc_millis + milliseconds;
     }
-    return (long long)(10e6 * acc_millis);
+    return (long long)(acc_millis);
 }
 
 long long GPUComputationContext::getAccComputeTime(int itrBound) {
     float acc_millis = 0.0;
-    float milliseconds;
     for (int itr = 0; itr <= itrBound; itr++) {
+        float milliseconds = 0.0;
         checkCudaStatus(cudaEventElapsedTime(&milliseconds, computeStart[itr], computeStop[itr]));
         acc_millis = acc_millis + milliseconds;
     }
-    return (long long)(10e6 * acc_millis);
+    return (long long)(acc_millis);
 }
 
 } // namespace solver

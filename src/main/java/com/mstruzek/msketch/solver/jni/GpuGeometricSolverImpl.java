@@ -86,6 +86,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         }
 
         long nextComputation = ModelRegistry.computationSnapshotId();
+        reporter.writelnf("[solver/gpu]  ! snapshot id == %d" , nextComputation);
         if (lastSnapshotId != nextComputation) {
             /*
              *   register model after structural changes

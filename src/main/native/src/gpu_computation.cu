@@ -334,13 +334,13 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         ///
         /// [ GPU ] computation context mapped onto devive object
         ///
-        /// tu chce snapshot transfer
+        /// snapshot transfer
 
         utility::memcpyAsync(&dev_ev[itr], ev[itr], 1, _stream);
         checkStreamNoError();
 
         //  -----SYNC
-        checkCudaStatus(cudaStreamSynchronize(_stream));
+        //checkCudaStatus(cudaStreamSynchronize(_stream));
 
         // #observation
 
@@ -494,7 +494,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         /// - not used !!! !!
         ///
         ///
-        utility::memcpyFromDevice(ev[itr], dev_ev[itr], 1, _stream);
+        // utility::memcpyFromDevice(ev[itr], dev_ev[itr], 1, _stream);
 
         double *host_norm = &ev[itr]->norm;
 
@@ -514,12 +514,14 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ] // :: SAXPY
         // unsigned int P_GRID_DIM = (_points.size()  + ST_DIM_BLOCK - 1 )/ ST_DIM_BLOCK;
-        // StateVectorAddDifference<<<P_GRID_DIM, ST_DIM_BLOCK, Ns, _stream>>>(dev_SV[itr], dev_b, _points.size());
+        const size_t POINTS_PER_THREAD = 4;
+        KernelTraits<POINTS_PER_THREAD, 512> kt(_points.size());            
+        StateVectorAddDifference<POINTS_PER_THREAD><<<kt.GRID_DIM, kt.BLOCK_DIM, Ns, _stream>>>(dev_SV[itr], dev_b, _points.size());
 
         /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ] // :: SAXPY
-        const double alpha = 1.0;
-        int point_size = 2 * static_cast<int>(_points.size());
-        _linearSystem->cublasAPIDaxpy(point_size, &alpha, dev_b, 1, dev_SV[itr], 1);
+        //const double alpha = 1.0;
+        //int point_size = 2 * static_cast<int>(_points.size());
+        //_linearSystem->cublasAPIDaxpy(point_size, &alpha, dev_b, 1, dev_SV[itr], 1);
 
         checkStreamNoError();
         // print actual state vector single kernel
@@ -603,9 +605,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     stat->coefficientArity = coffSize;
     stat->dimension = dimension;
 
-    stat->accEvaluationTime =
-        _cc->getAccPrepTime(iter);             // evaluationWatch.delta(); /// !! nasz wewnetrzny allocator pamieci !
-    stat->accSolverTime = solverWatch.delta(); // _cc->getAccSolverTime(iter);
+    stat->accEvaluationTime = _cc->getAccPrepTime(iter);                  // evaluationWatch.delta(); /// !! nasz wewnetrzny allocator pamieci !
+    stat->accSolverTime = _cc->getAccSolverTime(iter); //solverWatch.delta(); 
 
     stat->convergence = computation->norm < SOLVER_EPSILON;
     stat->error = computation->norm;
