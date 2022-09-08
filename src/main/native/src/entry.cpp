@@ -59,8 +59,11 @@ int main(int argc, char* args[])
     err = jni_initDriver(&env, eclass, 0);
 
     //jni_setBooleanProperty  
-    settings::get()->DEBUG_TENSOR_A= true;
-    settings::get()->DEBUG_TENSOR_B= true;
+    
+    jni_setBooleanProperty(&env, eclass, 2, (jboolean) true);  // settings::get()->DEBUG_TENSOR_A= true;
+    jni_setBooleanProperty(&env, eclass, 3, (jboolean) true);  // settings::get()->DEBUG_TENSOR_B= true;
+    
+    
 
     err = jni_initComputationContext(&env, eclass);
 

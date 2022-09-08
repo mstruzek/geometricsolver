@@ -10,3 +10,4 @@ src/main/native/.vs/
 src/main/native/x64/
 .vs/
 bin/
+_tmp/

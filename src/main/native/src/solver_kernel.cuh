@@ -663,8 +663,10 @@ __device__ void EvaluateForceIntensity_Impl(int tID, ComputationStateData *ecdat
 
     /// unpack tensor for evaluation
 
-    graph::DenseLayout layout = graph::DenseLayout(ec->dimension, 0, 0, ec->b);
-    graph::Tensor<graph::DenseLayout> mt = graph::tensorDevMem(layout, 0, 0);
+    const bool intention = false; // vector operations
+
+    graph::DenseLayout layout = graph::DenseLayout(ec->dimension, 0, 0, ec->b);    
+    graph::Tensor<graph::DenseLayout> mt = graph::tensorDevMem(layout, 0, 0, intention);
 
     if (tID < N) {
         const graph::Geometric *geometric = ec->getGeometricObject(tID);
@@ -1030,9 +1032,9 @@ __device__ void EvaluateConstraintValue_Impl(int tID, ComputationStateData *ecda
 
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
 
-
-    graph::DenseLayout layout = graph::DenseLayout(ec->dimension, ec->size, 0, ec->b);
-    graph::Tensor<graph::DenseLayout> mt = graph::tensorDevMem(layout, 0, 0);
+    const bool intention = false;
+    const graph::DenseLayout layout = graph::DenseLayout(ec->dimension, ec->size, 0, ec->b);    
+    graph::Tensor<graph::DenseLayout> mt = graph::tensorDevMem(layout, 0, 0, intention);
 
     if (tID < N) {
         const graph::Constraint *constraint = ec->getConstraint(tID);

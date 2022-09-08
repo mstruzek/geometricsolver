@@ -58,7 +58,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG.code, false);
 
-        JNISolverGate.setBooleanProperty(JNIDebugCode.STREAM_CAPTURING.code, NO);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.STREAM_CAPTURING.code, YES);
 
 
         JNISolverGate.setDoubleProperty(JNIDebugCode.CU_SOLVER_EPSILON.code, 10e-2);
@@ -66,10 +66,10 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         JNISolverGate.setLongProperty(JNIDebugCode.GRID_SIZE.code, 4); // NOT_USED
         JNISolverGate.setLongProperty(JNIDebugCode.BLOCK_SIZE.code, 512);
 
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_CHECK_ARG.code, YES);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_CHECK_ARG.code, NO);
 
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_A.code, YES);
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, YES);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_A.code, NO);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, NO);
 
 
         JNISolverGate.setBooleanProperty(JNIDebugCode.SOLVER_INC_HESSIAN.code, NO);

@@ -297,7 +297,7 @@ __GPU_DEV_INL__ double getVectorY(Vector const &value);
 
 template <typename LLayout = graph::BlockLayout> class Tensor {
   public:
-    __GPU_DEV_INL__ Tensor(LLayout const &_u = LLayout()) : u(_u) {}
+    __GPU_DEV_INL__ Tensor(LLayout const &_u = LLayout(), bool _intention = true) : u(_u), intention(_intention) {}
 
     __GPU_DEV_INL__ Tensor(double a00, double a01, double a10, double a11) : Tensor(LLayout()) {
         u.set(0, 0, a00);
@@ -308,8 +308,13 @@ template <typename LLayout = graph::BlockLayout> class Tensor {
 
     __GPU_DEV_INL__ void setVector(int offsetRow, int offsetCol, graph::Vector const &value) {
         /// horizontal
-        u.set(offsetRow, offsetCol + 0, getVectorX(value));
-        u.set(offsetRow, offsetCol + 1, getVectorY(value));
+        if (intention) {
+            u.set(offsetRow, offsetCol + 0, getVectorX(value));
+            u.set(offsetRow, offsetCol + 1, getVectorY(value));
+        } else {
+            u.set(offsetRow + 0, offsetCol, getVectorX(value));
+            u.set(offsetRow + 1, offsetCol, getVectorY(value));
+        }
     };
 
     __GPU_DEV_INL__ void setValue(int offsetRow, int offsetCol, double const &value) {
@@ -386,12 +391,13 @@ template <typename LLayout = graph::BlockLayout> class Tensor {
     friend class Tensor<graph::DirectSparseLayout>;
 
   private:
+    bool intention;     // vector put operation horizontal if true / vertical otherwise
     LLayout u;
 };
 
-__GPU_DEV_INL__ static Tensor<DenseLayout> tensorDevMem(DenseLayout parent, int rowOffset, int colOffset) {
+__GPU_DEV_INL__ static Tensor<DenseLayout> tensorDevMem(DenseLayout parent, int rowOffset, int colOffset, bool intention = true) {
     DenseLayout layout(parent.ld, parent.rowOffset + rowOffset, parent.colOffset + colOffset, parent.m_A);
-    Tensor<DenseLayout> tensor(layout);
+    Tensor<DenseLayout> tensor(layout, intention);
     return tensor;
 }
 
@@ -451,8 +457,8 @@ template <typename LLayout> class AdapterTensor : public Tensor<LLayout> {
     __GPU_DEV_INL__ AdapterTensor(LLayout layout) : Tensor<LLayout>(layout) {}
 
     __GPU_DEV_INL__ void setVector(int offsetRow, int offsetCol, Vector const &value) {
-        Tensor<LLayout>::setValue(offsetCol, offsetRow + 0, getVectorX(value));
-        Tensor<LLayout>::setValue(offsetCol, offsetRow + 1, getVectorY(value));
+        Tensor<LLayout>::setValue(offsetCol + 0, offsetRow, getVectorX(value));
+        Tensor<LLayout>::setValue(offsetCol + 1, offsetRow, getVectorY(value));
     }
 
     __GPU_DEV_INL__ void setValue(int offsetRow, int offsetCol, double const &value) {
