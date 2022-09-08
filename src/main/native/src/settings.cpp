@@ -69,6 +69,10 @@ int setLongProperty(int id, long value) {
     case 11:
         config->BLOCK_SIZE = value; // 11
         break;
+    case 12:
+        config->COMPUTATION_MODE = value; // 12
+        break;
+
     default:
         printf("[error] long property not found , id ( %d ) value( %d ) !!\n", id, value);
         return 1;

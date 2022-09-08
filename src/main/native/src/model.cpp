@@ -43,7 +43,7 @@ int constraintSize(Constraint const &constraint) {
         return 1;
 
     default:
-        printf("unknown constraint type");
+        printf("unknown constraint type \n");
         exit(1);
     }
 }
@@ -59,11 +59,26 @@ int geometricSetSize(Geometric const &geometric) {
     case GEOMETRIC_TYPE_ID_ARC:
         return 7 * 2;
     default:
-        printf("unknown geometric type");
+        printf("unknown geometric type \n");
         exit(1);
     }
 }
 
+ComputationMode getComputationMode(int computationId) {
+    switch (computationId) {
+    case 1:
+        return ComputationMode::DENSE_LAYOUT;
+    case 2:
+        return ComputationMode::SPARSE_LAYOUT;
+    case 3:
+        return ComputationMode::DIRECT_LAYOUT;
+    default:
+        printf("unknown computation id !\n");
+        exit(1);
+    }
+}
+
+/// accWriteCooStiff
 ///
 /// __device__ __host__ COO tensor format requirments
 ///
@@ -78,14 +93,11 @@ int tensorOpsCooStiffnesCoefficients(Geometric const &geometric) {
     case GEOMETRIC_TYPE_ID_ARC:
         return 19 * 2; // 19 - plusSubTensor * diagonal I (2)
     default:
-        printf("unknown geometric type");
+        printf("unknown geometric type \n");
         exit(1);
     }
 }
-
-///
-/// __device__ __host__ ??  ------ COO tensor format requirments --> exclusive_scan --> cudaMalloc(accWriteOffset)
-///
+/// accWriteCooConstraint
 int tensorOpsCooConstraintJacobian(Constraint const &constraint) {
     switch (constraint.constraintTypeId) {
     case CONSTRAINT_TYPE_ID_FIX_POINT:
@@ -126,7 +138,7 @@ int tensorOpsCooConstraintJacobian(Constraint const &constraint) {
         return 8;
     case CONSTRAINT_TYPE_ID_DISTANCE_2_POINTS:
         /// 2 * vector(2)
-        return 4;        
+        return 4;
     case CONSTRAINT_TYPE_ID_DISTANCE_POINT_LINE:
         /// 3 * vector(2)
         return 6;
@@ -140,7 +152,7 @@ int tensorOpsCooConstraintJacobian(Constraint const &constraint) {
         /// 2 * vector(2)
         return 4;
     default:
-        printf("unknown constraint type");
+        printf("unknown constraint type \n");
         exit(1);
     }
 }

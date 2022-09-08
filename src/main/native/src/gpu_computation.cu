@@ -11,10 +11,10 @@
 /// 
 #define ELEMENTS_PER_THREAD 4
 
-
+#include "model.cuh"
 #include "solver_kernel.cuh"
-#include "utility.cuh"
 
+#include "utility.cuh"
 #include "stop_watch.h"
 
 namespace solver {
@@ -250,6 +250,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     unsigned ST_DIM_GRID = settings::get()->GRID_SIZE;
     unsigned ST_DIM_BLOCK = settings::get()->BLOCK_SIZE;
 
+    ComputationMode computationMode = graph::getComputationMode(settings::get()->COMPUTATION_MODE);
+
     solverWatch.setStartTick();
 
     /// prepare local offset context
@@ -270,6 +272,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
     printf("#=============== Solver Initialized =============# \n");
     printf("");
+
+    
 
     /// LSM - ( reset )
     // linear_system_method_cuSolver_reset(stream);
@@ -335,7 +339,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         /// =================================
         /// Tensor A Computation Mode
         /// =================================
-        ev[itr]->computationMode = DENSE_LAYOUT;
+        ev[itr]->computationMode = computationMode;
 
         ///
         /// [ GPU ] computation context mapped onto devive object
@@ -378,8 +382,6 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         /// -------------------- GRAPH_CAPTURE - BEGIN
         ///
         ///
-        ///
-
         if (settings::get()->STREAM_CAPTURING) {
 
             /// stream caputure capability
@@ -402,7 +404,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         checkStreamNoError();
 
         /*
-            Lower Tensor Slice
+            Lower Tensor 
 
             --- (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix
         */
@@ -410,7 +412,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         EvaluateConstraintJacobian<<<conKt.GRID_DIM, conKt.BLOCK_DIM, Ns, _stream>>>(dev_ev[itr], _constraints.size());
         checkStreamNoError();
         /*
-            Transposed Jacobian - Uperr Tensor Slice
+            Transposed Jacobian - Uperr Tensor 
 
             --- (Wq)'; /// Jq' = (d(Fi)/dq)' --- transposed - write without
            intermediary matrix
@@ -442,27 +444,18 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             /// stream caputure capability
             checkCudaStatus(cudaStreamEndCapture(_stream, &graph));
 
-            // If we've already instantiated the graph, try to update it directly
-            // and avoid the instantiation overhead
             if (graphExec != NULL) {
-                // If the graph fails to update, errorNode will be set to the
-                // node causing the failure and updateResult will be set to a
-                // reason code.
+                // updateResult will store reason of failure
                 cudaGraphExecUpdate(graphExec, graph, &errorNode, &updateResult);
             }
 
-            // Instantiate during the first iteration or whenever the update
-            // fails for any reason
+            // First Execution if not initialize
             if (graphExec == NULL || updateResult != cudaGraphExecUpdateSuccess) {
-
-                // If a previous update failed, destroy the cudaGraphExec_t
-                // before re-instantiating it
+                // 
                 if (graphExec != NULL) {
                     checkCudaStatus(cudaGraphExecDestroy(graphExec));
                 }
-                // Instantiate graphExec from graph. The error node and
-                // error message parameters are unused here.
-
+                
                 cudaGraphNode_t pErrorNode = NULL;
 
                 const size_t bufferSize = 128;
@@ -478,10 +471,11 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
             //
             checkCudaStatus(cudaGraphDestroy(graph));
 
-            /// --------------------------  GRAPH_EXECUTION ---------------------------------------------- /// ///
+            /// -------------------  GRAPH_EXECUTION -------------------------- ///
+            /// -------------------  --------------- -------------------------- ///
             checkCudaStatus(cudaGraphLaunch(graphExec, _stream));
-
-            // checkCudaStatus(cudaStreamSynchronize(_stream)); ////          ?????
+            /// -------------------  --------------- -------------------------- ///
+            /// -------------------  GRAPH_EXECUTION -------------------------- ///
         }
 
         ///
@@ -630,6 +624,11 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     /// Evaluation data for  device  - CONST DATE for in process execution
 
     checkCudaStatus(cudaStreamSynchronize(_stream));
+
+    ///
+    if (graphExec != NULL) {
+        cudaGraphExecDestroy(graphExec);
+    }     
 
     solverWatch.reset();
     evaluationWatch.reset();

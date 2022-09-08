@@ -90,7 +90,7 @@
     <CudaCompile Include="kernel.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </CudaCompile>
-    <ClCompile Include="src\model.cpp" />
+    <CudaCompile Include="src\model.cu" />
     <ClCompile Include="src\settings.cpp" />
     <ClCompile Include="src\cuerror.cpp" />
     <ClCompile Include="src\gpu_linear_system.cpp" />

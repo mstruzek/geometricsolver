@@ -21,8 +21,8 @@
 /// =========================================
 /// Enable Tensor Sparse and Direct Layout
 /// =========================================
-#define TENSOR_SPARSE_LAYOUT
-//#/undef TENSOR_SPARSE_LAYOUT
+//#/define TENSOR_SPARSE_LAYOUT
+#undef TENSOR_SPARSE_LAYOUT
 
 
 
@@ -339,7 +339,7 @@ __global__ void ComputeStiffnessMatrix(ComputationStateData *ecdata, size_t N) {
 
     /// Runtime Dispatch
     switch (computationMode) {
-    case DENSE_LAYOUT:
+    case ComputationMode::DENSE_LAYOUT:
     {
         graph::DenseLayout denseLayout = graph::DenseLayout(ec->dimension, 0, 0, ec->A);
         graph::Tensor<graph::DenseLayout> tensor = graph::tensorDevMem(denseLayout, 0, 0);
@@ -350,7 +350,7 @@ __global__ void ComputeStiffnessMatrix(ComputationStateData *ecdata, size_t N) {
     };
     break;
 #ifdef TENSOR_SPARSE_LAYOUT
-    case SPARSE_LAYOUT:
+    case ComputationMode::SPARSE_LAYOUT:
     {
         graph::SparseLayout sparseLayout = graph::SparseLayout(accWriteOffset, cooRowInd, cooColInd, cooVal);
         graph::Tensor<graph::SparseLayout> tensorSparseLayout = graph::tensorDevMem(sparseLayout, intention);
@@ -360,7 +360,7 @@ __global__ void ComputeStiffnessMatrix(ComputationStateData *ecdata, size_t N) {
         return;
     };
     break;
-    case DIRECT_LAYOUT:
+    case ComputationMode::DIRECT_LAYOUT:
     {
         graph::DirectSparseLayout directLayout = graph::DirectSparseLayout(accWriteOffset, P, cooRowInd, cooColInd, cooVal);
         graph::Tensor<graph::DirectSparseLayout> tensorDirect = graph::tensorDevMem(directLayout, intention);
@@ -1657,7 +1657,7 @@ __global__ void EvaluateConstraintJacobian(ComputationStateData *ecdata, size_t 
 
     /// Runtime Dispatch
     switch (computationMode) {
-    case DENSE_LAYOUT: 
+    case ComputationMode::DENSE_LAYOUT: 
     {
         ///                        
         const graph::DenseLayout layout = graph::DenseLayout(ec->dimension, ec->size, 0, ec->A);
@@ -1668,7 +1668,7 @@ __global__ void EvaluateConstraintJacobian(ComputationStateData *ecdata, size_t 
         return;
     }; break;
 #ifdef TENSOR_SPARSE_LAYOUT    
-    case SPARSE_LAYOUT: 
+    case ComputationMode::SPARSE_LAYOUT: 
     {
         graph::SparseLayout sparseLayout = graph::SparseLayout(accWriteOffset, cooRowInd, cooColInd, cooVal);
         graph::Tensor<graph::SparseLayout> tensorSparseLayout = graph::tensorDevMem(sparseLayout, intention);
@@ -1678,7 +1678,7 @@ __global__ void EvaluateConstraintJacobian(ComputationStateData *ecdata, size_t 
         return;
     }; 
     break;
-    case DIRECT_LAYOUT: 
+    case ComputationMode::DIRECT_LAYOUT: 
     {
         graph::DirectSparseLayout directLayout = graph::DirectSparseLayout(accWriteOffset, P, cooRowInd, cooColInd, cooVal);
         graph::Tensor<graph::DirectSparseLayout> tensorDirect = graph::tensorDevMem(directLayout, intention);
@@ -1790,7 +1790,7 @@ __global__ void EvaluateConstraintTRJacobian(ComputationStateData *ecdata, size_
 
     /// Runtime Dispatch
     switch (computationMode) {
-    case DENSE_LAYOUT: 
+    case ComputationMode::DENSE_LAYOUT: 
     {         
         const graph::DenseLayout layout = graph::DenseLayout(ec->dimension, 0, constraintOffset, ec->A);
         graph::AdapterTensor<graph::DenseLayout> tensor = graph::transposeTensorDevMem(layout, intention);
@@ -1801,7 +1801,7 @@ __global__ void EvaluateConstraintTRJacobian(ComputationStateData *ecdata, size_
     }; 
     break;
 #ifdef TENSOR_SPARSE_LAYOUT
-    case SPARSE_LAYOUT: 
+    case ComputationMode::SPARSE_LAYOUT: 
     {
         graph::SparseLayout sparseLayout = graph::SparseLayout(accWriteOffset, cooRowInd, cooColInd, cooVal);
         graph::Tensor<graph::SparseLayout> tensorSparseLayout = graph::tensorDevMem(sparseLayout, intention);
@@ -1811,7 +1811,7 @@ __global__ void EvaluateConstraintTRJacobian(ComputationStateData *ecdata, size_
         return;
     }; 
     break;
-    case DIRECT_LAYOUT: 
+    case ComputationMode::DIRECT_LAYOUT: 
     {
         graph::DirectSparseLayout directLayout = graph::DirectSparseLayout(accWriteOffset, P, cooRowInd, cooColInd, cooVal);
         graph::Tensor<graph::DirectSparseLayout> tensorDirect = graph::tensorDevMem(directLayout, intention);
@@ -2267,7 +2267,7 @@ __global__ void EvaluateConstraintHessian(ComputationStateData *ecdata, size_t N
 
     /// Runtime Dispatch
     switch (computationMode) {
-    case DENSE_LAYOUT: {
+    case ComputationMode::DENSE_LAYOUT: {
         graph::DenseLayout denseLayout = graph::DenseLayout(ec->dimension, 0, 0, ec->A);
         graph::Tensor<graph::DenseLayout> tensor = graph::tensorDevMem(denseLayout, 0, 0);
         ///
@@ -2276,7 +2276,7 @@ __global__ void EvaluateConstraintHessian(ComputationStateData *ecdata, size_t N
         return;
     }; break;
 #ifdef TENSOR_SPARSE_LAYOUT
-    case SPARSE_LAYOUT: {
+    case ComputationMode::SPARSE_LAYOUT: {
         graph::SparseLayout sparseLayout = graph::SparseLayout(accWriteOffset, cooRowInd, cooColInd, cooVal);
         graph::Tensor<graph::SparseLayout> tensorSparseLayout = graph::tensorDevMem(sparseLayout, intention);
         ///
@@ -2284,7 +2284,7 @@ __global__ void EvaluateConstraintHessian(ComputationStateData *ecdata, size_t N
         ///
         return;
     }; break;
-    case DIRECT_LAYOUT: {
+    case ComputationMode::DIRECT_LAYOUT: {
         graph::DirectSparseLayout directLayout =
             graph::DirectSparseLayout(accWriteOffset, P, cooRowInd, cooColInd, cooVal);
         graph::Tensor<graph::DirectSparseLayout> tensorDirect = graph::tensorDevMem(directLayout, intention);
