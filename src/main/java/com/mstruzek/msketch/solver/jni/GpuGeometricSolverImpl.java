@@ -72,7 +72,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, NO);
 
 
-        JNISolverGate.setBooleanProperty(JNIDebugCode.SOLVER_INC_HESSIAN.code, NO);
+        JNISolverGate.setBooleanProperty(JNIDebugCode.SOLVER_INC_HESSIAN.code, YES);
 
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, false);
 //        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_SV.code, true);
@@ -131,18 +131,19 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         }
 
         /*
+         * =============================================
          * -----------------  SOLVER -------------------
+         * =============================================
          */
-
         try {
 
             err = JNISolverGate.solveSystem();
 
         } catch (Exception e) {
+            reporter.writelnf("[solver/gpu] solver execution failed %s!", e.getMessage());
             e.printStackTrace();
-            System.out.flush();
+            return null;
         }
-
 
         if (err != JNISolverGate.JNI_SUCCESS) {
             reporter.writelnf("[solver/gpu] solver execution failed with error = %s!", JNISolverGate.getLastError());
@@ -155,8 +156,10 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         reporter.writelnf(" -- computation lastError    : %s", JNISolverGate.getLastError());
         reporter.writelnf(" -- computation convergence  : %b", solverStatistics.convergence);
 
-        fetchGPUComputedPositionsIntoModel();
-
+        boolean isResultValid = !Double.isNaN(solverStatistics.error);
+        if(isResultValid)  {
+            fetchGPUComputedPositionsIntoModel();
+        }
         return solverStatistics;
     }
 

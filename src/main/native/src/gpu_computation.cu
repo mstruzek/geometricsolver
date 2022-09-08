@@ -373,8 +373,9 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         const KernelTraits<OBJECTS_PER_THREAD, BLOCK_DIM> geoKt(_geometrics.size());
         const KernelTraits<OBJECTS_PER_THREAD, BLOCK_DIM> conKt(_constraints.size());
 
+        
+        /// ------------------------------------------------------------------------ ///
         /// -------------------- GRAPH_CAPTURE - BEGIN
-        /// ------------------------------------------------------------------------ /// ///
         ///
         ///
         ///
@@ -434,7 +435,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         ///
         ///
         /// -------------------- GRAPH_CAPTURE - END
-        /// ------------------------------------------------------------------------ /// ///
+        /// ------------------------------------------------------------------------ ///
+
         if (settings::get()->STREAM_CAPTURING) {
 
             /// stream caputure capability
@@ -503,7 +505,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         double *host_norm = &ev[itr]->norm;
 
-#define H_DEBUG      
+#undef H_DEBUG      
 
         //
         ///  ConstraintGetFullNorm
