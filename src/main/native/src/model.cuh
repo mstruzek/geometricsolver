@@ -232,9 +232,9 @@ class DirectSparseLayout {
   public:
     __GPU_DEV_INL__ DirectSparseLayout() : accOffset(NULL), P(NULL), cooVal(NULL) {}
 
-    __GPU_DEV_INL__ DirectSparseLayout(int *const _accOffset, int *const _P, double *_cooVal, int *_cooRowInd,
-                                        int *_cooColInd)
-        : accOffset(_accOffset), P(_P), cooVal(_cooVal), cooRowInd(_cooRowInd), cooColInd(_cooColInd) {
+    __GPU_DEV_INL__ DirectSparseLayout(int *const _accOffset, int *const _P, int *_cooRowInd, int *_cooColInd,
+                                       double *_cooVal)
+        : accOffset(_accOffset), P(_P), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {
         iterator.reset();
     }
 
@@ -284,6 +284,7 @@ class DirectSparseLayout {
   private:
     int *const accOffset; /// thread acc offset
     int *const P;         /// direct indicies dense vector
+
     double *const cooVal; /// COO values
 
 #define __BEFORE_TRANSFORMATION__
@@ -297,7 +298,7 @@ __GPU_DEV_INL__ double getVectorY(Vector const &value);
 
 template <typename LLayout = graph::BlockLayout> class Tensor {
   public:
-    __GPU_DEV_INL__ Tensor(LLayout const &_u = LLayout(), bool _intention = true) : u(_u), intention(_intention) {}
+    __GPU_DEV_INL__ Tensor(LLayout const &_u = LLayout(), bool _intention = false) : u(_u), intention(_intention) {}
 
     __GPU_DEV_INL__ Tensor(double a00, double a01, double a10, double a11) : Tensor(LLayout()) {
         u.set(0, 0, a00);
@@ -307,13 +308,13 @@ template <typename LLayout = graph::BlockLayout> class Tensor {
     }
 
     __GPU_DEV_INL__ void setVector(int offsetRow, int offsetCol, graph::Vector const &value) {
-        /// horizontal
-        if (intention) {
-            u.set(offsetRow, offsetCol + 0, getVectorX(value));
-            u.set(offsetRow, offsetCol + 1, getVectorY(value));
-        } else {
+        /// vertical
+        if (intention) { // tensor "B"
             u.set(offsetRow + 0, offsetCol, getVectorX(value));
             u.set(offsetRow + 1, offsetCol, getVectorY(value));
+        } else { // tensor "Jacobian"
+            u.set(offsetRow, offsetCol + 0, getVectorX(value));
+            u.set(offsetRow, offsetCol + 1, getVectorY(value));
         }
     };
 
@@ -391,7 +392,7 @@ template <typename LLayout = graph::BlockLayout> class Tensor {
     friend class Tensor<graph::DirectSparseLayout>;
 
   private:
-    bool intention;     // vector put operation horizontal if true / vertical otherwise
+    bool intention;     // vector put operation vertical if true / horizontal otherwise
     LLayout u;
 };
 
@@ -401,13 +402,13 @@ __GPU_DEV_INL__ static Tensor<DenseLayout> tensorDevMem(DenseLayout parent, int 
     return tensor;
 }
 
-__GPU_DEV_INL__ static Tensor<SparseLayout> tensorDevMem(SparseLayout layout) {
-    Tensor<graph::SparseLayout> tensor(layout);
+__GPU_DEV_INL__ static Tensor<SparseLayout> tensorDevMem(SparseLayout layout, bool intention = true) {
+    Tensor<graph::SparseLayout> tensor(layout, intention);
     return tensor;
 }
 
-__GPU_DEV_INL__ static Tensor<DirectSparseLayout> tensorDevMem(DirectSparseLayout layout) {
-    Tensor<DirectSparseLayout> tensor(layout);
+__GPU_DEV_INL__ static Tensor<DirectSparseLayout> tensorDevMem(DirectSparseLayout layout, bool intention = true) {
+    Tensor<DirectSparseLayout> tensor(layout, intention);
     return tensor;
 }
 
@@ -454,7 +455,7 @@ typedef graph::Tensor<graph::BlockLayout> TensorBlock;
 template <typename LLayout> class AdapterTensor : public Tensor<LLayout> {
 
   public:
-    __GPU_DEV_INL__ AdapterTensor(LLayout layout) : Tensor<LLayout>(layout) {}
+    __GPU_DEV_INL__ AdapterTensor(LLayout layout, bool intention) : Tensor<LLayout>(layout, intention) {}
 
     __GPU_DEV_INL__ void setVector(int offsetRow, int offsetCol, Vector const &value) {
         Tensor<LLayout>::setValue(offsetCol + 0, offsetRow, getVectorX(value));
@@ -472,8 +473,8 @@ template <typename LLayout> class AdapterTensor : public Tensor<LLayout> {
 
 // transponsed operations
 template <typename LLayout>
-__GPU_DEV_INL__ static AdapterTensor<LLayout> transposeTensorDevMem(LLayout parent) {
-    AdapterTensor<LLayout> t{parent};
+__GPU_DEV_INL__ static AdapterTensor<LLayout> transposeTensorDevMem(LLayout parent, bool intention) {
+    AdapterTensor<LLayout> t{parent, intention};
     return t;
 }
 

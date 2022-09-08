@@ -70,6 +70,12 @@ template <typename... Args> __device__ void log(const char *formatStr, Args... a
     ::printf(formatStr, args...); 
 }
 
+
+template <typename... Args> __device__ void log_error(const char *formatStr, Args... args) {
+    ///
+    ::printf(formatStr, args...);
+}
+
 __global__ void stdoutTensorData(ComputationStateData *ecdata, size_t rows, size_t cols) {
 
     ComputationState *ev = static_cast<ComputationState *>(ecdata);
@@ -254,23 +260,17 @@ __global__ void StateVectorAddDifference(double *SV, double *dx, size_t N) {
 /// ==================================== STIFFNESS MATRIX ================================= ///
 ///
 
-template<typename Layout>
-__device__ void setStiffnessMatrix_FreePoint(int rc, graph::Tensor<Layout> &mt);
+template <typename Layout> __device__ void setStiffnessMatrix_FreePoint(int rc, graph::Tensor<Layout> &mt);
 
-template<typename Layout>
-__device__ void setStiffnessMatrix_Line(int rc, graph::Tensor<Layout> &mt);
+template <typename Layout> __device__ void setStiffnessMatrix_Line(int rc, graph::Tensor<Layout> &mt);
 
- template<typename Layout>
- __device__ void setStiffnessMatrix_Line(int rc, graph::Tensor<Layout> &mt);
+template <typename Layout> __device__ void setStiffnessMatrix_Line(int rc, graph::Tensor<Layout> &mt);
 
-template<typename Layout>
-__device__ void setStiffnessMatrix_FixLine(int rc, graph::Tensor<Layout> &mt);
+template <typename Layout> __device__ void setStiffnessMatrix_FixLine(int rc, graph::Tensor<Layout> &mt);
 
-template<typename Layout>
-__device__ void setStiffnessMatrix_Circle(int rc, graph::Tensor<Layout> &mt);
+template <typename Layout> __device__ void setStiffnessMatrix_Circle(int rc, graph::Tensor<Layout> &mt);
 
-template<typename Layout>
-__device__ void setStiffnessMatrix_Arc(int rc, graph::Tensor<Layout> &mt);
+template <typename Layout> __device__ void setStiffnessMatrix_Arc(int rc, graph::Tensor<Layout> &mt);
 
 /**
  * @brief Compute Stiffness Matrix on each geometric object.
@@ -281,14 +281,11 @@ __device__ void setStiffnessMatrix_Arc(int rc, graph::Tensor<Layout> &mt);
  * @param ec
  * @return __global__
  */
-__device__ void ComputeStiffnessMatrix_Impl(int tID, ComputationStateData *ecdata, size_t N) {
+template <typename Layout>
+__device__ void ComputeStiffnessMatrix_Impl(int tID, ComputationStateData *ecdata, graph::Tensor<Layout> tensor,
+                                            size_t N) {
 
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
-
-    /// actually max single block with 1024 threads
-
-    graph::DenseLayout layout = graph::DenseLayout(ec->dimension, 0, 0, ec->A);
-    graph::Tensor<graph::DenseLayout> tensor = graph::tensorDevMem(layout, 0, 0);
 
     if (tID < N) {
         const size_t rc = ec->accGeometricSize[tID]; /// row-column row
@@ -335,7 +332,54 @@ __global__ void ComputeStiffnessMatrix(ComputationStateData *ecdata, size_t N) {
     /// From Kernel Reference Addressing
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 
-    ComputeStiffnessMatrix_Impl(tID, ecdata, N);
+    ComputationState *ec = static_cast<ComputationState *>(ecdata);
+    /// actually max single block with 1024 threads
+
+    ComputationMode computationMode = ec->computationMode;
+
+    int *P = ec->P;
+    int *accWriteOffset = NULL;
+    int *cooRowInd = ec->cooColInd;
+    int *cooColInd = ec->cooColInd;
+    double *cooVal = ec->cooVal;
+    const bool intention = true;
+
+    /// Runtime Dispatch
+    switch (computationMode) {
+    case DENSE_LAYOUT:
+    {
+        graph::DenseLayout denseLayout = graph::DenseLayout(ec->dimension, 0, 0, ec->A);
+        graph::Tensor<graph::DenseLayout> tensor = graph::tensorDevMem(denseLayout, 0, 0);
+
+        ComputeStiffnessMatrix_Impl<graph::DenseLayout>(tID, ecdata, tensor, N);
+
+        return;
+    };
+    break;
+    case SPARSE_LAYOUT:
+    {
+        graph::SparseLayout sparseLayout = graph::SparseLayout(accWriteOffset, cooRowInd, cooColInd, cooVal);
+        graph::Tensor<graph::SparseLayout> tensorSparseLayout = graph::tensorDevMem(sparseLayout, intention);
+
+        // ComputeStiffnessMatrix_Impl<graph::SparseLayout>(tID, ecdata, tensorSparseLayout, N);
+
+        return;
+    };
+    break;
+    case DIRECT_LAYOUT:
+    {
+        graph::DirectSparseLayout directLayout =
+            graph::DirectSparseLayout(accWriteOffset, P, cooRowInd, cooColInd, cooVal);
+        graph::Tensor<graph::DirectSparseLayout> tensorDirect = graph::tensorDevMem(directLayout, intention);
+
+        // ComputeStiffnessMatrix_Impl<graph::DirectSparseLayout>(tID, ecdata, tensorDirect, N);
+
+        return;
+    };
+    break;
+    default:
+        log_error("[gpu/tensor] computation mode unknown \n");
+    }
 }
 
 /// -1 * b from equation reduction
@@ -663,8 +707,7 @@ __device__ void EvaluateForceIntensity_Impl(int tID, ComputationStateData *ecdat
 
     /// unpack tensor for evaluation
 
-    const bool intention = false; // vector operations
-
+    const bool intention = true; // vector operations
     graph::DenseLayout layout = graph::DenseLayout(ec->dimension, 0, 0, ec->b);    
     graph::Tensor<graph::DenseLayout> mt = graph::tensorDevMem(layout, 0, 0, intention);
 
@@ -1032,7 +1075,7 @@ __device__ void EvaluateConstraintValue_Impl(int tID, ComputationStateData *ecda
 
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
 
-    const bool intention = false;
+    const bool intention = true;
     const graph::DenseLayout layout = graph::DenseLayout(ec->dimension, ec->size, 0, ec->b);    
     graph::Tensor<graph::DenseLayout> mt = graph::tensorDevMem(layout, 0, 0, intention);
 
@@ -1543,7 +1586,7 @@ __device__ void EvaluateConstraintJacobian_Impl(int tID, ComputationStateData *e
         const int constraintOffset = ec->accConstraintSize[tID];
 
         const graph::DenseLayout layout = graph::DenseLayout(ec->dimension, ec->size, 0, ec->A);
-        graph::Tensor<graph::DenseLayout> mt1 = graph::tensorDevMem(layout, constraintOffset, 0);
+        graph::Tensor<graph::DenseLayout> mt1 = graph::tensorDevMem(layout, constraintOffset, 0 , false);
 
         const graph::Constraint *constraint = ec->getConstraint(tID);
         switch (constraint->constraintTypeId) {
@@ -1634,8 +1677,10 @@ __device__ void EvaluateConstraintTRJacobian_Impl(int tID, ComputationStateData 
         const int constraintOffset = (ec->size + ec->accConstraintSize[tID]);
 
         const graph::DenseLayout layout = graph::DenseLayout(ec->dimension, 0, constraintOffset, ec->A);
-        
-        graph::AdapterTensor<graph::DenseLayout> mt2 = graph::transposeTensorDevMem(layout);
+
+        const bool intention = false;
+
+        graph::AdapterTensor<graph::DenseLayout> mt2 = graph::transposeTensorDevMem(layout, intention);
 
 
         const graph::Constraint *constraint = ec->getConstraint(tID);

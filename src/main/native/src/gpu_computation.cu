@@ -107,10 +107,10 @@ void GPUComputation::preInitializeData() {
     parameterOffset = utility::stateOffset(_parameters, [](auto parameter) { return parameter->id; });
 
     /// accumalted position of geometric block
-    accGeometricSize = utility::accumalatedValue(_geometrics, graph::geometricSetSize);
+    accGeometricSize = utility::accumulatedValue(_geometrics, graph::geometricSetSize);
 
     /// accumulated position of constrain block
-    accConstraintSize = utility::accumalatedValue(_constraints, graph::constraintSize);
+    accConstraintSize = utility::accumulatedValue(_constraints, graph::constraintSize);
 
     /// `A` tensor internal structure dimensions
     size = std::accumulate(_geometrics.begin(), _geometrics.end(), 0,
@@ -332,6 +332,11 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
         ev[itr]->accGeometricSize = d_accGeometricSize;
         ev[itr]->accConstraintSize = d_accConstraintSize;
 
+        /// =================================
+        /// Tensor A Computation Mode
+        /// =================================
+        ev[itr]->computationMode = DENSE_LAYOUT;
+
         ///
         /// [ GPU ] computation context mapped onto devive object
         ///
@@ -498,6 +503,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         double *host_norm = &ev[itr]->norm;
 
+#define H_DEBUG      
+
         //
         ///  ConstraintGetFullNorm
         //
@@ -510,6 +517,11 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         _linearSystem->solveLinearEquation(dev_A, dev_b, N);
 
+
+#ifdef H_DEBUG
+        stdoutRightHandSide<<<GRID_DBG, 1, Ns, _stream>>>(dev_ev[itr], N);
+        checkCudaStatus(cudaStreamSynchronize(_stream));
+#endif 
         /// ======== LINER SYSTEM equation CuSolver    === STOP
 
         /// uaktualniamy punkty [ SV ] = [ SV ] + [ delta ] // :: SAXPY

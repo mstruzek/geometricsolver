@@ -40,4 +40,32 @@
 ///
 #define  CIRCLE_SPRING_ALFA                        10.0
 
+
+///
+/// Computation mode that will prepare matrix [ A ]  state  - this is stiffness matrix, and Jacobian matrix.
+///
+///
+enum ComputationMode {
+
+	///
+	/// Tensor is initalized as columnard dense vector with leading dimension
+	///
+	///
+	DENSE_LAYOUT = 1,
+
+	///
+	/// Tensor is inistalized in COO - "Coordinate Format"
+	///
+	SPARSE_LAYOUT = 2,
+
+	///
+	/// Tensor is computed in CSR direct form ( inverse permutation vector ;  "reordering" )
+	///
+	/// "Compress Sparse Row Format"
+	///
+	DIRECT_LAYOUT = 3
+};
+
+
+
 #endif // _MODEL_CONFIG_H

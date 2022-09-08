@@ -60,6 +60,7 @@ int main(int argc, char* args[])
 
     //jni_setBooleanProperty  
     
+    jni_setBooleanProperty(&env, eclass, 8, (jboolean) true);  // settings::get()->DEBUG_CHECK_ARG = false;
     jni_setBooleanProperty(&env, eclass, 2, (jboolean) true);  // settings::get()->DEBUG_TENSOR_A= true;
     jni_setBooleanProperty(&env, eclass, 3, (jboolean) true);  // settings::get()->DEBUG_TENSOR_B= true;
     

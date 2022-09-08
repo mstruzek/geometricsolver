@@ -80,14 +80,17 @@ std::vector<int> stateOffset(std::vector<Obj> objects, ObjIdFunction objectIdFun
 
 /// #/include <numeric> std::partial_sum
 
+/// Accumulated value, [ 0, E(0), E(0,1) + ... , E(0,N-1);  E(0,N)] ,  total accumulate value is E(0,N)
+///
 template <typename Obj, typename ValueFunction>
-std::vector<int> accumalatedValue(std::vector<Obj> vector, ValueFunction valueFunction) {
+std::vector<int> accumulatedValue(std::vector<Obj> vector, ValueFunction valueFunction) {
     int accValue = 0;
-    std::vector<int> accumulated(vector.size(), 0);
+    std::vector<int> accumulated(vector.size() + 1, 0);
     for (int offset = 0; offset < vector.size(); offset++) {
         accumulated[offset] = accValue;
         accValue = accValue + valueFunction(vector[offset]);
     }
+    accumulated[accumulated.size()-1] = accValue;
     return accumulated;
 }
 
