@@ -309,17 +309,17 @@ template <typename FieldType>
 void JniSetFieldValue(JNIEnv *env, jclass objClazz, jobject object, const char *const fieldName,
                       FieldType sourceField) {
     if constexpr (std::is_same<FieldType, double>::value) {
-        env->SetDoubleField(object, env->GetFieldID(objClazz, fieldName, "D"), sourceField);
+        env->SetDoubleField(object, env->GetFieldID(objClazz, fieldName, "D"), static_cast<jdouble>(sourceField));
     } else if constexpr (std::is_same<FieldType, long>::value) {
-        env->SetLongField(object, env->GetFieldID(objClazz, fieldName, "J"), sourceField);
+        env->SetLongField(object, env->GetFieldID(objClazz, fieldName, "J"), static_cast<jlong>(sourceField));
     } else if constexpr (std::is_same<FieldType, long long>::value) {
-        env->SetLongField(object, env->GetFieldID(objClazz, fieldName, "J"), sourceField);
+        env->SetLongField(object, env->GetFieldID(objClazz, fieldName, "J"), static_cast<jlong>(sourceField));
     } else if constexpr (std::is_same<FieldType, int>::value) {
-        env->SetIntField(object, env->GetFieldID(objClazz, fieldName, "I"), sourceField);
+        env->SetIntField(object, env->GetFieldID(objClazz, fieldName, "I"), static_cast<jint>(sourceField));
     } else if constexpr (std::is_same<FieldType, size_t>::value) {
-        env->SetIntField(object, env->GetFieldID(objClazz, fieldName, "I"), sourceField);
+        env->SetIntField(object, env->GetFieldID(objClazz, fieldName, "I"), static_cast<jint>(sourceField));
     } else if constexpr (std::is_same<FieldType, bool>::value) {
-        env->SetBooleanField(object, env->GetFieldID(objClazz, fieldName, "Z"), sourceField);
+        env->SetBooleanField(object, env->GetFieldID(objClazz, fieldName, "Z"), static_cast<jboolean>(sourceField));
     }
 }
 

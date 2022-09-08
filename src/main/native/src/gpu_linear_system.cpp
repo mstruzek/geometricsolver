@@ -128,7 +128,7 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
     ///
     ///               solver linear equation A * X = B
     ///
-    checkCuSolverStatus(cusolverDnDgetrs(handle, CUBLAS_OP_N, N, 1, A, N, devIpiv, b, N, devInfo));
+    checkCuSolverStatus(cusolverDnDgetrs(handle, CUBLAS_OP_N, (int)N, 1, A, (int)N, devIpiv, b, (int)N, devInfo));
 
     /*
 

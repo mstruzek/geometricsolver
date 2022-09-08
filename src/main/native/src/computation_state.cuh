@@ -8,38 +8,38 @@
 
 struct ComputationState : public ComputationStateData {
 
-    __host__ __device__ graph::Vector const &getPoint(int pointId) const {
+    __GPU_DEV_INL__ graph::Vector const &getPoint(int pointId) const {
         int offset = pointOffset[pointId];
         graph::Vector *vector;
         *((void **)&vector) = &SV[offset * 2];
         return *vector;
     }
 
-    __host__ __device__ double getLagrangeMultiplier(int constraintId) const {
+    __GPU_DEV_INL__ double getLagrangeMultiplier(int constraintId) const {
         int multiOffset = accConstraintSize[constraintId];
         return SV[size + multiOffset];
     }
 
-    __host__ __device__  graph::Point const &getPointRef(int pointId) {
+    __GPU_DEV_INL__ graph::Point const &getPointRef(int pointId) {
         const size_t offset = pointOffset[pointId];
         return points[offset];
     }
 
-    __host__ __device__  graph::Geometric *getGeometricObject(int geometricId){
+    __GPU_DEV_INL__ graph::Geometric *getGeometricObject(int geometricId) {
         const size_t offset = geometricOffset[geometricId];
         return &geometrics[offset];
     }
 
-    __host__ __device__ graph::Constraint *getConstraint(int constraintId) {
+    __GPU_DEV_INL__ graph::Constraint *getConstraint(int constraintId) {
         const size_t offset = constraintOffset[constraintId];
         return &constraints[offset];
     }
 
-    __host__ __device__ graph::Parameter *getParameter(int parameterId) {
+    __GPU_DEV_INL__ graph::Parameter *getParameter(int parameterId) {
         const size_t offset = parameterOffset[parameterId];
         return &parameters[offset];
     }
 
 };
 
-__host__ __device__ __forceinline__ double toRadians(double value) { return (M_PI / 180.0) * value; }
+__GPU_DEV_INL__ double toRadians(double value) { return (M_PI / 180.0) * value; }
