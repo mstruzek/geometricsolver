@@ -11,8 +11,8 @@ GPUComputationContext::GPUComputationContext(cudaStream_t stream) : stream(strea
     // initialize all static cuda context - no direct or indirect dependent on geometric model.
 
     dev_norm = std::vector<double *>(CMAX, nullptr);
-    ev = std::vector<ComputationStateData *>(CMAX, nullptr);
-    dev_ev = std::vector<ComputationStateData *>(CMAX, nullptr);
+    ev = std::vector<ComputationState *>(CMAX, nullptr);
+    dev_ev = std::vector<ComputationState *>(CMAX, nullptr);
 
     computeStart = std::vector<cudaEvent_t>(CMAX, nullptr);
     computeStop = std::vector<cudaEvent_t>(CMAX, nullptr);

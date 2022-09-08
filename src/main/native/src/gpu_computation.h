@@ -81,7 +81,7 @@ class GPUComputation {
 
     void checkStreamNoError();
 
-    void reportThisResult(ComputationStateData *computation);
+    void reportThisResult(ComputationState *computation);
 
     static void computationResultHandlerDelegate(cudaStream_t stream, cudaError_t status, void *userData);
 
@@ -106,7 +106,7 @@ class GPUComputation {
     std::mutex mutex;
 
     /// host reference guarded by mutex
-    std::atomic<ComputationStateData *> result;
+    std::atomic<ComputationState *> result;
 
   private:
     /// points register poLocations id-> point_offset

@@ -11,10 +11,15 @@
 
 #include "model_config.h"
 
+
 #define __GPU_COMM_INL__ __forceinline__ __host__ __device__
 #define __GPU_DEV_INL__ __forceinline__ __device__
 
+
+
 namespace graph {
+
+class Vector;
 
 /// Forward definition
 struct Geometric;
@@ -35,7 +40,9 @@ ComputationMode getComputationMode(int computationId);
 /// ================================================================================///
 /// ================================================================================///
 
-class Vector;
+
+#ifdef __NVCC__
+
 
 // 2x2 small grid
 class BlockLayout {
@@ -68,6 +75,7 @@ __GPU_DEV_INL__ double BlockLayout::get(int row, int col) const {
     }
     return NAN;
 }
+
 
 //=================================================================================
 
@@ -324,6 +332,8 @@ __GPU_DEV_INL__ double DirectSparseLayout::get(int row, int col) const {
 
 //=================================================================================
 
+// @deprecated macro definition !__NVCC__
+
 /// default vector accessor
 __GPU_DEV_INL__ double getVectorX(Vector const &value);
 
@@ -434,8 +444,9 @@ template <typename LLayout = graph::BlockLayout> class Tensor {
 
 //=================================================================================
 
+
 __GPU_DEV_INL__ static Tensor<DenseLayout> tensorDevMem(DenseLayout parent, int rowOffset, int colOffset,
-                                                        bool intention = true) {
+                                                        bool intention = true ) {
     DenseLayout layout(parent.ld, parent.rowOffset + rowOffset, parent.colOffset + colOffset, parent.m_A);
     Tensor<DenseLayout> tensor(layout, intention);
     return tensor;
@@ -525,8 +536,20 @@ __GPU_DEV_INL__ static AdapterTensor<LLayout> transposeTensorDevMem(LLayout pare
 
 //=================================================================================
 
+#endif // __NVCC__
+
+
+//=================================================================================
+
 class Vector {
   public:
+
+#if !defined(__NVCC__) 
+        Vector(double px, double py) : x(px), y(py) {}
+#endif 
+
+#ifdef __NVCC__
+
     __GPU_COMM_INL__ Vector() : x(0.0), y(0.0){};
 
     __GPU_COMM_INL__ Vector(Vector const &other) {
@@ -569,15 +592,21 @@ class Vector {
 
     __GPU_COMM_INL__ bool operator==(Vector const &other) const { return (this->x == other.x && this->y == other.y); }
 
+#endif // __NVCC__
+
   public:
     double x, y;
 };
 
 typedef Vector PPoint;
 
+#ifdef __NVCC__
+
 __GPU_DEV_INL__ double getVectorX(Vector const &value) { return value.x; }
 
 __GPU_DEV_INL__ double getVectorY(Vector const &value) { return value.y; }
+
+#endif  // __NVCC__
 
 /// ================================================================================///
 /// ================================================================================///

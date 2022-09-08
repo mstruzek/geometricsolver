@@ -85,7 +85,7 @@ template <typename... Args> __device__ void log_error(const char *formatStr, Arg
     ::printf(formatStr, args...);
 }
 
-__global__ void stdoutTensorData(ComputationStateData *ecdata, size_t rows, size_t cols) {
+__global__ void stdoutTensorData(ComputationState *ecdata, size_t rows, size_t cols) {
 
     ComputationState *ev = static_cast<ComputationState *>(ecdata);
 
@@ -114,7 +114,7 @@ __global__ void stdoutTensorData(ComputationStateData *ecdata, size_t rows, size
     }
 }
 
-__global__ void stdoutRightHandSide(ComputationStateData *ecdata, size_t rows) {
+__global__ void stdoutRightHandSide(ComputationState *ecdata, size_t rows) {
 
     ComputationState *ev = static_cast<ComputationState *>(ecdata);
 
@@ -132,9 +132,9 @@ __global__ void stdoutRightHandSide(ComputationStateData *ecdata, size_t rows) {
     }
 }
 
-__global__ void stdoutStateVector(ComputationStateData *ecdata, size_t rows) {
+__global__ void stdoutStateVector(ComputationState *ecdata, size_t rows) {
 
-    ComputationState *ev = static_cast<ComputationState *>(ecdata);
+    ComputationState *ev = static_cast<ComputationState*>(ecdata);
 
     const graph::DenseLayout layout = graph::DenseLayout(rows, 0, 0, ev->SV);
     const graph::Tensor<graph::DenseLayout> SV = graph::tensorDevMem(layout, 0, 0);    
@@ -291,7 +291,7 @@ template <typename Layout> __device__ void setStiffnessMatrix_Arc(int rc, graph:
  * @return __global__
  */
 template <typename Layout>
-__device__ void ComputeStiffnessMatrix_Impl(int tID, ComputationStateData *ecdata, graph::Tensor<Layout>& tensor,size_t N) {
+__device__ void ComputeStiffnessMatrix_Impl(int tID, ComputationState *ecdata, graph::Tensor<Layout>& tensor,size_t N) {
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
     if (tID < N) {
         const size_t rc = ec->accGeometricSize[tID]; /// row-column row
@@ -320,7 +320,7 @@ __device__ void ComputeStiffnessMatrix_Impl(int tID, ComputationStateData *ecdat
     return;
 }
 
-__global__ void ComputeStiffnessMatrix(ComputationStateData *ecdata, size_t N) {
+__global__ void ComputeStiffnessMatrix(ComputationState *ecdata, size_t N) {
 
     /// From Kernel Reference Addressing
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
@@ -696,7 +696,7 @@ __device__ void setForceIntensity_Arc(int row, graph::Geometric const *geometric
 /// Evaluate Force Intensity ==============================================================
 ///
 
-__device__ void EvaluateForceIntensity_Impl(int tID, ComputationStateData *ecdata, size_t N) {
+__device__ void EvaluateForceIntensity_Impl(int tID, ComputationState *ecdata, size_t N) {
     ComputationState *ec = (ComputationState *)ecdata;
 
     /// unpack tensor for evaluation
@@ -739,7 +739,7 @@ __device__ void EvaluateForceIntensity_Impl(int tID, ComputationStateData *ecdat
     return;
 }
 
-__global__ void EvaluateForceIntensity(ComputationStateData *ecdata, size_t N) {
+__global__ void EvaluateForceIntensity(ComputationState *ecdata, size_t N) {
 
     /// Kernel Reference Addressing
     int tId = blockDim.x * blockIdx.x + threadIdx.x;
@@ -1065,7 +1065,7 @@ __device__ void setValueConstraintSetVertical(int row, graph::Constraint const *
 ///
 /// Evaluate Constraint Value =============================================================
 ///
-__device__ void EvaluateConstraintValue_Impl(int tID, ComputationStateData *ecdata, size_t N) {
+__device__ void EvaluateConstraintValue_Impl(int tID, ComputationState *ecdata, size_t N) {
 
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
 
@@ -1137,7 +1137,7 @@ __device__ void EvaluateConstraintValue_Impl(int tID, ComputationStateData *ecda
     }
 }
 
-__global__ void EvaluateConstraintValue(ComputationStateData *ecdata, size_t N) {
+__global__ void EvaluateConstraintValue(ComputationState *ecdata, size_t N) {
     /// Kernel Reference Addressing
     int tId = blockDim.x * blockIdx.x + threadIdx.x;
     ///
@@ -1571,7 +1571,7 @@ __device__ void setJacobianConstraintSetVertical(int tID, graph::Constraint cons
 ///
 ///
 template<typename Tensor>
-__device__ void EvaluateConstraintJacobian_Impl(int tID, ComputationStateData *ecdata, Tensor& mt1, size_t N) {
+__device__ void EvaluateConstraintJacobian_Impl(int tID, ComputationState *ecdata, Tensor& mt1, size_t N) {
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
     /// unpack tensor for evaluation
     /// COLUMN_ORDER - tensor A
@@ -1636,7 +1636,7 @@ __device__ void EvaluateConstraintJacobian_Impl(int tID, ComputationStateData *e
     }
 }
 
-__global__ void EvaluateConstraintJacobian(ComputationStateData *ecdata, size_t N) {
+__global__ void EvaluateConstraintJacobian(ComputationState *ecdata, size_t N) {
 
     /// From Kernel Reference Addressing
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
@@ -1703,7 +1703,7 @@ __global__ void EvaluateConstraintJacobian(ComputationStateData *ecdata, size_t 
 ///
 ///
 template<typename Tensor>
-__device__ void EvaluateConstraintTRJacobian_Impl(int tID, ComputationStateData *ecdata, Tensor& mt2, size_t N) {
+__device__ void EvaluateConstraintTRJacobian_Impl(int tID, ComputationState *ecdata, Tensor& mt2, size_t N) {
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
     /// unpack tensor for evaluation
     /// COLUMN_ORDER - tensor A
@@ -1768,7 +1768,7 @@ __device__ void EvaluateConstraintTRJacobian_Impl(int tID, ComputationStateData 
     }
 }
 
-__global__ void EvaluateConstraintTRJacobian(ComputationStateData *ecdata, size_t N) {
+__global__ void EvaluateConstraintTRJacobian(ComputationState *ecdata, size_t N) {
 
     ///==============================================================
 
@@ -2185,7 +2185,7 @@ __device__ void setHessianTensorConstraintSetVertical(int tID, graph::Constraint
 ///
 ///
 template<typename Tensor>
-__device__ void EvaluateConstraintHessian_Impl(int tID, ComputationStateData *ecdata, Tensor& mt, size_t N) {
+__device__ void EvaluateConstraintHessian_Impl(int tID, ComputationState *ecdata, Tensor& mt, size_t N) {
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
     /// unpack tensor for evaluation
     /// COLUMN_ORDER - tensor A    
@@ -2250,7 +2250,7 @@ __device__ void EvaluateConstraintHessian_Impl(int tID, ComputationStateData *ec
     }
 }
 
-__global__ void EvaluateConstraintHessian(ComputationStateData *ecdata, size_t N) {
+__global__ void EvaluateConstraintHessian(ComputationState *ecdata, size_t N) {
     /// Kernel Reference Addressing
     int tID = blockDim.x * blockIdx.x + threadIdx.x;
 

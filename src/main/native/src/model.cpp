@@ -5,6 +5,7 @@
 
 namespace graph {
 
+
 int constraintSize(Constraint const &constraint) {
     switch (constraint.constraintTypeId) {
     case CONSTRAINT_TYPE_ID_FIX_POINT:

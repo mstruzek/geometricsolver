@@ -90,7 +90,7 @@
     <CudaCompile Include="kernel.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </CudaCompile>
-    <CudaCompile Include="src\model.cu" />
+    <ClCompile Include="src\model.cpp" />
     <ClCompile Include="src\settings.cpp" />
     <ClCompile Include="src\cuerror.cpp" />
     <ClCompile Include="src\gpu_linear_system.cpp" />
@@ -107,7 +107,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\com_mstruzek_jni_JNISolverGate.h" />
-    <ClInclude Include="src\computation_state_data.h" />
     <ClInclude Include="src\gpu_computation.h" />
     <ClInclude Include="src\gpu_computation_context.h" />
     <ClInclude Include="src\settings.h" />

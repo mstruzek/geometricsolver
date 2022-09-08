@@ -3,7 +3,7 @@
 #include "cuda_runtime_api.h"
 
 #include <vector>
-#include "computation_state_data.h"
+#include "computation_state.cuh"
 #include "stop_watch.h"
 
 /// MAX SOLVER ITERATIONS
@@ -51,10 +51,10 @@ class GPUComputationContext {
     std::vector<double *> dev_norm;
 
     /// Local Computation References
-    std::vector<ComputationStateData *> ev;
+    std::vector<ComputationState *> ev;
 
     /// Device Reference - `synchronized into device` one-way
-    std::vector<ComputationStateData *> dev_ev;
+    std::vector<ComputationState *> dev_ev;
 
   private:
     cudaStream_t stream = nullptr;

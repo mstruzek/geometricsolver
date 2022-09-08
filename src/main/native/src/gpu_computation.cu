@@ -185,7 +185,7 @@ void GPUComputation::computationResultHandlerDelegate(cudaStream_t stream, cudaE
 /// <param name="userData"></param>
 void GPUComputation::computationResultHandler(cudaStream_t stream, cudaError_t status, void *userData) {
     // synchronize on stream
-    ComputationStateData *computation = static_cast<ComputationStateData *>(userData);
+    ComputationState *computation = static_cast<ComputationState *>(userData);
 
     // obsluga bledow w strumieniu
     if (status != cudaSuccess) {
@@ -209,7 +209,7 @@ void GPUComputation::computationResultHandler(cudaStream_t stream, cudaError_t s
     if (computation->norm < CONVERGENCE || isNan || last) {
         /// update offset
 
-        auto desidreState = static_cast<ComputationStateData *>(nullptr);
+        auto desidreState = static_cast<ComputationState *>(nullptr);
         if (result.compare_exchange_strong(desidreState, computation)) {
             condition.notify_one();
         }
@@ -308,8 +308,8 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
 
         ///  Host Context - with references to device
 
-        std::vector<ComputationStateData *> &ev = _cc->ev;
-        std::vector<ComputationStateData *> &dev_ev = _cc->dev_ev;
+        std::vector<ComputationState *> &ev = _cc->ev;
+        std::vector<ComputationState *> &dev_ev = _cc->dev_ev;
 
         // computation data;
         ev[itr]->cID = itr;
@@ -636,7 +636,7 @@ void GPUComputation::solveSystem(solver::SolverStat *stat, cudaError_t *error) {
     *error = cudaGetLastError();
 }
 
-void GPUComputation::reportThisResult(ComputationStateData *computation) {
+void GPUComputation::reportThisResult(ComputationState *computation) {
     long long solutionDelta = solverWatch.delta();
 
     printf("\n");
