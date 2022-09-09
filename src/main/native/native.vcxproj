@@ -89,6 +89,7 @@
   <ItemGroup>
     <ClInclude Include="src\kernel_traits.h" />
     <ClInclude Include="src\quda.cuh" />
+    <ClInclude Include="src\tensor_layout.cuh" />
     <ClInclude Include="src\tensor_operation.h" />
     <CudaCompile Include="kernel.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>

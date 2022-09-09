@@ -7,6 +7,8 @@
 
 #include "model.cuh"
 
+#include "tensor_layout.cuh"
+
 #include "computation_state.cuh"
 
 /// KERNEL#
