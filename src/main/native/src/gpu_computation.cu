@@ -232,6 +232,8 @@ void GPUComputation::PreInitializeComputationState(ComputationState *ev, int itr
     ev->accGeometricSize = d_accGeometricSize;
     ev->accConstraintSize = d_accConstraintSize;
 
+    ev->computationMode = computationMode;
+
     /// =================================
     ///     Tensor A Computation Mode
     /// =================================
@@ -240,7 +242,7 @@ void GPUComputation::PreInitializeComputationState(ComputationState *ev, int itr
         /// 1. zapisa do COO
         /// 2. conversja COO - CSR
         /// 3. linera solver CSR
-        ev->computationMode = computationMode;
+        
         ev->cooRowInd = d_cooRowInd; /// DirectLayout access
         ev->cooColInd = d_cooColInd; /// DirectLayout access
         ev->cooVal = d_cooVal;
@@ -269,10 +271,10 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream
     /// tensor A = [ Stiff + Hessian + Jacobian + JacobianT ]
     ///
     const unsigned G_GRID_DIM = GeometricKernelTraits.GRID_DIM;
-    const unsigned G_BLOCK_DIM = GeometricKernelTraits.GRID_DIM;
+    const unsigned G_BLOCK_DIM = GeometricKernelTraits.BLOCK_DIM;
 
     const unsigned Z_GRID_DIM = ConstraintKernelTraits.GRID_DIM;
-    const unsigned Z_BLOCK_DIM = ConstraintKernelTraits.GRID_DIM;
+    const unsigned Z_BLOCK_DIM = ConstraintKernelTraits.BLOCK_DIM;
 
     ///==================================================== ///
     ///                 Stiff Tensor - K                    ///
@@ -314,10 +316,10 @@ void GPUComputation::DeviceConstructTensorB(ComputationState *dev_ev, cudaStream
     /// B = [ SV ]  - right hand side
     ///
     const unsigned G_GRID_DIM = GeometricKernelTraits.GRID_DIM;
-    const unsigned G_BLOCK_DIM = GeometricKernelTraits.GRID_DIM;
+    const unsigned G_BLOCK_DIM = GeometricKernelTraits.BLOCK_DIM;
 
     const unsigned Z_GRID_DIM = ConstraintKernelTraits.GRID_DIM;
-    const unsigned Z_BLOCK_DIM = ConstraintKernelTraits.GRID_DIM;
+    const unsigned Z_BLOCK_DIM = ConstraintKernelTraits.BLOCK_DIM;
 
     ///==================================================== ///
     ///                 Point-Point-Tension F(q)            ///
@@ -577,14 +579,18 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
 
     GPUComputation::unregisterComputation(this);
 
+    checkCudaStatus(cudaStreamSynchronize(stream));
+
     if (settings::get()->DEBUG) {
         ///
         ///
         ReportComputationResult(computation);
     }
+    
+    BuildSolverStat(computation, stat);
+
     RebuildPointsFrom(computation);
 
-    checkCudaStatus(cudaStreamSynchronize(stream));
 
     if (graphExec != NULL) {
         cudaGraphExecDestroy(graphExec);

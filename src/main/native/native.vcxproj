@@ -105,6 +105,7 @@
     <ClCompile Include="src\gpu_computation_context.cpp" />
     <CudaCompile Include="src\gpu_computation.cu" />
     <CudaCompile Include="src\quda.cu" />
+    <CudaCompile Include="src\solver_kernel.cu" />
     <CudaCompile Include="src\tensor_operation.cu" />
   </ItemGroup>
   <ItemGroup>

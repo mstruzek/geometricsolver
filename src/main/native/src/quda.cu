@@ -12,4 +12,13 @@ template <> __device__ __host__ const char *line_format<double>() {
     return doubleFormat;
 }
 
+
+template <typename Type> __global__ void stdout_vector_kernel(Type *vector, int size) {
+    const char *format = line_format<Type>();
+    int i = size;
+    while (i-- > 0) {
+        log(format, i, vector[i]);
+    }
+}
+
 } // namespace quda

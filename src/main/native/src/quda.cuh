@@ -197,17 +197,11 @@ template <typename... Ty> __device__ __host__ void log(const char *format, Ty &.
 
 template <typename Ty> __device__ __host__ const char *line_format();
 
-#ifdef __NVCC__
 
-template <typename Type> __global__ void stdout_vector_kernel(Type *vector, int size) {
-    const char *format = line_format<Type>();
-    int i = size;
-    while (i-- > 0) {
-        log(format, i, vector[i]);
-    }
-}
+template <typename Type> 
+__global__ void stdout_vector_kernel(Type *vector, int size);
 
-#endif
+
 
 template <typename Type> void stdout_vector(dev_vector<Type> &vector, const char *title) {
     log("%s ###########\n", title);
@@ -216,6 +210,7 @@ template <typename Type> void stdout_vector(dev_vector<Type> &vector, const char
     ///
     /// ----  ADVICE : basic types or references transport !
     stdout_vector_kernel<Type><<<1, 1>>>(vector.data(), vector.size());
+
     cudaStreamSynchronize(0);
     log("\n");
 }
