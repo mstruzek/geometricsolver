@@ -108,8 +108,20 @@ struct ComputationState {
     /// computation mode applied onto "A tensor" at this iteration
     ComputationMode computationMode;
 
+    /// Accumulated Writes in COO format from kernel into Stiff Tensor
+    int *accCooWriteStiffTensor;
+
+    /// Accumulated Writes in COO format from kernel into Jacobian Tensor
+    int *accCooWriteJacobianTensor;
+
+    /// offset for Jacobian kernel Writes
+    int cooWritesStiffSize;
+
+    /// offset for Transposed Jacobian kernel writes
+    int cooWirtesJacobianSize;
+
     // CSR format, inverse permutation vector, direct addressing from COO to sparse matrix in CSR format
-    int *P;
+    int *INV_P;
 
     /// not-transformed row vector of indicies, Coordinate Format COO
     int *cooRowInd = NULL;
@@ -119,6 +131,7 @@ struct ComputationState {
 
     /// COO vector of values, Coordinate Format COO, or CSR format sorted
     double *cooVal = NULL;
+
 
 };
 

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _GPU_COMPUTATION_CONTEXT_H_
+#define _GPU_COMPUTATION_CONTEXT_H_
 
 #include "cuda_runtime_api.h"
 
@@ -26,17 +27,17 @@ class GPUComputationContext {
 
     double *get_dev_norm(size_t itr);
 
-    void recordComputeStart(size_t itr);
+    void ComputeStart(size_t itr);
 
-    void recordComputeStop(size_t itr);
+    void ComputeStop(size_t itr);
 
-    void recordPrepStart(size_t itr);
+    void PrepStart(size_t itr);
 
-    void recordPrepStop(size_t itr);
+    void PrepStop(size_t itr);
 
-    void recordSolverStart(size_t itr);
+    void SolverStart(size_t itr);
 
-    void recordSolverStop(size_t itr);
+    void SolverStop(size_t itr);
 
     void info_solver_version() const;
         
@@ -46,18 +47,22 @@ class GPUComputationContext {
 
     long long getAccComputeTime(int itrBound); 
 
+    ComputationState* host_ev(int iteration);
+
+    ComputationState* get_dev_ev(int iteration);
+
   public:
     /// cuBlas device norm2
     std::vector<double *> dev_norm;
+
+  private:
+    cudaStream_t stream = nullptr;
 
     /// Local Computation References
     std::vector<ComputationState *> ev;
 
     /// Device Reference - `synchronized into device` one-way
     std::vector<ComputationState *> dev_ev;
-
-  private:
-    cudaStream_t stream = nullptr;
 
     /// === Solver Performance Watchers
 
@@ -81,3 +86,5 @@ class GPUComputationContext {
 };
 
 } // namespace solver
+
+#endif // _GPU_COMPUTATION_CONTEXT_H_

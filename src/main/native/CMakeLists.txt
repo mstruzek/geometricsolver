@@ -45,16 +45,11 @@ elseif(WIN32)
 	#set(JAVA_HOME "C:\\Program Files\\Java\\jdk-17.0.2\\")
 endif()
 
-
 find_package(JNI)     #  in this cmake-3.20 settings JNI module is not setting the target JNI::JNI (cmake-3.24)
-
-
-
 
 find_package(CUDAToolkit 11.7)
 
-
-add_library(${PROJECT_SHARED_LIBRARY} SHARED 
+add_library(${PROJECT_SHARED_LIBRARY} SHARED
         src/com_mstruzek_jni_JNISolverGate.cpp
         src/cuerror.cpp
         src/settings.cpp
@@ -62,6 +57,7 @@ add_library(${PROJECT_SHARED_LIBRARY} SHARED
         src/gpu_geometric_solver.cpp
         src/gpu_computation_context.cpp
         src/gpu_computation.cu
+        src/tensor_operation.cu
         src/gpu_linear_system.cpp )
 
 

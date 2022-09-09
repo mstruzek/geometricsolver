@@ -35,6 +35,13 @@ int geometricSetSize(Geometric const &geometric);
 /// map computation mode from computation id
 ComputationMode getComputationMode(int computationId);
 
+
+/// accWriteCooStiffTensor
+int tensorOpsCooStiffnesCoefficients(Geometric const &geometric);
+
+/// accWriteCooJacobianTensor
+int tensorOpsCooConstraintJacobian(Constraint const &constraint);
+
 /// ================================================================================///
 /// ================================================================================///
 /// ================================================================================///

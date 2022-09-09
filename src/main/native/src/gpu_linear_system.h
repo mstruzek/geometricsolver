@@ -51,7 +51,7 @@ class GPULinearSystem {
     ~GPULinearSystem();
 
   private:
-    cudaStream_t _stream = nullptr;
+    cudaStream_t stream = nullptr;
 
     /// cuda variables
     cusolverDnHandle_t handle = nullptr;

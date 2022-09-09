@@ -8,7 +8,7 @@
 namespace solver {
 
 GPUComputationContext::GPUComputationContext(cudaStream_t stream) : stream(stream) {
-    // initialize all static cuda context - no direct or indirect dependent on geometric model.
+    // initialize all static cuda context - no direct or indirect dependencies on geometric model.
 
     dev_norm = std::vector<double *>(CMAX, nullptr);
     ev = std::vector<ComputationState *>(CMAX, nullptr);
@@ -88,32 +88,32 @@ void GPUComputationContext::info_solver_version() const {
     printf("[ CUSOLVER ]  version ( Major.Minor.PatchLevel): %d.%d.%d\n", major, minor, patch);
 }
 
-void GPUComputationContext::recordComputeStart(size_t itr) {
+void GPUComputationContext::ComputeStart(size_t itr) {
     ///
     checkCudaStatus(cudaEventRecord(computeStart[itr], stream));
 }
 
-void GPUComputationContext::recordComputeStop(size_t itr) {
+void GPUComputationContext::ComputeStop(size_t itr) {
     ///
     checkCudaStatus(cudaEventRecord(computeStop[itr], stream));
 }
 
-void GPUComputationContext::recordPrepStart(size_t itr) {
+void GPUComputationContext::PrepStart(size_t itr) {
     ///
     checkCudaStatus(cudaEventRecord(prepStart[itr], stream));
 }
 
-void GPUComputationContext::recordPrepStop(size_t itr) {
+void GPUComputationContext::PrepStop(size_t itr) {
     ///
     checkCudaStatus(cudaEventRecord(prepStop[itr], stream));
 }
 
-void GPUComputationContext::recordSolverStart(size_t itr) {
+void GPUComputationContext::SolverStart(size_t itr) {
     ///
     checkCudaStatus(cudaEventRecord(solverStart[itr], stream));
 }
 
-void GPUComputationContext::recordSolverStop(size_t itr) {
+void GPUComputationContext::SolverStop(size_t itr) {
     ///
     checkCudaStatus(cudaEventRecord(solverStop[itr], stream));
 }
@@ -146,6 +146,16 @@ long long GPUComputationContext::getAccComputeTime(int itrBound) {
         acc_millis = acc_millis + milliseconds;
     }
     return (long long)(acc_millis);
+}
+
+ComputationState * GPUComputationContext::host_ev(int iteration) { 
+    ///
+    return ev[iteration]; 
+}
+
+ComputationState * GPUComputationContext::get_dev_ev(int iteration) { 
+    ///
+    return dev_ev[iteration]; 
 }
 
 } // namespace solver

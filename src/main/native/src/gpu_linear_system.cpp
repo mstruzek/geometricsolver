@@ -14,7 +14,7 @@ namespace solver {
 ///         CUSOLVERDN_LOG_MASK = 16
 ///
 
-GPULinearSystem::GPULinearSystem(cudaStream_t _stream) : _stream(_stream) {
+GPULinearSystem::GPULinearSystem(cudaStream_t stream) : stream(stream) {
 
     // ! blocking - look back
     lastError = cudaPeekAtLastError();
@@ -28,13 +28,13 @@ GPULinearSystem::GPULinearSystem(cudaStream_t _stream) : _stream(_stream) {
 
     /// # cuBlas context
     checkCublasStatus(cublasCreate(&cublasHandle));
-    checkCublasStatus(cublasSetStream(cublasHandle, _stream));
+    checkCublasStatus(cublasSetStream(cublasHandle, stream));
 
     ///  # cuSolver setup solver -- nie zaincjalozowac wyrzej
     checkCuSolverStatus(cusolverDnCreate(&handle));
-    checkCuSolverStatus(cusolverDnSetStream(handle, _stream));
+    checkCuSolverStatus(cusolverDnSetStream(handle, stream));
 
-    checkCudaStatus(cudaMallocAsync((void **)&devInfo, 1 * sizeof(int), _stream));
+    checkCudaStatus(cudaMallocAsync((void **)&devInfo, 1 * sizeof(int), stream));
 }
 
 void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
@@ -73,18 +73,18 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
 
     if (Lwork > preLwork) {
         // free mem
-        checkCudaStatus(cudaFreeAsync(Workspace, _stream));
-        checkCudaStatus(cudaFreeAsync(devIpiv, _stream));
+        checkCudaStatus(cudaFreeAsync(Workspace, stream));
+        checkCudaStatus(cudaFreeAsync(devIpiv, stream));
 
         ///  !!!!Remark: getrf uses fastest implementation with large workspace of size m*n
 
         /// prealocate additional buffer before LU factorization
         Lwork = (int)(Lwork * settings::get()->CU_SOLVER_LWORK_FACTOR);
 
-        checkCudaStatus(cudaMallocAsync((void **)&Workspace, Lwork * sizeof(double), _stream));
-        checkCudaStatus(cudaMallocAsync((void **)&devIpiv, dN * sizeof(double), _stream));
+        checkCudaStatus(cudaMallocAsync((void **)&Workspace, Lwork * sizeof(double), stream));
+        checkCudaStatus(cudaMallocAsync((void **)&devIpiv, dN * sizeof(double), stream));
 
-        checkCudaStatus(cudaStreamSynchronize(_stream));
+        checkCudaStatus(cudaStreamSynchronize(stream));
 
         if (settings::get()->DEBUG) {
             printf("[ LU ] workspace attached, 'Lwork' (workspace size)  = %d \n", Lwork);
@@ -107,8 +107,8 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
 
     /// dont check matrix determinant
     if (settings::get()->DEBUG_CHECK_ARG) {
-        checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, 1 * sizeof(int), cudaMemcpyDeviceToHost, _stream));
-        checkCudaStatus(cudaStreamSynchronize(_stream));
+        checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, 1 * sizeof(int), cudaMemcpyDeviceToHost, stream));
+        checkCudaStatus(cudaStreamSynchronize(stream));
         if (hInfo < 0) {
             printf("[ LU ] error! wrong parameter %d (exclude handle)\n", -hInfo);
             exit(1);
@@ -138,8 +138,8 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
     /// dont check arguments
     if (settings::get()->DEBUG_CHECK_ARG) {
         /// inspect computation requirments
-        checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, sizeof(int), cudaMemcpyDeviceToHost, _stream));
-        checkCudaStatus(cudaStreamSynchronize(_stream));
+        checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, sizeof(int), cudaMemcpyDeviceToHost, stream));
+        checkCudaStatus(cudaStreamSynchronize(stream));
         ///
         if (hInfo != 0) {
             printf("[ LU ]! parameter is wrong (not counting handle). %d \n", -hInfo);
@@ -159,7 +159,7 @@ void GPULinearSystem::vectorNorm(int n, double *x, double *result) {
     checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, result));
 
     if (settings::get()->DEBUG_SOLVER_CONVERGENCE) {
-        checkCudaStatus(cudaStreamSynchronize(_stream));
+        checkCudaStatus(cudaStreamSynchronize(stream));
         printf("[cublas.norm] constraint evalutated norm  = %e \n", *result);
     } else {
         // blad na cublas RESULT jest lokalny  zawsze
@@ -172,16 +172,16 @@ void GPULinearSystem::cublasAPIDaxpy(int n, const double *alpha, const double *x
     checkCublasStatus(::cublasDaxpy(cublasHandle, n, alpha, x, incx, y, incy));
 
     if (settings::get()->DEBUG_SOLVER_CONVERGENCE) {
-        checkCudaStatus(cudaStreamSynchronize(_stream));
+        checkCudaStatus(cudaStreamSynchronize(stream));
         printf("[cublas.norm] cublasDaxpy \n");
     }
 }
 
 GPULinearSystem::~GPULinearSystem() {
 
-    checkCudaStatus(cudaFreeAsync(Workspace, _stream));
-    checkCudaStatus(cudaFreeAsync(devIpiv, _stream));
-    checkCudaStatus(cudaFreeAsync(devInfo, _stream));
+    checkCudaStatus(cudaFreeAsync(Workspace, stream));
+    checkCudaStatus(cudaFreeAsync(devIpiv, stream));
+    checkCudaStatus(cudaFreeAsync(devInfo, stream));
 
     checkCuSolverStatus(cusolverDnDestroy(handle));
 

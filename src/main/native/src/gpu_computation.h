@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿#ifndef _GPU_COMPUTATION_H_
+#define _GPU_COMPUTATION_H_
 
 #include <memory>
 #include <vector>
@@ -7,12 +8,29 @@
 #include <condition_variable>
 #include <mutex>
 
+#include <cusparse.h>
+
 #include "gpu_computation_context.h"
 #include "gpu_linear_system.h"
+#include "kernel_traits.h"
+
 #include "model.cuh"
 #include "solver_stat.h"
 
+#include "tensor_operation.h"
+
+#include "gpu_geometric_solver.h"
+
+
+#define BLOCK_DIM 512
+
+#define OBJECTS_PER_THREAD 1
+
+#define ELEMENTS_PER_THREAD 4
+
 namespace solver {
+
+class GPUGeometricSolver;
 
 /// Domain Model  - ( dependent on geometry state change )
 class GPUComputation {
@@ -28,9 +46,7 @@ class GPUComputation {
      * commitTime --
      */
     GPUComputation(long computationId, cudaStream_t stream, std::shared_ptr<GPULinearSystem> linearSystem,
-                   std::shared_ptr<GPUComputationContext> cc, std::vector<graph::Point> &&points,
-                   std::vector<graph::Geometric> &&geometrics, std::vector<graph::Constraint> &&constraints,
-                   std::vector<graph::Parameter> &&parameters);
+                   std::shared_ptr<GPUComputationContext> cc, GPUGeometricSolver *solver);
 
     /**
      *  remove all registers containing points, constraints, parameters !
@@ -79,23 +95,81 @@ class GPUComputation {
 
     void computationResultHandler(cudaStream_t stream, cudaError_t status, void *userData);
 
-    void checkStreamNoError();
+    void AddComputationHandler(ComputationState *compState);
 
-    void reportThisResult(ComputationState *computation);
+    void validateStream();
+
+    void PreInitializeComputationState(ComputationState *ev, int itr);
+
+    void InitializeStateVector();
+
+    void DeviceConstructTensorA(ComputationState *dev_ev, cudaStream_t stream);
+
+    void DeviceConstructTensorB(ComputationState *dev_ev, cudaStream_t stream);
+
+    void DebugTensorConstruction(ComputationState *dev_ev);
+
+    void DebugTensorSV(ComputationState *dev_ev);
+
+    void StateVectorAddDelta(double *dev_SV, double *dev_b);
+
+    void RebuildPointsFrom(ComputationState *computation);
+
+    void CudaGraphCaptureAndLaunch(cudaGraphExec_t graphExec);
+
+    void BuildSolverStat(ComputationState *computation, SolverStat *stat);
+
+    void ReportComputationResult(ComputationState *computation);
 
     static void computationResultHandlerDelegate(cudaStream_t stream, cudaError_t status, void *userData);
+
+    static void registerComputation(GPUComputation *computation);
+
+    static void unregisterComputation(GPUComputation *computation);
 
     // std::function/ std::bind  does not provide reference to raw C pointer
     static GPUComputation *_registerComputation;
 
+    /// number of bytes - kernel shared memory
+    const unsigned int Ns = 0;
+
+    /// grid size
+    constexpr static unsigned int DIM_GRID = 1;
+    constexpr static unsigned int GRID_DBG = 1;
+
+    /// https://docs.nvidia.com/cuda/turing-tuning-guide/index.html#sm-occupancy
+    /// thread block size
+    const unsigned int DIM_BLOCK = 512;
+    
+    // CUDAdrv.MAX_THREADS_PER_BLOCK, which is good, ( 1024 )
+    // "if your kernel uses many registers, it also limits the amount of threads you can use."
+
   private:
-    long computationId; /// snapshotId
+    const long computationId; /// snapshotId
 
-    std::shared_ptr<GPUComputationContext> _cc;
+    ComputationMode computationMode;
 
-    std::shared_ptr<GPULinearSystem> _linearSystem;
+    typedef KernelTraits<ELEMENTS_PER_THREAD, BLOCK_DIM> PointKernelTraits_t;
 
-    cudaStream_t _stream;
+    typedef KernelTraits<OBJECTS_PER_THREAD, BLOCK_DIM> GeometricKernelTraits_t;
+
+    typedef KernelTraits<OBJECTS_PER_THREAD, BLOCK_DIM> ConstraintKernelTraits_t;
+
+    const PointKernelTraits_t PointKernelTraits;
+
+    const GeometricKernelTraits_t GeometricKernelTraits;
+
+    const ConstraintKernelTraits_t ConstraintKernelTraits;
+
+    std::shared_ptr<GPUComputationContext> computationContext;
+
+    std::shared_ptr<GPULinearSystem> linearSystem;
+
+
+    /// conversion from COO to CSR format for linear sparse solver
+    TensorOperation tensorOps;
+
+    cudaStream_t stream;
 
     cudaError_t error;
 
@@ -110,16 +184,16 @@ class GPUComputation {
 
   private:
     /// points register poLocations id-> point_offset
-    std::vector<graph::Point> _points;
+    std::vector<graph::Point> points;
 
     /// geometricc register
-    std::vector<graph::Geometric> _geometrics;
+    std::vector<graph::Geometric> geometrics;
 
     /// constraints register
-    std::vector<graph::Constraint> _constraints;
+    std::vector<graph::Constraint> constraints;
 
     /// parameters register -- paramLocation id-> param_offset
-    std::vector<graph::Parameter> _parameters;
+    std::vector<graph::Parameter> parameters;
 
     /// Point  Offset in computation matrix [id] -> point offset   ~~ Gather Vectors
     std::vector<int> pointOffset;
@@ -137,6 +211,12 @@ class GPUComputation {
 
     /// Accumulated Constraint Size
     std::vector<int> accConstraintSize;
+
+    /// Accumulated Writes in COO format from kernel into Stiff Tensor
+    std::vector<int> accCooWriteStiffTensor;
+
+    /// Accumulated Writes in COO format from kernel into Jacobian Tensor
+    std::vector<int> accCooWriteJacobianTensor;
 
     size_t size;      /// wektor stanu
     size_t coffSize;  /// wspolczynniki Lagrange
@@ -158,13 +238,13 @@ class GPUComputation {
     /// STATE VECTOR  -- lineage
     std::vector<double *> dev_SV;
     
-
+       
     /// Evaluation data for  device  - CONST DATE for in process execution
 
-    graph::Point *d_points = nullptr;
-    graph::Geometric *d_geometrics = nullptr;
-    graph::Constraint *d_constraints = nullptr;
-    graph::Parameter *d_parameters = nullptr;
+    graph::Point* d_points = NULL;
+    graph::Geometric *d_geometrics = NULL;
+    graph::Constraint *d_constraints = NULL;
+    graph::Parameter *d_parameters = NULL;
 
     int *d_pointOffset;
     int *d_geometricOffset;
@@ -175,6 +255,43 @@ class GPUComputation {
     int *d_accGeometricSize;
     /// accumulative offset with constraint size evaluation function
     int *d_accConstraintSize;
+
+    /// Accumulated Writes in COO format from kernel into Stiff Tensor
+    int *d_accCooWriteStiffTensor;
+
+    /// Accumulated Writes in COO format from kernel into Jacobian Tensor
+    int *d_accCooWriteJacobianTensor;
+
+    /// offset value for kernel Jacobian writes
+    int cooWritesStiffSize;
+
+    /// offset for kernel Transposed Jacobian writes
+    int cooWirtesJacobianSize;
+
+    /// not-transformed row vector of indicies, Coordinate Format COO
+    int *d_cooRowInd = NULL;
+
+    /// not-transformed column vector of indicies, Coordinate Format COO
+    int *d_cooColInd = NULL;
+
+    /// COO vector of values, Coordinate Format COO, or CSR format sorted
+    double *d_cooVal = NULL;
+
+    /// Permutation vector "i" - store into , gather from  P[i]
+    int *d_P = NULL;
+
+    /// inversed permutation vector INVP[i] - store into, gather from "i"
+    int *d_INV_P = NULL;
+
+    /// COO - cuSparse Handle - Coordinated Format conversion from COO into CSR direct
+    cusparseHandle_t cuSparseHandle;
+
+    /// COO - cuSparse computation buffer size
+    size_t pBufferSizeInBytes = 0;
+
+    /// COO - cuSparse computation buffer
+    void *pBuffer;
+
 
     /// Solver Performance Watchers
   private:
@@ -187,21 +304,15 @@ class GPUComputation {
 
     /// Kernel configurations - settings::get() D.3.1.1. Device-Side Kernel Launch - kernel default shared memory,
 
-    /// number of bytes - kernel shared memory
-    const unsigned int Ns = 0;
-
-
-    /// grid size
-    const unsigned int DIM_GRID = 1;
-    const unsigned int GRID_DBG = 1;
-
-    /// https://docs.nvidia.com/cuda/turing-tuning-guide/index.html#sm-occupancy
-    /// thread block size
-    const unsigned int DIM_BLOCK = 512;
-
-    // The maximum registers per thread is 255.
-    // CUDAdrv.MAX_THREADS_PER_BLOCK, which is good, ( 1024 )
-    // "if your kernel uses many registers, it also limits the amount of threads you can use."
 };
 
+#undef BLOCK_DIM
+
+#undef OBJECTS_PER_THREAD
+
+#undef ELEMENTS_PER_THREAD
+
+
 } // namespace solver
+
+#endif // _GPU_COMPUTATION_H_

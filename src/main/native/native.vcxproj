@@ -54,7 +54,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>cublas.lib;cublasLt.lib;cusolver.lib;cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;jvm.lib;jawt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cusparse.lib;cublas.lib;cublasLt.lib;cusolver.lib;cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;jvm.lib;jawt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Program Files\Java\jdk-17.0.2\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <CudaCompile>
@@ -87,6 +87,9 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\kernel_traits.h" />
+    <ClInclude Include="src\quda.cuh" />
+    <ClInclude Include="src\tensor_operation.h" />
     <CudaCompile Include="kernel.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </CudaCompile>
@@ -100,6 +103,8 @@
     </ClCompile>
     <ClCompile Include="src\gpu_computation_context.cpp" />
     <CudaCompile Include="src\gpu_computation.cu" />
+    <CudaCompile Include="src\quda.cu" />
+    <CudaCompile Include="src\tensor_operation.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\com_mstruzek_jni_JNISolverGate.cpp" />

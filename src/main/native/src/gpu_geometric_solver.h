@@ -18,6 +18,7 @@
 
 namespace solver {
 
+class GPUComputation;
 
 /*
  * initialize GPUComputationContext
@@ -27,6 +28,7 @@ namespace solver {
  * - GPUComputation will borrow dev_ev,ev from computation context
  */
 class GPUGeometricSolver {
+
 
   public:
     GPUGeometricSolver();
@@ -70,6 +72,7 @@ class GPUGeometricSolver {
      */
     void solveSystemOnGPU(SolverStat *stat, cudaError_t *error);
 
+
     std::shared_ptr<GPUComputation> getComputation();
 
   private:
@@ -84,15 +87,14 @@ class GPUGeometricSolver {
 
     std::vector<graph::Parameter> parameters;
 
+
     std::shared_ptr<GPUComputationContext> _computationContext;
+    std::shared_ptr<solver::GPUComputation> _computation;    
 
-    std::shared_ptr<GPUComputation> _computation;
-    
-    std::shared_ptr<GPULinearSystem> _linearSystem;
+    std::shared_ptr<GPULinearSystem> linearSystem;
+
+    friend class GPUComputation;
 };
-
-
-void ConstraintGetFullNorm(size_t coffSize, size_t size, double *b, double *result, cudaStream_t stream);
 
 } // namespace solver
 
