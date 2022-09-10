@@ -136,11 +136,5 @@ struct ComputationState {
 };
 
 
-#ifdef __NVCC__
-
-__GPU_DEV_INL__ double toRadians(double value) { return (M_PI / 180.0) * value; }
-
-#endif // __NVCC__
-
 
 #endif // __COMPUTATION_STATE_H_

@@ -14,9 +14,17 @@
 #include "tensor_layout.cuh"
 
 
-#define __GPU_COMM_INL__ __forceinline__ __host__ __device__
-#define __GPU_DEV_INL__ __forceinline__ __device__
+#ifndef __GPU_COMM_INL__
+#define __GPU_COMM_INL__ __host__ __device__
+#endif
 
+#ifndef __GPU_DEV_INL__
+#define __GPU_DEV_INL__ __device__
+#endif
+
+#ifndef __GPU_DEV_INLF__
+#define __GPU_DEV_INLF__ __forceinline__ __device__
+#endif
 
 namespace graph {
 
@@ -25,6 +33,10 @@ namespace graph {
 /// ================================================================================///
 /// ================================================================================///
 
+class BlockLayout;
+
+template <typename> 
+class Tensor;
 
 //=================================================================================
 
@@ -37,47 +49,38 @@ class Vector {
 
 #ifdef __NVCC__
 
-    __GPU_COMM_INL__ Vector() : x(0.0), y(0.0){};
+    __GPU_DEV_INLF__ Vector() : x(0.0), y(0.0){};
 
-    __GPU_COMM_INL__ Vector(Vector const &other) {
+    __GPU_DEV_INLF__ Vector(Vector const &other) {
         this->x = other.x;
         this->y = other.y;
     };
 
-    __GPU_COMM_INL__ Vector(double px, double py) : x(px), y(py) {}
+    __GPU_DEV_INLF__ Vector(double px, double py) : x(px), y(py) {}
 
-    __GPU_COMM_INL__ Vector plus(Vector const &other) const { return Vector(this->x + other.x, this->y + other.y); }
+    __GPU_DEV_INLF__ Vector plus(Vector const &other) const { return Vector(this->x + other.x, this->y + other.y); }
 
-    __GPU_COMM_INL__ Vector minus(Vector const &other) const { return Vector(this->x - other.x, this->y - other.y); }
+    __GPU_DEV_INLF__ Vector minus(Vector const &other) const { return Vector(this->x - other.x, this->y - other.y); }
 
-    __GPU_COMM_INL__ double product(Vector const &other) const { return (this->x * other.x + this->y * other.y); }
+    __GPU_DEV_INLF__ double product(Vector const &other) const { return (this->x * other.x + this->y * other.y); }
 
-    __GPU_COMM_INL__ Vector product(double scalar) const { return Vector(this->x * scalar, this->y * scalar); }
+    __GPU_DEV_INLF__ Vector product(double scalar) const { return Vector(this->x * scalar, this->y * scalar); }
 
-    __GPU_COMM_INL__ double cross(Vector const &other) const { return (this->x * other.y - this->y * other.x); }
+    __GPU_DEV_INLF__ double cross(Vector const &other) const { return (this->x * other.y - this->y * other.x); }
 
-    __GPU_COMM_INL__ Vector operator/(double scalar) const { return Vector(this->x / scalar, this->y / scalar); }
+    __GPU_DEV_INLF__ Vector operator/(double scalar) const { return Vector(this->x / scalar, this->y / scalar); }
 
-    __GPU_COMM_INL__ double length() const { return sqrt(this->x * this->x + this->y * this->y); }
+    __GPU_DEV_INLF__ double length() const { return sqrt(this->x * this->x + this->y * this->y); }
 
-    __GPU_COMM_INL__ Vector unit() const { return this->operator/(length()); }
+    __GPU_DEV_INLF__ Vector unit() const { return this->operator/(length()); }
 
-    __GPU_COMM_INL__ Vector pivot() const { return Vector(-this->y, this->x); }
+    __GPU_DEV_INLF__ Vector pivot() const { return Vector(-this->y, this->x); }
 
-    __GPU_COMM_INL__ Vector Rot(double angle) {
-        double rad = toRadians(angle);
-        return Vector(this->x * cos(rad) - this->y * sin(rad), this->x * sin(rad) + this->y * cos(rad));
-    }
+    __GPU_DEV_INL__ Vector Rot(double angle);
 
-    __GPU_DEV_INL__ Tensor<graph::BlockLayout> cartesian(Vector const &rhs) {
-        double a00 = this->x * rhs.x;
-        double a01 = this->x * rhs.y;
-        double a10 = this->y * rhs.x;
-        double a11 = this->y * rhs.y;
-        return Tensor<graph::BlockLayout>(a00, a01, a10, a11);        
-    }
+    __GPU_DEV_INL__ Tensor<BlockLayout> cartesian(Vector const &rhs);
 
-    __GPU_COMM_INL__ bool operator==(Vector const &other) const { return (this->x == other.x && this->y == other.y); }
+    __GPU_DEV_INLF__ bool operator==(Vector const &other) const { return (this->x == other.x && this->y == other.y); }
 
 #endif // __NVCC__
 
@@ -89,9 +92,9 @@ typedef Vector PPoint;
 
 #ifdef __NVCC__
 
-__GPU_DEV_INL__ double getVectorX(Vector const &value) { return value.x; }
+__GPU_DEV_INLF__ double getVectorX(Vector const &value) { return value.x; }
 
-__GPU_DEV_INL__ double getVectorY(Vector const &value) { return value.y; }
+__GPU_DEV_INLF__ double getVectorY(Vector const &value) { return value.y; }
 
 #endif  // __NVCC__
 

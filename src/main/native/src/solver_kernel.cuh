@@ -22,9 +22,9 @@
 /// =========================================
 /// Enable Tensor Sparse and Direct Layout
 /// =========================================
-//#/define TENSOR_SPARSE_LAYOUT
+#define TENSOR_SPARSE_LAYOUT
 
-#undef TENSOR_SPARSE_LAYOUT
+//#undef TENSOR_SPARSE_LAYOUT
 
 
 #ifndef ELEMENTS_PER_THREAD

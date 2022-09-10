@@ -6,6 +6,29 @@
 namespace graph {
 
 
+#ifdef __NVCC__
+__GPU_DEV_INL__ Tensor<graph::BlockLayout> Vector::cartesian(Vector const &rhs) {
+    double a00 = this->x * rhs.x;
+    double a01 = this->x * rhs.y;
+    double a10 = this->y * rhs.x;
+    double a11 = this->y * rhs.y;
+    return Tensor<graph::BlockLayout>(a00, a01, a10, a11);
+}
+
+
+__GPU_DEV_INL__ Vector Vector::Rot(double angle) {
+    double rad = toRadians(angle);
+    return Vector(this->x * cos(rad) - this->y * sin(rad), this->x * sin(rad) + this->y * cos(rad));
+}
+
+
+
+
+
+#endif
+
+
+
 int constraintSize(Constraint const &constraint) {
     switch (constraint.constraintTypeId) {
     case CONSTRAINT_TYPE_ID_FIX_POINT:

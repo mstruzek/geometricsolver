@@ -96,7 +96,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </CudaCompile>
     <ClCompile Include="src\gpu_utility.cpp" />
-    <ClCompile Include="src\model.cpp" />
+    <CudaCompile Include="src\model.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
     <ClCompile Include="src\settings.cpp" />
     <ClCompile Include="src\cuerror.cpp" />
     <ClCompile Include="src\gpu_linear_system.cpp" />
@@ -108,6 +110,7 @@
     <CudaCompile Include="src\gpu_computation.cu" />
     <CudaCompile Include="src\quda.cu" />
     <CudaCompile Include="src\solver_kernel.cu" />
+    <CudaCompile Include="src\tensor_layout.cu" />
     <CudaCompile Include="src\tensor_operation.cu" />
   </ItemGroup>
   <ItemGroup>
