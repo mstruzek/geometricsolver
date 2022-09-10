@@ -50,6 +50,9 @@ tasks.register("compileNativeSetup") {
     inputs.files(fileTree(nativeSourcePath).matching {
         include "CMakeLists.txt"
     })
+    inputs.files(fileTree(nativeBuildPath).matching{
+        include "CMakeLists.txt"
+    })
     outputs.file(file(nativeBuildPath + "CMakeLists.txt"))
     doLast {
         ant.delete(dir: nativeBuildPath)
@@ -88,7 +91,7 @@ tasks.compileNative.dependsOn(tasks.compileNativeSetup)
 
 tasks.register("cleanNative") {
     doLast {
-        ant.delete(dir: nativeBuildPath)
+        ant.delete(dir: nativeBuildPath, verbose: true, includeEmptyDirs:true)
     }
 }
 
