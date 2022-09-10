@@ -2,13 +2,50 @@
 
 
 /// <summary>
-/// Inverse COO indicies map - This is Direct Form !
+/// Kernel Permuatation compaction routine  PT[i] = P1[P2[i]] .
 /// </summary>
-/// <param name="P">dense indicies vector - result of cusparseXcoosortByRow</param>
-/// <param name="IP">dense output vector - direct form</param>
+/// </summary>
+/// <param name="nnz"></param>
+/// <param name="PT1"></param>
+/// <param name="PT2"></param>
+/// <param name="PT"></param>
+/// <returns></returns>
+__global__ void __compactPermutationVector__(int nnz, int *PT1, int *PT2, int *PT) {
+    
+    int tId = blockDim.x * blockIdx.x + threadIdx.x;
+
+#define ROUTINE_ELEMENT_RANGE 4
+
+    if (threadIdx.x < nnz) {
+        int indicie = PT2[tId];
+        PT[tId] = PT1[indicie];
+    }
+}
+
+/// <summary>
+///  Kernel Permutation compaction routine. Kernel Executor.  PT[i] = PT1[PT2[i]] .
+/// </summary>
+/// <param name="K_gridDim"></param>
+/// <param name="K_blockDim"></param>
+/// <param name="K_stream"></param>
+/// <param name="nnz"></param>
+/// <param name="PT1"></param>
+/// <param name="PT2"></param>
+/// <param name="PT"></param>
+void compactPermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream, int nnz, int *PT1,
+                              int *PT2, int *PT) {
+
+    __compactPermutationVector__<<<K_gridDim, K_blockDim, 0, K_stream>>>(nnz, PT1, PT2, PT);
+}
+
+/// <summary>
+/// Inverse COO INP map - This is Direct Form !
+/// </summary>
+/// <param name="INP">dense INP vector - result of cusparseXcoosortByRow</param>
+/// <param name="OUTP">dense output vector - direct form</param>
 /// <param name="N">size of intput/output vector</param>
 /// <returns></returns>
-__global__ void inverse_indices(int *indicies, int *inverse, size_t N) {
+__global__ void __compressPermuationVector__(int *INP, int *OUTP, size_t N) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
     const unsigned offset = ELEMENTS_PER_THREAD * threadId;
     const unsigned upperLimit = offset + ELEMENTS_PER_THREAD;
@@ -19,17 +56,34 @@ __global__ void inverse_indices(int *indicies, int *inverse, size_t N) {
 ///
 #pragma unroll
         for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
-            inverse[indicies[offset + T]] = offset + T;
+            OUTP[INP[offset + T]] = offset + T;
         }
     } else {
         const unsigned remainder = N - offset;
         for (int T = 0; T < remainder; ++T) {
             if (offset + T < N) {
-                inverse[indicies[offset + T]] = offset + T;
+                OUTP[INP[offset + T]] = offset + T;
             }
         }
     }
 }
+
+/// <summary>
+/// Inverse COO indicies map ;  this is Direct Form !
+/// </summary>
+/// <param name="K_gridDim"></param>
+/// <param name="K_blockDim"></param>
+/// <param name="K_stream"></param>
+/// <param name="INP">indicies desne in vector</param>
+/// <param name="OUTP">inverse dense out vector - direct form</param>
+/// <param name="N">size of intput/output vector</param>
+/// <returns></returns>
+void compactPermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream, int *INP, int *OUTP,
+                              size_t N) {
+    ///
+    __compressPermuationVector__<<<K_gridDim, K_blockDim , 0 , K_stream>>>(INP, OUTP,N);
+}
+
 
 /// ==============================================================================
 ///

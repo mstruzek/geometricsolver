@@ -87,6 +87,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\gpu_utility.h" />
     <ClInclude Include="src\kernel_traits.h" />
     <ClInclude Include="src\quda.cuh" />
     <ClInclude Include="src\tensor_layout.cuh" />
@@ -94,6 +95,7 @@
     <CudaCompile Include="kernel.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </CudaCompile>
+    <ClCompile Include="src\gpu_utility.cpp" />
     <ClCompile Include="src\model.cpp" />
     <ClCompile Include="src\settings.cpp" />
     <ClCompile Include="src\cuerror.cpp" />

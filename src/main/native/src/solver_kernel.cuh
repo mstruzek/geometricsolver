@@ -31,14 +31,35 @@
 #define ELEMENTS_PER_THREAD 4
 #endif
 
+#define KERNEL_EXECUTOR
+
 /// <summary>
-/// Inverse COO indicies map - This is Direct Form !
+///  Kernel Permutation compaction routine. Kernel Dispatcher.
 /// </summary>
-/// <param name="P">dense indicies vector - result of cusparseXcoosortByRow</param>
-/// <param name="IP">dense output vector - direct form</param>
+/// <param name="K_gridDim"></param>
+/// <param name="K_blockDim"></param>
+/// <param name="K_stream"></param>
+/// <param name="nnz"></param>
+/// <param name="PT1"></param>
+/// <param name="PT2"></param>
+/// <param name="PT"></param>
+KERNEL_EXECUTOR void compactPermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream, int nnz,
+                                             int *PT1, int *PT2, int *PT);
+
+
+
+/// <summary>
+/// Inverse COO indicies map ;  this is Direct Form !
+/// </summary>
+/// <param name="K_gridDim"></param>
+/// <param name="K_blockDim"></param>
+/// <param name="K_stream"></param>
+/// <param name="INP">indicies desne in vector</param>
+/// <param name="OUTP">inverse dense out vector - direct form</param>
 /// <param name="N">size of intput/output vector</param>
 /// <returns></returns>
-__global__ void inverse_indices(int *indicies, int *inverse, size_t N);
+KERNEL_EXECUTOR void compactPermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream,
+                                              int *INP, int *OUTP, size_t N); 
 
 /// ==============================================================================
 ///
