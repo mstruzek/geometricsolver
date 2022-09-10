@@ -14,6 +14,14 @@
 #include "stop_watch.h"
 #include "utility.cuh"
 
+
+#ifdef DEBUG_GPU
+#define validateStream validateStreamState()
+#else
+#define validateStream (void)(0)
+#endif
+
+
 namespace solver {
 
 /// ====================
@@ -199,7 +207,7 @@ void GPUComputation::computationResultHandlerDelegate(cudaStream_t stream, cudaE
     }
 }
 
-void GPUComputation::validateStream() {
+void GPUComputation::validateStreamState() {
     if (settings::get()->DEBUG_CHECK_ARG) {
         /// submitted kernel into  cuda driver
         checkCudaStatus(cudaPeekAtLastError());
@@ -260,7 +268,7 @@ void GPUComputation::InitializeStateVector() {
     ///                 Init State Vector                   ///
     ///==================================================== ///
     CopyIntoStateVector<<<I_GRID_BLOCK, I_BLOCK_DIM, Ns, stream>>>(dev_SV[0], d_points, points.size());
-    validateStream();
+    validateStream;
 
     ///==================================================== ///
     ///                 Zreo Lagrange Coefficients          ///
@@ -282,14 +290,14 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream
     ///                 Stiff Tensor - K                    ///
     ///==================================================== ///
     ComputeStiffnessMatrix<<<G_GRID_DIM, G_BLOCK_DIM, Ns, stream>>>(dev_ev, geometrics.size());
-    validateStream();
+    validateStream;
 
     ///==================================================== ///
     ///                 Hessian Tensor - K                  ///
     ///==================================================== ///
     if (settings::get()->SOLVER_INC_HESSIAN) {
         EvaluateConstraintHessian<<<Z_GRID_DIM, Z_BLOCK_DIM, Ns, stream>>>(dev_ev, constraints.size());
-        validateStream();
+        validateStream;
     }
 
     /// Lower Tensor
@@ -300,7 +308,7 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream
     ///                 Lower Jacobian                      ///
     ///==================================================== ///
     EvaluateConstraintJacobian<<<Z_GRID_DIM, Z_BLOCK_DIM, Ns, stream>>>(dev_ev, constraints.size());
-    validateStream();
+    validateStream;
 
     ///  Transposed Jacobian - Uperr Tensor
     ///  (Wq)';  Jq' = (d(Fi)/dq)' --- transposed - write without
@@ -310,7 +318,7 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream
     ///                 Upper Jacobian                      ///
     ///==================================================== ///
     EvaluateConstraintTRJacobian<<<Z_GRID_DIM, Z_BLOCK_DIM, Ns, stream>>>(dev_ev, constraints.size());
-    validateStream();
+    validateStream;
 }
 
 void GPUComputation::DeviceConstructTensorB(ComputationState *dev_ev, cudaStream_t stream) {
@@ -327,13 +335,13 @@ void GPUComputation::DeviceConstructTensorB(ComputationState *dev_ev, cudaStream
     ///                 Point-Point-Tension F(q)            ///
     ///==================================================== ///
     EvaluateForceIntensity<<<G_GRID_DIM, G_BLOCK_DIM, Ns, stream>>>(dev_ev, geometrics.size());
-    validateStream();
+    validateStream;
 
     ///==================================================== ///
     ///                 Constraint Tension Fi(q)            ///
     ///==================================================== ///
     EvaluateConstraintValue<<<Z_GRID_DIM, Z_BLOCK_DIM, Ns, stream>>>(dev_ev, constraints.size());
-    validateStream();
+    validateStream;
 }
 
 void GPUComputation::DebugTensorConstruction(ComputationState *dev_ev) {
@@ -355,7 +363,7 @@ void GPUComputation::DebugTensorSV(ComputationState *dev_ev) {
         stdoutStateVector<<<GRID_DBG, 1, Ns, stream>>>(dev_ev, N);
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
-    validateStream();
+    validateStream;
 }
 
 void GPUComputation::StateVectorAddDelta(double *dev_SV, double *dev_b) {
@@ -367,7 +375,7 @@ void GPUComputation::StateVectorAddDelta(double *dev_SV, double *dev_b) {
     ///                 SV = SV + delta                     ///
     ///==================================================== ///
     StateVectorAddDifference<<<I_GRID_DIM, I_BLOCK_DIM, Ns, stream>>>(dev_SV, dev_b, points.size());
-    validateStream();
+    validateStream;
 
     // Uaktualniamy punkty SV = SV + delta
     // alternative : linearSystem->cublasAPIDaxpy(point_size, &alpha, dev_b, 1, dev_SV[itr], 1);
@@ -383,7 +391,7 @@ void GPUComputation::RebuildPointsFrom(ComputationState *computation) {
     ///                 Point From State Vector             ///
     ///==================================================== ///
     CopyFromStateVector<<<I_GRID_DIM, I_BLOCK_DIM, Ns, stream>>>(d_points, computation->SV, points.size());
-    validateStream();
+    validateStream;
 
     utility::memcpyFromDevice(points, d_points, stream);
 };
@@ -482,7 +490,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
         PreInitializeComputationState(ev, itr);
 
         utility::memcpyAsync(&dev_ev, ev, 1, stream);
-        validateStream();
+        validateStream;
 
         computationContext->PrepStart(itr);
 
@@ -531,14 +539,14 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
         ///  ConstraintGetFullNorm
         //
         linearSystem->vectorNorm(static_cast<int>(coffSize), (dev_b + size), host_norm);
-        validateStream();
+        validateStream;
 
         computationContext->SolverStart(itr);
 
         /// ======== DENSE - CuSolver LINER SYSTEM equation CuSolver    === START
 
         linearSystem->solveLinearEquation(dev_A, dev_b, N);
-        validateStream();
+        validateStream;
 
 #ifdef H_DEBUG
         DebugTensorConstruction(dev_ev);
@@ -795,3 +803,6 @@ GPUComputation::~GPUComputation() {
 }
 
 } // namespace solver
+
+
+#undef validateStream

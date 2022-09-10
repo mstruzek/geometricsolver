@@ -12,7 +12,7 @@
 #ifdef DEBUG_GPU
 #define validateStream validateStreamState()
 #else
-#define validateStream (void)(0)
+#define validateStream 
 #endif
 
 /** przyczyna INT na urzadzenieu __device__ __host__ ! ERROR 700       cudaErrorIllegalAddress */
@@ -477,3 +477,7 @@ void GPULinearSystem::validateStreamState() {
 }
 
 } // namespace solver
+
+#undef validateStream 
+
+

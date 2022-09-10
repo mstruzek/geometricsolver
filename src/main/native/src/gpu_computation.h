@@ -97,7 +97,7 @@ class GPUComputation {
 
     void AddComputationHandler(ComputationState *compState);
 
-    void validateStream();
+    void validateStreamState();
 
     void PreInitializeComputationState(ComputationState *ev, int itr);
 
