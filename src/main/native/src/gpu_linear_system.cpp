@@ -224,11 +224,11 @@ void GPULinearSystem::cublasAPIDaxpy(int n, const double *alpha, const double *x
 ///
 /// QR solver with reorder "symrcm".
 /// </summary>
-/// <param name="csrRowPtrA"></param>
-/// <param name="csrColIndA"></param>
-/// <param name="csrValInd"></param>
-/// <param name="b"></param>
-/// <param name="x"></param>
+/// <param name="csrRowPtrA">IN</param>
+/// <param name="csrColIndA">IN</param>
+/// <param name="csrValInd">IN</param>
+/// <param name="b">IN</param>
+/// <param name="x">OUT dx</param>
 void GPULinearSystem::solverLinearEquationSP(int m, int n, int nnz, int *csrRowPtrA, int *csrColIndA, double *csrValA,
                                              double *b, double *x, int *singularity) {
 
@@ -469,8 +469,10 @@ GPULinearSystem::~GPULinearSystem() {
 
 void GPULinearSystem::validateStreamState() {
     if (settings::get()->DEBUG_CHECK_ARG) {
-        checkCudaStatus(cudaStreamSynchronize(stream));
-        checkCudaStatus(cudaPeekAtLastError());
+        /// submitted kernel into  cuda driver 
+        checkCudaStatus(cudaPeekAtLastError()); 
+        /// block and wait for execution
+        checkCudaStatus(cudaStreamSynchronize(stream));        
     }
 }
 

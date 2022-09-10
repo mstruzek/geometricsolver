@@ -201,8 +201,10 @@ void GPUComputation::computationResultHandlerDelegate(cudaStream_t stream, cudaE
 
 void GPUComputation::validateStream() {
     if (settings::get()->DEBUG_CHECK_ARG) {
-        checkCudaStatus(cudaStreamSynchronize(stream));
+        /// submitted kernel into  cuda driver
         checkCudaStatus(cudaPeekAtLastError());
+        /// block and wait for execution
+        checkCudaStatus(cudaStreamSynchronize(stream));                
     }
 }
 
