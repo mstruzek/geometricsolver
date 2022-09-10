@@ -22,9 +22,9 @@
 /// =========================================
 /// Enable Tensor Sparse and Direct Layout
 /// =========================================
-#define TENSOR_SPARSE_LAYOUT
+//#define TENSOR_SPARSE_LAYOUT
 
-//#undef TENSOR_SPARSE_LAYOUT
+#undef TENSOR_SPARSE_LAYOUT
 
 
 #ifndef ELEMENTS_PER_THREAD
@@ -58,7 +58,7 @@ KERNEL_EXECUTOR void compactPermutationVector(unsigned K_gridDim, unsigned K_blo
 /// <param name="OUTP">inverse dense out vector - direct form</param>
 /// <param name="N">size of intput/output vector</param>
 /// <returns></returns>
-KERNEL_EXECUTOR void compactPermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream,
+KERNEL_EXECUTOR void inversePermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream,
                                               int *INP, int *OUTP, size_t N); 
 
 /// ==============================================================================

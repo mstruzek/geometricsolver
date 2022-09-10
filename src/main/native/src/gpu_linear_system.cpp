@@ -418,7 +418,7 @@ void GPULinearSystem::invertPermuts(int n, int *PT, int *INV) {
 
     unsigned GRID_DIM = CompressKernelTraits.GRID_DIM;
     unsigned BLOCK_DIM = CompressKernelTraits.GRID_DIM;
-    compactPermutationVector(GRID_DIM, BLOCK_DIM, stream, PT, INV, n);
+    inversePermutationVector(GRID_DIM, BLOCK_DIM, stream, PT, INV, n);
     validateStream;
 }
 

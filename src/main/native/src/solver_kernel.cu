@@ -45,7 +45,7 @@ void compactPermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStrea
 /// <param name="OUTP">dense output vector - direct form</param>
 /// <param name="N">size of intput/output vector</param>
 /// <returns></returns>
-__global__ void __compressPermuationVector__(int *INP, int *OUTP, size_t N) {
+__global__ void __inversePermuationVector__(int *INP, int *OUTP, size_t N) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
     const unsigned offset = ELEMENTS_PER_THREAD * threadId;
     const unsigned upperLimit = offset + ELEMENTS_PER_THREAD;
@@ -78,10 +78,10 @@ __global__ void __compressPermuationVector__(int *INP, int *OUTP, size_t N) {
 /// <param name="OUTP">inverse dense out vector - direct form</param>
 /// <param name="N">size of intput/output vector</param>
 /// <returns></returns>
-void compactPermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream, int *INP, int *OUTP,
+void inversePermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream, int *INP, int *OUTP,
                               size_t N) {
     ///
-    __compressPermuationVector__<<<K_gridDim, K_blockDim , 0 , K_stream>>>(INP, OUTP,N);
+    __inversePermuationVector__<<<K_gridDim, K_blockDim , 0 , K_stream>>>(INP, OUTP,N);
 }
 
 

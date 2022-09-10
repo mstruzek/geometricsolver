@@ -70,9 +70,9 @@ class DenseLayout {
     __GPU_DEV_INLF__ DenseLayout(size_t _ld, size_t _rowOffset, size_t _colOffset, double *A)
         : ld(_ld), rowOffset(_rowOffset), colOffset(_colOffset), m_A(A) {}
 
-    __GPU_DEV_INLF__ void set(int row, int col, double value) { 
+    __GPU_DEV_INLF__ void set(int row, int col, double value) {
         ///
-        m_A[ld * (colOffset + col) + rowOffset + row] = value; 
+        m_A[ld * (colOffset + col) + rowOffset + row] = value;
     }
 
     __GPU_DEV_INLF__ void add(int row, int col, double value) {
@@ -80,9 +80,9 @@ class DenseLayout {
         m_A[ld * (colOffset + col) + rowOffset + row] += value;
     }
 
-    __GPU_DEV_INLF__ double get(int row, int col) const { 
+    __GPU_DEV_INLF__ double get(int row, int col) const {
         ///
-        return m_A[ld * (colOffset + col) + rowOffset + row]; 
+        return m_A[ld * (colOffset + col) + rowOffset + row];
     }
 
   public:
@@ -169,7 +169,6 @@ class SparseLayout {
     double *const cooVal; /// COO values
 };
 
-
 //=================================================================================
 
 /// Local Thread Index Storage
@@ -217,15 +216,53 @@ template <typename DataType> class BlockIterator {
 ///
 class DirectSparseLayout {
   public:
-    __GPU_DEV_INLF__ DirectSparseLayout();
+    __GPU_DEV_INLF__ DirectSparseLayout() : accOffset(NULL), P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
+
     __GPU_DEV_INLF__ DirectSparseLayout(int *const _accOffset, int *const _P, int *_cooRowInd, int *_cooColInd,
-                                       double *_cooVal);
+                                        double *_cooVal)
+        : accOffset(_accOffset), P(_P), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {
+        iterator.reset();
+    }
 
-    __GPU_DEV_INLF__ void set(int row, int col, double value);
+    __GPU_DEV_INLF__ void set(int row, int col, double value) {
+        unsigned threadId = iterator.thread_id();
+        unsigned offset = iterator.next();
+        unsigned threadOffset = accOffset[threadId];
 
-    __GPU_DEV_INLF__ void add(int row, int col, double value);
+        /// override value - inversed indicies
+        cooVal[P[threadOffset + offset]] = value;
+    }
 
-    __GPU_DEV_INLF__ double get(int row, int col) const;
+    __GPU_DEV_INLF__ void add(int row, int col, double value) {
+        unsigned threadId = iterator.thread_id();
+        unsigned threadOffset = accOffset[threadId];
+        unsigned itr_offset = iterator.value();
+
+        // ADD
+        for (unsigned itr = 0; itr < itr_offset; itr++) {
+            int at_row = cooRowInd[threadOffset + itr];
+            int at_col = cooColInd[threadOffset + itr];
+            if (at_row == row && at_col == col) {
+
+                cooVal[P[threadOffset + itr]] += value;
+                return;
+            } else if (at_row == -1 && at_col == -1) {
+
+                break;
+            }
+        }
+
+        // SET
+        unsigned offset = iterator.next();
+        /// override value - inversed indicies
+        cooVal[P[threadOffset + offset]] = value;
+    }
+
+    __GPU_DEV_INLF__ double get(int row, int col) const {
+        /// invalidate computation state
+        /// !!!!!!!!! ERROR ---
+        return NAN;
+    }
 
   private:
     BlockIterator<int> iterator{};
@@ -240,57 +277,6 @@ class DirectSparseLayout {
     int *cooRowInd; /// COO row not-transformed
     int *cooColInd; /// COO col not-transformed
 };
-
-//=================================================================================
-
-__GPU_DEV_INL__ DirectSparseLayout::DirectSparseLayout()
-    : accOffset(NULL), P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
-
-__GPU_DEV_INL__ DirectSparseLayout::DirectSparseLayout(int *const _accOffset, int *const _P, int *_cooRowInd,
-                                                       int *_cooColInd, double *_cooVal)
-    : accOffset(_accOffset), P(_P), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {
-    iterator.reset();
-}
-
-__GPU_DEV_INL__ void DirectSparseLayout::set(int row, int col, double value) {
-    unsigned threadId = iterator.thread_id();
-    unsigned offset = iterator.next();
-    unsigned threadOffset = accOffset[threadId];
-
-    /// override value - inversed indicies
-    cooVal[P[threadOffset + offset]] = value;
-}
-
-__GPU_DEV_INL__ void DirectSparseLayout::add(int row, int col, double value) {
-    unsigned threadId = iterator.thread_id();
-    unsigned threadOffset = accOffset[threadId];
-    unsigned itr_offset = iterator.value();
-
-    // ADD
-    for (unsigned itr = 0; itr < itr_offset; itr++) {
-        int at_row = cooRowInd[threadOffset + itr];
-        int at_col = cooColInd[threadOffset + itr];
-        if (at_row == row && at_col == col) {
-
-            cooVal[P[threadOffset + itr]] += value;
-            return;
-        } else if (at_row == -1 && at_col == -1) {
-
-            break;
-        }
-    }
-
-    // SET
-    unsigned offset = iterator.next();
-    /// override value - inversed indicies
-    cooVal[P[threadOffset + offset]] = value;
-}
-
-__GPU_DEV_INL__ double DirectSparseLayout::get(int row, int col) const {
-    /// invalidate computation state
-    /// !!!!!!!!! ERROR ---
-    return NAN;
-}
 
 //=================================================================================
 
@@ -396,7 +382,8 @@ template <typename LLayout = BlockLayout> class Tensor {
 
 //=================================================================================
 
-__GPU_DEV_INLF__ Tensor<DenseLayout> tensorDevMem(DenseLayout parent, int rowOffset, int colOffset, bool intention = true) {
+__GPU_DEV_INLF__ Tensor<DenseLayout> tensorDevMem(DenseLayout parent, int rowOffset, int colOffset,
+                                                  bool intention = true) {
     DenseLayout layout(parent.ld, parent.rowOffset + rowOffset, parent.colOffset + colOffset, parent.m_A);
     Tensor<DenseLayout> tensor(layout, intention);
     return tensor;
