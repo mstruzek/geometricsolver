@@ -149,17 +149,6 @@ class GPUComputation {
 
     ComputationMode computationMode;
 
-    typedef KernelTraits<ELEMENTS_PER_THREAD, BLOCK_DIM> PointKernelTraits_t;
-
-    typedef KernelTraits<OBJECTS_PER_THREAD, BLOCK_DIM> GeometricKernelTraits_t;
-
-    typedef KernelTraits<OBJECTS_PER_THREAD, BLOCK_DIM> ConstraintKernelTraits_t;
-
-    const PointKernelTraits_t PointKernelTraits;
-
-    const GeometricKernelTraits_t GeometricKernelTraits;
-
-    const ConstraintKernelTraits_t ConstraintKernelTraits;
 
     std::shared_ptr<GPUComputationContext> computationContext;
 

@@ -19,12 +19,9 @@
 #define __GPU_DEV_INLF__ __forceinline__ __device__
 #endif
 
-
-
 #define DEGREES_TO_RADIANS 0.017453292519943295;
 
 __GPU_DEV_INLF__ double toRadians(double angdeg) { return angdeg * DEGREES_TO_RADIANS; }
-
 
 namespace graph {
 
@@ -64,6 +61,10 @@ class DenseLayout {
   public:
     __GPU_DEV_INLF__ DenseLayout() : ld(0), rowOffset(0), colOffset(0), m_A(NULL) {}
 
+    DenseLayout(DenseLayout const &other) = default;
+
+    DenseLayout &operator=(DenseLayout const &other) = default;
+
     __GPU_DEV_INLF__ DenseLayout(size_t _ld, size_t _rowOffset, size_t _colOffset, double *A)
         : ld(_ld), rowOffset(_rowOffset), colOffset(_colOffset), m_A(A) {}
 
@@ -84,29 +85,38 @@ class DenseLayout {
 
   public:
     // leading dimension
-    const size_t ld;
+    size_t ld;
 
     // row offset
-    const size_t rowOffset;
+    size_t rowOffset;
 
     // column offset
-    const size_t colOffset;
+    size_t colOffset;
 
     // device storage
-    double *const m_A;
+    double *m_A;
 };
 
 //=================================================================================
 
 class SparseLayout {
   public:
-    __GPU_DEV_INLF__ SparseLayout(int *_accWriteOffset, int *_cooRowInd, int *_cooColInd, double *_cooVal)
-        : accWriteOffset(_accWriteOffset), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {}
+    __GPU_DEV_INLF__ SparseLayout()
+        : baseOffset(0), accWriteOffset(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
+
+    __GPU_DEV_INLF__ SparseLayout(int baseOffset, int *_accWriteOffset, int *_cooRowInd, int *_cooColInd,
+                                  double *_cooVal)
+        : baseOffset(baseOffset), accWriteOffset(_accWriteOffset), cooRowInd(_cooRowInd), cooColInd(_cooColInd),
+          cooVal(_cooVal) {}
+
+    SparseLayout(const SparseLayout &other) = default;
+
+    SparseLayout &operator=(const SparseLayout &other) = default;
 
     __GPU_DEV_INLF__ void set(int row, int col, double value) {
         /// standard 128 byte cache line - no additional contention in a warp
-        int offset = accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x];
-        int nextOffset = accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x + 1]; /// uzupelnic skladowa
+        int offset = baseOffset + accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x];
+        int nextOffset = baseOffset + accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x + 1]; /// uzupelnic skladowa
         int blockSize = nextOffset - offset;
 
         for (int t = 0; t < blockSize; ++t) {
@@ -124,8 +134,8 @@ class SparseLayout {
 
     __GPU_DEV_INLF__ void add(int row, int col, double value) {
         /// 128 byte cache line - contention in a warp
-        int offset = accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x];
-        int nextOffset = accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x + 1]; /// uzupelnic skladowa
+        int offset = baseOffset + accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x];
+        int nextOffset = baseOffset + accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x + 1]; /// uzupelnic skladowa
         int blockSize = nextOffset - offset;
 
         for (int t = 0; t < blockSize; ++t) {
@@ -146,8 +156,8 @@ class SparseLayout {
     }
 
     __GPU_DEV_INLF__ double get(int row, int col) const {
-        int offset = accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x];
-        int nextOffset = accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x + 1];
+        int offset = baseOffset + accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x];
+        int nextOffset = baseOffset + accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x + 1];
         int blockSize = nextOffset - offset;
 
         for (int t = 0; t < blockSize; ++t) {
@@ -159,11 +169,12 @@ class SparseLayout {
     }
 
   private:
-    int *const accWriteOffset; /// cub::exclusive_scan , offset for this Constraint or Geometric Block
+    int baseOffset;      /// base offset for jacobian , transponse jacobina or hessian*
+    int *accWriteOffset; /// cub::exclusive_scan , offset for this Constraint or Geometric Block
 
-    int *const cooRowInd; /// COO row indicies
-    int *const cooColInd; /// COO column indicies
-    double *const cooVal; /// COO values
+    int *cooRowInd; /// COO row indicies
+    int *cooColInd; /// COO column indicies
+    double *cooVal; /// COO values
 };
 
 //=================================================================================
@@ -213,18 +224,24 @@ template <typename DataType> class BlockIterator {
 ///
 class DirectSparseLayout {
   public:
-    __GPU_DEV_INLF__ DirectSparseLayout() : accOffset(NULL), P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
+    __GPU_DEV_INLF__ DirectSparseLayout()
+        : baseOffset(0), accOffset(NULL), P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
 
-    __GPU_DEV_INLF__ DirectSparseLayout(int *const _accOffset, int *const _P, int *_cooRowInd, int *_cooColInd,
-                                        double *_cooVal)
-        : accOffset(_accOffset), P(_P), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {
+    __GPU_DEV_INLF__ DirectSparseLayout(int baseOffset, int *const _accOffset, int *const _P, int *_cooRowInd,
+                                        int *_cooColInd, double *_cooVal)
+        : baseOffset(baseOffset), accOffset(_accOffset), P(_P), cooRowInd(_cooRowInd), cooColInd(_cooColInd),
+          cooVal(_cooVal) {
         iterator.reset();
     }
+
+    DirectSparseLayout(const DirectSparseLayout &other) = default;
+
+    DirectSparseLayout& operator=(const DirectSparseLayout &other) = default;
 
     __GPU_DEV_INLF__ void set(int row, int col, double value) {
         unsigned threadId = iterator.thread_id();
         unsigned offset = iterator.next();
-        unsigned threadOffset = accOffset[threadId];
+        unsigned threadOffset = baseOffset + accOffset[threadId];
 
         /// override value - inversed indicies
         cooVal[P[threadOffset + offset]] = value;
@@ -232,7 +249,7 @@ class DirectSparseLayout {
 
     __GPU_DEV_INLF__ void add(int row, int col, double value) {
         unsigned threadId = iterator.thread_id();
-        unsigned threadOffset = accOffset[threadId];
+        unsigned threadOffset = baseOffset + accOffset[threadId];
         unsigned itr_offset = iterator.value();
 
         // ADD
@@ -240,11 +257,10 @@ class DirectSparseLayout {
             int at_row = cooRowInd[threadOffset + itr];
             int at_col = cooColInd[threadOffset + itr];
             if (at_row == row && at_col == col) {
-
                 cooVal[P[threadOffset + itr]] += value;
                 return;
             } else if (at_row == -1 && at_col == -1) {
-
+                // SET value
                 break;
             }
         }
@@ -265,10 +281,11 @@ class DirectSparseLayout {
     BlockIterator<int> iterator{};
 
   private:
-    int *const accOffset; /// thread acc offset
-    int *const P;         /// direct indicies dense vector
+    int baseOffset; /// base offset for Jacobian, or Transposed Jacobian, or Hessian.
+    int *accOffset; /// thread acc offset
+    int *P;         /// direct indicies dense vector
 
-    double *const cooVal; /// COO values
+    double *cooVal; /// COO values
 
 #define __BEFORE_TRANSFORMATION__
     int *cooRowInd; /// COO row not-transformed
@@ -466,8 +483,6 @@ __GPU_DEV_INLF__ static AdapterTensor<LLayout> transposeTensorDevMem(LLayout par
 }
 
 //=================================================================================
-
-
 
 } // namespace graph
 

@@ -26,9 +26,7 @@ namespace solver {
 
 GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::shared_ptr<GPULinearSystem> linearSystem,
                                std::shared_ptr<GPUComputationContext> cc, GPUGeometricSolver *solver)
-    : computationId(computationId), linearSystem(linearSystem), PointKernelTraits(solver->points.size()),
-      ConstraintKernelTraits(solver->constraints.size()), GeometricKernelTraits(solver->geometrics.size()),
-      tensorOperation(stream), stream(stream), computationContext(cc) {
+    : computationId(computationId), linearSystem(linearSystem), tensorOperation(stream), stream(stream), computationContext(cc) {
 
     /// change owner of computation state
     points = std::move(solver->points);
@@ -279,9 +277,10 @@ void GPUComputation::InitializeStateVector() {
 }
 
 void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream_t stream) {
-    ///
-    /// tensor A = [ Stiff + Hessian + Jacobian + JacobianT ]
-    ///
+    
+    /// Tensor A Sparse Memory Layout
+    /// mem layout = [ Stiff + Jacobian + JacobianT  + Hessian*] 
+    
     ///==================================================== ///
     ///           KERNEL ( Stiff Tensor - K )               ///
     ///==================================================== ///
@@ -553,9 +552,9 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
             int n = N;
             int nnz = N * N;
 
-            int *csrRowPtrA;
-            int *csrColIndA;
-            double *csrValA;
+            int *csrRowPtrA = NULL;
+            int *csrColIndA = NULL;
+            double *csrValA = NULL;
             
             double *b = dev_b;
             double *x = dev_b;

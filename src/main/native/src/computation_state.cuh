@@ -108,13 +108,16 @@ struct ComputationState {
     /// computation mode applied onto "A tensor" at this iteration
     ComputationMode computationMode;
 
-    /// Accumulated Writes in COO format from kernel into Stiff Tensor
+    /// Relative Offsets - Accumulated Writes in COO format from kernel into  Stiff Tensor
     int *accCooWriteStiffTensor;
 
-    /// Accumulated Writes in COO format from kernel into Jacobian Tensor
+    /// Relative Offsets - Accumulated Writes in COO format from kernel into Jacobian Tensor
     int *accCooWriteJacobianTensor;
+    
+    /// Relative Offsets -  Accumulate writes in COO format form kernel into Hessian Tensor 
+    int *accCooWriteHessianTensor;
 
-    /// non-zero elements in coo or csr ; nnz =  cooWritesStiffSize + 2 * cooWirtesJacobianSize
+    /// non-zero elements in coo or csr ; nnz =  cooWritesStiffSize + 2 * cooWirtesJacobianSize + optional(hessian)*
     int nnz;
 
     /// offset for Jacobian kernel Writes
