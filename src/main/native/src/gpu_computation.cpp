@@ -266,17 +266,14 @@ void GPUComputation::PreInitializeComputationState(ComputationState *ev, int itr
 
 void GPUComputation::InitializeStateVector() {
 
-    const unsigned I_GRID_BLOCK = PointKernelTraits.GRID_DIM;
-    const unsigned I_BLOCK_DIM = PointKernelTraits.BLOCK_DIM;
-
     ///==================================================== ///
-    ///                 Init State Vector                   ///
+    ///            KERNEL ( Init State Vector )             ///
     ///==================================================== ///
-    CopyIntoStateVector<<<I_GRID_BLOCK, I_BLOCK_DIM, Ns, stream>>>(dev_SV[0], d_points, points.size());
+    CopyIntoStateVector( stream, dev_SV[0], d_points, points.size());
     validateStream;
 
     ///==================================================== ///
-    ///                 Zreo Lagrange Coefficients          ///
+    ///              Zreo Lagrange Coefficients             ///
     ///==================================================== ///
     utility::memsetAsync(dev_SV[0] + size, 0, coffSize, stream);
 }
@@ -285,23 +282,17 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream
     ///
     /// tensor A = [ Stiff + Hessian + Jacobian + JacobianT ]
     ///
-    const unsigned G_GRID_DIM = GeometricKernelTraits.GRID_DIM;
-    const unsigned G_BLOCK_DIM = GeometricKernelTraits.BLOCK_DIM;
-
-    const unsigned Z_GRID_DIM = ConstraintKernelTraits.GRID_DIM;
-    const unsigned Z_BLOCK_DIM = ConstraintKernelTraits.BLOCK_DIM;
-
     ///==================================================== ///
-    ///                 Stiff Tensor - K                    ///
+    ///           KERNEL ( Stiff Tensor - K )               ///
     ///==================================================== ///
-    ComputeStiffnessMatrix<<<G_GRID_DIM, G_BLOCK_DIM, Ns, stream>>>(dev_ev, geometrics.size());
+    ComputeStiffnessMatrix(stream, dev_ev, geometrics.size());
     validateStream;
 
     ///==================================================== ///
-    ///                 Hessian Tensor - K                  ///
+    ///           KERNEL ( Hessian Tensor - K )             ///
     ///==================================================== ///
     if (settings::get()->SOLVER_INC_HESSIAN) {
-        EvaluateConstraintHessian<<<Z_GRID_DIM, Z_BLOCK_DIM, Ns, stream>>>(dev_ev, constraints.size());
+        EvaluateConstraintHessian(stream, dev_ev, constraints.size());
         validateStream;
     }
 
@@ -310,9 +301,9 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream
     ///
 
     ///==================================================== ///
-    ///                 Lower Jacobian                      ///
+    ///           KERNEL ( Lower Jacobian )                 ///
     ///==================================================== ///
-    EvaluateConstraintJacobian<<<Z_GRID_DIM, Z_BLOCK_DIM, Ns, stream>>>(dev_ev, constraints.size());
+    EvaluateConstraintJacobian( stream, dev_ev, constraints.size());
     validateStream;
 
     ///  Transposed Jacobian - Uperr Tensor
@@ -320,9 +311,9 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream
     ///  intermediary matrix
 
     ///==================================================== ///
-    ///                 Upper Jacobian                      ///
+    ///           KERNEL ( Upper Jacobian )                 ///
     ///==================================================== ///
-    EvaluateConstraintTRJacobian<<<Z_GRID_DIM, Z_BLOCK_DIM, Ns, stream>>>(dev_ev, constraints.size());
+    EvaluateConstraintTRJacobian( stream, dev_ev, constraints.size());
     validateStream;
 }
 
@@ -330,34 +321,34 @@ void GPUComputation::DeviceConstructTensorB(ComputationState *dev_ev, cudaStream
     ///
     /// B = [ SV ]  - right hand side
     ///
-    const unsigned G_GRID_DIM = GeometricKernelTraits.GRID_DIM;
-    const unsigned G_BLOCK_DIM = GeometricKernelTraits.BLOCK_DIM;
-
-    const unsigned Z_GRID_DIM = ConstraintKernelTraits.GRID_DIM;
-    const unsigned Z_BLOCK_DIM = ConstraintKernelTraits.BLOCK_DIM;
-
     ///==================================================== ///
-    ///                 Point-Point-Tension F(q)            ///
+    ///      KERNEL ( Point-Point-Tension F(q) )            ///
     ///==================================================== ///
-    EvaluateForceIntensity<<<G_GRID_DIM, G_BLOCK_DIM, Ns, stream>>>(dev_ev, geometrics.size());
+    EvaluateForceIntensity(stream, dev_ev, geometrics.size());
     validateStream;
 
     ///==================================================== ///
-    ///                 Constraint Tension Fi(q)            ///
+    ///      KERNEL ( Constraint Tension Fi(q) )            ///
     ///==================================================== ///
-    EvaluateConstraintValue<<<Z_GRID_DIM, Z_BLOCK_DIM, Ns, stream>>>(dev_ev, constraints.size());
+    EvaluateConstraintValue(stream, dev_ev, constraints.size());
     validateStream;
 }
 
 void GPUComputation::DebugTensorConstruction(ComputationState *dev_ev) {
     int N = (int)dimension;
     if (settings::get()->DEBUG_TENSOR_A) {
-        stdoutTensorData<<<GRID_DBG, 1, Ns, stream>>>(dev_ev, N, N);
+        ///==================================================== ///
+        ///      KERNEL ( stdout tensor at gpu )                ///
+        ///==================================================== ///
+        stdoutTensorData(stream, dev_ev, N, N);
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
 
     if (settings::get()->DEBUG_TENSOR_B) {
-        stdoutRightHandSide<<<GRID_DBG, 1, Ns, stream>>>(dev_ev, N);
+        ///==================================================== ///
+        ///      KERNEL ( stdout tensor at gpu )                ///
+        ///==================================================== ///
+        stdoutRightHandSide(stream, dev_ev, N);
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
 }
@@ -365,7 +356,10 @@ void GPUComputation::DebugTensorConstruction(ComputationState *dev_ev) {
 void GPUComputation::DebugTensorSV(ComputationState *dev_ev) {
     int N = (int)dimension;
     if (settings::get()->DEBUG_TENSOR_SV) {
-        stdoutStateVector<<<GRID_DBG, 1, Ns, stream>>>(dev_ev, N);
+        ///==================================================== ///
+        ///      KERNEL ( stdout state vector  )                ///
+        ///==================================================== ///
+        stdoutStateVector(stream, dev_ev, N);
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
     validateStream;
@@ -373,13 +367,10 @@ void GPUComputation::DebugTensorSV(ComputationState *dev_ev) {
 
 void GPUComputation::StateVectorAddDelta(double *dev_SV, double *dev_b) {
 
-    const unsigned I_GRID_DIM = PointKernelTraits.GRID_DIM;
-    const unsigned I_BLOCK_DIM = PointKernelTraits.BLOCK_DIM;
-
     ///==================================================== ///
-    ///                 SV = SV + delta                     ///
+    ///           KERNEL ( SV = SV + delta )                ///
     ///==================================================== ///
-    StateVectorAddDifference<<<I_GRID_DIM, I_BLOCK_DIM, Ns, stream>>>(dev_SV, dev_b, points.size());
+    StateVectorAddDifference(stream, dev_SV, dev_b, points.size());
     validateStream;
 
     // Uaktualniamy punkty SV = SV + delta
@@ -389,13 +380,10 @@ void GPUComputation::StateVectorAddDelta(double *dev_SV, double *dev_b) {
 
 void GPUComputation::RebuildPointsFrom(ComputationState *computation) {
 
-    const unsigned I_GRID_DIM = PointKernelTraits.GRID_DIM;
-    const unsigned I_BLOCK_DIM = PointKernelTraits.BLOCK_DIM;
-
     ///==================================================== ///
-    ///                 Point From State Vector             ///
-    ///==================================================== ///
-    CopyFromStateVector<<<I_GRID_DIM, I_BLOCK_DIM, Ns, stream>>>(d_points, computation->SV, points.size());
+    ///          KERNEL( Point From State Vector )          ///
+    ///==================================================== ///    
+    CopyFromStateVector(stream, d_points, computation->SV, points.size());
     validateStream;
 
     utility::memcpyFromDevice(points, d_points, stream);
@@ -576,7 +564,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
 
             int singularity = -1;
 
-            linearSystem->solverLinearEquationSP(N, N, nnz, csrRowPtrA, csrColIndA, csrValA, b, x, &singularity);
+            linearSystem->solverLinearEquationSP(m, n, nnz, csrRowPtrA, csrColIndA, csrValA, b, x, &singularity);
             validateStream;
         } else {
 

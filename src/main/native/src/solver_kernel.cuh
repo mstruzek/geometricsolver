@@ -35,6 +35,7 @@
 
 #define KERNEL_EXECUTOR_QQQ // przygotowac  KERNEL_EXECUTOR
 
+/// ===========================================================================================
 /// <summary>
 ///  Kernel Permutation compaction routine. Kernel Dispatcher.
 /// </summary>
@@ -49,7 +50,7 @@ KERNEL_EXECUTOR void compactPermutationVector(unsigned K_gridDim, unsigned K_blo
                                              int *PT1, int *PT2, int *PT);
 
 
-
+/// ===========================================================================================
 /// <summary>
 /// Inverse COO indicies map ;  this is Direct Form !
 /// </summary>
@@ -63,110 +64,117 @@ KERNEL_EXECUTOR void compactPermutationVector(unsigned K_gridDim, unsigned K_blo
 KERNEL_EXECUTOR void inversePermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream,
                                               int *INP, int *OUTP, size_t N); 
 
-/// ==============================================================================
+/// ===========================================================================================
 ///
 ///                             debug utility
 ///
-/// ==============================================================================
+/// ===========================================================================================
+
+KERNEL_EXECUTOR void stdoutTensorData(cudaStream_t stream, ComputationState *ecdata, size_t rows, size_t cols);
+
+KERNEL_EXECUTOR void stdoutRightHandSide(cudaStream_t stream, ComputationState *ecdata, size_t rows);
+
+KERNEL_EXECUTOR void stdoutStateVector(cudaStream_t stream, ComputationState *ecdata, size_t rows);
+
+///  ==========================================================================================
 
 
-KERNEL_EXECUTOR_QQQ __global__ void stdoutTensorData(ComputationState *ecdata, size_t rows, size_t cols);
-
-KERNEL_EXECUTOR_QQQ __global__ void stdoutRightHandSide(ComputationState *ecdata, size_t rows);
-
-KERNEL_EXECUTOR_QQQ __global__ void stdoutStateVector(ComputationState *ecdata, size_t rows);
-
-///  ===============================================================================
-
-/// --------------- [ KERNEL# GPU ]
-
+/// ================================= SET STATE VECTOR ========================================
 /// <summary>
 /// Initialize State vector from actual points (without point id).
 /// Reference mapping exists in Evaluation.pointOffset
 /// </summary>
 /// <param name="ec"></param>
 /// <returns></returns>
+KERNEL_EXECUTOR void CopyIntoStateVector(cudaStream_t stream, double *SV, graph::Point *points, size_t size);
 
 
-
-KERNEL_EXECUTOR_QQQ __global__ void CopyIntoStateVector(double *SV, graph::Point *points, size_t size);
-
+/// ================================= UPDATE POINT VECTOR =====================================
 /// <summary>
 /// Move computed position from State Vector into corresponding point object.
 /// </summary>
 /// <param name="ec"></param>
 /// <returns></returns>
-///
-/// amortyzacja wzgledem inicjalizacji kernel a rejestrem watku
-KERNEL_EXECUTOR_QQQ __global__ void CopyFromStateVector(graph::Point *points, double *SV, size_t size);
+KERNEL_EXECUTOR void CopyFromStateVector(cudaStream_t stream, graph::Point *points, double *SV, size_t size);
 
-/// <summary> CUB -- ELEMNTS_PER_THREAD ??
-/// accumulate difference from newton-raphson method;  SV[] = SV[] + dx;
+
+/// ================================= UPDATE STATE VECTOR =====================================
+/// <summary>
+/// Accumulate difference from newton-raphson method;  SV[] = SV[] + dx;
 /// </summary>
-
-KERNEL_EXECUTOR_QQQ __global__ void StateVectorAddDifference(double *SV, double *dx, size_t N);
-
-///
-/// ==================================== STIFFNESS MATRIX ================================= ///
-///
-
-
-/**
- * @brief Compute Stiffness Matrix on each geometric object.
- *
- * Single cuda thread is responsible for evalution of an assigned geometric object.
- *
- *
- * @param ec
- * @return __global__
- */
-
-KERNEL_EXECUTOR_QQQ __global__ void ComputeStiffnessMatrix(ComputationState *ecdata, size_t N);
+/// <param name="SV"></param>
+/// <param name="dx"></param>
+/// <param name="N"></param>
+/// <returns></returns>
+KERNEL_EXECUTOR void StateVectorAddDifference(cudaStream_t stream, double *SV, double *dx, size_t N);
 
 
+/// ==================================== STIFFNESS MATRIX =====================================
+/// <summary>
+/// Compute Stiffness Matrix on each geometric object.
+/// Single cuda thread is responsible for evalution of an assigned geometric object.
+/// </summary>
+/// <param name="stream"></param>
+/// <param name="ecdata"></param>
+/// <param name="N"></param>
+/// <returns></returns>
+KERNEL_EXECUTOR void ComputeStiffnessMatrix(cudaStream_t stream, ComputationState *ecdata, size_t N);
 
-///
-/// ================================ FORCE INTENSITY ==================== ///
-///
+
+/// ==================================== FORCE INTENSITY ======================================
+/// <summary>
+/// Force Intesity
+/// </summary>
+/// <param name="stream"></param>
+/// <param name="ecdata"></param>
+/// <param name="N"></param>
+/// <returns></returns>
+KERNEL_EXECUTOR void EvaluateForceIntensity(cudaStream_t stream , ComputationState *ecdata, size_t N);
 
 
-KERNEL_EXECUTOR_QQQ __global__ void EvaluateForceIntensity(ComputationState *ecdata, size_t N);
+/// ===================================== CONSTRAINT VALUE ====================================
+/// <summary>
+/// Constraint Value 
+/// </summary>
+/// <param name="stream"></param>
+/// <param name="ecdata"></param>
+/// <param name="N"></param>
+/// <returns></returns>
+KERNEL_EXECUTOR void EvaluateConstraintValue(cudaStream_t stream, ComputationState *ecdata, size_t N);
 
-///
-/// ==================================== CONSTRAINT VALUE =================================
-///
 
-KERNEL_EXECUTOR_QQQ __global__ void EvaluateConstraintValue(ComputationState *ecdata, size_t N);
-
-///
 /// ============================ CONSTRAINT JACOBIAN MATRIX  ==================================
-///
-
-///
-/// Evaluate Constraint Jacobian ==========================================================
-///
-/// (FI) - (dfi/dq)   lower slice matrix of A
-///
-
-
-KERNEL_EXECUTOR_QQQ __global__ void EvaluateConstraintJacobian(ComputationState *ecdata, size_t N);
-
-///
-/// Evaluate Constraint Transposed Jacobian ==========================================================
-///
-/// (FI)' - (dfi/dq)'   tr-transponowane - upper slice matrix  of A
-///
-KERNEL_EXECUTOR_QQQ __global__ void EvaluateConstraintTRJacobian(ComputationState *ecdata, size_t N);
+/// <summary>
+/// Evaluate Constraint Jacobian  (FI) - (dfi/dq)   lower slice matrix of A
+/// </summary>
+/// <param name="stream"></param>
+/// <param name="ecdata"></param>
+/// <param name="N"></param>
+/// <returns></returns>
+KERNEL_EXECUTOR void EvaluateConstraintJacobian(cudaStream_t stream, ComputationState *ecdata, size_t N);
 
 
+/// ====================== CONSTRAINT TRANSPOSED JACOBIAN MATRIX ==============================
+/// <summary>
+/// Evaluate Constraint Transposed Jacobian  (FI)' - (dfi/dq)'   tr-transponowane - upper slice matrix  of A
+/// </summary>
+/// <param name="stream"></param>
+/// <param name="ecdata"></param>
+/// <param name="N"></param>
+/// <returns></returns>
+KERNEL_EXECUTOR void EvaluateConstraintTRJacobian(cudaStream_t stream, ComputationState *ecdata, size_t N);
+
+
+/// ================================== HESSIAN MATRIX  ========================================
 ///
-/// Evaluate Constraint Hessian Matrix=====================================================
-///
-///
-/// (FI)' - ((dfi/dq)`)/dq
-///
-///
-KERNEL_EXECUTOR_QQQ __global__ void EvaluateConstraintHessian(ComputationState *ecdata, size_t N);
+/// <summary>
+/// Evaluate Constraint Hessian Matrix (FI)' - ((dfi/dq)`)/dq
+/// </summary>
+/// <param name="stream"></param>
+/// <param name="ecdata"></param>
+/// <param name="N"></param>
+/// <returns></returns>
+KERNEL_EXECUTOR void EvaluateConstraintHessian(cudaStream_t stream, ComputationState *ecdata, size_t N);
 
 
 #endif // #ifndef _SOLVER_KERNEL_CUH_

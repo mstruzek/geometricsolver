@@ -50,13 +50,13 @@ find_package(JNI)     #  in this cmake-3.20 settings JNI module is not setting t
 find_package(CUDAToolkit 11.7)
 
 add_library(${PROJECT_SHARED_LIBRARY} SHARED
-		src/gpu_computation.cu
 		src/solver_kernel.cu
 		src/model.cu
 		src/quda.cu
         src/cuerror.cpp
         src/settings.cpp
 		src/gpu_utility.cpp
+        src/gpu_computation.cpp
         src/gpu_geometric_solver.cpp
         src/gpu_computation_context.cpp	
         src/gpu_linear_system.cpp
