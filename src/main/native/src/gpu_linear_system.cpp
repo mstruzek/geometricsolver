@@ -244,8 +244,6 @@ void GPULinearSystem::solverLinearEquationSP(int m, int n, int nnz, int *csrRowP
 }
 
 
-
-
 GPULinearSystem::~GPULinearSystem() {
 
     cusparseStatus_t sparseStatus;

@@ -16,6 +16,10 @@
 #define validateStream
 #endif
 
+///
+template void TensorOperation::gatherVector<double>(int nnz, cudaDataType valueType, double *PT1, int *PT2, double *PT);
+
+
 TensorOperation::TensorOperation(cudaStream_t stream) : stream(stream), pBuffer(NULL), Prm(NULL), Psize(0) {
 
     cusparseStatus_t status;
@@ -35,12 +39,12 @@ TensorOperation::TensorOperation(cudaStream_t stream) : stream(stream), pBuffer(
         fprintf(stderr, "[gpu/cusparse] cusparse stream failure ; ( %s ) %s \n", errorName, errorStr);
         exit(1);
     }
-        
+
     cublasStatus_t cublasStatus;
 
     /// cuBlas computation context
     cublasStatus = cublasCreate(&cublasHandle);
-    if( cublasStatus != CUBLAS_STATUS_SUCCESS) {
+    if (cublasStatus != CUBLAS_STATUS_SUCCESS) {
         const char *errorName = cusparseGetErrorName(status);
         const char *errorStr = cusparseGetErrorString(status);
         fprintf(stderr, "[gpu/cusparse] cublas handle failure ; ( %s ) %s \n", errorName, errorStr);
@@ -55,7 +59,6 @@ TensorOperation::TensorOperation(cudaStream_t stream) : stream(stream), pBuffer(
         exit(1);
     }
 };
-
 
 void TensorOperation::vectorNorm(int n, double *x, double *result) {
 
@@ -90,101 +93,90 @@ void TensorOperation::cublasAPIDaxpy(int n, const double *alpha, const double *x
 /// <param name="nnz">IN</param>
 /// <param name="cooRowInd">IN/OUT sorted out</param>
 /// <param name="cooColInd">IN/OUT sorted out  [ csrColIndA ] </param>
-/// <param name="cooValues">IN/OUT sorted out (PT) </param>
 /// <param name="csrRowPtrA">OUT vector - m + 1  [ csr compact form ] </param>
 /// <param name="PT">IN/OUT vector[nnz], permutation from coo into csr</param>
 /// <param name="initialize">if true PT is not reused in computation and csrRowPtrA is build</param>
-void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *cooColInd, double *cooValues,
-                                   int *csrRowInd, int *PT, bool initialize) {
+void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *cooColInd, int *csrRowInd, int *PT) {
 
     cusparseStatus_t status;
 
-    /// first Xcoosort round
-    if (initialize) {
+    /// required minimum vectors lengths
+    if (nnz > PT_nnz) {
 
-        /// required minimum vectors lengths
-        if (nnz > PT_nnz) {
-
-            if (PT1 != NULL) {
-                checkCudaStatus(cudaFreeAsync(PT2, stream));
-            }
-            if (PT2 != NULL) {
-                checkCudaStatus(cudaFreeAsync(PT1, stream));
-            }
-
-            checkCudaStatus(cudaMallocAsync((void **)&PT1, nnz * sizeof(int), stream));
-            checkCudaStatus(cudaMallocAsync((void **)&PT2, nnz * sizeof(int), stream));
-
-            PT_nnz = nnz;
+        if (PT1 != NULL) {
+            checkCudaStatus(cudaFreeAsync(PT2, stream));
+        }
+        if (PT2 != NULL) {
+            checkCudaStatus(cudaFreeAsync(PT1, stream));
         }
 
-        // first acc vector identity vector
-        cusparseCreateIdentityPermutation(sparseHandle, nnz, PT1);
+        checkCudaStatus(cudaMallocAsync((void **)&PT1, nnz * sizeof(int), stream));
+        checkCudaStatus(cudaMallocAsync((void **)&PT2, nnz * sizeof(int), stream));
 
-        /// seconf acc identity vector
-        cusparseCreateIdentityPermutation(sparseHandle, nnz, PT2);
+        PT_nnz = nnz;
+    }
 
-        /// required computation Buffer
-        size_t lastBufferSize = pBufferSizeInBytes;
+    // first acc vector identity vector
+    cusparseCreateIdentityPermutation(sparseHandle, nnz, PT1);
 
-        status = cusparseXcoosort_bufferSizeExt(sparseHandle, m, n, nnz, cooRowInd, cooColInd, &pBufferSizeInBytes);
-        if (status != CUSPARSE_STATUS_SUCCESS) {
-            auto errorName = cusparseGetErrorName(status);
-            auto errorStr = cusparseGetErrorString(status);
-            fprintf(stderr, "[cusparse/error]  Xcoosort buffer size estimate failes; ( %s ) %s \n", errorName,
-                    errorStr);
-            exit(1);
+    /// seconf acc identity vector
+    cusparseCreateIdentityPermutation(sparseHandle, nnz, PT2);
+
+    /// required computation Buffer
+    size_t lastBufferSize = pBufferSizeInBytes;
+
+    status = cusparseXcoosort_bufferSizeExt(sparseHandle, m, n, nnz, cooRowInd, cooColInd, &pBufferSizeInBytes);
+    if (status != CUSPARSE_STATUS_SUCCESS) {
+        auto errorName = cusparseGetErrorName(status);
+        auto errorStr = cusparseGetErrorString(status);
+        fprintf(stderr, "[cusparse/error]  Xcoosort buffer size estimate failes; ( %s ) %s \n", errorName, errorStr);
+        exit(1);
+    }
+
+    /// async prior action with host reference
+    checkCudaStatus(cudaStreamSynchronize(stream));
+
+    if (pBufferSizeInBytes > lastBufferSize) {
+        if (pBuffer) {
+            checkCudaStatus(cudaFreeAsync(pBuffer, stream));
         }
+        checkCudaStatus(cudaMallocAsync((void **)&pBuffer, pBufferSizeInBytes, stream));
+    }
 
-        /// async prior action with host reference
-        checkCudaStatus(cudaStreamSynchronize(stream));
+    checkCudaStatus(cudaStreamSynchronize(stream));
 
-        if (pBufferSizeInBytes > lastBufferSize) {
-            if (pBuffer) {
-                checkCudaStatus(cudaFreeAsync(pBuffer, stream));
-            }
-            checkCudaStatus(cudaMallocAsync((void **)&pBuffer, pBufferSizeInBytes, stream));
-        }
+    /// recompute sort by column action on COO tensor
+    status = cusparseXcoosortByColumn(sparseHandle, m, n, nnz, cooRowInd, cooColInd, PT1, pBuffer);
+    if (status != CUSPARSE_STATUS_SUCCESS) {
+        checkCusparseStatus(status);
+    }
+    validateStream;
 
-        checkCudaStatus(cudaStreamSynchronize(stream));
+    /// recompute sort by row action on COO tensor
+    status = cusparseXcoosortByRow(sparseHandle, m, n, nnz, cooRowInd, cooColInd, PT2, pBuffer);
+    if (status != CUSPARSE_STATUS_SUCCESS) {
+        auto errorName = cusparseGetErrorName(status);
+        auto errorStr = cusparseGetErrorString(status);
+        fprintf(stderr, "[cusparse/error]  Xcoosort by row failure ; ( %s ) %s \n", errorName, errorStr);
+        exit(1);
+    }
+    validateStream;
 
-        /// recompute sort by column action on COO tensor
-        status = cusparseXcoosortByColumn(sparseHandle, m, n, nnz, cooRowInd, cooColInd, PT1, pBuffer);
-        if (status != CUSPARSE_STATUS_SUCCESS) {
-            checkCusparseStatus(status);
-        }
-        validateStream;
+    // prior action :: if the Stream Ordered Memory Allocator ???
 
-        /// recompute sort by row action on COO tensor
-        status = cusparseXcoosortByRow(sparseHandle, m, n, nnz, cooRowInd, cooColInd, PT2, pBuffer);
-        if (status != CUSPARSE_STATUS_SUCCESS) {
-            auto errorName = cusparseGetErrorName(status);
-            auto errorStr = cusparseGetErrorString(status);
-            fprintf(stderr, "[cusparse/error]  Xcoosort by row failure ; ( %s ) %s \n", errorName, errorStr);
-            exit(1);
-        }
-        validateStream;
+    gatherVector(nnz, CUDA_R_32I, PT1, PT2, PT);
 
-        // prior action :: if the Stream Ordered Memory Allocator ???
+    validateStream;
 
-        gatherVector(nnz, CUDA_R_32I, PT1, PT2, PT);
-
-        validateStream;
-
-        /// create csrRowPtrA    -  async execution
-        status = cusparseXcoo2csr(sparseHandle, cooRowInd, nnz, m, csrRowInd, CUSPARSE_INDEX_BASE_ZERO);
-        if (status != CUSPARSE_STATUS_SUCCESS) {
-            auto errorName = cusparseGetErrorName(status);
-            auto errorStr = cusparseGetErrorString(status);
-            fprintf(stderr, "[cusparse/error]  conversion to csr storage format ; ( %s ) %s \n", errorName, errorStr);
-            exit(1);
-        }
-        validateStream;
-
-    } /// initialize end
-
-    /// Inplace cooValus pivoting - async execution
-    gatherVector(nnz, CUDA_R_64F, cooValues, PT, cooValues);
+    /// create csrRowPtrA    -  async execution
+    status = cusparseXcoo2csr(sparseHandle, cooRowInd, nnz, m, csrRowInd, CUSPARSE_INDEX_BASE_ZERO);
+    if (status != CUSPARSE_STATUS_SUCCESS) {
+        auto errorName = cusparseGetErrorName(status);
+        auto errorStr = cusparseGetErrorString(status);
+        fprintf(stderr, "[cusparse/error]  conversion to csr storage format ; ( %s ) %s \n", errorName, errorStr);
+        exit(1);
+    }
+    validateStream;
 
     return;
 }
@@ -252,11 +244,11 @@ TensorOperation::~TensorOperation() {
     if (PT1) {
         checkCudaStatus(cudaFreeAsync(PT1, stream));
     }
-    if (PT2) {  
+    if (PT2) {
         checkCudaStatus(cudaFreeAsync(PT2, stream));
     }
 
-    checkCusparseStatus(cusparseDestroy(sparseHandle)); 
+    checkCusparseStatus(cusparseDestroy(sparseHandle));
 
     checkCublasStatus(cublasDestroy(cublasHandle));
 }
@@ -269,5 +261,6 @@ void TensorOperation::validateStreamState() {
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
 }
+
 
 #undef validateStream

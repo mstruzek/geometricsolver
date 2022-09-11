@@ -138,6 +138,8 @@ struct ComputationState {
     /// COO vector of values, Coordinate Format COO, or CSR format sorted
     double *cooVal = NULL;
 
+    /// tensor A solver response - -1 invertible otherwise exect index of diagonal element 
+    int singularity = -1;
 
 };
 

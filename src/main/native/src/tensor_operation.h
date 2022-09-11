@@ -40,12 +40,10 @@ class TensorOperation {
     /// <param name="nnz">IN</param>
     /// <param name="cooRowInd">IN/OUT sorted</param>
     /// <param name="cooColInd">IN/OUT sorted - csrColInd </param>
-    /// <param name="cooValues">IN/OUT sorted (INPT) </param>
-    /// <param name="csrRowInd">OUT vector - m + 1</param>
+        /// <param name="csrRowInd">OUT vector - m + 1</param>
     /// <param name="INPT">IN/OUT vector[nnz], permutation from coo into csr</param>
-    /// <param name="sort">if true INPT is not reused in computation</param>
-    void convertToCsr(int m, int n, int nnz, int *cooRowInd, int *cooColInd, double *cooValues, int *csrRowInd,
-                        int *PT, bool sort);
+    void convertToCsr(int m, int n, int nnz, int *cooRowInd, int *cooColInd, int *csrRowInd,
+                        int *PT);
 
     /// <summary>
     /// Gather vector operation ; PT[.] = PT1[PT2[.]]
@@ -104,5 +102,8 @@ class TensorOperation {
     size_t PT_nnz;
 
 };
+
+
+
 
 #endif _TENSOR_OPERATION_H_

@@ -26,9 +26,10 @@ namespace solver {
 
 GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::shared_ptr<GPULinearSystem> linearSystem,
                                std::shared_ptr<GPUComputationContext> cc, GPUGeometricSolver *solver)
-    : computationId(computationId), linearSystem(linearSystem), tensorOperation(stream), stream(stream), computationContext(cc) {
+    : computationId(computationId), linearSystem(linearSystem), tensorOperation(stream), stream(stream),
+      computationContext(cc) {
 
-    /// change owner of computation state
+    /// change owner of compSt state
     points = std::move(solver->points);
     geometrics = std::move(solver->geometrics);
     constraints = std::move(solver->constraints);
@@ -95,8 +96,6 @@ void GPUComputation::preInitializeData() {
         accCooWriteJacobianTensor = utility::accumulatedValue(constraints, graph::tensorOpsCooConstraintJacobian);
 
         // merge albo dwa buffory
-
-
     }
 
     /// `A` tensor internal structure dimensions
@@ -116,7 +115,7 @@ void GPUComputation::memcpyComputationToDevice() {
     ///         Host Computation with references to Device
     /// ============================================================
 
-    /// const data in computation
+    /// const data in compSt
     utility::mallocAsync(&d_points, points.size(), stream);
     utility::mallocAsync(&d_geometrics, geometrics.size(), stream);
     utility::mallocAsync(&d_constraints, constraints.size(), stream);
@@ -135,10 +134,13 @@ void GPUComputation::memcpyComputationToDevice() {
         utility::mallocAsync(&d_accCooWriteStiffTensor, accCooWriteStiffTensor.size(), stream);
         utility::mallocAsync(&d_accCooWriteJacobianTensor, accCooWriteJacobianTensor.size(), stream);
 
+        /// option ` not-implemented-yet  +HESSIAN
+        d_accCooWriteHessianTensor = NULL;
+
         cooWritesStiffSize = accCooWriteStiffTensor[accCooWriteStiffTensor.size() - 1];
         cooWirtesJacobianSize = accCooWriteJacobianTensor[accCooWriteJacobianTensor.size() - 1];
-        int cooWritesSize = cooWritesStiffSize + cooWirtesJacobianSize * 2; /// + HESSIAN if computed
-        
+        int cooWritesSize = cooWritesStiffSize + cooWirtesJacobianSize * 2; /// +HESSIAN if computed
+
         // non-zero elements (coo/csr)
         nnz = cooWritesSize;
 
@@ -146,15 +148,17 @@ void GPUComputation::memcpyComputationToDevice() {
         utility::mallocAsync(&d_cooRowInd, cooWritesSize, stream);
         utility::mallocAsync(&d_cooColInd, cooWritesSize, stream);
         utility::mallocAsync(&d_cooVal, cooWritesSize, stream);
-        utility::mallocAsync(&d_P, cooWritesSize, stream);
-        utility::mallocAsync(&d_INV_P, cooWritesSize, stream);
+        utility::mallocAsync(&d_PT, cooWritesSize, stream);
+        utility::mallocAsync(&d_INV_PT, cooWritesSize, stream);
+
+        utility::mallocAsync(&d_cooRowInd_tmp, cooWritesSize, stream);
 
         /// CSR
-        
+
         /// rows = m + 1
         utility::mallocAsync(&d_csrRowPtrA, dimension + 1, stream);
-        utility::mallocAsync(&d_csrColIndA, nnz, stream);         
-        utility::mallocAsync(&d_csrValA, nnz, stream);                        
+        utility::mallocAsync(&d_csrColIndA, nnz, stream);
+        utility::mallocAsync(&d_csrValA, nnz, stream);
     }
 
     // immutables -
@@ -193,7 +197,7 @@ void GPUComputation::memcpyComputationToDevice() {
     utility::mallocAsync(&dev_dx, N, stream);
 
     for (int itr = 0; itr < CMAX; itr++) {
-        /// each computation data with its own StateVector
+        /// each compSt data with its own StateVector
         utility::mallocAsync(&dev_SV[itr], N, stream);
     }
 }
@@ -220,7 +224,7 @@ void GPUComputation::validateStreamState() {
 }
 
 void GPUComputation::PreInitializeComputationState(ComputationState *ev, int itr) {
-    // computation data;
+    // compSt data;
     ev->cID = itr;
     ev->SV = dev_SV[itr]; /// data vector lineage
     ev->A = dev_A;
@@ -250,11 +254,15 @@ void GPUComputation::PreInitializeComputationState(ComputationState *ev, int itr
     /// =================================
     ///     Tensor A Computation Mode
     /// =================================
-    if (computationMode == ComputationMode::SPARSE_LAYOUT) {       
-        
+    if (computationMode == ComputationMode::SPARSE_LAYOUT) {
+
         ev->nnz = nnz;
         ev->cooWritesStiffSize = cooWritesStiffSize;
         ev->cooWirtesJacobianSize = cooWirtesJacobianSize;
+
+        ev->accCooWriteStiffTensor = d_accCooWriteStiffTensor;
+        ev->accCooWriteJacobianTensor = d_accCooWriteJacobianTensor;
+        ev->accCooWriteHessianTensor = d_accCooWriteHessianTensor;
 
         ev->cooRowInd = d_cooRowInd; /// SparseLayout access
         ev->cooColInd = d_cooColInd; /// SparseLayout access
@@ -267,7 +275,7 @@ void GPUComputation::InitializeStateVector() {
     ///==================================================== ///
     ///            KERNEL ( Init State Vector )             ///
     ///==================================================== ///
-    CopyIntoStateVector( stream, dev_SV[0], d_points, points.size());
+    CopyIntoStateVector(stream, dev_SV[0], d_points, points.size());
     validateStream;
 
     ///==================================================== ///
@@ -277,10 +285,10 @@ void GPUComputation::InitializeStateVector() {
 }
 
 void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream_t stream) {
-    
+
     /// Tensor A Sparse Memory Layout
-    /// mem layout = [ Stiff + Jacobian + JacobianT  + Hessian*] 
-    
+    /// mem layout = [ Stiff + Jacobian + JacobianT  + Hessian*]
+
     ///==================================================== ///
     ///           KERNEL ( Stiff Tensor - K )               ///
     ///==================================================== ///
@@ -302,7 +310,7 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream
     ///==================================================== ///
     ///           KERNEL ( Lower Jacobian )                 ///
     ///==================================================== ///
-    EvaluateConstraintJacobian( stream, dev_ev, constraints.size());
+    EvaluateConstraintJacobian(stream, dev_ev, constraints.size());
     validateStream;
 
     ///  Transposed Jacobian - Uperr Tensor
@@ -312,7 +320,7 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream
     ///==================================================== ///
     ///           KERNEL ( Upper Jacobian )                 ///
     ///==================================================== ///
-    EvaluateConstraintTRJacobian( stream, dev_ev, constraints.size());
+    EvaluateConstraintTRJacobian(stream, dev_ev, constraints.size());
     validateStream;
 }
 
@@ -334,12 +342,11 @@ void GPUComputation::DeviceConstructTensorB(ComputationState *dev_ev, cudaStream
 }
 
 void GPUComputation::DebugTensorConstruction(ComputationState *dev_ev) {
-    int N = (int)dimension;
     if (settings::get()->DEBUG_TENSOR_A) {
         ///==================================================== ///
         ///      KERNEL ( stdout tensor at gpu )                ///
         ///==================================================== ///
-        stdoutTensorData(stream, dev_ev, N, N);
+        stdoutTensorData(stream, dev_ev, dimension, dimension);
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
 
@@ -347,18 +354,17 @@ void GPUComputation::DebugTensorConstruction(ComputationState *dev_ev) {
         ///==================================================== ///
         ///      KERNEL ( stdout tensor at gpu )                ///
         ///==================================================== ///
-        stdoutRightHandSide(stream, dev_ev, N);
+        stdoutRightHandSide(stream, dev_ev, dimension);
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
 }
 
 void GPUComputation::DebugTensorSV(ComputationState *dev_ev) {
-    int N = (int)dimension;
     if (settings::get()->DEBUG_TENSOR_SV) {
         ///==================================================== ///
         ///      KERNEL ( stdout state vector  )                ///
         ///==================================================== ///
-        stdoutStateVector(stream, dev_ev, N);
+        stdoutStateVector(stream, dev_ev, dimension);
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
     validateStream;
@@ -381,7 +387,7 @@ void GPUComputation::RebuildPointsFrom(ComputationState *computation) {
 
     ///==================================================== ///
     ///          KERNEL( Point From State Vector )          ///
-    ///==================================================== ///    
+    ///==================================================== ///
     CopyFromStateVector(stream, d_points, computation->SV, points.size());
     validateStream;
 
@@ -509,15 +515,38 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
         }
 
         if (computationMode == ComputationMode::SPARSE_LAYOUT) {
-            /// -------------------  VECTOR P , INV_P
+            /// COMPUTE in sorted CSR format
 
-            /// Computation sorted CSR
-            // int *d_cooRowInd_comp;
-            // int *d_cooColInd_comp;
+            const int m = dimension;
+            const int n = dimension;
 
-            // tensorOperation.convertToCSR()
+            if (itr == FIRST_ROUND) {
+
+                /// COPYMK - for first iteration
+
+                utility::memcpyOnDevice(d_cooRowInd_tmp, d_cooRowInd, nnz, stream);
+                utility::memcpyOnDevice(d_csrColIndA, d_cooColInd, nnz, stream);
+
+
+                ///  destructive operation - in-place  Xcoosort !!! requirment for solver and DirectLayout
+                tensorOperation.convertToCsr(m, n, nnz, d_cooRowInd_tmp, d_csrColIndA, d_csrRowPtrA, d_PT);
+                validateStream;
+
+                /// gather d_csrValuA from cooValues;
+                tensorOperation.gatherVector(nnz, CUDA_R_64F, d_cooVal, d_PT, d_csrValA);
+
+                /// evaluate inverted permutation vector
+                tensorOperation.invertPermuts(nnz, d_PT, d_INV_PT);
+
+            } else { 
+                
+                /// ComputationMode::DIRECT_LAYOUT
+
+                /// Inplace cooValus pivoting - async execution
+                tensorOperation.gatherVector(nnz, CUDA_R_64F, d_cooVal, d_PT, d_csrValA);
+                validateStream;
+            }
         }
-
         ///
         computationContext->PrepStop(itr);
 
@@ -543,39 +572,45 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
             linearSystem->solveLinearEquation(dev_A, dev_b, N);
             validateStream;
 
+#ifdef H_DEBUG
+            DebugTensorConstruction(dev_ev);
+#endif
+            /// uaktualniamy punkty SV = SV + delta
+            StateVectorAddDelta(dev_SV[itr], dev_b);
+
         } else if (computationMode == ComputationMode::SPARSE_LAYOUT) {
             /// ------------------------------------------------------
             ///  Sparse - CuSolver LINER SYSTEM equation solver
             /// ------------------------------------------------------
 
-            int m = N;
-            int n = N;
-            int nnz = N * N;
+            int const m = N;
+            int const n = N;
 
-            int *csrRowPtrA = NULL;
-            int *csrColIndA = NULL;
-            double *csrValA = NULL;
-            
-            double *b = dev_b;
-            double *x = dev_b;
+            int* singularity = &ev->singularity;
 
-            ///  ??? ? ? ???  ? ?? 
-
-            int singularity = -1;
-
-            linearSystem->solverLinearEquationSP(m, n, nnz, csrRowPtrA, csrColIndA, csrValA, b, x, &singularity);
+            linearSystem->solverLinearEquationSP(m, n, nnz, d_csrRowPtrA, d_csrColIndA, d_csrValA, dev_b, dev_dx,
+                                                 singularity);
             validateStream;
-        } else {
 
+             if (settings::get()->DEBUG_CHECK_ARG) {
+                checkCudaStatus(cudaStreamSynchronize(stream));
+                 if (*singularity != -1) {
+                     fprintf(stderr, "[solver] tensor A is not invertible at index = %d \n", *singularity);
+                     ev->norm = NAN;
+                     ev->singularity = *singularity;
+                     result.store(ev, std::memory_order_seq_cst);
+                     break;
+                 }
+                 fprintf(stderr, "[solver] tensor A is invertible ;  %d \n", *singularity);
+             }
+
+             /// uaktualniamy state vector SV = SV + delta
+             StateVectorAddDelta(dev_SV[itr], dev_dx);
+
+        } else {
             fprintf(stderr, "[solver] computation mode not recognized ! %d \n", computationMode);
             exit(1);
-        }
-
-#ifdef H_DEBUG
-        DebugTensorConstruction(dev_ev);
-#endif
-        /// uaktualniamy punkty SV = SV + delta
-        StateVectorAddDelta(dev_SV[itr], dev_b);
+        }             
 
         computationContext->SolverStop(itr);
 
@@ -592,22 +627,22 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
             break;
         }
 
-        /// Continue int next ITERATION
+        /// Continue next ITERATION
         NEXT_ROUND(itr++);
 
     } // end_while
+    /// #########################################################################
 
     /// Computation tiles submited
     std::unique_lock<std::mutex> ulock(mutex);
 
-    /// Await last computation state
+    /// Await last compSt state
     if (result.load(std::memory_order_seq_cst) == NULL) {
         /// spurious wakeup
         condition.wait(ulock, [&] { return result.load(std::memory_order_seq_cst) != NULL; });
     }
 
-    ComputationState *computation;
-    computation = (ComputationState *)result.load(std::memory_order_seq_cst);
+    ComputationState *compSt = (ComputationState *)result.load(std::memory_order_seq_cst);
     solverWatch.setStopTick();
 
     GPUComputation::unregisterComputation(this);
@@ -617,12 +652,10 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
     if (settings::get()->DEBUG) {
         ///
         ///
-        ReportComputationResult(computation);
+        ReportComputationResult(compSt);
     }
-
-    BuildSolverStat(computation, stat);
-
-    RebuildPointsFrom(computation);
+    BuildSolverStat(compSt, stat);
+    RebuildPointsFrom(compSt);
 
     if (graphExec != NULL) {
         cudaGraphExecDestroy(graphExec);
@@ -660,22 +693,20 @@ void GPUComputation::computationResultHandler(cudaStream_t stream, cudaError_t s
         fprintf(stdout, "[resutl/handler]- computationId (%d)  \n", computation->cID);
         fprintf(stdout, "[resutl/handler]- norm (%e) \n", computation->norm);
     }
+    
+    bool const last = computation->cID == (CMAX - 1);
+    bool const isNan = isnan(computation->norm);
+    bool const isNotConvertible = computation->singularity != -1;
+    double const CONVERGENCE = settings::get()->CU_SOLVER_EPSILON;
 
-    bool last = computation->cID == (CMAX - 1);
-
-    const double CONVERGENCE = settings::get()->CU_SOLVER_EPSILON;
-
-    bool isNan = isnan(computation->norm);
-
-    if (computation->norm < CONVERGENCE || isNan || last) {
+    if (computation->norm < CONVERGENCE || isNan || last || isNotConvertible) {
         /// update offset
         auto expected = static_cast<ComputationState *>(nullptr);
         if (result.compare_exchange_strong(expected, computation)) {
             condition.notify_one();
         }
     }
-
-    // synchronize with stream next computation
+    // synchronize with stream next compSt
 }
 
 void GPUComputation::BuildSolverStat(ComputationState *computation, solver::SolverStat *stat) {
@@ -801,7 +832,7 @@ void GPUComputation::updatePointCoordinateVector(double stateVector[]) {
 //////////////////===================================
 
 GPUComputation::~GPUComputation() {
-    /// at least one solver computation
+    /// at least one solver compSt
 
     for (int itr = 0; itr < CMAX; itr++) {
         utility::freeAsync(dev_SV[itr], stream);
@@ -822,6 +853,22 @@ GPUComputation::~GPUComputation() {
     utility::freeAsync(d_geometrics, stream);
     utility::freeAsync(d_constraints, stream);
     utility::freeAsync(d_parameters, stream);
+
+    utility::freeAsync(d_accCooWriteStiffTensor, stream);
+    utility::freeAsync(d_accCooWriteJacobianTensor, stream);
+
+    utility::freeAsync(d_cooRowInd, stream);
+    utility::freeAsync(d_cooColInd, stream);
+    utility::freeAsync(d_cooVal, stream);
+    utility::freeAsync(d_PT, stream);
+    utility::freeAsync(d_INV_PT, stream);
+
+    utility::freeAsync(d_cooRowInd_tmp, stream);
+
+    /// CSR
+    utility::freeAsync(d_csrRowPtrA, stream);
+    utility::freeAsync(d_csrColIndA, stream);
+    utility::freeAsync(d_csrValA, stream);
 }
 
 } // namespace solver

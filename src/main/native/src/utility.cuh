@@ -44,6 +44,11 @@ template <typename Ty> void memcpyFromDevice(Ty *dest, Ty *src_device, size_t si
     checkCudaStatus(cudaMemcpyAsync(dest, src_device, size * sizeof(Ty), cudaMemcpyDeviceToHost, stream));
 }
 
+template <typename Ty> void memcpyOnDevice(Ty *dest_dev, Ty *src_dev, size_t size, cudaStream_t stream) {
+    /// transfer into new allocation
+    checkCudaStatus(cudaMemcpyAsync(dest_dev, src_dev, size * sizeof(Ty), cudaMemcpyDeviceToDevice, stream));
+}
+
 
 template <typename Ty> void freeAsync(Ty *dev_ptr, cudaStream_t stream) {
     if (dev_ptr != nullptr) checkCudaStatus(cudaFreeAsync(dev_ptr, stream));    

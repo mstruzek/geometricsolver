@@ -245,11 +245,14 @@ class GPUComputation {
     /// accumulative offset with constraint size evaluation function
     int *d_accConstraintSize;
 
-    /// Accumulated Writes in COO format from kernel into Stiff Tensor
+    /// ( ralative offset ) Accumulated Writes in COO format from kernel into Stiff Tensor
     int *d_accCooWriteStiffTensor;
 
-    /// Accumulated Writes in COO format from kernel into Jacobian Tensor
+    /// ( ralative offset ) Accumulated Writes in COO format from kernel into Jacobian Tensor
     int *d_accCooWriteJacobianTensor;
+
+    /// ( ralative offset ) Accumulated Writes in COO format from kernel into Jacobian Tensor
+    int *d_accCooWriteHessianTensor;
 
     /// non-zero elements in coo/scr tensor A
     int nnz;
@@ -260,11 +263,19 @@ class GPUComputation {
     /// offset for kernel Transposed Jacobian writes
     int cooWirtesJacobianSize;
 
-    /// not-transformed row vector of indicies, Coordinate Format COO
+    /// not-transformed row vector of indicies, Coordinate Format COO ( initialized once )
     int *d_cooRowInd = NULL;
 
-    /// not-transformed column vector of indicies, Coordinate Format COO
+    /// not-transformed column vector of indicies, Coordinate Format COO ( initialized once )
     int *d_cooColInd = NULL;
+
+    /// transformed in first-iteration
+    int *d_cooRowInd_tmp = NULL;
+
+    /// transformed in first-iteration -->  directly to csrColInd
+    // int *d_cooColInd_tmp = NULL;
+
+
 
     /// COO vector of values, Coordinate Format COO, or CSR format sorted
     double *d_cooVal = NULL;
@@ -279,10 +290,10 @@ class GPUComputation {
     double *d_csrValA;
 
     /// Permutation vector "i" - store into , gather from  P[i]
-    int *d_P = NULL;
+    int *d_PT = NULL;
 
     /// inversed permutation vector INVP[i] - store into, gather from "i"
-    int *d_INV_P = NULL;
+    int *d_INV_PT = NULL;
 
 
     /// Solver Performance Watchers
