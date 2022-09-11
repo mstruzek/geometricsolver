@@ -215,7 +215,7 @@ void TensorOperation::gatherVector(int nnz, cudaDataType valueType, RValueType *
         exit(1);
     }
 
-    /// permutation vector compact operatior PT[u] = PT1[PT2[i]]
+    /// permutation vector compact operatior PT[u] = PT1[PT2[u]]
 
     /// OPERATION ::  X_values[i] = Y[X_indices[i]]
     status = cusparseGather(sparseHandle, vecY, vecX);

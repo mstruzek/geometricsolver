@@ -2,9 +2,8 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <sstream>
 #include <stdexcept>
-#include <string.h>
+#include <sstream>
 #include <string>
 
 #include "gpu_utility.h"

@@ -34,7 +34,8 @@ class GPULinearSystem {
     /// Execution plan form computation of A *x = b equation .
     /// A is a Sparse Tensor. Sparse Tensor.
     ///
-    /// QR solver with reorder "symrcm".
+    /// QR solver with reorder routine "symrcm".
+    /// 
     /// </summary>
     /// <param name="csrRowInd"></param>
     /// <param name="csrColInd"></param>
@@ -54,26 +55,26 @@ class GPULinearSystem {
     void validateStreamState();
 
   private:
-    cudaStream_t stream = nullptr;
+    cudaStream_t stream;
 
     /// cuda variables
-    cusolverDnHandle_t handle = nullptr;
+    cusolverDnHandle_t handle;
 
-    cusolverSpHandle_t cusolverSpHandle = nullptr;
+    cusolverSpHandle_t cusolverSpHandle;
 
-    cudaError_t lastError = cudaSuccess;
+    cudaError_t lastError;
 
     /// cusolver context
     int Lwork = 0;
 
     /// additional workspace requirment imposed by LU solver
-    double *Workspace = nullptr;
+    double *Workspace;
 
     /// lu factorization output vector pivot indices
-    int *devIpiv = nullptr;
+    int *devIpiv;
 
     /// data from Factorization or Solver
-    int *devInfo = nullptr;
+    int *devInfo;
 
     /// cusolver tensor A default descriptor
     cusparseMatDescr_t descrA;
