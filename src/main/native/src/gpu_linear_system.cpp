@@ -12,7 +12,7 @@
 #ifdef DEBUG_GPU
 #define validateStream validateStreamState()
 #else
-#define validateStream 
+#define validateStream
 #endif
 
 /** przyczyna INT na urzadzenieu __device__ __host__ ! ERROR 700       cudaErrorIllegalAddress */
@@ -36,11 +36,6 @@ GPULinearSystem::GPULinearSystem(cudaStream_t stream) : stream(stream) {
         printf("[cuSolver]: error solver is not initialized, [ %s ] %s \n", errorName, errorStr);
         exit(1);
     }
-    /// reset previous errror
-
-    /// # cuBlas context
-    checkCublasStatus(cublasCreate(&cublasHandle));
-    checkCublasStatus(cublasSetStream(cublasHandle, stream));
 
     ///  # cuSolver initialize solver -- nie zaincjalozowac wyrzej
     checkCuSolverStatus(cusolverDnCreate(&handle));
@@ -48,33 +43,16 @@ GPULinearSystem::GPULinearSystem(cudaStream_t stream) : stream(stream) {
 
     checkCudaStatus(cudaMallocAsync((void **)&devInfo, 1 * sizeof(int), stream));
 
-    cusparseStatus_t status;
-
-    status = cusparseCreate(&cusparseHandle);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        auto errorName = cusparseGetErrorName(status);
-        auto errorStr = cusparseGetErrorString(status);
-        fprintf(stderr, "[cusparse/error] cusparse handle failure; ( %s ) %s \n", errorName, errorStr);
+    cusolverStatus_t status;
+    status = cusolverSpCreate(&cusolverSpHandle);
+    if (status != CUSOLVER_STATUS_SUCCESS) {
+        fprintf(stderr, "[cusolver/error] cusolverSP handler failure; ( %s ) \n", cusolverGetErrorName(status));
         exit(1);
     }
-    status = cusparseSetStream(cusparseHandle, stream);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        auto errorName = cusparseGetErrorName(status);
-        auto errorStr = cusparseGetErrorString(status);
-        fprintf(stderr, "[cusparse/error] cusparse stream set failure; ( %s ) %s \n", errorName, errorStr);
-        exit(1);
-    }
-
-    cusolverStatus_t cusolverStatus;
-    cusolverStatus = cusolverSpCreate(&cusolverSpHandle);
-    if (cusolverStatus != CUSOLVER_STATUS_SUCCESS) {
-        fprintf(stderr, "[cusolver/error] cusolverSP handler failure; ( %s ) \n",
-                cusolverGetErrorName(cusolverStatus));
-        exit(1);
-    }    
     cusolverSpSetStream(cusolverSpHandle, stream);
-    if (cusolverStatus != CUSOLVER_STATUS_SUCCESS) {
-        fprintf(stderr, "[cusolver/error] cusolverSP set stream failure; ( %s ) \n", cusolverGetErrorName(cusolverStatus));
+    if (status != CUSOLVER_STATUS_SUCCESS) {
+        fprintf(stderr, "[cusolver/error] cusolverSP set stream failure; ( %s ) \n",
+                cusolverGetErrorName(status));
         exit(1);
     }
 }
@@ -195,28 +173,7 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
     }
 }
 
-void GPULinearSystem::vectorNorm(int n, double *x, double *result) {
 
-    checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, result));
-
-    if (settings::get()->DEBUG_SOLVER_CONVERGENCE) {
-        checkCudaStatus(cudaStreamSynchronize(stream));
-        printf("[cublas.norm] constraint evalutated norm  = %e \n", *result);
-    } else {
-        // blad na cublas RESULT jest lokalny  zawsze
-        /// checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, result))
-    }
-}
-
-void GPULinearSystem::cublasAPIDaxpy(int n, const double *alpha, const double *x, int incx, double *y, int incy) {
-
-    checkCublasStatus(::cublasDaxpy(cublasHandle, n, alpha, x, incx, y, incy));
-
-    if (settings::get()->DEBUG_SOLVER_CONVERGENCE) {
-        checkCudaStatus(cudaStreamSynchronize(stream));
-        printf("[cublas.norm] cublasDaxpy \n");
-    }
-}
 
 /// <summary>
 /// Execution plan form computation of A *x = b equation .
@@ -286,141 +243,8 @@ void GPULinearSystem::solverLinearEquationSP(int m, int n, int nnz, int *csrRowP
     }
 }
 
-/// <summary>
-/// Transform COO storage format to CSR storage format.
-/// If initialize is requsted procedure will compute PT (permutation vector) and csrRowPtrA vector.
-/// In all cases cooValues will be recomputed with permutation vector.
-/// </summary>
-/// <param name="m">IN</param>
-/// <param name="n">IN</param>
-/// <param name="nnz">IN</param>
-/// <param name="cooRowInd">IN/OUT sorted out</param>
-/// <param name="cooColInd">IN/OUT sorted out  [ csrColIndA ] </param>
-/// <param name="cooValues">IN/OUT sorted out (PT) </param>
-/// <param name="csrRowPtrA">OUT vector - m + 1  [ csr compact form ] </param>
-/// <param name="PT">IN/OUT vector[nnz], permutation from coo into csr</param>
-/// <param name="initialize">if true PT is not reused in computation and csrRowPtrA is build</param>
-void GPULinearSystem::transformToCsr(int m, int n, int nnz, int *cooRowInd, int *cooColInd, double *cooValues,
-                                     int *csrRowInd, int *PT, bool initialize) {
 
-    cusparseStatus_t status;
 
-    /// first Xcoosort round
-    if (initialize) {
-
-        /// required minimum vectors lengths
-        if (nnz > PT_nnz) {
-
-            if (PT1 != NULL) {
-                checkCudaStatus(cudaFreeAsync(PT2, stream));
-            }
-            if (PT2 != NULL) {
-                checkCudaStatus(cudaFreeAsync(PT1, stream));
-            }
-
-            checkCudaStatus(cudaMallocAsync((void **)&PT1, nnz * sizeof(int), stream));
-            checkCudaStatus(cudaMallocAsync((void **)&PT2, nnz * sizeof(int), stream));
-
-            PT_nnz = nnz;
-        }
-
-        // first acc vector identity vector
-        cusparseCreateIdentityPermutation(cusparseHandle, nnz, PT1);
-
-        /// seconf acc identity vector
-        cusparseCreateIdentityPermutation(cusparseHandle, nnz, PT2);
-
-        /// required computation Buffer
-        size_t lastBufferSize = pBufferSizeInBytes;
-
-        status = cusparseXcoosort_bufferSizeExt(cusparseHandle, m, n, nnz, cooRowInd, cooColInd, &pBufferSizeInBytes);
-        if (status != CUSPARSE_STATUS_SUCCESS) {
-            auto errorName = cusparseGetErrorName(status);
-            auto errorStr = cusparseGetErrorString(status);
-            fprintf(stderr, "[cusparse/error]  Xcoosort buffer size estimate failes; ( %s ) %s \n", errorName,
-                    errorStr);
-            exit(1);
-        }
-
-        /// async prior action with host reference
-        checkCudaStatus(cudaStreamSynchronize(stream));
-
-        if (pBufferSizeInBytes > lastBufferSize) {
-            if (pBuffer) {
-                checkCudaStatus(cudaFreeAsync(pBuffer, stream));
-            }
-            checkCudaStatus(cudaMallocAsync((void **)&pBuffer, pBufferSizeInBytes, stream));
-        }
-
-        checkCudaStatus(cudaStreamSynchronize(stream));
-
-        /// recompute sort by column action on COO tensor
-        status = cusparseXcoosortByColumn(cusparseHandle, m, n, nnz, cooRowInd, cooColInd, PT1, pBuffer);
-        if (status != CUSPARSE_STATUS_SUCCESS) {
-            auto errorName = cusparseGetErrorName(status);
-            auto errorStr = cusparseGetErrorString(status);
-            fprintf(stderr, "[cusparse/error]  Xcoosort by column failure ; ( %s ) %s \n", errorName, errorStr);
-            exit(1);
-        }
-        validateStream;
-
-        /// recompute sort by row action on COO tensor
-        status = cusparseXcoosortByRow(cusparseHandle, m, n, nnz, cooRowInd, cooColInd, PT2, pBuffer);
-        if (status != CUSPARSE_STATUS_SUCCESS) {
-            auto errorName = cusparseGetErrorName(status);
-            auto errorStr = cusparseGetErrorString(status);
-            fprintf(stderr, "[cusparse/error]  Xcoosort by row failure ; ( %s ) %s \n", errorName, errorStr);
-            exit(1);
-        }
-        validateStream;
-
-        // prior action :: if the Stream Ordered Memory Allocator ???
-
-        constexpr const unsigned OBJECTS_PER_THREAD = 1;
-        constexpr const unsigned DEF_BLOCK_DIM = 1024;
-        KernelTraits<OBJECTS_PER_THREAD, DEF_BLOCK_DIM> PermutationKernelTraits{(unsigned)nnz};
-
-        /// Permutation vector compactio procedure PT[u] = PT1[PT2[u]]
-        unsigned GRID_DIM = PermutationKernelTraits.GRID_DIM;
-        unsigned BLOCK_DIM = PermutationKernelTraits.GRID_DIM;
-
-        compactPermutationVector(GRID_DIM, BLOCK_DIM, stream, nnz, PT1, PT2, PT);
-        validateStream;
-
-        /// create csrRowPtrA    -  async execution
-        status = cusparseXcoo2csr(cusparseHandle, cooRowInd, nnz, m, csrRowInd, CUSPARSE_INDEX_BASE_ZERO);
-        if (status != CUSPARSE_STATUS_SUCCESS) {
-            auto errorName = cusparseGetErrorName(status);
-            auto errorStr = cusparseGetErrorString(status);
-            fprintf(stderr, "[cusparse/error]  conversion to csr storage format ; ( %s ) %s \n", errorName, errorStr);
-            exit(1);
-        }
-        validateStream;
-
-    } /// initialize end
-
-    /// Inplace cooValus pivoting   -   async execution
-    status = cusparseDgthr(cusparseHandle, nnz, cooValues, cooValues, PT, CUSPARSE_INDEX_BASE_ZERO);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        auto errorName = cusparseGetErrorName(status);
-        auto errorStr = cusparseGetErrorString(status);
-        fprintf(stderr, "[cusparse/error]  gather operation on cooValues; ( %s ) %s \n", errorName, errorStr);
-        exit(1);
-    }
-}
-
-void GPULinearSystem::invertPermuts(int n, int *PT, int *INV) {
-
-    constexpr const unsigned OBJECTS_PER_THREAD = 4;
-    constexpr const unsigned DEF_BLOCK_DIM = 1024;
-
-    KernelTraits<OBJECTS_PER_THREAD, DEF_BLOCK_DIM> CompressKernelTraits{(unsigned)n};
-
-    unsigned GRID_DIM = CompressKernelTraits.GRID_DIM;
-    unsigned BLOCK_DIM = CompressKernelTraits.GRID_DIM;
-    inversePermutationVector(GRID_DIM, BLOCK_DIM, stream, PT, INV, n);
-    validateStream;
-}
 
 GPULinearSystem::~GPULinearSystem() {
 
@@ -429,16 +253,6 @@ GPULinearSystem::~GPULinearSystem() {
     checkCudaStatus(cudaFreeAsync(Workspace, stream));
     checkCudaStatus(cudaFreeAsync(devIpiv, stream));
     checkCudaStatus(cudaFreeAsync(devInfo, stream));
-
-    if (pBuffer) {
-        checkCudaStatus(cudaFreeAsync(pBuffer, stream));
-    }
-    if (PT1) {
-        checkCudaStatus(cudaFreeAsync(PT1, stream));
-    }
-    if (PT2) {
-        checkCudaStatus(cudaFreeAsync(PT2, stream));
-    }
 
     checkCuSolverStatus(cusolverDnDestroy(handle));
 
@@ -450,34 +264,22 @@ GPULinearSystem::~GPULinearSystem() {
             fprintf(stderr, "[cusparse] cusparse handle failure; ( %s ) %s \n", errorName, errorStr);
         }
     }
-
     cusolverStatus_t cusolverStatus;
     cusolverStatus = cusolverSpDestroy(cusolverSpHandle);
     if (cusolverStatus != CUSOLVER_STATUS_SUCCESS) {
         fprintf(stderr, "[cusolver/error] sovlerSP destroy; ( %s ) \n", cusolverGetErrorName(cusolverStatus));
     }
-
-    sparseStatus = cusparseDestroy(cusparseHandle);
-    if (sparseStatus != CUSPARSE_STATUS_SUCCESS) {
-        const char *errorName = cusparseGetErrorName(sparseStatus);
-        const char *errorStr = cusparseGetErrorString(sparseStatus);
-        fprintf(stderr, "[cusparse] cusparse handle failure; ( %s ) %s \n", errorName, errorStr);
-    }
-
-    checkCublasStatus(cublasDestroy(cublasHandle));
 }
 
 void GPULinearSystem::validateStreamState() {
     if (settings::get()->DEBUG_CHECK_ARG) {
-        /// submitted kernel into  cuda driver 
-        checkCudaStatus(cudaPeekAtLastError()); 
+        /// submitted kernel into  cuda driver
+        checkCudaStatus(cudaPeekAtLastError());
         /// block and wait for execution
-        checkCudaStatus(cudaStreamSynchronize(stream));        
+        checkCudaStatus(cudaStreamSynchronize(stream));
     }
 }
 
 } // namespace solver
 
-#undef validateStream 
-
-
+#undef validateStream

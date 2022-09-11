@@ -38,7 +38,7 @@ const char *cusolverGetErrorName(cusolverStatus_t status) {
 }
 
 
-void fail(cusparseStatus_t status, const char *error){
+void log_error(cusparseStatus_t status, const char *error){
     auto errorName = cusparseGetErrorName(status);
     auto errorStr = cusparseGetErrorString(status);
     std::string format = std::string(error) + std::string(" ; ( %s ) %s \n");

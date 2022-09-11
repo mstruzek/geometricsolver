@@ -70,11 +70,6 @@ KERNEL_EXECUTOR void inversePermutationVector(unsigned K_gridDim, unsigned K_blo
 /// ==============================================================================
 
 
-template <typename... Args> __device__ void log(const char *formatStr, Args... args);
-
-
-template <typename... Args> __device__ void log_error(const char *formatStr, Args... args);
-
 KERNEL_EXECUTOR_QQQ __global__ void stdoutTensorData(ComputationState *ecdata, size_t rows, size_t cols);
 
 KERNEL_EXECUTOR_QQQ __global__ void stdoutRightHandSide(ComputationState *ecdata, size_t rows);

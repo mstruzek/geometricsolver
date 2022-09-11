@@ -167,7 +167,7 @@ class GPUComputation {
 
 
     /// conversion from COO to CSR format for linear sparse solver
-    TensorOperation tensorOps;
+    TensorOperation tensorOperation;
 
     cudaStream_t stream;
 

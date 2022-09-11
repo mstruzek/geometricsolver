@@ -19,19 +19,16 @@
 #define __GPU_DEV_INLF__ __forceinline__ __device__
 #endif
 
-#ifdef __NVCC__
+
 
 #define DEGREES_TO_RADIANS 0.017453292519943295;
 
 __GPU_DEV_INLF__ double toRadians(double angdeg) { return angdeg * DEGREES_TO_RADIANS; }
 
-#endif
 
 namespace graph {
 
 class Vector;
-
-#ifdef __NVCC__
 
 //=================================================================================
 
@@ -470,7 +467,7 @@ __GPU_DEV_INLF__ static AdapterTensor<LLayout> transposeTensorDevMem(LLayout par
 
 //=================================================================================
 
-#endif // __NVCC__
+
 
 } // namespace graph
 

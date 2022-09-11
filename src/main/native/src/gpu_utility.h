@@ -21,7 +21,7 @@ struct CusolverStatusName {
 /// <returns></returns>
 const char *cusolverGetErrorName(cusolverStatus_t status);
 
-void fail(cusparseStatus_t status, const char *error);
+void log_error(cusparseStatus_t status, const char *error);
 
 
 #endif // _GPU_UTILITY_H_

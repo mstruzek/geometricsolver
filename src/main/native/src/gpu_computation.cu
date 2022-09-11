@@ -35,7 +35,7 @@ GPUComputation::GPUComputation(long computationId, cudaStream_t stream,
     PointKernelTraits(solver->points.size()),
     ConstraintKernelTraits(solver->constraints.size()),
     GeometricKernelTraits(solver->geometrics.size()),
-    tensorOps(stream), 
+    tensorOperation(stream), 
     stream(stream), 
     computationContext(cc) {
 
@@ -524,7 +524,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
             //int *d_cooRowInd_comp;
             //int *d_cooColInd_comp;
 
-            // tensorOps.convertToCSR()
+            // tensorOperation.convertToCSR()
         }
 
         ///
@@ -538,7 +538,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
         //
         ///  ConstraintGetFullNorm
         //
-        linearSystem->vectorNorm(static_cast<int>(coffSize), (dev_b + size), host_norm);
+        tensorOperation.vectorNorm(static_cast<int>(coffSize), (dev_b + size), host_norm);
         validateStream;
 
         computationContext->SolverStart(itr);
