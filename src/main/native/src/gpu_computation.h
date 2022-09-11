@@ -262,6 +262,9 @@ class GPUComputation {
     /// Accumulated Writes in COO format from kernel into Jacobian Tensor
     int *d_accCooWriteJacobianTensor;
 
+    /// non-zero elements in coo/scr tensor A
+    int nnz;
+
     /// offset value for kernel Jacobian writes
     int cooWritesStiffSize;
 
@@ -277,20 +280,20 @@ class GPUComputation {
     /// COO vector of values, Coordinate Format COO, or CSR format sorted
     double *d_cooVal = NULL;
 
+    /// CSR tensor A rows (compressed), Compressed Sparsed Row Format CSR ;  Xcoosort  | cooTcsr 
+    int *d_csrRowPtrA;
+
+    /// CSR tensor A columns, Compressed Sparsed Row Format CSR ; Xcoosort
+    int *d_csrColIndA;
+
+    /// CSR tensor A values, Compressed Sparsed Row Format CSR ; perm(d_cooValA)
+    double *d_csrValA;
+
     /// Permutation vector "i" - store into , gather from  P[i]
     int *d_P = NULL;
 
     /// inversed permutation vector INVP[i] - store into, gather from "i"
     int *d_INV_P = NULL;
-
-    /// COO - cuSparse Handle - Coordinated Format conversion from COO into CSR direct
-    cusparseHandle_t cuSparseHandle;
-
-    /// COO - cuSparse computation buffer size
-    size_t pBufferSizeInBytes = 0;
-
-    /// COO - cuSparse computation buffer
-    void *pBuffer;
 
 
     /// Solver Performance Watchers

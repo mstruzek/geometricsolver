@@ -99,10 +99,10 @@ struct ComputationState {
     /// paramater offs from given ID
     int *parameterOffset;
 
-    /// Accumulative offs with geometric size evaluation function,  [ 0, ... , N , N + 1]
+    /// Accumulative offs with geometric size evaluation function,  [ 0, ... , N ]
     int *accGeometricSize;
 
-    /// Accumulative offs with constraint size evaluation function, [ 0, ... , N , N + 1]
+    /// Accumulative offs with constraint size evaluation function, [ 0, ... , N ]
     int *accConstraintSize;
 
     /// computation mode applied onto "A tensor" at this iteration
@@ -114,6 +114,9 @@ struct ComputationState {
     /// Accumulated Writes in COO format from kernel into Jacobian Tensor
     int *accCooWriteJacobianTensor;
 
+    /// non-zero elements in coo or csr ; nnz =  cooWritesStiffSize + 2 * cooWirtesJacobianSize
+    int nnz;
+
     /// offset for Jacobian kernel Writes
     int cooWritesStiffSize;
 
@@ -121,7 +124,7 @@ struct ComputationState {
     int cooWirtesJacobianSize;
 
     // CSR format, inverse permutation vector, direct addressing from COO to sparse matrix in CSR format
-    int *INV_P;
+    int *INV_P = NULL;
 
     /// not-transformed row vector of indicies, Coordinate Format COO
     int *cooRowInd = NULL;
