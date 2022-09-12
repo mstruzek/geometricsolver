@@ -68,16 +68,16 @@ class GPULinearSystem {
     int Lwork = 0;
 
     /// additional workspace requirment imposed by LU solver
-    double *Workspace;
+    double *Workspace = nullptr;
 
     /// lu factorization output vector pivot indices
-    int *devIpiv;
+    int *devIpiv = nullptr;
 
     /// data from Factorization or Solver
-    int *devInfo;
+    int *devInfo = nullptr;
 
     /// cusolver tensor A default descriptor
-    cusparseMatDescr_t descrA;
+    cusparseMatDescr_t descrA = nullptr;
 };
 
 

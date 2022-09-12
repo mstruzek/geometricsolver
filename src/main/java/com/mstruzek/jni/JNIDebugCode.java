@@ -68,6 +68,12 @@ public enum JNIDebugCode {
     BLOCK_SIZE(11),
 
     /**
+     * DENSE_LAYOUT or SPARSE_LAYOUT
+     * @class com.mstruzek.jni.JNIDebugCode.Computation
+     */
+    COMPUTATION_MODE(12),
+
+    /**
      * This is  workspace size multiplier factor.( the main reason is for less re-allocations )
      */
     CU_SOLVER_LWORK_FACTOR(21),
@@ -87,6 +93,12 @@ public enum JNIDebugCode {
     public static class Decision {
         public static final boolean YES = true;
         public static final boolean NO = false;
+    }
+
+    public static class Computation {
+        public static final int DENSE_LAYOUT  = 1;
+        public static final int SPARSE_LAYOUT = 2;
+        /// public static final int DIRECT_LAYOUT = 3; // *this is derived operation from sparse layout !
     }
 
 

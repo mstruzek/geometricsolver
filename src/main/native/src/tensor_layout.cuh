@@ -61,10 +61,6 @@ class DenseLayout {
   public:
     __GPU_DEV_INLF__ DenseLayout() : ld(0), rowOffset(0), colOffset(0), m_A(NULL) {}
 
-    DenseLayout(DenseLayout const &other) = default;
-
-    DenseLayout &operator=(DenseLayout const &other) = default;
-
     __GPU_DEV_INLF__ DenseLayout(size_t _ld, size_t _rowOffset, size_t _colOffset, double *A)
         : ld(_ld), rowOffset(_rowOffset), colOffset(_colOffset), m_A(A) {}
 
@@ -108,10 +104,6 @@ class SparseLayout {
                                   double *_cooVal)
         : baseOffset(baseOffset), accWriteOffset(_accWriteOffset), cooRowInd(_cooRowInd), cooColInd(_cooColInd),
           cooVal(_cooVal) {}
-
-    SparseLayout(const SparseLayout &other) = default;
-
-    SparseLayout &operator=(const SparseLayout &other) = default;
 
     __GPU_DEV_INLF__ void set(int row, int col, double value) {
         /// standard 128 byte cache line - no additional contention in a warp
@@ -233,10 +225,6 @@ class DirectSparseLayout {
           cooVal(_cooVal) {
         iterator.reset();
     }
-
-    DirectSparseLayout(const DirectSparseLayout &other) = default;
-
-    DirectSparseLayout& operator=(const DirectSparseLayout &other) = default;
 
     __GPU_DEV_INLF__ void set(int row, int col, double value) {
         unsigned threadId = iterator.thread_id();

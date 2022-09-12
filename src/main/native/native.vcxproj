@@ -87,6 +87,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\gpu_allocator.h" />
     <ClInclude Include="src\gpu_utility.h" />
     <ClInclude Include="src\kernel_traits.h" />
     <ClInclude Include="src\quda.cuh" />

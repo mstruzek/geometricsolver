@@ -6,12 +6,15 @@
 #include <memory>
 #include <vector>
 
+#include "quda.cuh" 
 #include "model.cuh" 
 #include "solver_stat.h"
 
 #include "gpu_computation_context.h"
 #include "gpu_computation.h"
 #include "gpu_linear_system.h"
+
+
 
 
 #define CONVERGENCE_LIMIT 10e-5
@@ -79,13 +82,14 @@ class GPUGeometricSolver {
 
     cudaStream_t stream = nullptr;
 
-    std::vector<graph::Point> points;
 
-    std::vector<graph::Geometric> geometrics;
+    quda::cu_vector<graph::Point> points;
 
-    std::vector<graph::Constraint> constraints;
+    quda::cu_vector<graph::Geometric> geometrics;
 
-    std::vector<graph::Parameter> parameters;
+    quda::cu_vector<graph::Constraint> constraints;
+
+    quda::cu_vector<graph::Parameter> parameters;
 
 
     std::shared_ptr<GPUComputationContext> _computationContext;

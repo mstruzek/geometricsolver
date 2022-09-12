@@ -20,6 +20,7 @@
 #define validateStream (void)(0)
 #endif
 
+
 namespace solver {
 
 /// ====================
@@ -28,6 +29,10 @@ GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::sha
                                std::shared_ptr<GPUComputationContext> cc, GPUGeometricSolver *solver)
     : computationId(computationId), linearSystem(linearSystem), tensorOperation(stream), stream(stream),
       computationContext(cc) {
+
+    /// HOST_PAGEABLE
+
+    /// cuda_pinned_memory !
 
     /// change owner of compSt state
     points = std::move(solver->points);
@@ -160,6 +165,8 @@ void GPUComputation::memcpyComputationToDevice() {
         utility::mallocAsync(&d_csrColIndA, nnz, stream);
         utility::mallocAsync(&d_csrValA, nnz, stream);
     }
+
+    /// ?// single  data-plane transfer
 
     // immutables -
     utility::memcpyAsync(&d_points, points, stream);
@@ -517,8 +524,8 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
         if (computationMode == ComputationMode::SPARSE_LAYOUT) {
             /// COMPUTE in sorted CSR format
 
-            const int m = dimension;
-            const int n = dimension;
+            const int m = static_cast<int>(dimension);
+            const int n = static_cast<int>(dimension);
 
             if (itr == FIRST_ROUND) {
 
@@ -583,8 +590,8 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
             ///  Sparse - CuSolver LINER SYSTEM equation solver
             /// ------------------------------------------------------
 
-            int const m = N;
-            int const n = N;
+            int const m = static_cast<int>(dimension);
+            int const n = static_cast<int>(dimension);
 
             int* singularity = &ev->singularity;
 
@@ -596,7 +603,6 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
                 checkCudaStatus(cudaStreamSynchronize(stream));
                  if (*singularity != -1) {
                      fprintf(stderr, "[solver] tensor A is not invertible at index = %d \n", *singularity);
-                     ev->norm = NAN;
                      ev->singularity = *singularity;
                      result.store(ev, std::memory_order_seq_cst);
                      break;

@@ -173,39 +173,39 @@ class GPUComputation {
 
   private:
     /// points register poLocations id-> point_offset
-    std::vector<graph::Point> points;
+    quda::cu_vector<graph::Point> points;
 
     /// geometricc register
-    std::vector<graph::Geometric> geometrics;
+    quda::cu_vector<graph::Geometric> geometrics;
 
     /// constraints register
-    std::vector<graph::Constraint> constraints;
+    quda::cu_vector<graph::Constraint> constraints;
 
     /// parameters register -- paramLocation id-> param_offset
-    std::vector<graph::Parameter> parameters;
+    quda::cu_vector<graph::Parameter> parameters;
 
     /// Point  Offset in computation matrix [id] -> point offset   ~~ Gather Vectors
-    std::vector<int> pointOffset;
+    quda::cu_vector<int> pointOffset;
     
-    std::vector<int> geometricOffset;
+    quda::cu_vector<int> geometricOffset;
 
     /// Constraint Offset in computation matrix [id] -> constraint offset
-    std::vector<int> constraintOffset;
+    quda::cu_vector<int> constraintOffset;
 
     /// Parameter Offset mapper from [id] -> parameter offset in reference dest
-    std::vector<int> parameterOffset;
+    quda::cu_vector<int> parameterOffset;
 
     /// Accymulated Geometric Object Size -- 2 * point.size()
-    std::vector<int> accGeometricSize;
+    quda::cu_vector<int> accGeometricSize;
 
     /// Accumulated Constraint Size
-    std::vector<int> accConstraintSize;
+    quda::cu_vector<int> accConstraintSize;
 
     /// Accumulated Writes in COO format from kernel into Stiff Tensor
-    std::vector<int> accCooWriteStiffTensor;
+    quda::cu_vector<int> accCooWriteStiffTensor;
 
     /// Accumulated Writes in COO format from kernel into Jacobian Tensor
-    std::vector<int> accCooWriteJacobianTensor;
+    quda::cu_vector<int> accCooWriteJacobianTensor;
 
     size_t size;      /// wektor stanu
     size_t coffSize;  /// wspolczynniki Lagrange
@@ -230,10 +230,10 @@ class GPUComputation {
        
     /// Evaluation data for  device  - CONST DATE for in process execution
 
-    graph::Point* d_points = NULL;
-    graph::Geometric *d_geometrics = NULL;
-    graph::Constraint *d_constraints = NULL;
-    graph::Parameter *d_parameters = NULL;
+    graph::Point *d_points = nullptr;
+    graph::Geometric *d_geometrics = nullptr;
+    graph::Constraint *d_constraints = nullptr;
+    graph::Parameter *d_parameters = nullptr;
 
     int *d_pointOffset;
     int *d_geometricOffset;
@@ -241,18 +241,18 @@ class GPUComputation {
     int *d_parameterOffset;
 
     /// accumulative offset with geometric size evaluation function
-    int *d_accGeometricSize;
+    int *d_accGeometricSize = nullptr;
     /// accumulative offset with constraint size evaluation function
-    int *d_accConstraintSize;
+    int *d_accConstraintSize = nullptr;
 
     /// ( ralative offset ) Accumulated Writes in COO format from kernel into Stiff Tensor
-    int *d_accCooWriteStiffTensor;
+    int *d_accCooWriteStiffTensor = nullptr;
 
     /// ( ralative offset ) Accumulated Writes in COO format from kernel into Jacobian Tensor
-    int *d_accCooWriteJacobianTensor;
+    int *d_accCooWriteJacobianTensor = nullptr;
 
     /// ( ralative offset ) Accumulated Writes in COO format from kernel into Jacobian Tensor
-    int *d_accCooWriteHessianTensor;
+    int *d_accCooWriteHessianTensor = nullptr;
 
     /// non-zero elements in coo/scr tensor A
     int nnz;
@@ -264,13 +264,13 @@ class GPUComputation {
     int cooWirtesJacobianSize;
 
     /// not-transformed row vector of indicies, Coordinate Format COO ( initialized once )
-    int *d_cooRowInd = NULL;
+    int *d_cooRowInd = nullptr;
 
     /// not-transformed column vector of indicies, Coordinate Format COO ( initialized once )
-    int *d_cooColInd = NULL;
+    int *d_cooColInd = nullptr;
 
     /// transformed in first-iteration
-    int *d_cooRowInd_tmp = NULL;
+    int *d_cooRowInd_tmp = nullptr;
 
     /// transformed in first-iteration -->  directly to csrColInd
     // int *d_cooColInd_tmp = NULL;
@@ -278,22 +278,22 @@ class GPUComputation {
 
 
     /// COO vector of values, Coordinate Format COO, or CSR format sorted
-    double *d_cooVal = NULL;
+    double *d_cooVal = nullptr;
 
     /// CSR tensor A rows (compressed), Compressed Sparsed Row Format CSR ;  Xcoosort  | cooTcsr 
-    int *d_csrRowPtrA;
+    int *d_csrRowPtrA = nullptr;
 
     /// CSR tensor A columns, Compressed Sparsed Row Format CSR ; Xcoosort
-    int *d_csrColIndA;
+    int *d_csrColIndA = nullptr;
 
     /// CSR tensor A values, Compressed Sparsed Row Format CSR ; perm(d_cooValA)
-    double *d_csrValA;
+    double *d_csrValA = nullptr;
 
     /// Permutation vector "i" - store into , gather from  P[i]
-    int *d_PT = NULL;
+    int *d_PT = nullptr;
 
     /// inversed permutation vector INVP[i] - store into, gather from "i"
-    int *d_INV_PT = NULL;
+    int *d_INV_PT = nullptr;
 
 
     /// Solver Performance Watchers

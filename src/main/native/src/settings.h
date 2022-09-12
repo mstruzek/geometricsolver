@@ -18,7 +18,7 @@ struct Settings
 
     unsigned GRID_SIZE              = 1;            /// 10
     unsigned BLOCK_SIZE             = 512;          /// 11
-    unsigned COMPUTATION_MODE       = 1;            /// 12  - 1 - DENSE_LAYOUT , 2 - SPARSE_LAYOUT , 3 - DIRECT_LAYOUT
+    unsigned COMPUTATION_MODE       = 1;            /// 12  - 1 - DENSE_LAYOUT , 2 - SPARSE_LAYOUT , *3 - DIRECT_LAYOUT
 
     double CU_SOLVER_LWORK_FACTOR   = 1.0;          /// 21
     double CU_SOLVER_EPSILON        = 10.0;         /// 22

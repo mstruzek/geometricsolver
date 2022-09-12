@@ -82,22 +82,23 @@ class TensorOperation {
     cublasHandle_t cublasHandle;
 
     /// permutation vector - zaporzyc z cudf <- Memory Manager spowalniac process realokacji !!!
-    int *Prm;
+    int *Prm = nullptr;
+    
 
     int Psize;
 
 
     /// pBuffer will store intermediate computation from Xcoosort functions
-    void *pBuffer;
+    void *pBuffer = nullptr;
 
     /// actual allocation for Xcoosort
     size_t pBufferSizeInBytes;
 
     // first permutation vector, XcoosortByColumn
-    int *PT1;
+    int *PT1 = nullptr;
 
     // second permutation vector, XcoosortByRow
-    int *PT2;
+    int *PT2 = nullptr;
 
     size_t PT_nnz;
 

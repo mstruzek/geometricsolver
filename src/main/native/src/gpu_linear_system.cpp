@@ -26,7 +26,7 @@ namespace solver {
 ///         CUSOLVERDN_LOG_MASK = 16
 ///
 
-GPULinearSystem::GPULinearSystem(cudaStream_t stream) : stream(stream) {
+GPULinearSystem::GPULinearSystem(cudaStream_t stream) : stream(stream), Workspace(NULL), devIpiv(NULL) {
 
     // ! blocking - look back
     lastError = cudaPeekAtLastError();
@@ -92,9 +92,13 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
 
     if (Lwork > preLwork) {
         // free mem
-        checkCudaStatus(cudaFreeAsync(Workspace, stream));
-        checkCudaStatus(cudaFreeAsync(devIpiv, stream));
-
+        if (Workspace!=NULL) {
+            checkCudaStatus(cudaFreeAsync(Workspace, stream));
+        }         
+        if (devIpiv) {
+            checkCudaStatus(cudaFreeAsync(devIpiv, stream));
+        }
+       
         ///  !!!!Remark: getrf uses fastest implementation with large workspace of n m*n
 
         /// prealocate additional buffer before LU factorization
