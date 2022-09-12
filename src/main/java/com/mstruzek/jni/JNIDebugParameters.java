@@ -1,6 +1,6 @@
 package com.mstruzek.jni;
 
-public enum JNIDebugCode {
+public enum JNIDebugParameters {
 
 
     /**
@@ -90,19 +90,26 @@ public enum JNIDebugCode {
 
     public final int code;
 
-    public static class Decision {
-        public static final boolean YES = true;
-        public static final boolean NO = false;
+    public void setBooleanProperty(boolean value) {
+        JNISolverGate.setBooleanProperty(this.code, value);
+    }
+
+    public void setDoubleProperty(double value) {
+        JNISolverGate.setDoubleProperty(this.code, value);
+    }
+
+    public void setLongProperty(long value) {
+        JNISolverGate.setLongProperty(this.code, value);
     }
 
     public static class Computation {
         public static final int DENSE_LAYOUT  = 1;
         public static final int SPARSE_LAYOUT = 2;
-        /// public static final int DIRECT_LAYOUT = 3; // *this is derived operation from sparse layout !
+        /// public static final int DIRECT_LAYOUT = 3; // *this is continue next steps operation from sparse layout !
     }
 
 
-    JNIDebugCode(int code) {
+    JNIDebugParameters(int code) {
         this.code = code;
     }
 

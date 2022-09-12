@@ -317,13 +317,11 @@ KERNEL_EXECUTOR void CopyIntoStateVector(cudaStream_t stream, double *SV, graph:
 /// </summary>
 /// <param name="ec"></param>
 /// <returns></returns>
-///
-/// amortyzacja wzgledem inicjalizacji kernel a rejestrem watku
 __global__ void __CopyFromStateVector__(graph::Point *points, double *SV, size_t size) {
 
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
     const unsigned offset = threadId * ELEMENTS_PER_THREAD;
-    const unsigned upper_limit = offset + ELEMENTS_PER_THREAD;
+    const unsigned upper_limit = offset + ELEMENTS_PER_THREAD + 1 ;
 
     if (upper_limit < size) { ///  standard case
 

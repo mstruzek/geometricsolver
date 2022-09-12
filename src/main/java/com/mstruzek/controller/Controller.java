@@ -159,6 +159,8 @@ public class Controller implements ControllerInterface {
              */
             Model.solveSystem(solverType);
 
+            Events.send(EventType.REFRESH_N_REPAINT, new Object[]{});
+
         } catch (Throwable e) {
             e.printStackTrace();
             Events.send(EventType.CONTROLLER_ERROR, new Object[]{e.getMessage()});

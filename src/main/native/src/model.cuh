@@ -113,6 +113,7 @@ class Point : public Vector {
     int id;
 };
 
+
 struct Geometric {
     Geometric(int id, int geometricTypeId, int p1, int p2, int p3, int a, int b, int c, int d)
         : id(id), geometricTypeId(geometricTypeId), p1(p1), p2(p2), p3(p3), a(a), b(b), c(c), d(d) {}
@@ -183,6 +184,7 @@ int tensorOpsCooConstraintJacobian(Constraint const &constraint);
 template <typename TObject> class NVector {
 
   public:
+    __GPU_COMM_INL__ NVector() : _data(NULL), _size(0) {}
     __GPU_COMM_INL__ NVector(TObject *data, size_t size) : _data(data), _size(size) {}
 
     __GPU_COMM_INL__ NVector(const NVector &right) { *this = right; };
@@ -205,6 +207,18 @@ template <typename TObject> class NVector {
     size_t _size;
     TObject *_data;
 };
+
+
+namespace quda {
+
+    template <typename> struct printer;
+
+    template <> struct printer<graph::Point> {
+    __device__ __host__ void operator()(int i, const graph::Point& object) { 
+        printf("%d  ( %d )[ %f , %f ]\n", i, object.id, object.x, object.y); 
+    }
+};
+}
 
 //=================================================================================
 

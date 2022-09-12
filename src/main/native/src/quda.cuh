@@ -286,7 +286,7 @@ template <typename... Type> __device__ __host__ void log(const char *format, Typ
 
 /// ===================================================== ===================================================== ///
 
-template <typename Type> __device__ __host__ const char *line_format();
+    template <typename Type> struct printer {};
 
 template <typename Type> void stdout_vector_kernel(Type *vector, int size);
 
@@ -300,12 +300,12 @@ template <typename Type> void stdout_vector(dev_vector<Type> &vector, const char
 
 template <typename Type> void stdout_vector(host_vector<Type> &vector, const char *title) {
     const int size = vector.size();
-    const Type *array = vector.data();
-    const char *format = line_format<Type>();
+    const Type *data = vector.data();
+    printer<Type> printer;
     log("%s --- --- --- \n", title);
     int i = size;
     while (i-- > 0) {
-        log(format, i, array[i]);
+        printer(i, data[i]);
     }
     log("\n");
 }

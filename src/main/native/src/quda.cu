@@ -1,25 +1,34 @@
 #include "quda.cuh"
 
+#include <string>
+
 #define KERNEL_EXECUTOR
 
 namespace quda {
 
-template <> __device__ __host__ const char *line_format<int>() {
-    static const char *int_format = "(%d)  %d, \n";
-    return int_format;
-}
 
-template <> __device__ __host__ const char *line_format<double>() {
-    static const char *doubleFormat = "(%d)  %f, \n";
-    return doubleFormat;
-}
+
+
+template <> struct printer<int> {
+    __device__ __host__ void operator()(int i, const int &object) { 
+        ///
+        printf("%d  %d \n", i, object);
+    }
+};
+
+template <> struct printer<double> {
+    __device__ __host__ void operator()(int i, const double &object) {
+        printf("%d  %f\n", i , object);
+    }
+};
+
 
 
 template <typename Type> __global__ void __stdout_vector_kernel__(Type *vector, int size) {
-    const char *format = line_format<Type>();
+    printer<Type> printer;
     int i = size;
     while (i-- > 0) {
-        log(format, i, vector[i]);
+        printer(i, vector[i]);
     }
 }
 

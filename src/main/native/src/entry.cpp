@@ -60,7 +60,9 @@ int main(int argc, char* args[])
 
     //jni_setBooleanProperty  
     
-    jni_setBooleanProperty(&env, eclass, 8, (jboolean) true);  // settings::get()->DEBUG_CHECK_ARG = false;
+
+    jni_setBooleanProperty(&env, eclass, 8, (jboolean) true);  // settings::get()->DEBUG_SOLVER_CONVERGENCE = false; 
+    jni_setBooleanProperty(&env, eclass, 9, (jboolean) true);  // settings::get()->DEBUG_CHECK_ARG = false;
     jni_setBooleanProperty(&env, eclass, 2, (jboolean) true);  // settings::get()->DEBUG_TENSOR_A= true;
     jni_setBooleanProperty(&env, eclass, 3, (jboolean) true);  // settings::get()->DEBUG_TENSOR_B= true;
     
@@ -99,7 +101,7 @@ int main(int argc, char* args[])
     err = jni_solveSystem(&env, eclass);
 
 
-    err = jni_solveSystem(&env, eclass);
+    //err = jni_solveSystem(&env, eclass);
 
     try {
 

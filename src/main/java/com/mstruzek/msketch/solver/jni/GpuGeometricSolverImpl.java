@@ -1,6 +1,6 @@
 package com.mstruzek.msketch.solver.jni;
 
-import com.mstruzek.jni.JNIDebugCode;
+import com.mstruzek.jni.JNIDebugParameters;
 import com.mstruzek.jni.JNISolverGate;
 import com.mstruzek.msketch.*;
 import com.mstruzek.msketch.solver.GeometricSolver;
@@ -11,8 +11,7 @@ import com.mstruzek.msketch.solver.StateReporter;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.mstruzek.jni.JNIDebugCode.Decision.NO;
-import static com.mstruzek.jni.JNIDebugCode.Decision.YES;
+import static com.mstruzek.jni.JNIDebugParameters.Computation.DENSE_LAYOUT;
 import static java.util.stream.Collectors.toCollection;
 
 public class GpuGeometricSolverImpl implements GeometricSolver {
@@ -56,28 +55,26 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
     @Override
     public void setup() {
 
-//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG.code, false);
+//       JNIDebugParameters.DEBUG.setBooleanProperty(false);
 
-        JNISolverGate.setBooleanProperty(JNIDebugCode.STREAM_CAPTURING.code, NO);
+        JNIDebugParameters.STREAM_CAPTURING.setBooleanProperty(false);
+        JNIDebugParameters.COMPUTATION_MODE.setLongProperty(DENSE_LAYOUT);
 
+        JNIDebugParameters.CU_SOLVER_EPSILON.setDoubleProperty(1e-3);
 
-        JNISolverGate.setDoubleProperty(JNIDebugCode.CU_SOLVER_EPSILON.code, 10e-2);
+        JNIDebugParameters.DEBUG_CHECK_ARG.setBooleanProperty(false);
 
-        JNISolverGate.setLongProperty(JNIDebugCode.GRID_SIZE.code, 4); // NOT_USED
-        JNISolverGate.setLongProperty(JNIDebugCode.BLOCK_SIZE.code, 512);
+        JNIDebugParameters.SOLVER_INC_HESSIAN.setBooleanProperty(false);
 
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_CHECK_ARG.code, NO);
+        JNIDebugParameters.DEBUG_TENSOR_SV.setBooleanProperty(false);
 
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_A.code, NO);
-        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, NO);
+//        JNIDebugParameters.GRID_SIZE.setLongProperty(4); // NOT_USED
+//        JNIDebugParameters.BLOCK_SIZE.setLongProperty(512);
 
-
-        JNISolverGate.setBooleanProperty(JNIDebugCode.SOLVER_INC_HESSIAN.code, YES);
-
-//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_B.code, false);
-//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_TENSOR_SV.code, true);
-//        JNISolverGate.setBooleanProperty(JNIDebugCode.DEBUG_SOLVER_CONVERGENCE.code, YES);
-
+//        JNIDebugParameters.DEBUG_TENSOR_A.setBooleanProperty(false);
+//        JNIDebugParameters.DEBUG_TENSOR_B.setBooleanProperty(false);
+//        JNIDebugParameters.DEBUG_TENSOR_B.setBooleanProperty(false);
+//        JNIDebugParameters.DEBUG_SOLVER_CONVERGENCE.setBooleanProperty(true);
     }
 
     @Override
@@ -91,7 +88,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         }
 
         long nextComputation = ModelRegistry.computationSnapshotId();
-        reporter.writelnf("[solver/gpu]  ! snapshot id == %d" , nextComputation);
+        reporter.writelnf("[solver/gpu]  ! snapshot id == %d", nextComputation);
         if (lastSnapshotId != nextComputation) {
             /*
              *   register model after structural changes
@@ -157,7 +154,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         reporter.writelnf(" -- computation convergence  : %b", solverStatistics.convergence);
 
         boolean isResultValid = !Double.isNaN(solverStatistics.error);
-        if(isResultValid)  {
+        if (isResultValid) {
             fetchGPUComputedPositionsIntoModel();
         }
         return solverStatistics;

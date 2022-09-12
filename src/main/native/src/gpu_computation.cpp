@@ -14,6 +14,8 @@
 #include "stop_watch.h"
 #include "utility.cuh"
 
+#define DEBUG_GPU
+
 #ifdef DEBUG_GPU
 #define validateStream validateStreamState()
 #else
@@ -34,7 +36,7 @@ GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::sha
 
     /// cuda_pinned_memory !
 
-    /// change owner of compSt state
+    /// change owner of computation state
     points = std::move(solver->points);
     geometrics = std::move(solver->geometrics);
     constraints = std::move(solver->constraints);
@@ -120,7 +122,7 @@ void GPUComputation::memcpyComputationToDevice() {
     ///         Host Computation with references to Device
     /// ============================================================
 
-    /// const data in compSt
+    /// const data in computation
     utility::mallocAsync(&d_points, points.size(), stream);
     utility::mallocAsync(&d_geometrics, geometrics.size(), stream);
     utility::mallocAsync(&d_constraints, constraints.size(), stream);
@@ -204,7 +206,7 @@ void GPUComputation::memcpyComputationToDevice() {
     utility::mallocAsync(&dev_dx, N, stream);
 
     for (int itr = 0; itr < CMAX; itr++) {
-        /// each compSt data with its own StateVector
+        /// each computation data with its own StateVector
         utility::mallocAsync(&dev_SV[itr], N, stream);
     }
 }
@@ -231,7 +233,7 @@ void GPUComputation::validateStreamState() {
 }
 
 void GPUComputation::PreInitializeComputationState(ComputationState *ev, int itr) {
-    // compSt data;
+    // computation data;
     ev->cID = itr;
     ev->SV = dev_SV[itr]; /// data vector lineage
     ev->A = dev_A;
@@ -257,7 +259,7 @@ void GPUComputation::PreInitializeComputationState(ComputationState *ev, int itr
     ev->accConstraintSize = d_accConstraintSize;
 
     ev->computationMode = computationMode;
-
+    ev->singularity = -1;
     /// =================================
     ///     Tensor A Computation Mode
     /// =================================
@@ -279,15 +281,15 @@ void GPUComputation::PreInitializeComputationState(ComputationState *ev, int itr
 
 void GPUComputation::InitializeStateVector() {
 
-    ///==================================================== ///
-    ///            KERNEL ( Init State Vector )             ///
-    ///==================================================== ///
+    /// ---------------------------------------------------------------------------------------- ///
+    ///                                KERNEL ( Init State Vector )                              ///
+    /// ---------------------------------------------------------------------------------------- ///
     CopyIntoStateVector(stream, dev_SV[0], d_points, points.size());
     validateStream;
 
-    ///==================================================== ///
-    ///              Zreo Lagrange Coefficients             ///
-    ///==================================================== ///
+    /// ---------------------------------------------------------------------------------------- ///
+    ///                                 Zero Lagrange Coefficients                               ///
+    /// ---------------------------------------------------------------------------------------- ///
     utility::memsetAsync(dev_SV[0] + size, 0, coffSize, stream);
 }
 
@@ -296,15 +298,15 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream
     /// Tensor A Sparse Memory Layout
     /// mem layout = [ Stiff + Jacobian + JacobianT  + Hessian*]
 
-    ///==================================================== ///
-    ///           KERNEL ( Stiff Tensor - K )               ///
-    ///==================================================== ///
+    /// ---------------------------------------------------------------------------------------- ///
+    ///                                 KERNEL ( Stiff Tensor - K )                              ///
+    /// ---------------------------------------------------------------------------------------- ///
     ComputeStiffnessMatrix(stream, dev_ev, geometrics.size());
     validateStream;
 
-    ///==================================================== ///
-    ///           KERNEL ( Hessian Tensor - K )             ///
-    ///==================================================== ///
+    /// ---------------------------------------------------------------------------------------- ///
+    ///                                 KERNEL ( Hessian Tensor - K )                            ///
+    /// ---------------------------------------------------------------------------------------- ///
     if (settings::get()->SOLVER_INC_HESSIAN) {
         EvaluateConstraintHessian(stream, dev_ev, constraints.size());
         validateStream;
@@ -314,9 +316,9 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream
     /// (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix
     ///
 
-    ///==================================================== ///
-    ///           KERNEL ( Lower Jacobian )                 ///
-    ///==================================================== ///
+    /// ---------------------------------------------------------------------------------------- ///
+    ///                                 KERNEL ( Lower Jacobian )                                ///
+    /// ---------------------------------------------------------------------------------------- ///
     EvaluateConstraintJacobian(stream, dev_ev, constraints.size());
     validateStream;
 
@@ -324,9 +326,9 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream
     ///  (Wq)';  Jq' = (d(Fi)/dq)' --- transposed - write without
     ///  intermediary matrix
 
-    ///==================================================== ///
-    ///           KERNEL ( Upper Jacobian )                 ///
-    ///==================================================== ///
+    /// ---------------------------------------------------------------------------------------- ///
+    ///                                 KERNEL ( Upper Jacobian )                                ///
+    /// ---------------------------------------------------------------------------------------- ///
     EvaluateConstraintTRJacobian(stream, dev_ev, constraints.size());
     validateStream;
 }
@@ -335,32 +337,32 @@ void GPUComputation::DeviceConstructTensorB(ComputationState *dev_ev, cudaStream
     ///
     /// B = [ SV ]  - right hand side
     ///
-    ///==================================================== ///
-    ///      KERNEL ( Point-Point-Tension F(q) )            ///
-    ///==================================================== ///
+    /// ---------------------------------------------------------------------------------------- ///
+    ///                                 KERNEL ( Point-Point-Tension F(q) )                      ///
+    /// ---------------------------------------------------------------------------------------- ///
     EvaluateForceIntensity(stream, dev_ev, geometrics.size());
     validateStream;
 
-    ///==================================================== ///
-    ///      KERNEL ( Constraint Tension Fi(q) )            ///
-    ///==================================================== ///
+    /// ---------------------------------------------------------------------------------------- ///
+    ///                                 KERNEL ( Constraint Tension Fi(q) )                      ///
+    /// ---------------------------------------------------------------------------------------- ///
     EvaluateConstraintValue(stream, dev_ev, constraints.size());
     validateStream;
 }
 
 void GPUComputation::DebugTensorConstruction(ComputationState *dev_ev) {
     if (settings::get()->DEBUG_TENSOR_A) {
-        ///==================================================== ///
-        ///      KERNEL ( stdout tensor at gpu )                ///
-        ///==================================================== ///
+        /// ---------------------------------------------------------------------------------------- ///
+        ///                             KERNEL ( stdout tensor at gpu )                              ///
+        /// ---------------------------------------------------------------------------------------- ///
         stdoutTensorData(stream, dev_ev, dimension, dimension);
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
 
     if (settings::get()->DEBUG_TENSOR_B) {
-        ///==================================================== ///
-        ///      KERNEL ( stdout tensor at gpu )                ///
-        ///==================================================== ///
+        /// ---------------------------------------------------------------------------------------- ///
+        ///                             KERNEL ( stdout tensor at gpu )                              ///
+        /// ---------------------------------------------------------------------------------------- ///
         stdoutRightHandSide(stream, dev_ev, dimension);
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
@@ -368,9 +370,9 @@ void GPUComputation::DebugTensorConstruction(ComputationState *dev_ev) {
 
 void GPUComputation::DebugTensorSV(ComputationState *dev_ev) {
     if (settings::get()->DEBUG_TENSOR_SV) {
-        ///==================================================== ///
-        ///      KERNEL ( stdout state vector  )                ///
-        ///==================================================== ///
+        /// ---------------------------------------------------------------------------------------- ///
+        ///                             KERNEL ( stdout state vector  )                              ///
+        /// ---------------------------------------------------------------------------------------- ///
         stdoutStateVector(stream, dev_ev, dimension);
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
@@ -379,9 +381,9 @@ void GPUComputation::DebugTensorSV(ComputationState *dev_ev) {
 
 void GPUComputation::StateVectorAddDelta(double *dev_SV, double *dev_b) {
 
-    ///==================================================== ///
-    ///           KERNEL ( SV = SV + delta )                ///
-    ///==================================================== ///
+    /// ---------------------------------------------------------------------------------------- ///
+    ///                             KERNEL ( SV = SV + delta )                                   ///
+    /// ---------------------------------------------------------------------------------------- ///
     StateVectorAddDifference(stream, dev_SV, dev_b, points.size());
     validateStream;
 
@@ -392,13 +394,17 @@ void GPUComputation::StateVectorAddDelta(double *dev_SV, double *dev_b) {
 
 void GPUComputation::RebuildPointsFrom(ComputationState *computation) {
 
-    ///==================================================== ///
-    ///          KERNEL( Point From State Vector )          ///
-    ///==================================================== ///
+    /// ---------------------------------------------------------------------------------------- ///
+    ///                     KERNEL( Point From State Vector )                                    ///
+    /// ---------------------------------------------------------------------------------------- ///
     CopyFromStateVector(stream, d_points, computation->SV, points.size());
     validateStream;
 
     utility::memcpyFromDevice(points, d_points, stream);
+
+    checkCudaStatus(cudaStreamSynchronize(stream));
+
+    //quda::stdout_vector(quda::host_vector<graph::Point>(points.data(), points.size()), "points");
 };
 
 void GPUComputation::CudaGraphCaptureAndLaunch(cudaGraphExec_t graphExec) {
@@ -579,11 +585,15 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
             linearSystem->solveLinearEquation(dev_A, dev_b, N);
             validateStream;
 
+#define H_DEBUG 
+
 #ifdef H_DEBUG
             DebugTensorConstruction(dev_ev);
 #endif
             /// uaktualniamy punkty SV = SV + delta
             StateVectorAddDelta(dev_SV[itr], dev_b);
+
+            DebugTensorSV(dev_ev);
 
         } else if (computationMode == ComputationMode::SPARSE_LAYOUT) {
             /// ------------------------------------------------------
@@ -642,13 +652,13 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
     /// Computation tiles submited
     std::unique_lock<std::mutex> ulock(mutex);
 
-    /// Await last compSt state
+    /// Await last computation state
     if (result.load(std::memory_order_seq_cst) == NULL) {
         /// spurious wakeup
         condition.wait(ulock, [&] { return result.load(std::memory_order_seq_cst) != NULL; });
     }
 
-    ComputationState *compSt = (ComputationState *)result.load(std::memory_order_seq_cst);
+    ComputationState *computation = (ComputationState *)result.load(std::memory_order_seq_cst);
     solverWatch.setStopTick();
 
     GPUComputation::unregisterComputation(this);
@@ -658,10 +668,13 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
     if (settings::get()->DEBUG) {
         ///
         ///
-        ReportComputationResult(compSt);
+        ReportComputationResult(computation);
     }
-    BuildSolverStat(compSt, stat);
-    RebuildPointsFrom(compSt);
+    
+    BuildSolverStat(computation, stat);
+    
+    RebuildPointsFrom(computation);
+
 
     if (graphExec != NULL) {
         cudaGraphExecDestroy(graphExec);
@@ -696,8 +709,8 @@ void GPUComputation::computationResultHandler(cudaStream_t stream, cudaError_t s
     }
 
     if (settings::get()->DEBUG) {
-        fprintf(stdout, "[resutl/handler]- computationId (%d)  \n", computation->cID);
-        fprintf(stdout, "[resutl/handler]- norm (%e) \n", computation->norm);
+        fprintf(stdout, "[result/handler]- computationId (%d)  \n", computation->cID);
+        fprintf(stdout, "[result/handler]- norm (%e) \n", computation->norm);
     }
     
     bool const last = computation->cID == (CMAX - 1);
@@ -705,14 +718,15 @@ void GPUComputation::computationResultHandler(cudaStream_t stream, cudaError_t s
     bool const isNotConvertible = computation->singularity != -1;
     double const CONVERGENCE = settings::get()->CU_SOLVER_EPSILON;
 
-    if (computation->norm < CONVERGENCE || isNan || last || isNotConvertible) {
+    bool stopComputation = (computation->norm < CONVERGENCE) || isNan || last || isNotConvertible;
+    if (stopComputation) {
         /// update offset
         auto expected = static_cast<ComputationState *>(nullptr);
         if (result.compare_exchange_strong(expected, computation)) {
             condition.notify_one();
         }
     }
-    // synchronize with stream next compSt
+    // synchronize with stream next computation
 }
 
 void GPUComputation::BuildSolverStat(ComputationState *computation, solver::SolverStat *stat) {
@@ -776,14 +790,14 @@ double GPUComputation::getPointPYCoordinate(int id) {
 void GPUComputation::fillPointCoordinateVector(double *stateVector) {
     graph::StopWatchAdapter stopWatch;
     stopWatch.setStartTick();
-    // Effecient vector base loop  , time less then < 'unrolled 256,128, 64, .... pattern'
+    // Effecient vector base loop  
     for (size_t i = 0, size = points.size(); i < size; i++) {
         graph::Point &p = points[i];
         stateVector[2 * i] = p.x;
         stateVector[2 * i + 1] = p.y;
     }
     stopWatch.setStopTick();
-    fprintf(stdout, "fillPointCoordinateVector delta: %llu ", stopWatch.delta());
+    fprintf(stdout, "fillin state vector , delta[ns]: %llu ", stopWatch.delta());
 }
 
 int GPUComputation::updateConstraintState(int constraintId[], double vecX[], double vecY[], int size) {
@@ -838,7 +852,7 @@ void GPUComputation::updatePointCoordinateVector(double stateVector[]) {
 //////////////////===================================
 
 GPUComputation::~GPUComputation() {
-    /// at least one solver compSt
+    /// at least one solver computation
 
     for (int itr = 0; itr < CMAX; itr++) {
         utility::freeAsync(dev_SV[itr], stream);

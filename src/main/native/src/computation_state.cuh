@@ -13,6 +13,9 @@
 
 struct ComputationState {  
 
+    ComputationState() : INV_P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL), singularity(-1) 
+    {}
+
 #ifdef __NVCC__
     
 
@@ -127,19 +130,19 @@ struct ComputationState {
     int cooWirtesJacobianSize;
 
     // CSR format, inverse permutation vector, direct addressing from COO to sparse matrix in CSR format
-    int *INV_P = NULL;
+    int *INV_P;
 
     /// not-transformed row vector of indicies, Coordinate Format COO
-    int *cooRowInd = NULL;
+    int *cooRowInd;
 
     /// not-transformed column vector of indicies, Coordinate Format COO
-    int *cooColInd = NULL;
+    int *cooColInd;
 
     /// COO vector of values, Coordinate Format COO, or CSR format sorted
-    double *cooVal = NULL;
+    double *cooVal;
 
     /// tensor A solver response - -1 invertible otherwise exect index of diagonal element 
-    int singularity = -1;
+    int singularity;
 
 };
 
