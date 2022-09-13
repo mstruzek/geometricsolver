@@ -63,7 +63,6 @@ template <class _Ty> class gpu_allocator {
 };
 
 
-
 /// <summary>
 /// register additional operator==  in  std namespace
 /// </summary>
@@ -73,6 +72,8 @@ template <class _Ty, class _Other>
 _NODISCARD _CONSTEXPR20 bool operator==(const gpu_allocator<_Ty> &, const gpu_allocator<_Other> &) noexcept {
     return true;
 }
+
+} // namespace std
 
 #endif // _CU_ALLOCATOR_H_
 

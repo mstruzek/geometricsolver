@@ -21,7 +21,6 @@
 
 #include "gpu_geometric_solver.h"
 
-
 #define BLOCK_DIM 512
 
 #define OBJECTS_PER_THREAD 1
@@ -140,7 +139,7 @@ class GPUComputation {
     /// https://docs.nvidia.com/cuda/turing-tuning-guide/index.html#sm-occupancy
     /// thread block size
     const unsigned int DIM_BLOCK = 512;
-    
+
     // CUDAdrv.MAX_THREADS_PER_BLOCK, which is good, ( 1024 )
     // "if your kernel uses many registers, it also limits the amount of threads you can use."
 
@@ -149,11 +148,9 @@ class GPUComputation {
 
     ComputationMode computationMode;
 
-
     std::shared_ptr<GPUComputationContext> computationContext;
 
     std::shared_ptr<GPULinearSystem> linearSystem;
-
 
     /// conversion from COO to CSR format for linear sparse solver
     TensorOperation tensorOperation;
@@ -173,39 +170,39 @@ class GPUComputation {
 
   private:
     /// points register poLocations id-> point_offset
-    quda::cu_vector<graph::Point> points;
+    utility::cu_vector<graph::Point> points;
 
     /// geometricc register
-    quda::cu_vector<graph::Geometric> geometrics;
+    utility::cu_vector<graph::Geometric> geometrics;
 
     /// constraints register
-    quda::cu_vector<graph::Constraint> constraints;
+    utility::cu_vector<graph::Constraint> constraints;
 
     /// parameters register -- paramLocation id-> param_offset
-    quda::cu_vector<graph::Parameter> parameters;
+    utility::cu_vector<graph::Parameter> parameters;
 
     /// Point  Offset in computation matrix [id] -> point offset   ~~ Gather Vectors
-    quda::cu_vector<int> pointOffset;
-    
-    quda::cu_vector<int> geometricOffset;
+    utility::cu_vector<int> pointOffset;
+
+    utility::cu_vector<int> geometricOffset;
 
     /// Constraint Offset in computation matrix [id] -> constraint offset
-    quda::cu_vector<int> constraintOffset;
+    utility::cu_vector<int> constraintOffset;
 
     /// Parameter Offset mapper from [id] -> parameter offset in reference dest
-    quda::cu_vector<int> parameterOffset;
+    utility::cu_vector<int> parameterOffset;
 
     /// Accymulated Geometric Object Size -- 2 * point.size()
-    quda::cu_vector<int> accGeometricSize;
+    utility::cu_vector<int> accGeometricSize;
 
     /// Accumulated Constraint Size
-    quda::cu_vector<int> accConstraintSize;
+    utility::cu_vector<int> accConstraintSize;
 
     /// Accumulated Writes in COO format from kernel into Stiff Tensor
-    quda::cu_vector<int> accCooWriteStiffTensor;
+    utility::cu_vector<int> accCooWriteStiffTensor;
 
     /// Accumulated Writes in COO format from kernel into Jacobian Tensor
-    quda::cu_vector<int> accCooWriteJacobianTensor;
+    utility::cu_vector<int> accCooWriteJacobianTensor;
 
     size_t size;      /// wektor stanu
     size_t coffSize;  /// wspolczynniki Lagrange
@@ -217,42 +214,41 @@ class GPUComputation {
     /// dynamicznego - tensory na urzadzeniu.
     // ( MARKER  - computation root )
 
-    double *dev_A = nullptr;
+    utility::dev_vector<double> dev_A;
 
-    double *dev_b = nullptr;
+    utility::dev_vector<double> dev_b;
 
     /// [ A ] * [ dx ] = [ SV ]
-    double *dev_dx = nullptr;
+    utility::dev_vector<double> dev_dx;
 
     /// STATE VECTOR  -- lineage
-    std::vector<double *> dev_SV;
-    
-       
+    std::vector<utility::dev_vector<double>> dev_SV;
+
     /// Evaluation data for  device  - CONST DATE for in process execution
 
-    graph::Point *d_points = nullptr;
-    graph::Geometric *d_geometrics = nullptr;
-    graph::Constraint *d_constraints = nullptr;
-    graph::Parameter *d_parameters = nullptr;
+    utility::dev_vector<graph::Point> d_points;
+    utility::dev_vector<graph::Geometric> d_geometrics;
+    utility::dev_vector<graph::Constraint> d_constraints;
+    utility::dev_vector<graph::Parameter> d_parameters;
 
-    int *d_pointOffset;
-    int *d_geometricOffset;
-    int *d_constraintOffset;
-    int *d_parameterOffset;
+    utility::dev_vector<int> d_pointOffset;
+    utility::dev_vector<int> d_geometricOffset;
+    utility::dev_vector<int> d_constraintOffset;
+    utility::dev_vector<int> d_parameterOffset;
 
     /// accumulative offset with geometric size evaluation function
-    int *d_accGeometricSize = nullptr;
+    utility::dev_vector<int> d_accGeometricSize;
     /// accumulative offset with constraint size evaluation function
-    int *d_accConstraintSize = nullptr;
+    utility::dev_vector<int> d_accConstraintSize;
 
     /// ( ralative offset ) Accumulated Writes in COO format from kernel into Stiff Tensor
-    int *d_accCooWriteStiffTensor = nullptr;
+    utility::dev_vector<int> d_accCooWriteStiffTensor;
 
     /// ( ralative offset ) Accumulated Writes in COO format from kernel into Jacobian Tensor
-    int *d_accCooWriteJacobianTensor = nullptr;
+    utility::dev_vector<int> d_accCooWriteJacobianTensor;
 
     /// ( ralative offset ) Accumulated Writes in COO format from kernel into Jacobian Tensor
-    int *d_accCooWriteHessianTensor = nullptr;
+    utility::dev_vector<int> d_accCooWriteHessianTensor;
 
     /// non-zero elements in coo/scr tensor A
     int nnz;
@@ -264,37 +260,34 @@ class GPUComputation {
     int cooWirtesJacobianSize;
 
     /// not-transformed row vector of indicies, Coordinate Format COO ( initialized once )
-    int *d_cooRowInd = nullptr;
+    utility::dev_vector<int> d_cooRowInd;
 
     /// not-transformed column vector of indicies, Coordinate Format COO ( initialized once )
-    int *d_cooColInd = nullptr;
+    utility::dev_vector<int> d_cooColInd;
 
     /// transformed in first-iteration
-    int *d_cooRowInd_tmp = nullptr;
+    utility::dev_vector<int> d_cooRowInd_tmp;
 
     /// transformed in first-iteration -->  directly to csrColInd
     // int *d_cooColInd_tmp = NULL;
 
-
-
     /// COO vector of values, Coordinate Format COO, or CSR format sorted
-    double *d_cooVal = nullptr;
+    utility::dev_vector<double> d_cooVal;
 
-    /// CSR tensor A rows (compressed), Compressed Sparsed Row Format CSR ;  Xcoosort  | cooTcsr 
-    int *d_csrRowPtrA = nullptr;
+    /// CSR tensor A rows (compressed), Compressed Sparsed Row Format CSR ;  Xcoosort  | cooTcsr
+    utility::dev_vector<int> d_csrRowPtrA;
 
     /// CSR tensor A columns, Compressed Sparsed Row Format CSR ; Xcoosort
-    int *d_csrColIndA = nullptr;
+    utility::dev_vector<int> d_csrColIndA;
 
     /// CSR tensor A values, Compressed Sparsed Row Format CSR ; perm(d_cooValA)
-    double *d_csrValA = nullptr;
+    utility::dev_vector<double> d_csrValA;
 
     /// Permutation vector "i" - store into , gather from  P[i]
-    int *d_PT = nullptr;
+    utility::dev_vector<int> d_PT;
 
     /// inversed permutation vector INVP[i] - store into, gather from "i"
-    int *d_INV_PT = nullptr;
-
+    utility::dev_vector < int > d_INV_PT;
 
     /// Solver Performance Watchers
   private:
@@ -306,7 +299,6 @@ class GPUComputation {
     graph::StopWatchAdapter evaluationWatch;
 
     /// Kernel configurations - settings::get() D.3.1.1. Device-Side Kernel Launch - kernel default shared memory,
-
 };
 
 #undef BLOCK_DIM
@@ -314,7 +306,6 @@ class GPUComputation {
 #undef OBJECTS_PER_THREAD
 
 #undef ELEMENTS_PER_THREAD
-
 
 } // namespace solver
 

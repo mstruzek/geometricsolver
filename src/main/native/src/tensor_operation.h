@@ -32,6 +32,16 @@ class TensorOperation {
     /// <param name="incy"></param>
     void cublasAPIDaxpy(int n, const double *alpha, const double *x, int incx, double *y, int incy);
 
+
+    /// <summary>
+    /// Set memory value of type CUDA_R32I ( by definition cuMemsetD2D32Async )
+    /// </summary>
+    /// <param name="devPtr"></param>
+    /// <param name="value"></param>
+    /// <param name="widht"></param>
+    /// <param name="stream"></param>
+    void memsetD32I(int *devPtr, int value, size_t size, cudaStream_t stream);
+
     /// <summary>
     /// Convert coo tensor format into csr format.
     /// </summary>
@@ -64,6 +74,19 @@ class TensorOperation {
     /// <param name="INV">output inverse PT</param>
     void invertPermuts(int n, int *PT, int *INV);
 
+
+    /// <summary>
+    /// host debug function. fetch device coo vectors stdout in tensor form m x n
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <param name="m"></param>
+    /// <param name="n"></param>
+    /// <param name="nnz"></param>
+    /// <param name="d_cooRowInd"></param>
+    /// <param name="d_cooColInd"></param>
+    /// <param name="d_cooVal"></param>
+    void stdout_coo_tensor(cudaStream_t stream, int m, int n, int nnz, int *d_cooRowInd, int *d_cooColInd,
+                           double *d_cooVal);
 
   private:
     /// <summary>

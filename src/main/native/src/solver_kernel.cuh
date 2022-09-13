@@ -24,7 +24,7 @@
 /// =========================================
 //#define TENSOR_SPARSE_LAYOUT
 
-#undef TENSOR_SPARSE_LAYOUT
+//#undef TENSOR_SPARSE_LAYOUT
 
 
 #ifndef ELEMENTS_PER_THREAD
@@ -61,8 +61,24 @@ KERNEL_EXECUTOR void compactPermutationVector(unsigned K_gridDim, unsigned K_blo
 /// <param name="OUTP">inverse dense out vector - direct form</param>
 /// <param name="N">size of intput/output vector</param>
 /// <returns></returns>
-KERNEL_EXECUTOR void inversePermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream,
+KERNEL_EXECUTOR void inversePermutationVector(cudaStream_t stream,
                                               int *INP, int *OUTP, size_t N); 
+
+
+
+/// ===========================================================================================
+/// <summary>
+/// Inverse COO indicies map ;  this is Direct Form !
+/// </summary>
+/// <param name="K_gridDim"></param>
+/// <param name="K_blockDim"></param>
+/// <param name="K_stream"></param>
+/// <param name="INP">indicies desne in vector</param>
+/// <param name="OUTP">inverse dense out vector - direct form</param>
+/// <param name="N">size of intput/output vector</param>
+/// <returns></returns>
+KERNEL_EXECUTOR void kernelMemsetD32I(cudaStream_t stream, int *devPtr, int value, size_t size); 
+
 
 /// ===========================================================================================
 ///

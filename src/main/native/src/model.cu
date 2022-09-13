@@ -5,7 +5,6 @@
 
 namespace graph {
 
-
 #ifdef __NVCC__
 __GPU_DEV_INL__ Tensor<graph::BlockLayout> Vector::cartesian(Vector const &rhs) {
     double a00 = this->x * rhs.x;
@@ -15,19 +14,12 @@ __GPU_DEV_INL__ Tensor<graph::BlockLayout> Vector::cartesian(Vector const &rhs) 
     return Tensor<graph::BlockLayout>(a00, a01, a10, a11);
 }
 
-
 __GPU_DEV_INL__ Vector Vector::Rot(double angle) {
     double rad = toRadians(angle);
     return Vector(this->x * cos(rad) - this->y * sin(rad), this->x * sin(rad) + this->y * cos(rad));
 }
 
-
-
-
-
 #endif
-
-
 
 int constraintSize(Constraint const &constraint) {
     switch (constraint.constraintTypeId) {
@@ -109,13 +101,13 @@ ComputationMode getComputationMode(int computationId) {
 int tensorOpsCooStiffnesCoefficients(Geometric const &geometric) {
     switch (geometric.geometricTypeId) {
     case GEOMETRIC_TYPE_ID_FREE_POINT:
-        return 7 * 2; // 7 - plusSubTensor  * diagonal I (2)
+        return 7 * 4; // 7 - plusSubTensor  * diagonal I (2)
     case GEOMETRIC_TYPE_ID_LINE:
-        return 10 * 2; // 10 - plusSubTensor * diagonal I (2)
+        return 10 * 4; // 10 - plusSubTensor * diagonal I (2)
     case GEOMETRIC_TYPE_ID_CIRCLE:
-        return 10 * 2; // 10 - plusSubTensor * diagonal I (2)
+        return 10 * 4; // 10 - plusSubTensor * diagonal I (2)
     case GEOMETRIC_TYPE_ID_ARC:
-        return 19 * 2; // 19 - plusSubTensor * diagonal I (2)
+        return 19 * 4; // 19 - plusSubTensor * diagonal I (2)
     default:
         printf("unknown geometric type \n");
         exit(1);
@@ -125,8 +117,8 @@ int tensorOpsCooStiffnesCoefficients(Geometric const &geometric) {
 int tensorOpsCooConstraintJacobian(Constraint const &constraint) {
     switch (constraint.constraintTypeId) {
     case CONSTRAINT_TYPE_ID_FIX_POINT:
-        /// 1 * diagonal (2)
-        return 2;
+        /// 1 * diagonal (4)
+        return 4;
     case CONSTRAINT_TYPE_ID_PARAMETRIZED_XFIX:
         ///  1 * quick
         return 1;

@@ -61,8 +61,7 @@ class DenseLayout {
   public:
     __GPU_DEV_INLF__ DenseLayout() : ld(0), rowOffset(0), colOffset(0), m_A(NULL) {}
 
-    __GPU_DEV_INLF__ DenseLayout(size_t _ld, size_t _rowOffset, size_t _colOffset, double *A)
-        : ld(_ld), rowOffset(_rowOffset), colOffset(_colOffset), m_A(A) {}
+    __GPU_DEV_INLF__ DenseLayout(size_t _ld, size_t _rowOffset, size_t _colOffset, double *A) : ld(_ld), rowOffset(_rowOffset), colOffset(_colOffset), m_A(A) {}
 
     __GPU_DEV_INLF__ void set(int row, int col, double value) {
         ///
@@ -97,13 +96,10 @@ class DenseLayout {
 
 class SparseLayout {
   public:
-    __GPU_DEV_INLF__ SparseLayout()
-        : baseOffset(0), accWriteOffset(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
+    __GPU_DEV_INLF__ SparseLayout() : baseOffset(0), accWriteOffset(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
 
-    __GPU_DEV_INLF__ SparseLayout(int baseOffset, int *_accWriteOffset, int *_cooRowInd, int *_cooColInd,
-                                  double *_cooVal)
-        : baseOffset(baseOffset), accWriteOffset(_accWriteOffset), cooRowInd(_cooRowInd), cooColInd(_cooColInd),
-          cooVal(_cooVal) {}
+    __GPU_DEV_INLF__ SparseLayout(int baseOffset, int *_accWriteOffset, int *_cooRowInd, int *_cooColInd, double *_cooVal)
+        : baseOffset(baseOffset), accWriteOffset(_accWriteOffset), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {}
 
     __GPU_DEV_INLF__ void set(int row, int col, double value) {
         /// standard 128 byte cache line - no additional contention in a warp
@@ -216,13 +212,10 @@ template <typename DataType> class BlockIterator {
 ///
 class DirectSparseLayout {
   public:
-    __GPU_DEV_INLF__ DirectSparseLayout()
-        : baseOffset(0), accOffset(NULL), P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
+    __GPU_DEV_INLF__ DirectSparseLayout() : baseOffset(0), accOffset(NULL), P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
 
-    __GPU_DEV_INLF__ DirectSparseLayout(int baseOffset, int *const _accOffset, int *const _P, int *_cooRowInd,
-                                        int *_cooColInd, double *_cooVal)
-        : baseOffset(baseOffset), accOffset(_accOffset), P(_P), cooRowInd(_cooRowInd), cooColInd(_cooColInd),
-          cooVal(_cooVal) {
+    __GPU_DEV_INLF__ DirectSparseLayout(int baseOffset, int *const _accOffset, int *const _P, int *_cooRowInd, int *_cooColInd, double *_cooVal)
+        : baseOffset(baseOffset), accOffset(_accOffset), P(_P), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {
         iterator.reset();
     }
 
@@ -284,7 +277,8 @@ class DirectSparseLayout {
 
 template <typename LLayout = BlockLayout> class Tensor {
   public:
-    __GPU_DEV_INLF__ Tensor(LLayout const &_u = LLayout(), bool _intention = false) : u(_u), intention(_intention) {}
+    __GPU_DEV_INLF__ Tensor(LLayout const &layout = LLayout(), bool intention = false, int offset_row = 0, int offset_col = 0)
+        : u(layout), intention(intention), offset_row(offset_row), offset_col(offset_col) {}
 
     __GPU_DEV_INLF__ Tensor(double a00, double a01, double a10, double a11) : Tensor(LLayout()) {
         u.set(0, 0, a00);
@@ -293,47 +287,45 @@ template <typename LLayout = BlockLayout> class Tensor {
         u.set(1, 1, a11);
     }
 
-    __GPU_DEV_INLF__ void setVector(int offsetRow, int offsetCol, graph::Vector const &value) {
+    __GPU_DEV_INLF__ void setVector(int row, int col, graph::Vector const &value) {
         /// vertical
         if (intention) { // tensor "B"
-            u.set(offsetRow + 0, offsetCol, getVectorX(value));
-            u.set(offsetRow + 1, offsetCol, getVectorY(value));
+            u.set(offset_row + row + 0, offset_col + col, getVectorX(value));
+            u.set(offset_row + row + 1, offset_col + col, getVectorY(value));
         } else { // tensor "Jacobian"
-            u.set(offsetRow, offsetCol + 0, getVectorX(value));
-            u.set(offsetRow, offsetCol + 1, getVectorY(value));
+            u.set(offset_row + row, offset_col + col + 0, getVectorX(value));
+            u.set(offset_row + row, offset_col + col + 1, getVectorY(value));
         }
     };
 
-    __GPU_DEV_INLF__ void setValue(int offsetRow, int offsetCol, double const &value) {
-        u.set(offsetRow, offsetCol, value);
-    }
+    __GPU_DEV_INLF__ void setValue(int row, int col, double const &value) { u.set(offset_row + row, offset_col + col, value); }
 
-    __GPU_DEV_INL__ double getValue(int offsetRow, int offsetCol) const { return u.get(offsetRow, offsetCol); }
+    __GPU_DEV_INL__ double getValue(int row, int col) const { return u.get(offset_row + row, offset_col + col); }
 
-    __GPU_DEV_INLF__ void plusSubTensor(int offsetRow, int offsetCol, Tensor<graph::BlockLayout> const &mt) {
+    __GPU_DEV_INLF__ void plusSubTensor(int row, int col, Tensor<graph::BlockLayout> const &mt) {
         /// small tensor
         double a00 = mt.u.get(0, 0);
         double a01 = mt.u.get(0, 1);
         double a10 = mt.u.get(1, 0);
         double a11 = mt.u.get(1, 1);
 
-        u.add(offsetRow + 0, offsetCol, a00);
-        u.add(offsetRow + 1, offsetCol, a10);
-        u.add(offsetRow + 0, offsetCol + 1, a01);
-        u.add(offsetRow + 1, offsetCol + 1, a11);
+        u.add(offset_row + row + 0, offset_col + col, a00);
+        u.add(offset_row + row + 1, offset_col + col, a10);
+        u.add(offset_row + row + 0, offset_col + col + 1, a01);
+        u.add(offset_row + row + 1, offset_col + col + 1, a11);
     }
 
-    __GPU_DEV_INLF__ void setSubTensor(int offsetRow, int offsetCol, Tensor<graph::BlockLayout> const &mt) {
+    __GPU_DEV_INLF__ void setSubTensor(int row, int col, Tensor<graph::BlockLayout> const &mt) {
         /// small tensor
         double a00 = mt.u.get(0, 0);
         double a01 = mt.u.get(0, 1);
         double a10 = mt.u.get(1, 0);
         double a11 = mt.u.get(1, 1);
 
-        u.set(offsetRow + 0, offsetCol, a00);
-        u.set(offsetRow + 1, offsetCol, a10);
-        u.set(offsetRow + 0, offsetCol + 1, a01);
-        u.set(offsetRow + 1, offsetCol + 1, a11);
+        u.set(offset_row + row + 0, offset_col + col, a00);
+        u.set(offset_row + row + 1, offset_col + col, a10);
+        u.set(offset_row + row + 0, offset_col + col + 1, a01);
+        u.set(offset_row + row + 1, offset_col + col + 1, a11);
     }
 
     __GPU_DEV_INLF__ Tensor<graph::BlockLayout> multiplyC(double scalar) {
@@ -362,7 +354,6 @@ template <typename LLayout = BlockLayout> class Tensor {
 
     __GPU_DEV_INLF__ Tensor<graph::BlockLayout> transpose() const {
         if constexpr (std::is_same_v<LLayout, graph::BlockLayout>) {
-
             double a00 = u.get(0, 0);
             double a01 = u.get(0, 1);
             double a10 = u.get(1, 0);
@@ -378,21 +369,22 @@ template <typename LLayout = BlockLayout> class Tensor {
     friend class Tensor<graph::DirectSparseLayout>;
 
   private:
-    bool intention; // vector put operation vertical if true / horizontal otherwise
+    bool intention; /// vector put operation vertical if true / horizontal otherwise
     LLayout u;
+    int offset_row; /// base offset in parrent tensor
+    int offset_col; /// base offset in parent tensor
 };
 
 //=================================================================================
 
-__GPU_DEV_INLF__ Tensor<DenseLayout> tensorDevMem(DenseLayout parent, int rowOffset, int colOffset,
-                                                  bool intention = true) {
+__GPU_DEV_INLF__ Tensor<DenseLayout> tensorDevMem(DenseLayout parent, int rowOffset, int colOffset, bool intention = true) {
     DenseLayout layout(parent.ld, parent.rowOffset + rowOffset, parent.colOffset + colOffset, parent.m_A);
     Tensor<DenseLayout> tensor(layout, intention);
     return tensor;
 }
 
-__GPU_DEV_INLF__ Tensor<SparseLayout> tensorDevMem(SparseLayout layout, bool intention = true) {
-    Tensor<SparseLayout> tensor(layout, intention);
+__GPU_DEV_INLF__ Tensor<SparseLayout> tensorDevMem(SparseLayout layout, bool intention, int offset_row, int offset_col) {
+    Tensor<SparseLayout> tensor(layout, intention, offset_row, offset_col);
     return tensor;
 }
 
@@ -427,13 +419,9 @@ class SmallTensor {
         return Tensor<BlockLayout>(a00, a01, a10, a11);
     }
 
-    __GPU_DEV_INLF__ static Tensor<BlockLayout> identity(double value) {
-        return Tensor<BlockLayout>(value, 0.0, 0.0, value);
-    }
+    __GPU_DEV_INLF__ static Tensor<BlockLayout> identity(double value) { return Tensor<BlockLayout>(value, 0.0, 0.0, value); }
 
-    __GPU_DEV_INLF__ static Tensor<BlockLayout> diagonal(double diagonal) {
-        return Tensor<BlockLayout>(diagonal, 0.0, 0.0, diagonal);
-    }
+    __GPU_DEV_INLF__ static Tensor<BlockLayout> diagonal(double diagonal) { return Tensor<BlockLayout>(diagonal, 0.0, 0.0, diagonal); }
 };
 
 //=================================================================================
@@ -447,26 +435,23 @@ typedef Tensor<BlockLayout> TensorBlock;
 template <typename LLayout> class AdapterTensor : public Tensor<LLayout> {
 
   public:
-    __GPU_DEV_INLF__ AdapterTensor(LLayout layout, bool intention) : Tensor<LLayout>(layout, intention) {}
+    __GPU_DEV_INLF__ AdapterTensor(LLayout layout, bool intention, int offset_row, int offset_col)
+        : Tensor<LLayout>(layout, intention, offset_row, offset_col) {}
 
-    __GPU_DEV_INLF__ void setVector(int offsetRow, int offsetCol, Vector const &value) {
-        Tensor<LLayout>::setValue(offsetCol + 0, offsetRow, getVectorX(value));
-        Tensor<LLayout>::setValue(offsetCol + 1, offsetRow, getVectorY(value));
+    __GPU_DEV_INLF__ void setVector(int row, int col, Vector const &value) {
+        Tensor<LLayout>::setValue(col + 0, row, getVectorX(value));
+        Tensor<LLayout>::setValue(col + 1, row, getVectorY(value));
     }
 
-    __GPU_DEV_INLF__ void setValue(int offsetRow, int offsetCol, double const &value) {
-        Tensor<LLayout>::setValue(offsetCol, offsetRow, value);
-    }
+    __GPU_DEV_INLF__ void setValue(int row, int col, double const &value) { Tensor<LLayout>::setValue(col, row, value); }
 
-    __GPU_DEV_INLF__ void setSubTensor(int offsetRow, int offsetCol, Tensor<graph::BlockLayout> const &mt) {
-        Tensor<LLayout>::plusSubTensor(offsetCol, offsetRow, mt.transpose());
-    }
+    __GPU_DEV_INLF__ void setSubTensor(int row, int col, Tensor<graph::BlockLayout> const &mt) { Tensor<LLayout>::plusSubTensor(col, row, mt.transpose()); }
 };
 
 // transponsed operations
 template <typename LLayout>
-__GPU_DEV_INLF__ static AdapterTensor<LLayout> transposeTensorDevMem(LLayout parent, bool intention) {
-    AdapterTensor<LLayout> t{parent, intention};
+__GPU_DEV_INLF__ static AdapterTensor<LLayout> transposeTensorDevMem(LLayout parent, bool intention, int offset_row = 0, int offset_col = 0) {
+    AdapterTensor<LLayout> t{parent, intention, offset_row, offset_col};
     return t;
 }
 

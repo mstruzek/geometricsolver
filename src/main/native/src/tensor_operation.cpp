@@ -10,6 +10,8 @@
 
 #include "solver_kernel.cuh"
 
+#include "quda.cuh"
+
 #ifdef DEBUG_GPU
 #define validateStream validateStreamState()
 #else
@@ -20,7 +22,8 @@
 template void TensorOperation::gatherVector<double>(int nnz, cudaDataType valueType, double *PT1, int *PT2, double *PT);
 
 
-TensorOperation::TensorOperation(cudaStream_t stream) : stream(stream), pBuffer(NULL), Prm(NULL), Psize(0) {
+TensorOperation::TensorOperation(cudaStream_t stream)
+    : stream(stream), pBuffer(NULL), pBufferSizeInBytes(0), Prm(NULL), Psize(0), PT_nnz(0) {
 
     cusparseStatus_t status;
 
@@ -83,6 +86,12 @@ void TensorOperation::cublasAPIDaxpy(int n, const double *alpha, const double *x
     }
 }
 
+void TensorOperation::memsetD32I(int *devPtr, int value, size_t size, cudaStream_t stream) {
+
+    kernelMemsetD32I(stream, devPtr, value, size);
+    validateStream;
+}
+
 /// <summary>
 /// Transform COO storage format to CSR storage format.
 /// If initialize is requsted procedure will compute PT (permutation vector) and csrRowPtrA vector.
@@ -98,7 +107,7 @@ void TensorOperation::cublasAPIDaxpy(int n, const double *alpha, const double *x
 /// <param name="initialize">if true PT is not reused in computation and csrRowPtrA is build</param>
 void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *cooColInd, int *csrRowInd, int *PT) {
 
-    cusparseStatus_t status;
+    cusparseStatus_t status;         
 
     /// required minimum vectors lengths
     if (nnz > PT_nnz) {
@@ -160,13 +169,19 @@ void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *c
         fprintf(stderr, "[cusparse/error]  Xcoosort by row failure ; ( %s ) %s \n", errorName, errorStr);
         exit(1);
     }
-    validateStream;
+    validateStream;    
 
     // prior action :: if the Stream Ordered Memory Allocator ???
 
-    gatherVector(nnz, CUDA_R_32I, PT1, PT2, PT);
+    gatherVector(nnz, CUDA_R_32F, PT1, PT2, PT);
 
     validateStream;
+
+    if (settings::get()->DEBUG_COO_FORMAT) {
+        cudaStreamSynchronize(stream);
+        utility::stdout_vector(utility::dev_vector<int>{cooRowInd, (size_t)nnz, stream}, "cooRowInd --- Xsoort");
+        utility::stdout_vector(utility::dev_vector<int>{cooColInd, (size_t)(m + 1), stream}, "cooColInd --- Xsoort");
+    }
 
     /// create csrRowPtrA    -  async execution
     status = cusparseXcoo2csr(sparseHandle, cooRowInd, nnz, m, csrRowInd, CUSPARSE_INDEX_BASE_ZERO);
@@ -177,6 +192,13 @@ void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *c
         exit(1);
     }
     validateStream;
+
+    cudaStreamSynchronize(stream);
+    
+    if (settings::get()->DEBUG_CSR_FORMAT) {
+        cudaStreamSynchronize(stream);
+        utility::stdout_vector(utility::dev_vector<int>{csrRowInd, (size_t)(m + 1), stream}, "csrRowInd -- CSR result !");
+    }
 
     return;
 }
@@ -222,15 +244,44 @@ void TensorOperation::gatherVector(int nnz, cudaDataType valueType, RValueType *
 
 void TensorOperation::invertPermuts(int n, int *PT, int *INV) {
 
-    constexpr const unsigned OBJECTS_PER_THREAD = 4;
-    constexpr const unsigned DEF_BLOCK_DIM = 1024;
-
-    KernelTraits<OBJECTS_PER_THREAD, DEF_BLOCK_DIM> CompressKernelTraits{(unsigned)n};
-
-    unsigned GRID_DIM = CompressKernelTraits.GRID_DIM;
-    unsigned BLOCK_DIM = CompressKernelTraits.GRID_DIM;
-    inversePermutationVector(GRID_DIM, BLOCK_DIM, stream, PT, INV, n);
+    inversePermutationVector(stream, PT, INV, n);
     validateStream;
+}
+
+
+
+void TensorOperation::stdout_coo_tensor(cudaStream_t stream, int m, int n, int nnz, int *d_cooRowInd, int *d_cooColInd,
+                       double *d_cooVal) {
+    
+    utility::host_vector<int> cooRowInd{(size_t)nnz};
+    utility::host_vector<int> cooColInd{(size_t)nnz};
+    utility::host_vector<double> cooVal{(size_t)nnz};
+
+    cooRowInd.memcpy_of(utility::dev_vector<int>(d_cooRowInd, nnz, stream), stream);
+    cooColInd.memcpy_of(utility::dev_vector<int>(d_cooColInd, nnz, stream), stream);
+    cooVal.memcpy_of(utility::dev_vector<double>(d_cooVal, nnz, stream), stream);
+
+    cudaStreamSynchronize(stream);
+
+    /// all indicies withe value in coo format
+    for (int T = 0; T < nnz; ++T) {
+        utility::log(" %d , %d %d  -  %7.3f  \n", T, cooRowInd[T], cooColInd[T], cooVal[T]);
+    }
+
+    /// Stdout ad m x n format
+    int idx = 0;
+    for (int T = 0; T < m; ++T) {
+        for (int L = 0; L < n; ++L) {
+            if (cooRowInd[idx] == T && cooColInd[idx] == L) {
+                utility::log(" %8.3f ,", cooVal[idx]);
+                ++idx;
+            } else {
+                utility::log(" %8.3f ,", 0.0);
+            }
+        }
+        utility::log(" \n ");
+    }
+    utility::log("\n");
 }
 
 TensorOperation::~TensorOperation() {

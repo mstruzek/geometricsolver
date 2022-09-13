@@ -11,10 +11,10 @@
 
 #include "gpu_allocator.h"
 
+#include "quda.cuh"
 
-} // namespace std
 
-namespace quda {
+namespace utility {
 
 template <typename Type> class dev_vector;
 
@@ -33,7 +33,7 @@ template <typename Type> class host_vector {
     /// allocate owned pinned memory extent for requested type and size
     /// </summary>
     /// <param name="size"></param>
-    host_vector(size_t size) : _size(size), owner(true) {
+    host_vector(size_t size) : size(size), owner(true) {
         cudaError_t status = cudaMallocHost((void **)&_memory, size * sizeof(Type));
         if (status != cudaSuccess) {
             fprintf(stderr, "[host_vector] vector memory allocation failed !\n");
@@ -52,7 +52,7 @@ template <typename Type> class host_vector {
     /// </summary>
     /// <param name="memory"></param>
     /// <param name="size"></param>
-    host_vector(Type *memory, size_t size) : owner(false), _memory(memory), _size(size) {}
+    host_vector(Type *memory, size_t size) : owner(false), _memory(memory), size(size) {}
 
     /// <summary>
     /// default accesor to memory reference
@@ -61,12 +61,25 @@ template <typename Type> class host_vector {
     operator Type *() { return data(); }
 
     /// <summary>
-    /// default accesor to memory reference
+    /// implicit conversion / view accesor to memory reference
     /// </summary>
     /// <returns></returns>
     operator void *() { return data(); }
 
+    /// <summary>
+    /// default accesor to memory reference
+    /// </summary>
+    /// <returns></returns>
     Type *data() { return _memory; }
+
+
+    /// <summary>
+    /// convenient accessor in host context
+    /// </summary>
+    /// <typeparam name="Type"></typeparam>
+
+    Type &operator[](const size_t index) noexcept { return _memory[index]; }
+
 
     /// <summary>
     /// copy host vector possible initialized with cuda pinned memory.
@@ -75,15 +88,15 @@ template <typename Type> class host_vector {
     /// <param name="stream"></param>
     /// <returns></returns>
     host_vector<Type> &memcpy_of(host_vector<Type> &src, cudaStream_t stream = nullptr) {
-        if (_size != src.size()) {
+        if (size != src.get_size()) {
             fprintf(stderr, "[dev_vector] allocation buffers on device and host are not identical !\n");
             exit(1);
         }
         cudaError_t status;
         if (stream) {
-            status = cudaMemcpyAsync(_memory, src.data(), sizeof(Type) * _size, cudaMemcpyHostToHost, stream);
+            status = cudaMemcpyAsync(_memory, src.data(), sizeof(Type) * size, cudaMemcpyHostToHost, stream);
         } else {
-            status = cudaMemcpy(_memory, src.data(), sizeof(Type) * _size, cudaMemcpyHostToHost);
+            status = cudaMemcpy(_memory, src.data(), sizeof(Type) * size, cudaMemcpyHostToHost);
         }
         if (status != cudaSuccess) {
             const char *error_name = cudaGetErrorName(status);
@@ -101,15 +114,15 @@ template <typename Type> class host_vector {
     /// <param name="stream"></param>
     /// <returns></returns>
     host_vector<Type> &memcpy_of(dev_vector<Type> &src, cudaStream_t stream = nullptr) {
-        if (_size != src.size()) {
+        if (size != src.get_size()) {
             fprintf(stderr, "[dev_vector] allocation buffers on device and host are not identical !\n");
             exit(1);
         }
         cudaError_t status;
         if (stream) {
-            status = cudaMemcpyAsync(_memory, src.data(), sizeof(Type) * _size, cudaMemcpyDeviceToHost, stream);
+            status = cudaMemcpyAsync(_memory, src.data(), sizeof(Type) * size, cudaMemcpyDeviceToHost, stream);
         } else {
-            status = cudaMemcpy(_memory, src.data(), sizeof(Type) * _size, cudaMemcpyDeviceToHost);
+            status = cudaMemcpy(_memory, src.data(), sizeof(Type) * size, cudaMemcpyDeviceToHost);
         }
         if (status != cudaSuccess) {
             const char *error_name = cudaGetErrorName(status);
@@ -120,7 +133,7 @@ template <typename Type> class host_vector {
         return *this;
     }
 
-    size_t size() const { return _size; }
+    size_t get_size() const { return size; }
 
     /// release memory into cuda driver only when in possession of this memory extent
     ~host_vector() {
@@ -131,21 +144,45 @@ template <typename Type> class host_vector {
             if (status != cudaSuccess) {
                 const char *errorName = cudaGetErrorName(status);
                 const char *errorStr = cudaGetErrorString(status);
-                fprintf(stderr, "[host_vector] memory deallocation failed !\n", errorName, errorStr);
+                fprintf(stderr, "[host_vector] memory deallocation failed ; ( %s ) %s !\n", errorName, errorStr);
             }
         }
     }
 
   private:
     Type *_memory;
-    size_t _size;
+    size_t size;
     bool owner;
 };
+
 
 /// ===================================================== ===================================================== ///
 template <typename Type> class dev_vector {
   public:
+     
+    dev_vector() : _memory(NULL), size(0), stream(NULL), owner(false) {}
+
+    dev_vector(nullptr_t) : dev_vector() {}
+
     dev_vector(dev_vector const &other) = delete;
+
+
+    dev_vector &operator=(dev_vector const &other) = delete;
+
+    dev_vector(dev_vector &&other) : dev_vector() { 
+        *this = std::move(other); 
+    };
+
+    dev_vector &operator=(nullptr_t) { return *this;
+    }
+
+    dev_vector &operator=(dev_vector &&other) {
+        _memory = std::exchange(other._memory, nullptr);
+        size = std::exchange(other.size, 0);
+        stream = std::exchange(other.stream, nullptr);
+        owner = std::exchange(other.owner, false);
+        return *this;
+    };
 
     /// <summary>
     /// setup non ownig reference to device memory extent
@@ -154,14 +191,19 @@ template <typename Type> class dev_vector {
     /// <param name="size"></param>
     /// <param name="stream"></param>
     dev_vector(Type *memory, size_t size, cudaStream_t stream)
-        : _memory(memory), _size(size), stream(stream), owner(false) {}
+        : _memory(memory), size(size), stream(stream), owner(false) {}
+    
+    dev_vector(cu_vector<Type> &vector, cudaStream_t stream)
+        : dev_vector(vector.size(), stream) {
+        memcpy_of(host_vector<Type>(vector.data(), vector.size()), stream);
+    }
 
     /// <summary>
     /// initialize owning memory extent possibly allocated on selected stream
     /// </summary>
     /// <param name="size"></param>
     /// <param name="stream"></param>
-    dev_vector(size_t size, cudaStream_t stream = nullptr) : _size(size), stream(stream), owner(true) {
+    dev_vector(size_t size, cudaStream_t stream = nullptr) : size(size), stream(stream), owner(true) {
         cudaError_t status;
         if (stream) {
             status = cudaMallocAsync((void **)&_memory, size * sizeof(Type), stream);
@@ -190,7 +232,7 @@ template <typename Type> class dev_vector {
 
     Type *data() { return _memory; }
 
-    size_t size() const { return _size; }
+    size_t get_size() const { return size; }
 
     cudaStream_t get_stream() { return stream; }
 
@@ -201,15 +243,16 @@ template <typename Type> class dev_vector {
     /// <param name="stream"></param>
     /// <returns></returns>
     dev_vector<Type> &memcpy_of(host_vector<Type> &src, cudaStream_t stream = nullptr) {
-        if (_size != src.size()) {
+        if (size != src.get_size()) {
             fprintf(stderr, "[dev_vector] allocation buffers on device and host are not identical !\n");
             exit(1);
         }
         cudaError_t status;
         if (stream) {
-            status = cudaMemcpyAsync(_memory, src.data(), sizeof(Type) * _size, cudaMemcpyHostToDevice, stream);
+            status =
+                cudaMemcpyAsync(_memory, src.data(), sizeof(Type) * src.get_size(), cudaMemcpyHostToDevice, stream);
         } else {
-            status = cudaMemcpy(_memory, src.data(), sizeof(Type) * _size, cudaMemcpyHostToDevice);
+            status = cudaMemcpy(_memory, src.data(), sizeof(Type) * src.get_size(), cudaMemcpyHostToDevice);
         }
         if (status != cudaSuccess) {
             const char *errorName = cudaGetErrorName(status);
@@ -227,15 +270,15 @@ template <typename Type> class dev_vector {
     /// <param name="stream"></param>
     /// <returns></returns>
     dev_vector<Type> &memcpy_of(dev_vector<Type> &src, cudaStream_t stream = nullptr) {
-        if (_size != src.size()) {
+        if (size != src.get_size()) {
             fprintf(stderr, "[dev_vector] device allocations are not identical ! \n");
             exit(1);
         }
         cudaError_t status;
         if (stream) {
-            status = cudaMemcpyAsync(_memory, src.data(), sizeof(Type) * _size, cudaMemcpyDeviceToDevice, stream);
+            status = cudaMemcpyAsync(_memory, src.data(), sizeof(Type) * size, cudaMemcpyDeviceToDevice, stream);
         } else {
-            status = cudaMemcpy(_memory, src.data(), sizeof(Type) * _size, cudaMemcpyDeviceToDevice);
+            status = cudaMemcpy(_memory, src.data(), sizeof(Type) * size, cudaMemcpyDeviceToDevice);
         }
         if (status != cudaSuccess) {
             const char *errorName = cudaGetErrorName(status);
@@ -244,6 +287,29 @@ template <typename Type> class dev_vector {
             exit(1);
         }
         return *this;
+    }
+
+
+     dev_vector<Type> &memcpy_of(cu_vector<Type> const &vector, cudaStream_t stream = nullptr)  {
+
+        if (size != vector.size()) {
+             fprintf(stderr, "[dev_vector] allocations are not identical ! \n");
+             exit(1);
+         }
+         cudaError_t status;
+         if (stream) {
+             status =
+                 cudaMemcpyAsync(_memory, vector.data(), sizeof(Type) * vector.size(), cudaMemcpyHostToDevice, stream);
+         } else {
+             status = cudaMemcpy(_memory, vector.data(), sizeof(Type) * vector.size(), cudaMemcpyHostToDevice);
+         }
+         if (status != cudaSuccess) {
+             const char *errorName = cudaGetErrorName(status);
+             const char *errorStr = cudaGetErrorString(status);
+             fprintf(stderr, "[dev_vector] memcpy into device failed ; ( %s )  %s \n", errorName, errorStr);
+             exit(1);
+         }
+         return *this;
     }
 
     /// release memory into cuda driver only when in possession of this memory extent
@@ -274,13 +340,14 @@ template <typename Type> class dev_vector {
     /// memory extent in possession or borrowed
     Type *_memory;
 
-    size_t _size;
+    size_t size;
 
     bool owner;
 };
+
 /// ===================================================== ===================================================== ///
 
-template <typename... Type> __device__ __host__ void log(const char *format, Type &...values) {
+template <typename... Type> __device__ __host__ void log(const char *format, Type const& ... values) {
     ::printf(format, values...);
 }
 
@@ -288,18 +355,25 @@ template <typename... Type> __device__ __host__ void log(const char *format, Typ
 
     template <typename Type> struct printer {};
 
-template <typename Type> void stdout_vector_kernel(Type *vector, int size);
+template <typename Type> void stdout_vector_kernel(cudaStream_t stream, Type *vector, int size);
 
 template <typename Type> void stdout_vector(dev_vector<Type> &vector, const char *title) {
     log("%s --- --- ---\n", title);
+    stdout_vector_kernel<Type>(vector.get_stream(),vector.data(), vector.get_size());
+    checkCudaStatus(cudaStreamSynchronize(vector.get_stream()));
+    log("\n");
+}
 
-    stdout_vector_kernel<Type>(vector.data(), vector.size());
-    checkCudaStatus(cudaStreamSynchronize(0));
+template <typename Type> void stdout_vector(Type* vector, size_t size, const char *title, cudaStream_t stream) {
+    log("%s --- --- ---\n", title);
+
+    stdout_vector_kernel<Type>(stream, vector, size);
+    checkCudaStatus(cudaStreamSynchronize(stream));
     log("\n");
 }
 
 template <typename Type> void stdout_vector(host_vector<Type> &vector, const char *title) {
-    const int size = vector.size();
+    const int size = vector.get_size();
     const Type *data = vector.data();
     printer<Type> printer;
     log("%s --- --- --- \n", title);

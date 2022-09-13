@@ -39,6 +39,12 @@ int setBooleanProperty(int id, bool value) {
     case 9:
         setting->DEBUG_CHECK_ARG = value; // 9
         break;
+    case 30:
+        setting->DEBUG_COO_FORMAT= value; // 30
+        break;
+    case 31:
+        setting->DEBUG_CSR_FORMAT = value; // 31
+        break;
     case 100:
         setting->STREAM_CAPTURING = value; /// 100
         break;

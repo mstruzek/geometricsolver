@@ -13,6 +13,7 @@
 
 #include "tensor_layout.cuh"
 
+#include "version.cuh"
 
 #ifndef __GPU_COMM_INL__
 #define __GPU_COMM_INL__ __host__ __device__

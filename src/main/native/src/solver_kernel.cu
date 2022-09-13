@@ -11,6 +11,7 @@
 #endif
 
 #define TENSOR_SPARSE_LAYOUT
+//#undef TENSOR_SPARSE_LAYOUT
 
 /// =======================================================================================
 /// <summary>
@@ -64,7 +65,7 @@ __global__ void __inversePermuationVector__(int *INP, int *OUTP, size_t N) {
     const unsigned offset = ELEMENTS_PER_THREAD * threadId;
     const unsigned upperLimit = offset + ELEMENTS_PER_THREAD;
 
-    if (upperLimit < N) {
+    if (upperLimit <= N) {
 
 ///  ?????   warning C4068: nieznana pragma �unroll� nvcc
 ///
@@ -93,10 +94,55 @@ __global__ void __inversePermuationVector__(int *INP, int *OUTP, size_t N) {
 /// <param name="OUTP">inverse dense out vector - direct form</param>
 /// <param name="N">size of intput/output vector</param>
 /// <returns></returns>
-void inversePermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream, int *INP, int *OUTP,
-                              size_t N) {
-    ///
-    __inversePermuationVector__<<<K_gridDim, K_blockDim, 0, K_stream>>>(INP, OUTP, N);
+void inversePermutationVector(cudaStream_t stream, int *INP, int *OUTP, size_t N) {
+
+    constexpr const unsigned DEF_BLOCK_DIM = 1024;
+
+    KernelTraits<ELEMENTS_PER_THREAD, DEF_BLOCK_DIM> CompressKernelTraits{N};
+    unsigned GRID_DIM = CompressKernelTraits.GRID_DIM;
+    unsigned BLOCK_DIM = CompressKernelTraits.BLOCK_DIM;
+
+    __inversePermuationVector__<<<GRID_DIM, BLOCK_DIM, 0, stream>>>(INP, OUTP, N);
+}
+
+/// =======================================================================================
+
+__global__ void __kernelMemsetD32I__(int *devPtr, int value, size_t size) {
+    const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
+    const unsigned offset = ELEMENTS_PER_THREAD * threadId;
+    const unsigned upperLimit = offset + ELEMENTS_PER_THREAD;
+
+    if (upperLimit <= size) {
+#pragma unroll
+        for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
+            devPtr[offset + T] = value;
+        }
+    } else {
+        const unsigned remainder = size - offset;
+        for (int T = 0; T < remainder; ++T) {
+            if (offset + T < size) {
+                devPtr[offset + T] = value;
+            }
+        }
+    }
+}
+/// =======================================================================================
+/// <summary>
+/// memset vector of type CUDA_R32I value of extent size
+/// </summary>
+/// <param name="stream"></param>
+/// <param name="devPtr"></param>
+/// <param name="value"></param>
+/// <param name="size"></param>
+/// <returns></returns>
+KERNEL_EXECUTOR void kernelMemsetD32I(cudaStream_t stream, int *devPtr, int value, size_t size) {
+    constexpr const unsigned DEF_BLOCK_DIM = 1024;
+
+    KernelTraits<ELEMENTS_PER_THREAD, DEF_BLOCK_DIM> MemsetKernelTraits{size};
+    unsigned GRID_DIM = MemsetKernelTraits.GRID_DIM;
+    unsigned BLOCK_DIM = MemsetKernelTraits.BLOCK_DIM;
+
+    __kernelMemsetD32I__<<<GRID_DIM, BLOCK_DIM, 0, stream>>>(devPtr, value, size);
 }
 
 /// =======================================================================================
@@ -131,29 +177,36 @@ __global__ void __stdoutTensorData__(ComputationState *ecdata, size_t rows, size
 
     ComputationState *ev = static_cast<ComputationState *>(ecdata);
 
-    const graph::DenseLayout layout = graph::DenseLayout(ev->dimension, 0, 0, ev->A);
-    const graph::Tensor<graph::DenseLayout> A = graph::tensorDevMem(layout, 0, 0);
+    ComputationMode computationMode = ev->computationMode;
 
-    log("A \n");
-    log("\n MatrixDouble2 - %lu x %lu **************************************** \n", rows, cols);
+    if (computationMode == ComputationMode::DENSE_LAYOUT) {
+        const graph::DenseLayout layout = graph::DenseLayout(ev->dimension, 0, 0, ev->A);
+        const graph::Tensor<graph::DenseLayout> A = graph::tensorDevMem(layout, 0, 0);
 
-    /// table header
-    for (int i = 0; i < cols / 2; i++) {
-        log(WIDEN_DOUBLE_STR_FORMAT, i);
+        log("A \n");
+        log("\n MatrixDouble2 - %lu x %lu **************************************** \n", rows, cols);
+
+        /// table header
+        for (int i = 0; i < cols / 2; i++) {
+            log(WIDEN_DOUBLE_STR_FORMAT, i);
+        }
+        log("\n");
+
+        /// table ecdata
+
+        for (int i = 0; i < rows; i++) {
+            log(FORMAT_STR_DOUBLE, A.getValue(i, 0));
+
+            for (int j = 1; j < cols; j++) {
+                log(FORMAT_STR_DOUBLE_CM, A.getValue(i, j));
+            }
+            if (i < cols - 1)
+                log("\n");
+        }
+
+    } else if (computationMode == ComputationMode::SPARSE_LAYOUT) {
     }
     log("\n");
-
-    /// table ecdata
-
-    for (int i = 0; i < rows; i++) {
-        log(FORMAT_STR_DOUBLE, A.getValue(i, 0));
-
-        for (int j = 1; j < cols; j++) {
-            log(FORMAT_STR_DOUBLE_CM, A.getValue(i, j));
-        }
-        if (i < cols - 1)
-            log("\n");
-    }
 }
 
 /// =======================================================================================
@@ -271,7 +324,7 @@ __global__ void __CopyIntoStateVector__(double *SV, graph::Point *points, size_t
     const unsigned offset = threadId * ELEMENTS_PER_THREAD;
     const unsigned upper_limit = offset + ELEMENTS_PER_THREAD;
 
-    if (upper_limit < size) {
+    if (upper_limit <= size) {
 
 #pragma unroll
         for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
@@ -321,9 +374,9 @@ __global__ void __CopyFromStateVector__(graph::Point *points, double *SV, size_t
 
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
     const unsigned offset = threadId * ELEMENTS_PER_THREAD;
-    const unsigned upper_limit = offset + ELEMENTS_PER_THREAD + 1 ;
+    const unsigned upper_limit = offset + ELEMENTS_PER_THREAD;
 
-    if (upper_limit < size) { ///  standard case
+    if (upper_limit <= size) { ///  standard case
 
 #pragma unroll
         for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
@@ -379,7 +432,7 @@ __global__ void __StateVectorAddDifference__(double *SV, double *dx, size_t N) {
     const unsigned offset = threadId * ELEMENTS_PER_THREAD;
     const unsigned upper_limit = offset + ELEMENTS_PER_THREAD;
 
-    if (upper_limit < N) {
+    if (upper_limit <= N) {
 
 #pragma unroll
         for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
@@ -509,10 +562,12 @@ __global__ void __ComputeStiffnessMatrix__(ComputationState *ecdata, size_t N) {
     int *INV_P = ec->INV_P;
     int const baseOffset = 0;                               /// into coo vector
     int *const accWriteOffset = ec->accCooWriteStiffTensor; /// relative offset in coo
-    int *const cooRowInd = ec->cooColInd;
+    int *const cooRowInd = ec->cooRowInd;
     int *const cooColInd = ec->cooColInd;
     double *const cooVal = ec->cooVal;
     const bool intention = true;
+    int offset_row = 0;
+    int offset_col = 0;
 #endif
 
     /// RUNTIME DISPATCH
@@ -523,32 +578,25 @@ __global__ void __ComputeStiffnessMatrix__(ComputationState *ecdata, size_t N) {
         ///
         ComputeStiffnessMatrix_Impl(tID, ecdata, tensor, N);
         ///
-        return;
     }
-
 #ifdef TENSOR_SPARSE_LAYOUT
-    if (computationMode == ComputationMode::SPARSE_LAYOUT) {
-        graph::SparseLayout sparseLayout =
-            graph::SparseLayout(baseOffset, accWriteOffset, cooRowInd, cooColInd, cooVal);
-        graph::Tensor<graph::SparseLayout> tensorSparseLayout = graph::tensorDevMem(sparseLayout, intention);
+    else if (computationMode == ComputationMode::SPARSE_LAYOUT) {
+        graph::SparseLayout sparseLayout = graph::SparseLayout(baseOffset, accWriteOffset, cooRowInd, cooColInd, cooVal);
+        graph::Tensor<graph::SparseLayout> tensorSparseLayout = graph::tensorDevMem(sparseLayout, intention, offset_row, offset_col);
         ///
         ComputeStiffnessMatrix_Impl(tID, ecdata, tensorSparseLayout, N);
         ///
-        return;
-    }
-
-    if (computationMode == ComputationMode::DIRECT_LAYOUT) {
-        graph::DirectSparseLayout directLayout =
-            graph::DirectSparseLayout(baseOffset, accWriteOffset, INV_P, cooRowInd, cooColInd, cooVal);
+    } else if (computationMode == ComputationMode::DIRECT_LAYOUT) {
+        graph::DirectSparseLayout directLayout = graph::DirectSparseLayout(baseOffset, accWriteOffset, INV_P, cooRowInd, cooColInd, cooVal);
         graph::Tensor<graph::DirectSparseLayout> tensorDirect = graph::tensorDevMem(directLayout, intention);
         ///
         ComputeStiffnessMatrix_Impl(tID, ecdata, tensorDirect, N);
         ///
-        return;
     }
 #endif
-
-    log_error("[gpu/tensor] computation mode unknown \n");
+    else {
+        log_error("[gpu/tensor] computation mode unknown \n");
+    }    
 }
 
 /// =======================================================================================
@@ -1716,51 +1764,46 @@ __global__ void __EvaluateConstraintJacobian__(ComputationState *ecdata, size_t 
 
     const ComputationMode computationMode = ec->computationMode;
 
-    const int constraintOffset = ec->accConstraintSize[tId];
+    const int constraintOffset = ec->size + ec->accConstraintSize[tId];
 #ifdef TENSOR_SPARSE_LAYOUT
     int *const INV_P = ec->INV_P;
     int const baseOffset = ec->cooWritesStiffSize;             /// into coo vector
     int *const accWriteOffset = ec->accCooWriteJacobianTensor; /// relative coo offset
-    int *const cooRowInd = ec->cooColInd;
+    int *const cooRowInd = ec->cooRowInd;
     int *const cooColInd = ec->cooColInd;
     double *const cooVal = ec->cooVal;
+    int offset_row = constraintOffset;
+    int offset_col = 0;
 #endif
     const bool intention = false;
 
     /// RUNTIME DISPATCH
 
     if (computationMode == ComputationMode::DENSE_LAYOUT) {
-        graph::DenseLayout denseLayout = graph::DenseLayout(ec->dimension, ec->size, 0, ec->A);
+        graph::DenseLayout denseLayout = graph::DenseLayout(ec->dimension, 0, 0, ec->A);
         graph::Tensor<graph::DenseLayout> tensor = graph::tensorDevMem(denseLayout, constraintOffset, 0, intention);
         ///
         EvaluateConstraintJacobian_Impl(tId, ecdata, tensor, N);
-        ///
-        return;
+        ///        
     }
-
 #ifdef TENSOR_SPARSE_LAYOUT
-    if (computationMode == ComputationMode::SPARSE_LAYOUT) {
-        graph::SparseLayout sparseLayout =
-            graph::SparseLayout(baseOffset, accWriteOffset, cooRowInd, cooColInd, cooVal);
-        graph::Tensor<graph::SparseLayout> tensorSparseLayout = graph::tensorDevMem(sparseLayout, intention);
+    else if (computationMode == ComputationMode::SPARSE_LAYOUT) {
+        graph::SparseLayout sparseLayout = graph::SparseLayout(baseOffset, accWriteOffset, cooRowInd, cooColInd, cooVal);
+        graph::Tensor<graph::SparseLayout> tensorSparseLayout = graph::tensorDevMem(sparseLayout, intention, offset_row, offset_col);
         ///
         EvaluateConstraintJacobian_Impl(tId, ecdata, tensorSparseLayout, N);
-        ///
-        return;
-    }
-
-    if (computationMode == ComputationMode::DIRECT_LAYOUT) {
-        graph::DirectSparseLayout directLayout =
-            graph::DirectSparseLayout(baseOffset, accWriteOffset, INV_P, cooRowInd, cooColInd, cooVal);
+        ///      
+    } else if (computationMode == ComputationMode::DIRECT_LAYOUT) {
+        graph::DirectSparseLayout directLayout = graph::DirectSparseLayout(baseOffset, accWriteOffset, INV_P, cooRowInd, cooColInd, cooVal);
         graph::Tensor<graph::DirectSparseLayout> tensorDirect = graph::tensorDevMem(directLayout, intention);
         ///
         EvaluateConstraintJacobian_Impl(tId, ecdata, tensorDirect, N);
         ///
-        return;
     }
 #endif
-
-    log_error("[gpu/tensor] computation mode unknown \n");
+    else {
+        log_error("[gpu/tensor] computation mode unknown \n");
+    }    
 }
 
 /// =======================================================================================
@@ -1880,12 +1923,13 @@ __global__ void __EvaluateConstraintTRJacobian__(ComputationState *ecdata, size_
     int *const INV_P = ec->INV_P;
     int const baseOffset = ec->cooWritesStiffSize + ec->cooWirtesJacobianSize; /// into coo vector
     int *const accWriteOffset = ec->accCooWriteJacobianTensor;                 /// relative coo offset
-    int *const cooRowInd = ec->cooColInd;
+    int *const cooRowInd = ec->cooRowInd;
     int *const cooColInd = ec->cooColInd;
     double *const cooVal = ec->cooVal;
+    int offset_row = 0;
+    int offset_col = constraintOffset;
 #endif
     const bool intention = false;
-
     /// RUNTIME DISPATCH
 
     if (computationMode == ComputationMode::DENSE_LAYOUT) {
@@ -1894,32 +1938,25 @@ __global__ void __EvaluateConstraintTRJacobian__(ComputationState *ecdata, size_
         ///
         EvaluateConstraintTRJacobian_Impl(tId, ecdata, tensor, N);
         ///
-        return;
     }
-
 #ifdef TENSOR_SPARSE_LAYOUT
-    if (computationMode == ComputationMode::SPARSE_LAYOUT) {
-        graph::SparseLayout sparseLayout =
-            graph::SparseLayout(baseOffset, accWriteOffset, cooRowInd, cooColInd, cooVal);
-        graph::Tensor<graph::SparseLayout> tensorSparseLayout = graph::tensorDevMem(sparseLayout, intention);
+    else if (computationMode == ComputationMode::SPARSE_LAYOUT) {
+        graph::SparseLayout sparseLayout = graph::SparseLayout(baseOffset, accWriteOffset, cooRowInd, cooColInd, cooVal);
+        graph::AdapterTensor<graph::SparseLayout> sparseLayoutAdapter = graph::transposeTensorDevMem(sparseLayout, intention, offset_row, offset_col);
         ///
-        EvaluateConstraintTRJacobian_Impl(tId, ecdata, tensorSparseLayout, N);
+        EvaluateConstraintTRJacobian_Impl(tId, ecdata, sparseLayoutAdapter, N);
         ///
-        return;
-    }
-
-    if (computationMode == ComputationMode::DIRECT_LAYOUT) {
-        graph::DirectSparseLayout directLayout =
-            graph::DirectSparseLayout(baseOffset, accWriteOffset, INV_P, cooRowInd, cooColInd, cooVal);
-        graph::Tensor<graph::DirectSparseLayout> tensorDirect = graph::tensorDevMem(directLayout, intention);
+    } else if (computationMode == ComputationMode::DIRECT_LAYOUT) {
+        graph::DirectSparseLayout directLayout = graph::DirectSparseLayout(baseOffset, accWriteOffset, INV_P, cooRowInd, cooColInd, cooVal);
+        graph::AdapterTensor<graph::DirectSparseLayout> directLayoutAdapter = graph::transposeTensorDevMem(directLayout, intention, offset_row, offset_col);
         ///
-        EvaluateConstraintTRJacobian_Impl(tId, ecdata, tensorDirect, N);
+        EvaluateConstraintTRJacobian_Impl(tId, ecdata, directLayoutAdapter, N);
         ///
-        return;
     }
 #endif
-
-    log_error("[gpu/tensor] computation mode unknown \n");
+    else {
+        log_error("[gpu/tensor] computation mode unknown \n");
+    }
 }
 
 /// =======================================================================================
@@ -2563,9 +2600,11 @@ __global__ void __EvaluateConstraintHessian__(ComputationState *ecdata, size_t N
     int *const INV_P = ec->INV_P;
     int const baseOffset = ec->cooWritesStiffSize + 2 * ec->cooWirtesJacobianSize; /// into coo vector
     int *const accWriteOffset = ec->accCooWriteHessianTensor;                      /// relative offset in coo
-    int *const cooRowInd = ec->cooColInd;
+    int *const cooRowInd = ec->cooRowInd;
     int *const cooColInd = ec->cooColInd;
     double *const cooVal = ec->cooVal;
+    int offset_row = 0;
+    int offset_col = 0;
     const bool intention = true;
 #endif
 
@@ -2579,18 +2618,17 @@ __global__ void __EvaluateConstraintHessian__(ComputationState *ecdata, size_t N
         ///
         return;
     }
-
 #ifdef TENSOR_SPARSE_LAYOUT
-    if (computationMode == ComputationMode::SPARSE_LAYOUT) {
+    else if (computationMode == ComputationMode::SPARSE_LAYOUT) {
         graph::SparseLayout sparseLayout =
             graph::SparseLayout(baseOffset, accWriteOffset, cooRowInd, cooColInd, cooVal);
-        graph::Tensor<graph::SparseLayout> tensorSparseLayout = graph::tensorDevMem(sparseLayout, intention);
+        graph::Tensor<graph::SparseLayout> tensorSparseLayout =
+            graph::tensorDevMem(sparseLayout, intention, offset_row, offset_col);
         ///
         EvaluateConstraintHessian_Impl(tId, ecdata, tensorSparseLayout, N);
         ///
         return;
-    }
-    if (computationMode == ComputationMode::DIRECT_LAYOUT) {
+    } else if (computationMode == ComputationMode::DIRECT_LAYOUT) {
         graph::DirectSparseLayout directLayout =
             graph::DirectSparseLayout(baseOffset, accWriteOffset, INV_P, cooRowInd, cooColInd, cooVal);
         graph::Tensor<graph::DirectSparseLayout> tensorDirect = graph::tensorDevMem(directLayout, intention);
@@ -2600,8 +2638,9 @@ __global__ void __EvaluateConstraintHessian__(ComputationState *ecdata, size_t N
         return;
     }
 #endif
-
-    log_error("[gpu/tensor] computation mode unknown \n");
+    else {
+        log_error("[gpu/tensor] computation mode unknown \n");
+    }
 }
 
 /// =======================================================================================

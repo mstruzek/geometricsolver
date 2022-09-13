@@ -13,6 +13,7 @@
 
 #define jni_initDriver                 Java_com_mstruzek_jni_JNISolverGate_initDriver
 #define jni_setBooleanProperty         Java_com_mstruzek_jni_JNISolverGate_setBooleanProperty
+#define jni_setLongProperty            Java_com_mstruzek_jni_JNISolverGate_setLongProperty
 #define jni_getLastError               Java_com_mstruzek_jni_JNISolverGate_getLastError
 #define jni_closeDriver                Java_com_mstruzek_jni_JNISolverGate_closeDriver
 #define jni_initComputationContext     Java_com_mstruzek_jni_JNISolverGate_initComputationContext
@@ -60,11 +61,14 @@ int main(int argc, char* args[])
 
     //jni_setBooleanProperty  
     
+        
+    jni_setLongProperty(&env, eclass, 12, (jlong) 2);  // settings::get()->COMPUTATION_MODE  = /// 12  - 1 - DENSE_LAYOUT , 2 - SPARSE_LAYOUT , *3 - DIRECT_LAYOUT
 
-    jni_setBooleanProperty(&env, eclass, 8, (jboolean) true);  // settings::get()->DEBUG_SOLVER_CONVERGENCE = false; 
-    jni_setBooleanProperty(&env, eclass, 9, (jboolean) true);  // settings::get()->DEBUG_CHECK_ARG = false;
-    jni_setBooleanProperty(&env, eclass, 2, (jboolean) true);  // settings::get()->DEBUG_TENSOR_A= true;
-    jni_setBooleanProperty(&env, eclass, 3, (jboolean) true);  // settings::get()->DEBUG_TENSOR_B= true;
+
+    jni_setBooleanProperty(&env, eclass, 8, (jboolean) false);  // settings::get()->DEBUG_SOLVER_CONVERGENCE = false; 
+    jni_setBooleanProperty(&env, eclass, 9, (jboolean) false);  // settings::get()->DEBUG_CHECK_ARG = false;
+    jni_setBooleanProperty(&env, eclass, 2, (jboolean) false);  // settings::get()->DEBUG_TENSOR_A= true;
+    jni_setBooleanProperty(&env, eclass, 3, (jboolean) false);  // settings::get()->DEBUG_TENSOR_B= true;
     
     
 

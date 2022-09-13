@@ -83,13 +83,13 @@ class GPUGeometricSolver {
     cudaStream_t stream = nullptr;
 
 
-    quda::cu_vector<graph::Point> points;
+    utility::cu_vector<graph::Point> points;
 
-    quda::cu_vector<graph::Geometric> geometrics;
+    utility::cu_vector<graph::Geometric> geometrics;
 
-    quda::cu_vector<graph::Constraint> constraints;
+    utility::cu_vector<graph::Constraint> constraints;
 
-    quda::cu_vector<graph::Parameter> parameters;
+    utility::cu_vector<graph::Parameter> parameters;
 
 
     std::shared_ptr<GPUComputationContext> _computationContext;

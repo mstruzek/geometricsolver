@@ -14,6 +14,9 @@ struct Settings
     bool SOLVER_INC_HESSIAN         = false;        /// 7
     bool DEBUG_SOLVER_CONVERGENCE   = false;        /// 8
     bool DEBUG_CHECK_ARG            = false;        /// 9
+    bool DEBUG_CSR_FORMAT           = false;        /// 30
+    bool DEBUG_COO_FORMAT           = false;        /// 31
+
     bool STREAM_CAPTURING           = false;        /// 100
 
     unsigned GRID_SIZE              = 1;            /// 10

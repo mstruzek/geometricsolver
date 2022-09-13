@@ -12,6 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static com.mstruzek.jni.JNIDebugParameters.Computation.DENSE_LAYOUT;
+import static com.mstruzek.jni.JNISolverGate.JNI_SUCCESS;
 import static java.util.stream.Collectors.toCollection;
 
 public class GpuGeometricSolverImpl implements GeometricSolver {
@@ -19,6 +20,8 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
     private StateReporter reporter;
 
     private long lastSnapshotId = Long.MIN_VALUE;
+
+    private static final int DEVICE_ID = 0;
 
     @Override
     public GeometricSolverType solverType() {
@@ -29,48 +32,37 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
     public void initializeDriver() {
 
         StateReporter.DebugEnabled = false;
-
         reporter = StateReporter.getInstance();
 
-        int error = JNISolverGate.initDriver(0);
-
-        if (error != JNISolverGate.JNI_SUCCESS) {
+        int error = initDriver(DEVICE_ID);
+        if (error != JNI_SUCCESS) {
             reporter.writeln(" [GPU] driver failed - inspect jnigsketcher.so or *.dll file !");
             return;
         }
-
-        error = JNISolverGate.initComputationContext();
-        if (error != JNISolverGate.JNI_SUCCESS) {
+        error = initComputationContext();
+        if (error != JNI_SUCCESS) {
             reporter.writeln(" [GPU] failed computation context initializer!");
             return;
         }
-        /*
-         *
-         * Otherwise, drive establish connection with device id 1 - const.
-         */
+
         reporter.writeln(" [ GPU ] driver connection success");
     }
 
-
     @Override
     public void setup() {
-
 //       JNIDebugParameters.DEBUG.setBooleanProperty(false);
 
         JNIDebugParameters.STREAM_CAPTURING.setBooleanProperty(false);
         JNIDebugParameters.COMPUTATION_MODE.setLongProperty(DENSE_LAYOUT);
 
         JNIDebugParameters.CU_SOLVER_EPSILON.setDoubleProperty(1e-3);
-
         JNIDebugParameters.DEBUG_CHECK_ARG.setBooleanProperty(false);
 
-        JNIDebugParameters.SOLVER_INC_HESSIAN.setBooleanProperty(false);
-
+        JNIDebugParameters.SOLVER_INC_HESSIAN.setBooleanProperty(true);
         JNIDebugParameters.DEBUG_TENSOR_SV.setBooleanProperty(false);
 
 //        JNIDebugParameters.GRID_SIZE.setLongProperty(4); // NOT_USED
 //        JNIDebugParameters.BLOCK_SIZE.setLongProperty(512);
-
 //        JNIDebugParameters.DEBUG_TENSOR_A.setBooleanProperty(false);
 //        JNIDebugParameters.DEBUG_TENSOR_B.setBooleanProperty(false);
 //        JNIDebugParameters.DEBUG_TENSOR_B.setBooleanProperty(false);
@@ -79,43 +71,33 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
     @Override
     public SolverStat solveSystem() {
-
-        int err = 0; /// JNI_SUCCESS
-
+        int err = 0; /// jni_success
         if (ModelRegistry.constraintCounter == 0) {
             reporter.writeln("[solver/gpu] no constraints registered on model");
             return null;
         }
-
         long nextComputation = ModelRegistry.computationSnapshotId();
         reporter.writelnf("[solver/gpu]  ! snapshot id == %d", nextComputation);
         if (lastSnapshotId != nextComputation) {
-            /*
-             *   register model after structural changes
-             */
-            err = JNISolverGate.destroyComputation();
-            if (err != JNISolverGate.JNI_SUCCESS) {
+            /* register model after structural changes */
+            err = destroyComputation();
+            if (err != JNI_SUCCESS) {
                 reporter.writeln("[solver/gpu] destroy computation error !");
                 return null;
             }
 
             boolean registered = registerModelOnGPU();
-
             if (!registered) {
                 reporter.writeln("[solver/gpu] model registration error !");
                 return null;
             }
-
-
             reporter.writeln("[solver/gpu] model registration OK !");
 
-            err = JNISolverGate.initComputation();
-
-            if (err != JNISolverGate.JNI_SUCCESS) {
+            err = initComputation();
+            if (err != JNI_SUCCESS) {
                 reporter.writeln("[solver/gpu] model computation data initialization error !");
                 return null;
             }
-
             lastSnapshotId = nextComputation;
 
         } else {
@@ -127,14 +109,11 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
             updateStateVector();
         }
 
-        /*
-         * =============================================
-         * -----------------  SOLVER -------------------
-         * =============================================
-         */
+        /* ------------------------------------------------------------
+         * ------------------------- SOLVER ---------------------------
+         * ------------------------------------------------------------ */
         try {
-
-            err = JNISolverGate.solveSystem();
+            err = solveSystemExecute();
 
         } catch (Exception e) {
             reporter.writelnf("[solver/gpu] solver execution failed %s!", e.getMessage());
@@ -142,15 +121,15 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
             return null;
         }
 
-        if (err != JNISolverGate.JNI_SUCCESS) {
-            reporter.writelnf("[solver/gpu] solver execution failed with error = %s!", JNISolverGate.getLastError());
+        if (err != JNI_SUCCESS) {
+            reporter.writelnf("[solver/gpu] solver execution failed with error = %s!", lastError());
             return null;
         }
 
-        final SolverStat solverStatistics = JNISolverGate.getSolverStatistics();
+        final SolverStat solverStatistics = getSolverStatistics();
 
         reporter.writelnf("[solver/gpu] computation success  !");
-        reporter.writelnf(" -- computation lastError    : %s", JNISolverGate.getLastError());
+        reporter.writelnf(" -- computation lastError    : %s", lastError());
         reporter.writelnf(" -- computation convergence  : %b", solverStatistics.convergence);
 
         boolean isResultValid = !Double.isNaN(solverStatistics.error);
@@ -162,7 +141,6 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
 
     private void updateConstraintsState() {
-
         final List<ConstraintFixPoint> constraintsFixed = ModelRegistry.dbConstraint().values().stream()
             .filter(constraint -> constraint.getConstraintType().equals(ConstraintType.FixPoint))
             .map(ConstraintFixPoint.class::cast)
@@ -182,7 +160,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
             vecY[itr] = fixVector.getY();
             itr++;
         }
-        JNISolverGate.updateConstraintState(constraintId, vecX, vecY, size);
+        updateConstrainState(size, constraintId, vecX, vecY);
     }
 
     private void updateStateVector() {
@@ -195,9 +173,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
             stateVector[2 * itr + 1] = p.getY();
             itr++;
         }
-
-        /// JNI commit
-        JNISolverGate.updateStateVector(stateVector);
+        updateStateVector(stateVector);
     }
 
     private void updateParametersValues() {
@@ -210,24 +186,24 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
             value[itr] = parameter.getValue();
             itr++;
         }
-        JNISolverGate.updateParametersValues(parameterId, value, size);
+        updateParametersValues(size, value, parameterId);
     }
 
     @Override
     public void destroyDriver() {
 
-        int error = JNISolverGate.destroyComputation();
-        if (error != JNISolverGate.JNI_SUCCESS) {
+        int error = destroyComputation();
+        if (error != JNI_SUCCESS) {
             reporter.writelnf("[gpu/solver] destroy computation error !");
         }
 
-        error = JNISolverGate.destroyComputationContext();
-        if (error != JNISolverGate.JNI_SUCCESS) {
+        error = destroyComputationContext();
+        if (error != JNI_SUCCESS) {
             reporter.writelnf("[gpu/solver] destroy computation context error !");
         }
 
-        error = JNISolverGate.closeDriver();
-        if (error != JNISolverGate.JNI_SUCCESS) {
+        error = closeDriver();
+        if (error != JNI_SUCCESS) {
             reporter.writelnf("[gpu/solver] close driver error !");
         }
     }
@@ -238,7 +214,7 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
      * Data in moved from State Vector of gpu geometric solver.
      */
     private void fetchGPUComputedPositionsIntoModel() {
-        double[] coordinateVector = JNISolverGate.fetchStateVector();
+        double[] coordinateVector = fetchStateVector();
         int itr = 0;
         for (int pointId : ModelRegistry.dbPoint().keySet()) {
             double px = coordinateVector[itr * 2];
@@ -253,7 +229,6 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
          */
     }
 
-
     /**
      * Register current database model in GPU solver context.
      */
@@ -263,8 +238,8 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
             int id = point.getId();
             double px = point.getX();
             double py = point.getY();
-            int err = JNISolverGate.registerPointType(id, px, py);
-            if (err != JNISolverGate.JNI_SUCCESS) {
+            int err = registerPointType(id, px, py);
+            if (err != JNI_SUCCESS) {
                 reporter.writelnf("[solver/gpu] point registration failed : %s", point.toString());
                 return false;
             }
@@ -281,8 +256,8 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
             int b = geometric.getB();
             int c = geometric.getC();
             int d = geometric.getD();
-            int err = JNISolverGate.registerGeometricType(primitiveId, geometricType, p1, p2, p3, a, b, c, d);
-            if (err != JNISolverGate.JNI_SUCCESS) {
+            int err = registerGeometricType(primitiveId, geometricType, p1, p2, p3, a, b, c, d);
+            if (err != JNI_SUCCESS) {
                 reporter.writelnf("[solver/gpu] point registration failed : %s", geometric.toString());
                 return false;
             }
@@ -292,8 +267,8 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         for (Parameter parameter : ModelRegistry.dbParameter().values()) {
             int parameterId = parameter.getId();
             double value = parameter.getValue();
-            int err = JNISolverGate.registerParameterType(parameterId, value);
-            if (err != JNISolverGate.JNI_SUCCESS) {
+            int err = registerParameterType(parameterId, value);
+            if (err != JNI_SUCCESS) {
                 reporter.writelnf("[solver/gpu] parameter registration failed : %s", parameter.toString());
                 return false;
             }
@@ -316,8 +291,8 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
                 vecX = fixVector.getX();
                 vecY = fixVector.getY();
             }
-            int err = JNISolverGate.registerConstraintType(constraintId, constraintTypeId, k, l, m, n, paramId, vecX, vecY);
-            if (err != JNISolverGate.JNI_SUCCESS) {
+            int err = registerConstraintType(constraintId, constraintTypeId, k, l, m, n, paramId, vecX, vecY);
+            if (err != JNI_SUCCESS) {
                 reporter.writelnf("[solver/gpu] constraint registration failed : %s", constraint.toString());
                 return false;
             }
@@ -326,4 +301,74 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         return true;
     }
 
+    private int initDriver(int deviceId) {
+        return JNISolverGate.initDriver(deviceId);
+    }
+
+
+    private String lastError() {
+        return JNISolverGate.getLastError();
+    }
+
+    private int initComputationContext() {
+        return JNISolverGate.initComputationContext();
+    }
+
+    private SolverStat getSolverStatistics() {
+        return JNISolverGate.getSolverStatistics();
+    }
+
+    private int solveSystemExecute() {
+        return JNISolverGate.solveSystem();
+    }
+
+    private int initComputation() {
+        return JNISolverGate.initComputation();
+    }
+
+    private int destroyComputation() {
+        return JNISolverGate.destroyComputation();
+    }
+
+    private double[] fetchStateVector() {
+        return JNISolverGate.fetchStateVector();
+    }
+
+    private int registerPointType(int id, double px, double py) {
+        return JNISolverGate.registerPointType(id, px, py);
+    }
+
+    private int registerConstraintType(int constraintId, int constraintTypeId, int k, int l, int m, int n, int paramId, double vecX, double vecY) {
+        return JNISolverGate.registerConstraintType(constraintId, constraintTypeId, k, l, m, n, paramId, vecX, vecY);
+    }
+
+    private int registerGeometricType(int primitiveId, int geometricType, int p1, int p2, int p3, int a, int b, int c, int d) {
+        return JNISolverGate.registerGeometricType(primitiveId, geometricType, p1, p2, p3, a, b, c, d);
+    }
+
+    private int registerParameterType(int parameterId, double value) {
+        return JNISolverGate.registerParameterType(parameterId, value);
+    }
+
+    private void updateConstrainState(int size, int[] constraintId, double[] vecX, double[] vecY) {
+        JNISolverGate.updateConstraintState(constraintId, vecX, vecY, size);
+    }
+
+    private void updateStateVector(double[] stateVector) {
+        JNISolverGate.updateStateVector(stateVector);
+    }
+
+    private int closeDriver() {
+        return JNISolverGate.closeDriver();
+    }
+
+    private int destroyComputationContext() {
+        return JNISolverGate.destroyComputationContext();
+    }
+
+    private void updateParametersValues(int size, double[] value, int[] parameterId) {
+        JNISolverGate.updateParametersValues(parameterId, value, size);
+    }
+
 }
+

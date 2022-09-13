@@ -8,6 +8,7 @@
 #include "solver_kernel.cuh"
 
 #include "gpu_utility.h"
+#include "quda.cuh"
 
 #ifdef DEBUG_GPU
 #define validateStream validateStreamState()
@@ -26,7 +27,7 @@ namespace solver {
 ///         CUSOLVERDN_LOG_MASK = 16
 ///
 
-GPULinearSystem::GPULinearSystem(cudaStream_t stream) : stream(stream), Workspace(NULL), devIpiv(NULL) {
+GPULinearSystem::GPULinearSystem(cudaStream_t stream) : stream(stream), Workspace(NULL), devIpiv(NULL), handle(NULL) {
 
     // ! blocking - look back
     lastError = cudaPeekAtLastError();
@@ -222,12 +223,27 @@ void GPULinearSystem::solverLinearEquationSP(int m, int n, int nnz, int *csrRowP
         }
     }
 
-    /// Tolerance to decide if singular or not .
-    constexpr double tol = 10e-15;
+    if (settings::get()->DEBUG_CSR_FORMAT) {
+        checkCudaStatus(cudaStreamSynchronize(stream));
+        utility::stdout_vector(utility::dev_vector<int>(csrRowPtrA, nnz, stream), "d_csrRowPtrA");
+        utility::stdout_vector(utility::dev_vector<int>(csrColIndA, nnz, stream), "d_csrColIndA");
+        utility::stdout_vector(utility::dev_vector<double>(csrValA, nnz, stream), "d_csrValA");           
+    }
 
-    /// No ordering if reorder=0. Otherwise, symrcm (1), symamd (2),
-    ///  or csrmetisnd (3) is used to reduce zero fill-in.
-    constexpr int reorder = 0;
+#define SOLVER_QR_TOLERANCE 1e-10
+
+    /// Tolerance to decide if singular or not .
+    constexpr double tol = SOLVER_QR_TOLERANCE;
+
+
+#define SOLVER_QR_SCHEMA_SYMRCM 1
+#define SOLVER_QR_SCHEMA_SYMAMD 2
+#define SOLVER_QR_SCHEMA_CSRMETISND 3
+/// No ordering if reorder=0. Otherwise, symrcm (1), symamd (2),
+///  or csrmetisnd (3) is used to reduce zero fill-in.
+#define SOLVER_QR_REORDER SOLVER_QR_SCHEMA_SYMRCM 
+
+    constexpr int reorder = SOLVER_QR_REORDER;
 
     cusolverStatus_t cusolverStatus;
 
@@ -252,10 +268,16 @@ GPULinearSystem::~GPULinearSystem() {
 
     cusparseStatus_t sparseStatus;
 
-    checkCudaStatus(cudaFreeAsync(Workspace, stream));
-    checkCudaStatus(cudaFreeAsync(devIpiv, stream));
-    checkCudaStatus(cudaFreeAsync(devInfo, stream));
-
+    if (Workspace) {
+        checkCudaStatus(cudaFreeAsync(Workspace, stream));
+    }
+    if (devIpiv) {
+        checkCudaStatus(cudaFreeAsync(devIpiv, stream));
+    }
+    if (devInfo) {
+        checkCudaStatus(cudaFreeAsync(devInfo, stream));
+    }
+    
     checkCuSolverStatus(cusolverDnDestroy(handle));
 
     if (descrA) {

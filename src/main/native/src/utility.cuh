@@ -32,6 +32,12 @@ void memcpyAsync(Type **dest_device, std::vector<Type, Allocator<Type>> const &v
     memcpyAsync(dest_device, vector.data(), vector.size(), stream);
 }
 
+
+template <typename Type, template <typename> typename Allocator>
+void memcpyFromDevice(std::vector<Type, Allocator<Type>> &vector, Type *src_device) {
+    checkCudaStatus(cudaMemcpy(vector.data(), src_device, vector.size() * sizeof(Type), cudaMemcpyDeviceToHost));
+}
+
 template <typename Type, template <typename> typename Allocator>
 void memcpyFromDevice(std::vector<Type, Allocator<Type>> &vector, Type *src_device, cudaStream_t stream) {
     /// transfer into new allocation host_vector
