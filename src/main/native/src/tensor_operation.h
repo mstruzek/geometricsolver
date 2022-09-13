@@ -6,6 +6,8 @@
 #include "cublas_v2.h"              /// cuBlas
 #include "cusparse.h"               /// cuSparse
 
+#include "quda.cuh"
+
 class TensorOperation {
   public:
     /// Setup sparse handler
@@ -89,12 +91,6 @@ class TensorOperation {
                            double *d_cooVal);
 
   private:
-    /// <summary>
-    /// Debug current stream execution state !
-    /// </summary>
-    void validateStreamState();
-
-  private:
          
     cudaStream_t stream;
 
@@ -105,23 +101,23 @@ class TensorOperation {
     cublasHandle_t cublasHandle;
 
     /// permutation vector - zaporzyc z cudf <- Memory Manager spowalniac process realokacji !!!
-    int *Prm = nullptr;
+    utility::dev_vector<int> Prm;
     
 
     int Psize;
 
 
     /// pBuffer will store intermediate computation from Xcoosort functions
-    void *pBuffer = nullptr;
+    utility::dev_vector<char> pBuffer;
 
     /// actual allocation for Xcoosort
     size_t pBufferSizeInBytes;
 
     // first permutation vector, XcoosortByColumn
-    int *PT1 = nullptr;
+    utility::dev_vector <int> PT1;
 
     // second permutation vector, XcoosortByRow
-    int *PT2 = nullptr;
+    utility::dev_vector<int>  PT2;
 
     size_t PT_nnz;
 

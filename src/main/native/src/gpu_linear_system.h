@@ -28,7 +28,7 @@ class GPULinearSystem {
     /// <param name="A"></param>
     /// <param name="b"></param>
     /// <param name="N"></param>
-    void solveLinearEquation(double *A, double *b, size_t N);
+    void solveLinearEquation(double *A, double *b, int N);
 
     /// <summary>
     /// Execution plan form computation of A *x = b equation .

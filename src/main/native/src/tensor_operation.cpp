@@ -12,33 +12,25 @@
 
 #include "quda.cuh"
 
-#ifdef DEBUG_GPU
-#define validateStream validateStreamState()
-#else
-#define validateStream
-#endif
-
 ///
 template void TensorOperation::gatherVector<double>(int nnz, cudaDataType valueType, double *PT1, int *PT2, double *PT);
 
-
-TensorOperation::TensorOperation(cudaStream_t stream)
-    : stream(stream), pBuffer(NULL), pBufferSizeInBytes(0), Prm(NULL), Psize(0), PT_nnz(0) {
+TensorOperation::TensorOperation(cudaStream_t stream) : stream(stream), pBufferSizeInBytes(0), Psize(0), PT_nnz(0) {
 
     cusparseStatus_t status;
 
     /// cuSparse computation context
     status = cusparseCreate(&sparseHandle);
     if (status != CUSPARSE_STATUS_SUCCESS) {
-        const char *errorName = cusparseGetErrorName(status);
-        const char *errorStr = cusparseGetErrorString(status);
+        auto errorName = cusparseGetErrorName(status);
+        auto errorStr = cusparseGetErrorString(status);
         fprintf(stderr, "[gpu/cusparse] cusparse initialization failure ; ( %s ) %s \n", errorName, errorStr);
         exit(1);
     }
     status = cusparseSetStream(sparseHandle, stream);
     if (status != CUSPARSE_STATUS_SUCCESS) {
-        const char *errorName = cusparseGetErrorName(status);
-        const char *errorStr = cusparseGetErrorString(status);
+        auto errorName = cusparseGetErrorName(status);
+        auto errorStr = cusparseGetErrorString(status);
         fprintf(stderr, "[gpu/cusparse] cusparse stream failure ; ( %s ) %s \n", errorName, errorStr);
         exit(1);
     }
@@ -48,16 +40,16 @@ TensorOperation::TensorOperation(cudaStream_t stream)
     /// cuBlas computation context
     cublasStatus = cublasCreate(&cublasHandle);
     if (cublasStatus != CUBLAS_STATUS_SUCCESS) {
-        const char *errorName = cusparseGetErrorName(status);
-        const char *errorStr = cusparseGetErrorString(status);
+        auto errorName = cusparseGetErrorName(status);
+        auto errorStr = cusparseGetErrorString(status);
         fprintf(stderr, "[gpu/cusparse] cublas handle failure ; ( %s ) %s \n", errorName, errorStr);
         exit(1);
     }
 
     cublasStatus = cublasSetStream(cublasHandle, stream);
     if (cublasStatus != CUBLAS_STATUS_SUCCESS) {
-        const char *errorName = cusparseGetErrorName(status);
-        const char *errorStr = cusparseGetErrorString(status);
+        auto errorName = cusparseGetErrorName(status);
+        auto errorStr = cusparseGetErrorString(status);
         fprintf(stderr, "[gpu/cublas] stream not set for cublas handler; ( %s ) %s \n", errorName, errorStr);
         exit(1);
     }
@@ -89,7 +81,11 @@ void TensorOperation::cublasAPIDaxpy(int n, const double *alpha, const double *x
 void TensorOperation::memsetD32I(int *devPtr, int value, size_t size, cudaStream_t stream) {
 
     kernelMemsetD32I(stream, devPtr, value, size);
-    validateStream;
+
+    if (settings::get()->DEBUG_CHECK_ARG) {
+        /// block and wait for execution
+        checkCudaStatus(cudaStreamSynchronize(stream));
+    }
 }
 
 /// <summary>
@@ -107,33 +103,21 @@ void TensorOperation::memsetD32I(int *devPtr, int value, size_t size, cudaStream
 /// <param name="initialize">if true PT is not reused in computation and csrRowPtrA is build</param>
 void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *cooColInd, int *csrRowInd, int *PT) {
 
-    cusparseStatus_t status;         
+    cusparseStatus_t status;
 
     /// required minimum vectors lengths
-    if (nnz > PT_nnz) {
-
-        if (PT1 != NULL) {
-            checkCudaStatus(cudaFreeAsync(PT2, stream));
-        }
-        if (PT2 != NULL) {
-            checkCudaStatus(cudaFreeAsync(PT1, stream));
-        }
-
-        checkCudaStatus(cudaMallocAsync((void **)&PT1, nnz * sizeof(int), stream));
-        checkCudaStatus(cudaMallocAsync((void **)&PT2, nnz * sizeof(int), stream));
-
-        PT_nnz = nnz;
+    if (PT1.get_size() < nnz) {
+        PT1 = utility::dev_vector<int>{nnz, stream};
+        PT2 = utility::dev_vector<int>{nnz, stream};
     }
 
     // first acc vector identity vector
-    cusparseCreateIdentityPermutation(sparseHandle, nnz, PT1);
+    checkCusparseStatus(cusparseCreateIdentityPermutation(sparseHandle, nnz, PT1));
 
     /// seconf acc identity vector
-    cusparseCreateIdentityPermutation(sparseHandle, nnz, PT2);
+    checkCusparseStatus(cusparseCreateIdentityPermutation(sparseHandle, nnz, PT2));
 
     /// required computation Buffer
-    size_t lastBufferSize = pBufferSizeInBytes;
-
     status = cusparseXcoosort_bufferSizeExt(sparseHandle, m, n, nnz, cooRowInd, cooColInd, &pBufferSizeInBytes);
     if (status != CUSPARSE_STATUS_SUCCESS) {
         auto errorName = cusparseGetErrorName(status);
@@ -145,11 +129,8 @@ void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *c
     /// async prior action with host reference
     checkCudaStatus(cudaStreamSynchronize(stream));
 
-    if (pBufferSizeInBytes > lastBufferSize) {
-        if (pBuffer) {
-            checkCudaStatus(cudaFreeAsync(pBuffer, stream));
-        }
-        checkCudaStatus(cudaMallocAsync((void **)&pBuffer, pBufferSizeInBytes, stream));
+    if (pBufferSizeInBytes > pBuffer.get_size()) {
+        pBuffer = utility::dev_vector<char>(pBufferSizeInBytes, stream);
     }
 
     checkCudaStatus(cudaStreamSynchronize(stream));
@@ -159,8 +140,6 @@ void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *c
     if (status != CUSPARSE_STATUS_SUCCESS) {
         checkCusparseStatus(status);
     }
-    validateStream;
-
     /// recompute sort by row action on COO tensor
     status = cusparseXcoosortByRow(sparseHandle, m, n, nnz, cooRowInd, cooColInd, PT2, pBuffer);
     if (status != CUSPARSE_STATUS_SUCCESS) {
@@ -169,16 +148,16 @@ void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *c
         fprintf(stderr, "[cusparse/error]  Xcoosort by row failure ; ( %s ) %s \n", errorName, errorStr);
         exit(1);
     }
-    validateStream;    
 
+    if (settings::get()->DEBUG_CHECK_ARG) {
+        checkCudaStatus(cudaStreamSynchronize(stream));
+    }
     // prior action :: if the Stream Ordered Memory Allocator ???
 
-    gatherVector(nnz, CUDA_R_32F, PT1, PT2, PT);
-
-    validateStream;
+    gatherVector<int>(nnz, CUDA_R_32F, PT1, PT2, PT);
 
     if (settings::get()->DEBUG_COO_FORMAT) {
-        cudaStreamSynchronize(stream);
+        checkCudaStatus(cudaStreamSynchronize(stream));
         utility::stdout_vector(utility::dev_vector<int>{cooRowInd, (size_t)nnz, stream}, "cooRowInd --- Xsoort");
         utility::stdout_vector(utility::dev_vector<int>{cooColInd, (size_t)(m + 1), stream}, "cooColInd --- Xsoort");
     }
@@ -191,43 +170,32 @@ void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *c
         fprintf(stderr, "[cusparse/error]  conversion to csr storage format ; ( %s ) %s \n", errorName, errorStr);
         exit(1);
     }
-    validateStream;
 
-    cudaStreamSynchronize(stream);
-    
+    checkCudaStatus(cudaStreamSynchronize(stream));
+
     if (settings::get()->DEBUG_CSR_FORMAT) {
-        cudaStreamSynchronize(stream);
+        checkCudaStatus(cudaStreamSynchronize(stream));
         utility::stdout_vector(utility::dev_vector<int>{csrRowInd, (size_t)(m + 1), stream}, "csrRowInd -- CSR result !");
     }
 
     return;
 }
 
-template <typename RValueType>
-void TensorOperation::gatherVector(int nnz, cudaDataType valueType, RValueType *PT1, int *PT2, RValueType *PT) {
+template <typename ValueType> void TensorOperation::gatherVector(int nnz, cudaDataType valueType, ValueType *PT1, int *PT2, ValueType *PT) {
 
     cusparseStatus_t status;
 
     cusparseSpVecDescr_t vecX; // P2 , vals PT
     cusparseDnVecDescr_t vecY; // P1
 
-    RValueType *X_values = PT;
+    ValueType *X_values = PT;
     int *X_indicies = PT2;
-    RValueType *Y = PT1;
+    ValueType *Y = PT1;
 
     /// not supported CUDA_R_32I
-    status = cusparseCreateSpVec(&vecX, nnz, nnz, X_indicies, X_values, CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ZERO,
-                                 valueType);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        log_error(status, "[cusparse] sparse vector setup failed !");
-        exit(1);
-    }
+    checkCusparseStatus(cusparseCreateSpVec(&vecX, nnz, nnz, X_indicies, X_values, CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ZERO, valueType));
     /// not supported CUDA_R_32I
-    status = cusparseCreateDnVec(&vecY, nnz, Y, valueType);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        log_error(status, "[cusparse] dense vector setup failed !");
-        exit(1);
-    }
+    checkCusparseStatus(cusparseCreateDnVec(&vecY, nnz, Y, valueType));
 
     /// permutation vector compact operatior PT[u] = PT1[PT2[u]]
 
@@ -245,14 +213,15 @@ void TensorOperation::gatherVector(int nnz, cudaDataType valueType, RValueType *
 void TensorOperation::invertPermuts(int n, int *PT, int *INV) {
 
     inversePermutationVector(stream, PT, INV, n);
-    validateStream;
+
+    if (settings::get()->DEBUG_CHECK_ARG) {
+        /// block and wait for execution
+        checkCudaStatus(cudaStreamSynchronize(stream));
+    }
 }
 
+void TensorOperation::stdout_coo_tensor(cudaStream_t stream, int m, int n, int nnz, int *d_cooRowInd, int *d_cooColInd, double *d_cooVal) {
 
-
-void TensorOperation::stdout_coo_tensor(cudaStream_t stream, int m, int n, int nnz, int *d_cooRowInd, int *d_cooColInd,
-                       double *d_cooVal) {
-    
     utility::host_vector<int> cooRowInd{(size_t)nnz};
     utility::host_vector<int> cooColInd{(size_t)nnz};
     utility::host_vector<double> cooVal{(size_t)nnz};
@@ -286,31 +255,9 @@ void TensorOperation::stdout_coo_tensor(cudaStream_t stream, int m, int n, int n
 
 TensorOperation::~TensorOperation() {
     //
-    if (Prm) {
-        checkCudaStatus(cudaFreeAsync(Prm, stream));
-    }
-    if (pBuffer) {
-        checkCudaStatus(cudaFreeAsync(pBuffer, stream));
-    }
-    if (PT1) {
-        checkCudaStatus(cudaFreeAsync(PT1, stream));
-    }
-    if (PT2) {
-        checkCudaStatus(cudaFreeAsync(PT2, stream));
-    }
-
     checkCusparseStatus(cusparseDestroy(sparseHandle));
 
     checkCublasStatus(cublasDestroy(cublasHandle));
-}
-
-void TensorOperation::validateStreamState() {
-    if (settings::get()->DEBUG_CHECK_ARG) {
-        /// submitted kernel into  cuda driver
-        checkCudaStatus(cudaPeekAtLastError());
-        /// block and wait for execution
-        checkCudaStatus(cudaStreamSynchronize(stream));
-    }
 }
 
 

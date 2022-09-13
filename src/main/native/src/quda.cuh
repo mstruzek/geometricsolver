@@ -13,7 +13,6 @@
 
 #include "quda.cuh"
 
-
 namespace utility {
 
 template <typename Type> class dev_vector;
@@ -72,14 +71,12 @@ template <typename Type> class host_vector {
     /// <returns></returns>
     Type *data() { return _memory; }
 
-
     /// <summary>
     /// convenient accessor in host context
     /// </summary>
     /// <typeparam name="Type"></typeparam>
 
     Type &operator[](const size_t index) noexcept { return _memory[index]; }
-
 
     /// <summary>
     /// copy host vector possible initialized with cuda pinned memory.
@@ -155,32 +152,45 @@ template <typename Type> class host_vector {
     bool owner;
 };
 
-
 /// ===================================================== ===================================================== ///
 template <typename Type> class dev_vector {
   public:
-     
+    /// <summary>
+    /// No resources attached
+    /// </summary>
     dev_vector() : _memory(NULL), size(0), stream(NULL), owner(false) {}
 
     dev_vector(nullptr_t) : dev_vector() {}
 
+    /// <summary>
+    /// Need to transfer ownerhip of  _memery allocataion.
+    /// </summary>
+    /// <param name="other"></param>
     dev_vector(dev_vector const &other) = delete;
 
-
+    /// <summary>
+    /// Need to transfer ownerhip of  _memery allocataion.
+    /// </summary>
+    /// <param name="other"></param>
+    /// <returns></returns>
     dev_vector &operator=(dev_vector const &other) = delete;
 
-    dev_vector(dev_vector &&other) : dev_vector() { 
-        *this = std::move(other); 
-    };
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="other"></param>
+    dev_vector(dev_vector &&other) : dev_vector() { *this = std::move(other); };
 
-    dev_vector &operator=(nullptr_t) { return *this;
-    }
-
+    /// <summary>
+    /// Temporary right hand side object will take ownerhip of resource to destroy what is needed.
+    /// </summary>
+    /// <param name="other"></param>
+    /// <returns></returns>
     dev_vector &operator=(dev_vector &&other) {
-        _memory = std::exchange(other._memory, nullptr);
-        size = std::exchange(other.size, 0);
-        stream = std::exchange(other.stream, nullptr);
-        owner = std::exchange(other.owner, false);
+        _memory = std::exchange(other._memory, _memory);
+        size = std::exchange(other.size, size);
+        stream = std::exchange(other.stream, stream);
+        owner = std::exchange(other.owner, owner);
         return *this;
     };
 
@@ -190,16 +200,19 @@ template <typename Type> class dev_vector {
     /// <param name="memory"></param>
     /// <param name="size"></param>
     /// <param name="stream"></param>
-    dev_vector(Type *memory, size_t size, cudaStream_t stream)
-        : _memory(memory), size(size), stream(stream), owner(false) {}
-    
-    dev_vector(cu_vector<Type> &vector, cudaStream_t stream)
-        : dev_vector(vector.size(), stream) {
+    dev_vector(Type *memory, size_t size, cudaStream_t stream) : _memory(memory), size(size), stream(stream), owner(false) {}
+
+    /// <summary>
+    /// Helper utility for pinned memory vector.
+    /// </summary>
+    /// <param name="vector"></param>
+    /// <param name="stream"></param>
+    dev_vector(cu_vector<Type> &vector, cudaStream_t stream) : dev_vector(vector.size(), stream) {
         memcpy_of(host_vector<Type>(vector.data(), vector.size()), stream);
     }
 
     /// <summary>
-    /// initialize owning memory extent possibly allocated on selected stream
+    /// Initialize owning memory extent possibly allocated on selected stream
     /// </summary>
     /// <param name="size"></param>
     /// <param name="stream"></param>
@@ -218,6 +231,8 @@ template <typename Type> class dev_vector {
         }
     }
 
+    dev_vector(int size, cudaStream_t stream = nullptr) : dev_vector(static_cast<size_t>(size), stream) {}
+
     /// <summary>
     /// default accesor to memory reference
     /// </summary>
@@ -230,10 +245,22 @@ template <typename Type> class dev_vector {
     /// <returns></returns>
     operator void *() { return data(); }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
     Type *data() { return _memory; }
 
+    /// <summary>
+    /// Allocation size in units of basic type - allocation/sizeof(Type) 
+    /// </summary>
+    /// <returns></returns>
     size_t get_size() const { return size; }
 
+    /// <summary>
+    /// Associated stream of allocation for this extenr, also used as default in dtor.
+    /// </summary>
+    /// <returns></returns>
     cudaStream_t get_stream() { return stream; }
 
     /// <summary>
@@ -249,8 +276,7 @@ template <typename Type> class dev_vector {
         }
         cudaError_t status;
         if (stream) {
-            status =
-                cudaMemcpyAsync(_memory, src.data(), sizeof(Type) * src.get_size(), cudaMemcpyHostToDevice, stream);
+            status = cudaMemcpyAsync(_memory, src.data(), sizeof(Type) * src.get_size(), cudaMemcpyHostToDevice, stream);
         } else {
             status = cudaMemcpy(_memory, src.data(), sizeof(Type) * src.get_size(), cudaMemcpyHostToDevice);
         }
@@ -289,27 +315,31 @@ template <typename Type> class dev_vector {
         return *this;
     }
 
-
-     dev_vector<Type> &memcpy_of(cu_vector<Type> const &vector, cudaStream_t stream = nullptr)  {
+    /// <summary>
+    /// Copy from pinned memory allocation.
+    /// </summary>
+    /// <param name="vector"></param>
+    /// <param name="stream"></param>
+    /// <returns></returns>
+    dev_vector<Type> &memcpy_of(cu_vector<Type> const &vector, cudaStream_t stream = nullptr) {
 
         if (size != vector.size()) {
-             fprintf(stderr, "[dev_vector] allocations are not identical ! \n");
-             exit(1);
-         }
-         cudaError_t status;
-         if (stream) {
-             status =
-                 cudaMemcpyAsync(_memory, vector.data(), sizeof(Type) * vector.size(), cudaMemcpyHostToDevice, stream);
-         } else {
-             status = cudaMemcpy(_memory, vector.data(), sizeof(Type) * vector.size(), cudaMemcpyHostToDevice);
-         }
-         if (status != cudaSuccess) {
-             const char *errorName = cudaGetErrorName(status);
-             const char *errorStr = cudaGetErrorString(status);
-             fprintf(stderr, "[dev_vector] memcpy into device failed ; ( %s )  %s \n", errorName, errorStr);
-             exit(1);
-         }
-         return *this;
+            fprintf(stderr, "[dev_vector] allocations are not identical ! \n");
+            exit(1);
+        }
+        cudaError_t status;
+        if (stream) {
+            status = cudaMemcpyAsync(_memory, vector.data(), sizeof(Type) * vector.size(), cudaMemcpyHostToDevice, stream);
+        } else {
+            status = cudaMemcpy(_memory, vector.data(), sizeof(Type) * vector.size(), cudaMemcpyHostToDevice);
+        }
+        if (status != cudaSuccess) {
+            const char *errorName = cudaGetErrorName(status);
+            const char *errorStr = cudaGetErrorString(status);
+            fprintf(stderr, "[dev_vector] memcpy into device failed ; ( %s )  %s \n", errorName, errorStr);
+            exit(1);
+        }
+        return *this;
     }
 
     /// release memory into cuda driver only when in possession of this memory extent
@@ -347,24 +377,22 @@ template <typename Type> class dev_vector {
 
 /// ===================================================== ===================================================== ///
 
-template <typename... Type> __device__ __host__ void log(const char *format, Type const& ... values) {
-    ::printf(format, values...);
-}
+template <typename... Type> __device__ __host__ void log(const char *format, Type const &...values) { ::printf(format, values...); }
 
 /// ===================================================== ===================================================== ///
 
-    template <typename Type> struct printer {};
+template <typename Type> struct printer {};
 
 template <typename Type> void stdout_vector_kernel(cudaStream_t stream, Type *vector, int size);
 
 template <typename Type> void stdout_vector(dev_vector<Type> &vector, const char *title) {
     log("%s --- --- ---\n", title);
-    stdout_vector_kernel<Type>(vector.get_stream(),vector.data(), vector.get_size());
+    stdout_vector_kernel<Type>(vector.get_stream(), vector.data(), (int)vector.get_size());
     checkCudaStatus(cudaStreamSynchronize(vector.get_stream()));
     log("\n");
 }
 
-template <typename Type> void stdout_vector(Type* vector, size_t size, const char *title, cudaStream_t stream) {
+template <typename Type> void stdout_vector(Type *vector, size_t size, const char *title, cudaStream_t stream) {
     log("%s --- --- ---\n", title);
 
     stdout_vector_kernel<Type>(stream, vector, size);
@@ -386,6 +414,6 @@ template <typename Type> void stdout_vector(host_vector<Type> &vector, const cha
 
 /// ===================================================== ===================================================== ///
 
-} // namespace quda
+} // namespace utility
 
 #endif // _QUDA_CUH_

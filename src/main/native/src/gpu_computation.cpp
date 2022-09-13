@@ -542,20 +542,17 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
         if (computationMode == ComputationMode::SPARSE_LAYOUT) {
             /// COMPUTE in sorted CSR format
 
-            const int m = static_cast<int>(dimension);
-            const int n = static_cast<int>(dimension);
+            const int m = dimension;
+            const int n = dimension;
 
-            if (itr == FIRST_ROUND) {
-                
+            if (itr == FIRST_ROUND) {                
                 ///  memset -1 prze iteracja 
-
                 d_cooRowInd_tmp.memcpy_of(d_cooRowInd, stream);
                 d_csrColIndA.memcpy_of(d_cooColInd, stream);
 
                 ///  destructive operation - in-place  Xcoosort !!! requirment for solver and DirectLayout
                 tensorOperation.convertToCsr(m, n, nnz, d_cooRowInd_tmp, d_csrColIndA, d_csrRowPtrA, d_PT);
                 validateStream;
-
 
                 /// gather d_csrValuA from cooValues;
                 tensorOperation.gatherVector<double>(nnz, CUDA_R_64F, d_cooVal, d_PT, d_csrValA);
@@ -620,20 +617,16 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
             DebugTensorSV(dev_ev);
 
         } else if (computationMode == ComputationMode::SPARSE_LAYOUT) {
-
-            
-
+           
             /// ---------------------------------------------------------------------------------------- ///
             ///                     Sparse - CuSolver LINER SYSTEM equation solver                       ///
             /// ---------------------------------------------------------------------------------------- ///
-
-            int const m = static_cast<int>(dimension);
-            int const n = static_cast<int>(dimension);
+            int const m = dimension;
+            int const n = dimension;
 
             int *singularity = &ev->singularity;
 
-            linearSystem->solverLinearEquationSP(m, n, nnz, d_csrRowPtrA, d_csrColIndA, d_csrValA, dev_b, dev_dx,
-                                                 singularity);
+            linearSystem->solverLinearEquationSP(m, n, nnz, d_csrRowPtrA, d_csrColIndA, d_csrValA, dev_b, dev_dx, singularity);
             validateStream;
 
             if (settings::get()->DEBUG_CHECK_ARG) {
@@ -646,7 +639,6 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
                 }
                 fprintf(stderr, "[solver] tensor A is invertible ;  %d \n", *singularity);
             }
-
             /// uaktualniamy state vector SV = SV + delta
             StateVectorAddDelta(dev_SV[itr], dev_dx);
 
@@ -693,8 +685,6 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
     checkCudaStatus(cudaStreamSynchronize(stream));
 
     if (settings::get()->DEBUG) {
-        ///
-        ///
         ReportComputationResult(computation);
     }
 
@@ -728,8 +718,8 @@ void GPUComputation::computationResultHandler(cudaStream_t stream, cudaError_t s
 
     // obsluga bledow w strumieniu
     if (status != cudaSuccess) {
-        const char *errorName = cudaGetErrorName(status);
-        const char *errorStr = cudaGetErrorString(status);
+        auto errorName = cudaGetErrorName(status);
+        auto errorStr = cudaGetErrorString(status);
         printf("[error] - computation id [%d] ,  %s = %s \n", computation->cID, errorName, errorStr);
         return;
     }

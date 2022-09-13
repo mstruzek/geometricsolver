@@ -126,8 +126,8 @@ int tensorOpsCooConstraintJacobian(Constraint const &constraint) {
         ///  1 * quick
         return 1;
     case CONSTRAINT_TYPE_ID_CONNECT_2_POINTS:
-        /// 2 * diagonal (2)
-        return 4;
+        /// 2 * diagonal (4)
+        return 8;
     case CONSTRAINT_TYPE_ID_HORIZONTAL_POINT:
         /// 2 * quick
         return 2;

@@ -204,9 +204,9 @@ class GPUComputation {
     /// Accumulated Writes in COO format from kernel into Jacobian Tensor
     utility::cu_vector<int> accCooWriteJacobianTensor;
 
-    size_t size;      /// wektor stanu
-    size_t coffSize;  /// wspolczynniki Lagrange
-    size_t dimension; /// dimension = size + coffSize
+    int size;      /// wektor stanu
+    int coffSize;  /// wspolczynniki Lagrange
+    int dimension; /// dimension = size + coffSize
 
   private:
     /// device vectors

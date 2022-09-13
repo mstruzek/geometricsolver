@@ -98,12 +98,9 @@ int main(int argc, char* args[])
     /// --definition-end: 
 
 
-
-
     err = jni_initComputation(&env, eclass);
 
     err = jni_solveSystem(&env, eclass);
-
 
     //err = jni_solveSystem(&env, eclass);
 

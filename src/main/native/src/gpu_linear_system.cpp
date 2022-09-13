@@ -58,7 +58,7 @@ GPULinearSystem::GPULinearSystem(cudaStream_t stream) : stream(stream), Workspac
     }
 }
 
-void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
+void GPULinearSystem::solveLinearEquation(double *A, double *b, int N) {
     //
     //     LU Solver -  !!    this solver REQUIRMENTS -  "  NxN tensor "
     //
@@ -83,11 +83,10 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
 
     int preLwork = Lwork;
 
-    int dN = (int)N;
     ///
     /// LU - calculate the n of work buffers needed.
     ///
-    checkCuSolverStatus(cusolverDnDgetrf_bufferSize(handle, dN, dN, A, dN, &Lwork));
+    checkCuSolverStatus(cusolverDnDgetrf_bufferSize(handle, N, N, A, N, &Lwork));
 
     checkCudaStatus(cudaPeekAtLastError());
 
@@ -106,7 +105,7 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
         Lwork = (int)(Lwork * settings::get()->CU_SOLVER_LWORK_FACTOR);
 
         checkCudaStatus(cudaMallocAsync((void **)&Workspace, Lwork * sizeof(double), stream));
-        checkCudaStatus(cudaMallocAsync((void **)&devIpiv, dN * sizeof(double), stream));
+        checkCudaStatus(cudaMallocAsync((void **)&devIpiv, N * sizeof(double), stream));
 
         checkCudaStatus(cudaStreamSynchronize(stream));
 
@@ -120,7 +119,7 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
     ///
     ///     P - permutation vector
     ///
-    checkCuSolverStatus(cusolverDnDgetrf(handle, dN, dN, A, dN, Workspace, devIpiv, devInfo));
+    checkCuSolverStatus(cusolverDnDgetrf(handle, N, N, A, N, Workspace, devIpiv, devInfo));
 
     /*
 
@@ -152,7 +151,7 @@ void GPULinearSystem::solveLinearEquation(double *A, double *b, size_t N) {
     ///
     ///               solver linear equation A * X = B
     ///
-    checkCuSolverStatus(cusolverDnDgetrs(handle, CUBLAS_OP_N, (int)N, 1, A, (int)N, devIpiv, b, (int)N, devInfo));
+    checkCuSolverStatus(cusolverDnDgetrs(handle, CUBLAS_OP_N, N, 1, A, N, devIpiv, b, N, devInfo));
 
     /*
 

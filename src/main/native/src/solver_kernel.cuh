@@ -33,8 +33,6 @@
 
 #define KERNEL_EXECUTOR
 
-#define KERNEL_EXECUTOR_QQQ // przygotowac  KERNEL_EXECUTOR
-
 /// ===========================================================================================
 /// <summary>
 ///  Kernel Permutation compaction routine. Kernel Dispatcher.
