@@ -196,7 +196,7 @@ template <typename TObject> class NVector {
         return *this;
     };
 
-    __GPU_COMM_INL__ TObject &operator[](const size_t idx) {
+    __GPU_COMM_INL__ TObject &operator[](const size_t idx) const {
 #ifdef NVECTOR_DEBUG
         if (idx >= _size)
             printf("illegal memmory access : mem (%p)  , id ( %zu )\n", _data, idx);

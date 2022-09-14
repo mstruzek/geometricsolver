@@ -116,10 +116,11 @@ KERNEL_EXECUTOR void StateVectorAddDifference(cudaStream_t stream, double *SV, d
 /// Single cuda thread is responsible for evalution of an assigned geometric object.
 /// </summary>
 /// <param name="stream"></param>
+/// <param name="NS">CTA shared memory</param>
 /// <param name="ecdata"></param>
 /// <param name="N"></param>
 /// <returns></returns>
-KERNEL_EXECUTOR void ComputeStiffnessMatrix(cudaStream_t stream, ComputationState *ecdata, size_t N);
+KERNEL_EXECUTOR void ComputeStiffnessMatrix(cudaStream_t stream,int NS, ComputationState *ecdata, size_t N);
 
 
 /// ==================================== FORCE INTENSITY ======================================
@@ -149,10 +150,11 @@ KERNEL_EXECUTOR void EvaluateConstraintValue(cudaStream_t stream, ComputationSta
 /// Evaluate Constraint Jacobian  (FI) - (dfi/dq)   lower slice matrix of A
 /// </summary>
 /// <param name="stream"></param>
+/// <param name="NS">CTA shared memeory</param>
 /// <param name="ecdata"></param>
 /// <param name="N"></param>
 /// <returns></returns>
-KERNEL_EXECUTOR void EvaluateConstraintJacobian(cudaStream_t stream, ComputationState *ecdata, size_t N);
+KERNEL_EXECUTOR void EvaluateConstraintJacobian(cudaStream_t stream, int NS, ComputationState *ecdata, size_t N);
 
 
 /// ====================== CONSTRAINT TRANSPOSED JACOBIAN MATRIX ==============================
@@ -160,10 +162,11 @@ KERNEL_EXECUTOR void EvaluateConstraintJacobian(cudaStream_t stream, Computation
 /// Evaluate Constraint Transposed Jacobian  (FI)' - (dfi/dq)'   tr-transponowane - upper slice matrix  of A
 /// </summary>
 /// <param name="stream"></param>
+/// <param name="NS">CTA shared memeory</param>
 /// <param name="ecdata"></param>
 /// <param name="N"></param>
 /// <returns></returns>
-KERNEL_EXECUTOR void EvaluateConstraintTRJacobian(cudaStream_t stream, ComputationState *ecdata, size_t N);
+KERNEL_EXECUTOR void EvaluateConstraintTRJacobian(cudaStream_t stream, int NS, ComputationState *ecdata, size_t N);
 
 
 /// ================================== HESSIAN MATRIX  ========================================
@@ -172,10 +175,11 @@ KERNEL_EXECUTOR void EvaluateConstraintTRJacobian(cudaStream_t stream, Computati
 /// Evaluate Constraint Hessian Matrix (FI)' - ((dfi/dq)`)/dq
 /// </summary>
 /// <param name="stream"></param>
+/// <param name="NS">CTA shared memeory</param>
 /// <param name="ecdata"></param>
 /// <param name="N"></param>
 /// <returns></returns>
-KERNEL_EXECUTOR void EvaluateConstraintHessian(cudaStream_t stream, ComputationState *ecdata, size_t N);
+KERNEL_EXECUTOR void EvaluateConstraintHessian(cudaStream_t stream, int NS, ComputationState *ecdata, size_t N);
 
 
 #endif // #ifndef _SOLVER_KERNEL_CUH_

@@ -103,9 +103,11 @@ public enum JNIDebugParameters {
     }
 
     public static class Computation {
-        public static final int DENSE_LAYOUT  = 1;
-        public static final int SPARSE_LAYOUT = 2;
-        /// public static final int DIRECT_LAYOUT = 3; // *this is continue next steps operation from sparse layout !
+        public static final int DENSE_MODE = 1;     // LU solver -  DENSE_LAYOUT
+        public static final int SPARSE_MODE_QR = 2;    // Sparse QR solver - SPARSE_LAYOUT
+        public static final int DIRECT_MODE_QR = 3;    // Sparse QR solver - one SPARSE LAYOUT continue with DIRECT_LAYOUT
+        public static final int SPARSE_MODE_LU = 4;    // Sparse LU incomplete solver - SPARSE_LAYOUT
+        public static final int DIRECT_MODE_LU = 5;    // Sparse LU incomplete solver - one SPARSE LAYOUT continue with DIRECT_LAYOUT
     }
 
 

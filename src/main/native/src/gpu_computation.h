@@ -102,7 +102,7 @@ class GPUComputation {
 
     void InitializeStateVector();
 
-    void DeviceConstructTensorA(ComputationState *dev_ev, cudaStream_t stream);
+    void DeviceConstructTensorA(ComputationState *dev_ev, ComputationMode mode, cudaStream_t stream);
 
     void DeviceConstructTensorB(ComputationState *dev_ev, cudaStream_t stream);
 
@@ -287,7 +287,7 @@ class GPUComputation {
     utility::dev_vector<int> d_PT;
 
     /// inversed permutation vector INVP[i] - store into, gather from "i"
-    utility::dev_vector < int > d_INV_PT;
+    utility::dev_vector<int> d_INV_PT;
 
     /// Solver Performance Watchers
   private:

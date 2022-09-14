@@ -26,27 +26,27 @@ struct ComputationState {
         return *vector;
     }
 
-    __GPU_DEV_INL__ double getLagrangeMultiplier(int constraintId) const {
+    __GPU_DEV_INL__ double getLagrangeMultiplier(int constraintId) {
         int multiOffset = accConstraintSize[constraintId];
         return SV[size + multiOffset];
     }
 
-    __GPU_DEV_INL__ graph::Point const &getPointRef(int pointId) {
+    __GPU_DEV_INL__ graph::Point const &getPointRef(int pointId) const {
         const size_t offset = pointOffset[pointId];
         return points[offset];
     }
 
-    __GPU_DEV_INL__ graph::Geometric *getGeometricObject(int geometricId) {
+    __GPU_DEV_INL__ graph::Geometric *getGeometricObject(int geometricId) const {
         const size_t offset = geometricOffset[geometricId];
         return &geometrics[offset];
     }
 
-    __GPU_DEV_INL__ graph::Constraint *getConstraint(int constraintId) {
+    __GPU_DEV_INL__ graph::Constraint *getConstraint(int constraintId) const {
         const size_t offset = constraintOffset[constraintId];
         return &constraints[offset];
     }
 
-    __GPU_DEV_INL__ graph::Parameter *getParameter(int parameterId) {
+    __GPU_DEV_INL__ graph::Parameter *getParameter(int parameterId) const {
         const size_t offset = parameterOffset[parameterId];
         return &parameters[offset];
     }
@@ -91,34 +91,34 @@ struct ComputationState {
     NVector<graph::Parameter> parameters;
 
     // NVector direct map
-    int *pointOffset;
+    const int *pointOffset;
 
     // NVector direct map
-    int *geometricOffset;
+    const int *geometricOffset;
 
     // NVector direct map
-    int *constraintOffset;
+    const int *constraintOffset;
 
     /// paramater offs from given ID
-    int *parameterOffset;
+    const int *parameterOffset;
 
     /// Accumulative offs with geometric size evaluation function,  [ 0, ... , N ]
-    int *accGeometricSize;
+    const int *accGeometricSize;
 
     /// Accumulative offs with constraint size evaluation function, [ 0, ... , N ]
-    int *accConstraintSize;
+    const int *accConstraintSize;
 
     /// computation mode applied onto "A tensor" at this iteration
     ComputationMode computationMode;
 
     /// Relative Offsets - Accumulated Writes in COO format from kernel into  Stiff Tensor
-    int *accCooWriteStiffTensor;
+    const int *accCooWriteStiffTensor;
 
     /// Relative Offsets - Accumulated Writes in COO format from kernel into Jacobian Tensor
-    int *accCooWriteJacobianTensor;
+    const int *accCooWriteJacobianTensor;
     
     /// Relative Offsets -  Accumulate writes in COO format form kernel into Hessian Tensor 
-    int *accCooWriteHessianTensor;
+    const int *accCooWriteHessianTensor;
 
     /// non-zero elements in coo or csr ; nnz =  cooWritesStiffSize + 2 * cooWirtesJacobianSize + optional(hessian)*
     int nnz;
@@ -130,7 +130,7 @@ struct ComputationState {
     int cooWirtesJacobianSize;
 
     // CSR format, inverse permutation vector, direct addressing from COO to sparse matrix in CSR format
-    int *INV_P;
+    const int *INV_P;
 
     /// not-transformed row vector of indicies, Coordinate Format COO
     int *cooRowInd;

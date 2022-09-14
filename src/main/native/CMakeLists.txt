@@ -55,7 +55,7 @@ find_package(CUDAToolkit 11.7)
 add_library(${PROJECT_SHARED_LIBRARY} SHARED
 		src/solver_kernel.cu
 		src/model.cu
-		src/quda.cu
+		src/quda.cpp
         src/cuerror.cpp
         src/settings.cpp
 		src/gpu_utility.cpp

@@ -62,13 +62,15 @@ int main(int argc, char* args[])
     //jni_setBooleanProperty  
     
         
-    jni_setLongProperty(&env, eclass, 12, (jlong) 1);  // settings::get()->COMPUTATION_MODE  = /// 12  - 1 - DENSE_LAYOUT , 2 - SPARSE_LAYOUT , *3 - DIRECT_LAYOUT
+    jni_setLongProperty(&env, eclass, 12, (jlong) 3);  // settings::get()->COMPUTATION_MODE  = /// 12  - 1 - DENSE_LAYOUT , 2 - SPARSE_LAYOUT , *3 - DIRECT_LAYOUT
 
 
     jni_setBooleanProperty(&env, eclass, 8, (jboolean) true);  // settings::get()->DEBUG_SOLVER_CONVERGENCE = false; 
     jni_setBooleanProperty(&env, eclass, 9, (jboolean) true);  // settings::get()->DEBUG_CHECK_ARG = false;
     jni_setBooleanProperty(&env, eclass, 2, (jboolean) true);  // settings::get()->DEBUG_TENSOR_A= true;
     jni_setBooleanProperty(&env, eclass, 3, (jboolean) true);  // settings::get()->DEBUG_TENSOR_B= true;
+
+    jni_setBooleanProperty(&env, eclass, 7, (jboolean) true);  // settings::get()->SOLVER_INC_HESSIAN = false;
     
     
 
