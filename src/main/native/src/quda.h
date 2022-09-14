@@ -171,13 +171,14 @@ template <typename Type> class dev_vector {
     /// Take a snapshot of reference device vector.
     /// </summary>
     /// <param name="other"></param>
-    dev_vector(dev_vector const &other) = delete; 
+    dev_vector(dev_vector const &other) noexcept : dev_vector(){ *this = other;
+    }; 
 
     /// <summary>
     /// Become a new owner of other memory allocation.
     /// </summary>
     /// <param name="other"></param>
-    dev_vector(dev_vector &&other) : dev_vector() { *this = std::move(other); };
+    dev_vector(dev_vector &&other) noexcept : dev_vector() { *this = std::move(other); };
 
     /// <summary>
     /// setup non ownig reference to device memory extent
@@ -301,7 +302,7 @@ template <typename Type> class dev_vector {
     /// </summary>
     /// <param name="other"></param>
     /// <returns></returns>
-    dev_vector &operator=(dev_vector &&other) {
+    dev_vector &operator=(dev_vector &&other) noexcept {
         if (owner) {
             this->~dev_vector();
         }
@@ -317,7 +318,16 @@ template <typename Type> class dev_vector {
     /// </summary>
     /// <param name="other"></param>
     /// <returns></returns>
-    dev_vector &operator=(dev_vector const &other) = delete; 
+    dev_vector &operator=(dev_vector const &other) noexcept {
+        if (owner) {
+            this->~dev_vector();
+        }
+        owner = false;
+        memory = other.memory;
+        size = other.size;
+        stream = other.stream;
+        return *this;
+    } 
 
     /// <summary>
     /// Type safe implicit conversion function.
