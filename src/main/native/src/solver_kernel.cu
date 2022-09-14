@@ -23,7 +23,7 @@
 /// <param name="PT2"></param>
 /// <param name="PT"></param>
 /// <returns></returns>
-__global__ void __compactPermutationVector__(int nnz, int *PT1, int *PT2, int *PT) {
+__global__ void __compactPermutationVector__(int nnz, const int* __restrict__ PT1, const int *  __restrict__ PT2, int* __restrict__ PT) {
 
     int tId = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -60,7 +60,7 @@ void compactPermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStrea
 /// <param name="OUTP">dense output vector - direct form</param>
 /// <param name="N">size of intput/output vector</param>
 /// <returns></returns>
-__global__ void __inversePermuationVector__(int *INP, int *OUTP, size_t N) {
+__global__ void __inversePermuationVector__(const int * __restrict__ INP, int * __restrict__ OUTP, size_t N) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
     const unsigned offset = ELEMENTS_PER_THREAD * threadId;
     const unsigned upperLimit = offset + ELEMENTS_PER_THREAD;
@@ -107,7 +107,7 @@ void inversePermutationVector(cudaStream_t stream, int *INP, int *OUTP, size_t N
 
 /// =======================================================================================
 
-__global__ void __kernelMemsetD32I__(int *devPtr, int value, size_t size) {
+__global__ void __kernelMemsetD32I__(int * __restrict__ devPtr, int value, size_t size) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
     const unsigned offset = ELEMENTS_PER_THREAD * threadId;
     const unsigned upperLimit = offset + ELEMENTS_PER_THREAD;
@@ -156,7 +156,7 @@ template <typename... Args> __device__ void log_error(const char *formatStr, Arg
 
 /// --------------- [ KERNEL# GPU ]
 
-__global__ void __CopyIntoStateVector__(double *SV, graph::Point *points, size_t size) {
+__global__ void __CopyIntoStateVector__(double * __restrict__ SV, const graph::Point * __restrict__ points, size_t size) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
     const unsigned offset = threadId * ELEMENTS_PER_THREAD;
     const unsigned upper_limit = offset + ELEMENTS_PER_THREAD;
@@ -207,7 +207,7 @@ KERNEL_EXECUTOR void CopyIntoStateVector(cudaStream_t stream, double *SV, graph:
 /// </summary>
 /// <param name="ec"></param>
 /// <returns></returns>
-__global__ void __CopyFromStateVector__(graph::Point *points, double *SV, size_t size) {
+__global__ void __CopyFromStateVector__(graph::Point* __restrict__ points, const double * __restrict__ SV, size_t size) {
 
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
     const unsigned offset = threadId * ELEMENTS_PER_THREAD;
@@ -264,7 +264,7 @@ KERNEL_EXECUTOR void CopyFromStateVector(cudaStream_t stream, graph::Point *poin
 /// <param name="dx"></param>
 /// <param name="N"></param>
 /// <returns></returns>
-__global__ void __StateVectorAddDifference__(double *SV, double *dx, size_t N) {
+__global__ void __StateVectorAddDifference__(double * __restrict__ SV, const double * __restrict__ dx, size_t N) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
     const unsigned offset = threadId * ELEMENTS_PER_THREAD;
     const unsigned upper_limit = offset + ELEMENTS_PER_THREAD;

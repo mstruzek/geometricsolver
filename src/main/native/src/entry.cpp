@@ -62,7 +62,7 @@ int main(int argc, char* args[])
     //jni_setBooleanProperty  
     
         
-    jni_setLongProperty(&env, eclass, 12, (jlong) 2);  // settings::get()->COMPUTATION_MODE  = /// 12  - 1 - DENSE_LAYOUT , 2 - SPARSE_LAYOUT , *3 - DIRECT_LAYOUT
+    jni_setLongProperty(&env, eclass, 12, (jlong) 1);  // settings::get()->COMPUTATION_MODE  = /// 12  - 1 - DENSE_LAYOUT , 2 - SPARSE_LAYOUT , *3 - DIRECT_LAYOUT
 
 
     jni_setBooleanProperty(&env, eclass, 8, (jboolean) true);  // settings::get()->DEBUG_SOLVER_CONVERGENCE = false; 

@@ -98,7 +98,7 @@ class SparseLayout {
   public:
     __GPU_DEV_INLF__ SparseLayout() : baseOffset(0), accWriteOffset(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
 
-    __GPU_DEV_INLF__ SparseLayout(int baseOffset, int *_accWriteOffset, int *_cooRowInd, int *_cooColInd, double *_cooVal)
+    __GPU_DEV_INLF__ SparseLayout(int baseOffset, const int *_accWriteOffset, int *_cooRowInd, int *_cooColInd, double *_cooVal)
         : baseOffset(baseOffset), accWriteOffset(_accWriteOffset), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {}
 
     __GPU_DEV_INLF__ void set(int row, int col, double value) {
@@ -163,12 +163,12 @@ class SparseLayout {
     }
 
   private:
-    int baseOffset;      /// base offset for jacobian , transponse jacobina or hessian*
-    int *accWriteOffset; /// cub::exclusive_scan , offset for this Constraint or Geometric Block
+    const int baseOffset;      /// base offset for jacobian , transponse jacobina or hessian*
+    const int * __restrict__ accWriteOffset; /// cub::exclusive_scan , offset for this Constraint or Geometric Block
 
-    int *cooRowInd; /// COO row indicies
-    int *cooColInd; /// COO column indicies
-    double *cooVal; /// COO values
+    int * __restrict__ cooRowInd; /// COO row indicies
+    int * __restrict__ cooColInd; /// COO column indicies
+    double * __restrict__ cooVal; /// COO values
 };
 
 //=================================================================================
@@ -220,7 +220,7 @@ class DirectSparseLayout {
   public:
     __GPU_DEV_INLF__ DirectSparseLayout() : baseOffset(0), accOffset(NULL), P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
 
-    __GPU_DEV_INLF__ DirectSparseLayout(int baseOffset, int *const _accOffset, int *const _P, int *_cooRowInd, int *_cooColInd, double *_cooVal)
+    __GPU_DEV_INLF__ DirectSparseLayout(int baseOffset, const int * _accOffset, const int * _P, const int *_cooRowInd, const int *_cooColInd, double *_cooVal)
         : baseOffset(baseOffset), accOffset(_accOffset), P(_P), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {
         iterator.reset();
     }
@@ -281,14 +281,14 @@ class DirectSparseLayout {
 
   private:
     int baseOffset; /// base offset for Jacobian, or Transposed Jacobian, or Hessian.
-    int *accOffset; /// thread acc offset
-    int *P;         /// direct indicies dense vector
+    const int * __restrict__ accOffset; /// thread acc offset
+    const int * __restrict__ P;         /// direct indicies dense vector
 
-    double *cooVal; /// COO values
+    double * __restrict__ cooVal; /// COO values
 
 #define __BEFORE_TRANSFORMATION__
-    int *cooRowInd; /// COO row computed at first round of SparseLayout mode 
-    int *cooColInd; /// COO col computed at first round of SparseLayout mode
+    const int * __restrict__ cooRowInd; /// COO row computed at first round of SparseLayout mode
+    const int * __restrict__ cooColInd; /// COO col computed at first round of SparseLayout mode
 };
 
 //=================================================================================
