@@ -13,6 +13,7 @@
 
 #include "stop_watch.h"
 #include "utility.cuh"
+#include "quda.h"
 
 #define DEBUG_GPU
 
@@ -189,7 +190,7 @@ void GPUComputation::memcpyComputationToDevice() {
 
     for (int itr = 0; itr < CMAX; itr++) {
         /// each computation data with its own StateVector
-        dev_SV.emplace_back(N, stream);
+        dev_SV.push_back(utility::dev_vector<double>{N, stream});
     }
 }
 
@@ -275,7 +276,8 @@ void GPUComputation::InitializeStateVector() {
     /// ---------------------------------------------------------------------------------------- ///
     ///                                 Zero Lagrange Coefficients                               ///
     /// ---------------------------------------------------------------------------------------- ///
-    utility::memsetAsync(dev_SV[0] + size, 0, coffSize, stream);
+       
+    utility::memsetAsync(dev_SV[0].data() + size, 0, coffSize, stream);
 }
 
 void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, cudaStream_t stream) {
@@ -353,30 +355,29 @@ void GPUComputation::DeviceConstructTensorB(ComputationState *dev_ev, cudaStream
     validateStream;
 }
 
-void GPUComputation::DebugTensorConstruction(ComputationState *dev_ev) {
-    if (settings::get()->DEBUG_TENSOR_A) {
+void GPUComputation::DebugTensorConstruction(ComputationState *ev) {
+    if (settings::get()->DEBUG_TENSOR_A && computationMode== ComputationMode::DENSE_LAYOUT) {
         /// ---------------------------------------------------------------------------------------- ///
         ///                             KERNEL ( stdout tensor at gpu )                              ///
         /// ---------------------------------------------------------------------------------------- ///
-        stdoutTensorData(stream, dev_ev, dimension, dimension);
-        checkCudaStatus(cudaStreamSynchronize(stream));
+        utility::stdoutTensorData(ev->A, dimension, dimension, stream, " --- A --- ");
     }
 
     if (settings::get()->DEBUG_TENSOR_B) {
         /// ---------------------------------------------------------------------------------------- ///
         ///                             KERNEL ( stdout tensor at gpu )                              ///
-        /// ---------------------------------------------------------------------------------------- ///
-        stdoutRightHandSide(stream, dev_ev, dimension);
-        checkCudaStatus(cudaStreamSynchronize(stream));
+        /// ---------------------------------------------------------------------------------------- ///        
+        utility::stdoutDeviceVector(ev->b, dimension, stream, " --- B --- ");
     }
 }
 
-void GPUComputation::DebugTensorSV(ComputationState *dev_ev) {
+void GPUComputation::DebugTensorSV(ComputationState *ev) {
     if (settings::get()->DEBUG_TENSOR_SV) {
         /// ---------------------------------------------------------------------------------------- ///
         ///                             KERNEL ( stdout state vector  )                              ///
-        /// ---------------------------------------------------------------------------------------- ///
-        stdoutStateVector(stream, dev_ev, dimension);
+        /// ---------------------------------------------------------------------------------------- ///        
+        utility::stdoutDeviceVector(ev->SV, dimension, stream, " --- State Vector --- ");
+
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
     validateStream;
@@ -579,7 +580,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
         ///
         computationContext->PrepStop(itr);
 
-        DebugTensorConstruction(dev_ev);
+        DebugTensorConstruction(ev);
 
 #undef H_DEBUG
 

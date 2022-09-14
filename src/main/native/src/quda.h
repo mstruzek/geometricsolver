@@ -10,8 +10,7 @@
 #include "cuerror.h"
 
 #include "gpu_allocator.h"
-
-#include "quda.h"
+#include "model.cuh"
 
 namespace utility {
 
@@ -166,13 +165,13 @@ template <typename Type> class dev_vector {
     /// <summary>
     /// No resources attached.
     /// </summary>
-    dev_vector() : memory(NULL), size(0), stream(NULL), owner(false) {}
+    dev_vector() : dev_vector(nullptr, 0, nullptr) {}
 
     /// <summary>
     /// Take a snapshot of reference device vector.
     /// </summary>
     /// <param name="other"></param>
-    dev_vector(dev_vector const &other) { *this = other; };
+    dev_vector(dev_vector const &other) = delete; 
 
     /// <summary>
     /// Become a new owner of other memory allocation.
@@ -318,16 +317,7 @@ template <typename Type> class dev_vector {
     /// </summary>
     /// <param name="other"></param>
     /// <returns></returns>
-    dev_vector &operator=(dev_vector const &other) {
-        if (owner) {
-            this->~dev_vector();
-        }
-        owner = false;
-        memory = other.memory;
-        size = other.size;
-        stream = other.stream;
-        return *this;
-    }
+    dev_vector &operator=(dev_vector const &other) = delete; 
 
     /// <summary>
     /// Type safe implicit conversion function.
@@ -395,7 +385,7 @@ template <typename Type> class dev_vector {
 
 /// ===================================================== ===================================================== ///
 
-template <typename... Type> __device__ __host__ void log(const char *format, Type const &...values) { ::printf(format, values...); }
+template <typename... Type> __device__ __host__ void infoLog(const char *format, Type const &...values) { ::printf(format, values...); }
 
 /// ===================================================== ===================================================== ///
 
@@ -405,14 +395,14 @@ constexpr const char VECTOR_HEADER[] = {"%s [ %d ] --- --- --- \n"};
 template <typename Type> void printer(int i, Type object);
 
 template <typename Type> void stdout_vector(host_vector<Type> &vector, const char *title) {
-    const int size = vector.get_size();
+    const size_t size = vector.get_size();
     const Type *data = vector.data();
-    log(VECTOR_HEADER, title, size);
-    int i = size;
+    infoLog(VECTOR_HEADER, title, size);
+    int i = (int)size;
     while (i-- > 0) {
         printer<Type>(i, data[i]);
     }
-    log(LINE_SEPARATOR);
+    infoLog(LINE_SEPARATOR);
 }
 
 template <typename Type> void stdout_vector(dev_vector<Type> &vector, const char *title) {
@@ -425,6 +415,58 @@ template <typename Type> void stdout_vector(dev_vector<Type> &vector, const char
     }
     stdout_vector<Type>(host_view, title);
 }
+
+/// ===================================================== ===================================================== ///
+
+/// =======================================================================================
+///                             debug utility
+/// =======================================================================================
+
+constexpr const char *WIDEN_DOUBLE_STR_FORMAT = "%26d";
+constexpr const char *FORMAT_STR_DOUBLE = " %11.2e";
+constexpr const char *FORMAT_STR_IDX_DOUBLE = "%% %2d  %11.2e \n";
+constexpr const char *FORMAT_STR_IDX_DOUBLE_E = "%%     %11.2e \n";
+
+constexpr const char *FORMAT_STR_IDX_INT = "%% %2d  %2d \n";
+constexpr const char *FORMAT_STR_IDX_INT_E = "%%     %2d \n";
+
+constexpr const char *FORMAT_STR_DOUBLE_CM = ", %11.2e";
+
+template <typename Type> void step_printer(int idx, Type value);
+
+/// =======================================================================================
+/// <summary>
+/// [debug] State Vector print from device
+/// </summary>
+
+template <typename Type> void stdoutDeviceVector(Type *d_vector, size_t dimension, cudaStream_t stream, const char *title) {
+    utility::host_vector<Type> stateVector{dimension};
+    stateVector.memcpy_of(utility::dev_vector<Type>(d_vector, dimension, stream));
+    if (stream) {
+        checkCudaStatus(cudaStreamSynchronize(stream));
+    }
+    infoLog(LINE_SEPARATOR);
+    infoLog(title);
+    infoLog("\n MatrixDouble1 - %lu x 1 ****************************************\n", dimension);
+    infoLog(LINE_SEPARATOR);
+
+    for (int i = 0; i < dimension; i++) {
+        Type value = stateVector[i];
+        step_printer<Type>(i, value);        
+    }
+    infoLog(LINE_SEPARATOR);
+}
+
+///  ======================================================================================
+/// <summary>
+/// [debug] stdout tensor A - dense form.
+/// </summary>
+/// <param name="ecdata"></param>
+/// <param name="rows"></param>
+/// <param name="cols"></param>
+/// <returns></returns>
+void stdoutTensorData(double *d_A, size_t ld, size_t cols, cudaStream_t stream, const char *title);
+
 
 /// ===================================================== ===================================================== ///
 

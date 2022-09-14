@@ -8,7 +8,7 @@
 
 
 /// <summary>
-/// Cuda fast pinned memory allocator as required by std::vector
+/// cuda efficient Pinned Memory allocator as required by std::vector
 /// </summary>
 /// <typeparam name="_Ty"></typeparam>
 template <class _Ty> class gpu_allocator {
@@ -55,7 +55,7 @@ template <class _Ty> class gpu_allocator {
             fprintf(stderr, "[cuda/pinned] deallocation failed !\n");
             const char *error_name = cudaGetErrorName(status);
             const char *error_str = cudaGetErrorString(status);
-            fprintf(stderr, " cuda allocation of pinned memory failed ; ( %s )  %s \n", error_name, error_str);
+            fprintf(stderr, " cuda pinned memory allocatio failed ; ( %s )  %s \n", error_name, error_str);
             exit(1);
         }
         return ptr;

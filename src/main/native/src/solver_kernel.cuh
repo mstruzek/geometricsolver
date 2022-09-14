@@ -63,7 +63,6 @@ KERNEL_EXECUTOR void inversePermutationVector(cudaStream_t stream,
                                               int *INP, int *OUTP, size_t N); 
 
 
-
 /// ===========================================================================================
 /// <summary>
 /// Inverse COO indicies map ;  this is Direct Form !
@@ -77,18 +76,6 @@ KERNEL_EXECUTOR void inversePermutationVector(cudaStream_t stream,
 /// <returns></returns>
 KERNEL_EXECUTOR void kernelMemsetD32I(cudaStream_t stream, int *devPtr, int value, size_t size); 
 
-
-/// ===========================================================================================
-///
-///                             debug utility
-///
-/// ===========================================================================================
-
-KERNEL_EXECUTOR void stdoutTensorData(cudaStream_t stream, ComputationState *ecdata, size_t rows, size_t cols);
-
-KERNEL_EXECUTOR void stdoutRightHandSide(cudaStream_t stream, ComputationState *ecdata, size_t rows);
-
-KERNEL_EXECUTOR void stdoutStateVector(cudaStream_t stream, ComputationState *ecdata, size_t rows);
 
 ///  ==========================================================================================
 

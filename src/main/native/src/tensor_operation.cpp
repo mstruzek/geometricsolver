@@ -234,7 +234,7 @@ void TensorOperation::stdout_coo_tensor(cudaStream_t stream, int m, int n, int n
 
     /// all indicies withe value in coo format
     for (int T = 0; T < nnz; ++T) {
-        utility::log(" %d , %d %d  -  %7.3f  \n", T, cooRowInd[T], cooColInd[T], cooVal[T]);
+        utility::infoLog(" %d , %d %d  -  %7.3f  \n", T, cooRowInd[T], cooColInd[T], cooVal[T]);
     }
 
     /// Stdout ad m x n format
@@ -242,15 +242,15 @@ void TensorOperation::stdout_coo_tensor(cudaStream_t stream, int m, int n, int n
     for (int T = 0; T < m; ++T) {
         for (int L = 0; L < n; ++L) {
             if (cooRowInd[idx] == T && cooColInd[idx] == L) {
-                utility::log(" %8.3f ,", cooVal[idx]);
+                utility::infoLog(" %8.3f ,", cooVal[idx]);
                 ++idx;
             } else {
-                utility::log(" %8.3f ,", 0.0);
+                utility::infoLog(" %8.3f ,", 0.0);
             }
         }
-        utility::log(" \n ");
+        utility::infoLog(" \n ");
     }
-    utility::log("\n");
+    utility::infoLog("\n");
 }
 
 TensorOperation::~TensorOperation() {
