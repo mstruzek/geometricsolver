@@ -61,7 +61,7 @@ class DenseLayout {
   public:
     __GPU_DEV_INLF__ DenseLayout() : ld(0), rowOffset(0), colOffset(0), m_A(NULL) {}
 
-    __GPU_DEV_INLF__ DenseLayout(size_t _ld, size_t _rowOffset, size_t _colOffset, double *A) : ld(_ld), rowOffset(_rowOffset), colOffset(_colOffset), m_A(A) {}
+    __GPU_DEV_INLF__ DenseLayout(size_t ld, size_t rowOffset, size_t colOffset, double *A) : ld(ld), rowOffset(rowOffset), colOffset(colOffset), m_A(A) {}
 
     __GPU_DEV_INLF__ void set(int row, int col, double value) {
         ///
@@ -103,16 +103,20 @@ class SparseLayout {
 
     __GPU_DEV_INLF__ void set(int row, int col, double value) {
         /// standard 128 byte cache line - no additional contention in a warp
-        int offset = baseOffset + accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x];
-        int nextOffset = baseOffset + accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x + 1]; /// uzupelnic skladowa
+        int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+        int offset = baseOffset + accWriteOffset[threadId];
+        int nextOffset = baseOffset + accWriteOffset[threadId + 1]; /// uzupelnic skladowa
         int blockSize = nextOffset - offset;
 
         for (int t = 0; t < blockSize; ++t) {
             const int row_at = cooRowInd[offset + t];
             const int col_at = cooColInd[offset + t];
-            if (row_at == -1 && col_at == -1) {
+            if (row_at == row && col_at == col) {
+                /// write value into coo vector - reuse COO patern applied in first round 
+                cooVal[offset + t] = value;     /// 1 Xwrite into cache L2
+            } else if (row_at == -1 && col_at == -1) {
                 /// SET VALUE
-                cooRowInd[offset + t] = row;
+                cooRowInd[offset + t] = row;    /// 3 Xwrite into cache L2
                 cooColInd[offset + t] = col;
                 cooVal[offset + t] = value;
                 return;
@@ -122,8 +126,9 @@ class SparseLayout {
 
     __GPU_DEV_INLF__ void add(int row, int col, double value) {
         /// 128 byte cache line - contention in a warp
-        int offset = baseOffset + accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x];
-        int nextOffset = baseOffset + accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x + 1]; /// uzupelnic skladowa
+        int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+        int offset = baseOffset + accWriteOffset[threadId];
+        int nextOffset = baseOffset + accWriteOffset[threadId + 1]; /// uzupelnic skladowa
         int blockSize = nextOffset - offset;
 
         for (int t = 0; t < blockSize; ++t) {
@@ -131,11 +136,11 @@ class SparseLayout {
             const int col_at = cooColInd[offset + t];
             if (row_at == row && col_at == col) {
                 /// override value
-                cooVal[offset + t] += value;
+                cooVal[offset + t] += value; /// 1 XWrite into cache L2
                 return;
             } else if (row_at == -1 && col_at == -1) {
                 /// SET VALUE
-                cooRowInd[offset + t] = row;
+                cooRowInd[offset + t] = row;  /// 3 XWrite into cache L2 
                 cooColInd[offset + t] = col;
                 cooVal[offset + t] = value;
                 return;
@@ -144,8 +149,9 @@ class SparseLayout {
     }
 
     __GPU_DEV_INLF__ double get(int row, int col) const {
-        int offset = baseOffset + accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x];
-        int nextOffset = baseOffset + accWriteOffset[blockIdx.x * blockDim.x + threadIdx.x + 1];
+        int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+        int offset = baseOffset + accWriteOffset[threadId];
+        int nextOffset = baseOffset + accWriteOffset[threadId + 1];
         int blockSize = nextOffset - offset;
 
         for (int t = 0; t < blockSize; ++t) {
@@ -238,7 +244,8 @@ class DirectSparseLayout {
             int at_row = cooRowInd[threadOffset + itr];
             int at_col = cooColInd[threadOffset + itr];
             if (at_row == row && at_col == col) {
-                cooVal[P[threadOffset + itr]] += value;
+                
+                cooVal[P[threadOffset + itr]] += value; /// 1 XWrite into L2 memory
                 return;
             } else if (at_row == -1 && at_col == -1) {
                 // SET value
@@ -249,12 +256,23 @@ class DirectSparseLayout {
         // SET
         unsigned offset = iterator.next();
         /// override value - inversed indicies
-        cooVal[P[threadOffset + offset]] = value;
+        cooVal[P[threadOffset + offset]] = value;       /// 1 XWrite into L2 memory
     }
 
-    __GPU_DEV_INLF__ double get(int row, int col) const {
-        /// invalidate computation state
-        /// !!!!!!!!! ERROR ---
+    __GPU_DEV_INLF__ double get(int row, int col) {
+        int threadId = iterator.thread_id();
+        int threadOffset = baseOffset + accOffset[threadId];
+        int nextOffset = baseOffset + accOffset[threadId + 1]; 
+        int blockSize = nextOffset - threadOffset;
+
+        // GET
+        for (int itr = 0; itr < blockSize; ++itr) {
+            const int row_at = cooRowInd[threadOffset + itr];
+            const int col_at = cooColInd[threadOffset + itr];
+            if (row_at == row && col_at == col) {
+                return cooVal[P[threadOffset + itr]];
+            }
+        }
         return NAN;
     }
 
@@ -269,8 +287,8 @@ class DirectSparseLayout {
     double *cooVal; /// COO values
 
 #define __BEFORE_TRANSFORMATION__
-    int *cooRowInd; /// COO row not-transformed
-    int *cooColInd; /// COO col not-transformed
+    int *cooRowInd; /// COO row computed at first round of SparseLayout mode 
+    int *cooColInd; /// COO col computed at first round of SparseLayout mode
 };
 
 //=================================================================================
@@ -443,9 +461,15 @@ template <typename LLayout> class AdapterTensor : public Tensor<LLayout> {
         Tensor<LLayout>::setValue(col + 1, row, getVectorY(value));
     }
 
-    __GPU_DEV_INLF__ void setValue(int row, int col, double const &value) { Tensor<LLayout>::setValue(col, row, value); }
+    __GPU_DEV_INLF__ void setValue(int row, int col, double const &value) {
+        ///
+        Tensor<LLayout>::setValue(col, row, value); 
+    }
 
-    __GPU_DEV_INLF__ void setSubTensor(int row, int col, Tensor<graph::BlockLayout> const &mt) { Tensor<LLayout>::plusSubTensor(col, row, mt.transpose()); }
+    __GPU_DEV_INLF__ void setSubTensor(int row, int col, Tensor<graph::BlockLayout> const &mt) { 
+        ///
+        Tensor<LLayout>::plusSubTensor(col, row, mt.transpose()); 
+    }
 };
 
 // transponsed operations

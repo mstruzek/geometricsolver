@@ -101,13 +101,13 @@ ComputationMode getComputationMode(int computationId) {
 int tensorOpsCooStiffnesCoefficients(Geometric const &geometric) {
     switch (geometric.geometricTypeId) {
     case GEOMETRIC_TYPE_ID_FREE_POINT:
-        return 7 * 4; // 7 - plusSubTensor  * diagonal I (2)
+        return 7 * 4; // 7 - plusSubTensor  * diagonal I (4)
     case GEOMETRIC_TYPE_ID_LINE:
-        return 10 * 4; // 10 - plusSubTensor * diagonal I (2)
+        return 10 * 4; // 10 - plusSubTensor * diagonal I (4)
     case GEOMETRIC_TYPE_ID_CIRCLE:
-        return 10 * 4; // 10 - plusSubTensor * diagonal I (2)
+        return 10 * 4; // 10 - plusSubTensor * diagonal I (4)
     case GEOMETRIC_TYPE_ID_ARC:
-        return 19 * 4; // 19 - plusSubTensor * diagonal I (2)
+        return 19 * 4; // 19 - plusSubTensor * diagonal I (4)
     default:
         printf("unknown geometric type \n");
         exit(1);

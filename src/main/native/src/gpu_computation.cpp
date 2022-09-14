@@ -462,7 +462,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
     // register C-function reference delegate - registerForDelegation(this) / unregisterFromDelegation(this)
     GPUComputation::registerComputation(this);
 
-    size_t N = dimension;
+    int N = dimension;
 
     solverWatch.setStartTick();
 
@@ -479,6 +479,11 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
     cudaGraphExec_t graphExec = NULL;
 
     int itr = 0;
+    
+    if (computationMode == ComputationMode::SPARSE_LAYOUT) {
+        tensorOperation.memsetD32I(d_cooRowInd, -1, nnz, stream);
+        tensorOperation.memsetD32I(d_cooColInd, -1, nnz, stream);
+    }
 
 #define FIRST_ROUND 0
 #define NEXT_ROUND(v) v
@@ -515,15 +520,10 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
             utility::memsetAsync(dev_A.data(), 0, N * N, stream); // --- ze wzgledu na addytywnosc
         }
 
-        if (computationMode == ComputationMode::SPARSE_LAYOUT) {
-            tensorOperation.memsetD32I(d_cooRowInd, -1, nnz, stream);
-            tensorOperation.memsetD32I(d_cooColInd, -1, nnz, stream);
-        }
 
         /// ---------------------------------- Graph Capturing Mechanism ---------------------------------- //
         /// ## GRAPH_CAPTURE - BEGIN
         if (settings::get()->STREAM_CAPTURING) {
-
             /// stream caputure capability
             checkCudaStatus(cudaStreamBeginCapture(stream, cudaStreamCaptureModeGlobal));
         }
