@@ -8,7 +8,7 @@
 #include "solver_kernel.cuh"
 
 #include "gpu_utility.h"
-#include "quda.cuh"
+#include "quda.h"
 
 #ifdef DEBUG_GPU
 #define validateStream validateStreamState()

@@ -94,7 +94,7 @@
     <ClInclude Include="src\gpu_allocator.h" />
     <ClInclude Include="src\gpu_utility.h" />
     <ClInclude Include="src\kernel_traits.h" />
-    <ClInclude Include="src\quda.cuh" />
+    <ClInclude Include="src\quda.h" />
     <ClInclude Include="src\tensor_layout.cuh" />
     <ClInclude Include="src\tensor_operation.h" />
     <ClInclude Include="src\version.cuh" />
@@ -114,7 +114,7 @@
     </ClCompile>
     <ClCompile Include="src\gpu_computation_context.cpp" />
     <CudaCompile Include="src\gpu_computation.cpp" />
-    <CudaCompile Include="src\quda.cu" />
+    <CudaCompile Include="src\quda.cpp" />
     <CudaCompile Include="src\solver_kernel.cu" />
     <CudaCompile Include="src\tensor_layout.cu" />
     <CudaCompile Include="src\tensor_operation.cpp" />

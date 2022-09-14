@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-#include "quda.cuh" 
+#include "quda.h" 
 #include "model.cuh" 
 #include "solver_stat.h"
 

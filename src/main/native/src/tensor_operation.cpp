@@ -10,7 +10,7 @@
 
 #include "solver_kernel.cuh"
 
-#include "quda.cuh"
+#include "quda.h"
 
 ///
 template void TensorOperation::gatherVector<double>(int nnz, cudaDataType valueType, double *PT1, int *PT2, double *PT);

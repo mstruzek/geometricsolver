@@ -11,7 +11,7 @@
 
 #include "gpu_allocator.h"
 
-#include "quda.cuh"
+#include "quda.h"
 
 namespace utility {
 
@@ -150,7 +150,6 @@ template <typename Type> class host_vector {
     }
 
   private:
-    
     /// in charge of this memory extent or view only borrowed ( false )
     bool owner;
 
@@ -159,7 +158,6 @@ template <typename Type> class host_vector {
 
     /// allocation size in units sizeof(Type)
     size_t size;
-
 };
 
 /// ===================================================== ===================================================== ///
@@ -361,11 +359,11 @@ template <typename Type> class dev_vector {
     /// <returns></returns>
     cudaStream_t get_stream() { return stream; }
 
-    /// owned memory release into stream of origin 
+    /// owned memory release into stream of origin
     ~dev_vector() {
         if (!owner) {
             return;
-        }        
+        }
         if (memory) {
             cudaError_t status;
             if (stream) {
@@ -401,35 +399,31 @@ template <typename... Type> __device__ __host__ void log(const char *format, Typ
 
 /// ===================================================== ===================================================== ///
 
-template <typename Type> struct printer {};
+constexpr const char LINE_SEPARATOR[] = {"\n"};
+constexpr const char VECTOR_HEADER[] = {"%s [ %d ] --- --- --- \n"};
 
-template <typename Type> void stdout_vector_kernel(cudaStream_t stream, Type *vector, int size);
-
-template <typename Type> void stdout_vector(dev_vector<Type> &vector, const char *title) {
-    log("%s --- --- ---\n", title);
-    stdout_vector_kernel<Type>(vector.get_stream(), vector.data(), (int)vector.get_size());
-    checkCudaStatus(cudaStreamSynchronize(vector.get_stream()));
-    log("\n");
-}
-
-template <typename Type> void stdout_vector(Type *vector, size_t size, const char *title, cudaStream_t stream) {
-    log("%s --- --- ---\n", title);
-
-    stdout_vector_kernel<Type>(stream, vector, size);
-    checkCudaStatus(cudaStreamSynchronize(stream));
-    log("\n");
-}
+template <typename Type> void printer(int i, Type object);
 
 template <typename Type> void stdout_vector(host_vector<Type> &vector, const char *title) {
     const int size = vector.get_size();
     const Type *data = vector.data();
-    printer<Type> printer;
-    log("%s --- --- --- \n", title);
+    log(VECTOR_HEADER, title, size);
     int i = size;
     while (i-- > 0) {
-        printer(i, data[i]);
+        printer<Type>(i, data[i]);
     }
-    log("\n");
+    log(LINE_SEPARATOR);
+}
+
+template <typename Type> void stdout_vector(dev_vector<Type> &vector, const char *title) {
+    cudaStream_t stream = vector.get_stream();
+    utility::host_vector<Type> host_view(vector.get_size());
+
+    host_view.memcpy_of(vector, stream);
+    if (stream) {
+        checkCudaStatus(cudaStreamSynchronize(stream));
+    }
+    stdout_vector<Type>(host_view, title);
 }
 
 /// ===================================================== ===================================================== ///

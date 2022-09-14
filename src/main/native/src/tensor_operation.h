@@ -6,7 +6,7 @@
 #include "cublas_v2.h"              /// cuBlas
 #include "cusparse.h"               /// cuSparse
 
-#include "quda.cuh"
+#include "quda.h"
 
 class TensorOperation {
   public:
