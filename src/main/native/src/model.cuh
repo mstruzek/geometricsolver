@@ -1,7 +1,7 @@
 #ifndef _MODEL_H_
 #define _MODEL_H_
 
-#include "cuda_runtime.h"
+#include "cuda_runtime_api.h"
 #include "device_launch_parameters.h"
 #include "math.h"
 
@@ -11,7 +11,10 @@
 
 #include "model_config.h"
 
+#ifdef __NVCC__
 #include "tensor_layout.cuh"
+#endif __NVCC__
+
 
 #include "version.cuh"
 
@@ -168,12 +171,17 @@ int geometricSetSize(Geometric const &geometric);
 /// map computation mode from computation id
 ComputationMode getComputationMode(int computationId);
 
+/// map solver mode from configuration id value
+SolverMode getSolverMode(int solverModeId);
+
 /// accWriteCooStiffTensor
 int tensorOpsCooStiffnesCoefficients(Geometric const &geometric);
 
 /// accWriteCooJacobianTensor
 int tensorOpsCooConstraintJacobian(Constraint const &constraint);
 
+/// accWriteCooJacobianHessian
+int tensorOpsCooConstraintHessian(Constraint const &constraint);
 
 } // namespace graph
 

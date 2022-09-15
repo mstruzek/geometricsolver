@@ -11,7 +11,7 @@
 namespace utility {
 
 template <typename Type> void mallocHost(Type **dest, size_t size) {
-    checkCudaStatus(cudaMallocHost((void **)dest, size * sizeof(Type), cudaHostAllocDefault));
+    checkCudaStatus(cudaMallocHost((void **)dest, size * sizeof(Type)));
     // * - ::cudaHostAllocMapped: Maps the allocation into the CUDA address space.
     // * - - The device pointer to the memory may be obtained by calling * ::cudaHostGetDevicePointer()
 }

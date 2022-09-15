@@ -11,7 +11,7 @@
 #include <cusparse.h>
 
 #include "gpu_computation_context.h"
-#include "gpu_linear_system.h"
+#include "gpu_solver_system.h"
 #include "kernel_traits.h"
 
 #include "model.cuh"
@@ -44,13 +44,28 @@ class GPUComputation {
      *
      * commitTime --
      */
-    GPUComputation(long computationId, cudaStream_t stream, std::shared_ptr<GPULinearSystem> linearSystem,
+    GPUComputation(long computationId, cudaStream_t stream, std::shared_ptr<GPUSolverSystem> solverSystem,
                    std::shared_ptr<GPUComputationContext> cc, GPUGeometricSolver *solver);
 
     /**
      *  remove all registers containing points, constraints, parameters !
      */
     ~GPUComputation();
+
+    /// <summary>
+    /// Each iteration has different matrix A computation characteristics.
+    /// </summary>
+    /// <param name="round"></param>
+    /// <returns></returns>
+    ComputationLayout selectComputationLayout(int round);
+
+    /// <summary>
+    /// Post process tensor A computation into CSR format from sparse COO format .
+    /// Applied to sparse tensor only.
+    /// </summary>
+    /// <param name="round"></param>
+    /// <param name="computationLayout"></param>
+    void PostProcessTensorA(int round, ComputationLayout computationLayout);
 
     ///
     /// Setup all matricies for computation and prepare kernel stream with final computation on cuSolver
@@ -94,15 +109,17 @@ class GPUComputation {
 
     void computationResultHandler(cudaStream_t stream, cudaError_t status, void *userData);
 
-    void AddComputationHandler(ComputationState *compState);
+    void SetComputationHandler(ComputationState *compState);
 
     void validateStreamState();
 
-    void PreInitializeComputationState(ComputationState *ev, int itr);
+    void PreInitializeComputationState(ComputationState *ev, int itr, ComputationLayout computationLayout);
 
     void InitializeStateVector();
 
-    void DeviceConstructTensorA(ComputationState *dev_ev, ComputationMode mode, cudaStream_t stream);
+    int getSharedMemoryRequirments(ComputationLayout computationLayout);
+
+    void DeviceConstructTensorA(ComputationState *dev_ev, ComputationLayout computationLayout, cudaStream_t stream);
 
     void DeviceConstructTensorB(ComputationState *dev_ev, cudaStream_t stream);
 
@@ -148,9 +165,11 @@ class GPUComputation {
 
     ComputationMode computationMode;
 
+    SolverMode solverMode;
+
     std::shared_ptr<GPUComputationContext> computationContext;
 
-    std::shared_ptr<GPULinearSystem> linearSystem;
+    std::shared_ptr<solver::GPUSolverSystem> solverSystem;
 
     /// conversion from COO to CSR format for linear sparse solver
     TensorOperation tensorOperation;
@@ -203,6 +222,9 @@ class GPUComputation {
 
     /// Accumulated Writes in COO format from kernel into Jacobian Tensor
     utility::cu_vector<int> accCooWriteJacobianTensor;
+
+    /// Accumulated Writes in COO format from kernel into Hessian Tensor
+    utility::cu_vector<int> accCooWriteHessianTensor;
 
     int size;      /// wektor stanu
     int coffSize;  /// wspolczynniki Lagrange

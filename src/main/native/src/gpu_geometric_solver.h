@@ -12,9 +12,6 @@
 
 #include "gpu_computation_context.h"
 #include "gpu_computation.h"
-#include "gpu_linear_system.h"
-
-
 
 
 #define CONVERGENCE_LIMIT 10e-5
@@ -95,7 +92,7 @@ class GPUGeometricSolver {
     std::shared_ptr<GPUComputationContext> _computationContext;
     std::shared_ptr<solver::GPUComputation> _computation;    
 
-    std::shared_ptr<GPULinearSystem> linearSystem;
+    std::shared_ptr<GPUSolverSystem> solverSystem;
 
     friend class GPUComputation;
 };

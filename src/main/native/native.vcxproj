@@ -67,6 +67,7 @@
       <AdditionalCompilerOptions>
       </AdditionalCompilerOptions>
       <AdditionalOptions>-std=c++17  -Xcompiler "/Zc:__cplusplus" %(AdditionalOptions)</AdditionalOptions>
+      <CodeGeneration>compute_75,sm_75</CodeGeneration>
     </CudaCompile>
     <CudaLink>
       <AdditionalDependencies>
@@ -93,10 +94,16 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\solver\gpu_solver_dense_lu.cpp" />
+    <ClCompile Include="src\solver\gpu_solver_sparse_ilu02.cpp" />
+    <ClCompile Include="src\solver\gpu_solver_sparse_qr.cpp" />
     <ClInclude Include="src\gpu_allocator.h" />
     <ClInclude Include="src\gpu_utility.h" />
     <ClInclude Include="src\kernel_traits.h" />
     <ClInclude Include="src\quda.h" />
+    <ClInclude Include="src\solver\gpu_solver_dense_lu.h" />
+    <ClInclude Include="src\solver\gpu_solver_sparse_ilu02.h" />
+    <ClInclude Include="src\solver\gpu_solver_sparse_qr.h" />
     <ClInclude Include="src\tensor_layout.cuh" />
     <ClInclude Include="src\tensor_operation.h" />
     <ClInclude Include="src\version.cuh" />
@@ -109,7 +116,7 @@
     </CudaCompile>
     <ClCompile Include="src\settings.cpp" />
     <ClCompile Include="src\cuerror.cpp" />
-    <ClCompile Include="src\gpu_linear_system.cpp" />
+    <ClCompile Include="src\gpu_solver_system.cpp" />
     <ClInclude Include="src\computation_state.cuh" />
     <ClCompile Include="src\gpu_geometric_solver.cpp">
       <FileType>Document</FileType>
@@ -132,7 +139,7 @@
     <ClInclude Include="src\settings.h" />
     <ClInclude Include="src\cuerror.h" />
     <ClInclude Include="src\gpu_geometric_solver.h" />
-    <ClInclude Include="src\gpu_linear_system.h" />
+    <ClInclude Include="src\gpu_solver_system.h" />
     <ClInclude Include="src\model.cuh" />
     <ClInclude Include="src\model_config.h" />
     <ClInclude Include="src\solver_kernel.cuh" />

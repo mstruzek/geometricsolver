@@ -62,10 +62,16 @@ add_library(${PROJECT_SHARED_LIBRARY} SHARED
         src/gpu_computation.cpp
         src/gpu_geometric_solver.cpp
         src/gpu_computation_context.cpp	
-        src/gpu_linear_system.cpp
+        src/gpu_solver_system.cpp
+        src/solver/gpu_solver_dense_lu.cpp
+        src/solver/gpu_solver_sparse_ilu02.cpp
+        src/solver/gpu_solver_sparse_qr.cpp
         src/tensor_operation.cpp
         src/com_mstruzek_jni_JNISolverGate.cpp
 		)
+
+
+
 
 
 target_include_directories(${PROJECT_SHARED_LIBRARY} PUBLIC     

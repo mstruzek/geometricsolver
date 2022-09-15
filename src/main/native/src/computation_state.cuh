@@ -108,8 +108,11 @@ struct ComputationState {
     /// Accumulative offs with constraint size evaluation function, [ 0, ... , N ]
     const int *accConstraintSize;
 
-    /// computation mode applied onto "A tensor" at this iteration
+    /// computation mode applied
     ComputationMode computationMode;
+
+    /// computation layout in iteration round
+    ComputationLayout computationLayout;
 
     /// Relative Offsets - Accumulated Writes in COO format from kernel into  Stiff Tensor
     const int *accCooWriteStiffTensor;

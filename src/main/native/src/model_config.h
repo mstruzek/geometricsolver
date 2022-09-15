@@ -32,20 +32,78 @@
 /// Sztywnosc sprezyny niska - glownie dla polaczenia pomiedzy punktem
 /// zafiksowanym "{a,b}" i nie zafiksowanym "p*"
 ///
-#define CONSTS_SPRING_STIFFNESS_LOW                   1.0           
-#define CONSTS_SPRING_STIFFNESS_HIGH                 29.0
+#define CONSTS_SPRING_STIFFNESS_LOW                  1.0           
+#define CONSTS_SPRING_STIFFNESS_HIGH                29.0
 
 ///
 /// Internal stiffness from p1 to p2 
 ///
-#define  CIRCLE_SPRING_ALFA                        10.0
+#define  CIRCLE_SPRING_ALFA                         10.0
 
 
 ///
-/// Computation mode that will prepare matrix [ A ]  state  - this is stiffness matrix, and Jacobian matrix.
+/// Configuration property
 ///
 ///
 enum class ComputationMode {
+
+    ///
+    /// danse matrix mode
+    ///
+    ///
+    DENSE_MODE = 1,
+
+    ///
+    /// sparse mode with matrix computed from coo format into csr
+    ///
+    SPARSE_MODE = 2,
+
+    ///
+    /// mixed mode that first round precompute Inverse Permuataion for next rounds for direct insertions.    
+    ///
+    /// "Compress Sparse Row Format"
+    ///
+    DIRECT_MODE = 3,
+
+    /// 
+    /// Persist all commands on COO journal as records in linear form [ `add or `set ].
+    /// 
+    /// Afterwards SoA vector is compacted into COO format.
+    /// 
+    COMPACT_MODE = 3,
+};
+
+
+/// 
+/// Configuration property 
+/// 
+enum class SolverMode {
+
+    /// 
+    /// danse solver with LU 
+    /// 
+    DENSE_LU = 1,
+
+    /// 
+    /// default QR solver for sparse matrix
+    /// 
+    SPARSE_QR = 2,
+
+    /// 
+    /// Incomplete LU factorization solver for sparse matrix
+    /// 
+    SPARSE_ILU = 3,
+};
+
+
+///
+/// Computation layout that will prepare matrix [ A ]  state  - this is stiffness matrix, and Jacobian matrix.
+/// 
+/// Set into computation context on each Iteration.
+/// 
+/// Derived variable from ( Computation Mode, Solver Mode )
+///
+enum ComputationLayout {
 
     ///
     /// Tensor is initalized as columnard dense vector with leading dimension
@@ -63,7 +121,14 @@ enum class ComputationMode {
     ///
     /// "Compress Sparse Row Format"
     ///
-    DIRECT_LAYOUT = 3
+    DIRECT_LAYOUT = 3,
+
+    /// 
+    /// Tensor is computed in COO format at execution of kernel as a journal of COO commands.
+    /// 
+    /// In post-processing, journal vector is sorted and reduced ( compaction ) into final COO form.
+    /// 
+    COMPACT_LAYOUT = 4
 };
 
 

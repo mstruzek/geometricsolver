@@ -2,30 +2,20 @@ package com.mstruzek.jni;
 
 public enum JNIDebugParameters {
 
-
-    /**
-     * additional debug messages from solver routine
-     */
-    DEBUG(0),
-
-    /**
-     * production kernel = true
-     *
-     * if production kernel thread-Id addressing is horizontal in single dispatch kernel,
-     *
-     * otherwise in order computation on the  single stream.
-     */
-    KERNEL_PRE(1),
-
     /**
      * stdout computed Tensor A = false
      */
-    DEBUG_TENSOR_A(2),
+    DEBUG_TENSOR_A(1),
 
     /**
      * stdout computed Tensor B = false
      */
-    DEBUG_TENSOR_B(3),
+    DEBUG_TENSOR_B(2),
+
+    /**
+     * additional debug messages from solver routine
+     */
+    DEBUG(3),
 
     /**
      * stdout State Vector = false
@@ -42,12 +32,6 @@ public enum JNIDebugParameters {
      */
     CLOCK_NANOSECONDS(6),
 
-
-    /**
-     * compute Tensor A with Hessian - second derivatives
-     */
-    SOLVER_INC_HESSIAN(7),
-
     /**
      * stdout constraint norm2
      */
@@ -59,34 +43,45 @@ public enum JNIDebugParameters {
     DEBUG_CHECK_ARG(9),
 
     /**
-     * Set default computation kernel  Grid Size = 1
-     */
-    GRID_SIZE(10),
-    /**
-     * Set default computation kernel Block Size = 128
-     */
-    BLOCK_SIZE(11),
-
-    /**
      * DENSE_LAYOUT or SPARSE_LAYOUT
      * @class com.mstruzek.jni.JNIDebugCode.Computation
      */
-    COMPUTATION_MODE(12),
+    COMPUTATION_MODE(20),
+
+    /**
+     * LU, QR, ...
+     */
+    SOLVER_MODE(21),
+
+    /**
+     * compute Tensor A with Hessian - second derivatives
+     */
+    SOLVER_INC_HESSIAN(24),
 
     /**
      * This is  workspace size multiplier factor.( the main reason is for less re-allocations )
      */
-    CU_SOLVER_LWORK_FACTOR(21),
+    SOLVER_LWORK_FACTOR(26),
 
     /**
      * solution Epsilon : 10e-5
      */
-    CU_SOLVER_EPSILON(22),
+    SOLVER_EPSILON(27),
+
+    /**
+     *  stdout computed CSR format
+     */
+    DEBUG_CSR_FORMAT(30),
+
+    /**
+     * stdout computed intermediate COO format
+     */
+    DEBUG_COO_FORMAT (31),
 
     /**
      * Stream Capturing Capabilities
      */
-    STREAM_CAPTURING(100);
+    STREAM_CAPTURING(60);
 
     public final int code;
 
@@ -102,14 +97,40 @@ public enum JNIDebugParameters {
         JNISolverGate.setLongProperty(this.code, value);
     }
 
-    public static class Computation {
-        public static final int DENSE_MODE = 1;     // LU solver -  DENSE_LAYOUT
-        public static final int SPARSE_MODE_QR = 2;    // Sparse QR solver - SPARSE_LAYOUT
-        public static final int DIRECT_MODE_QR = 3;    // Sparse QR solver - one SPARSE LAYOUT continue with DIRECT_LAYOUT
-        public static final int SPARSE_MODE_LU = 4;    // Sparse LU incomplete solver - SPARSE_LAYOUT
-        public static final int DIRECT_MODE_LU = 5;    // Sparse LU incomplete solver - one SPARSE LAYOUT continue with DIRECT_LAYOUT
+    public static class ComputationMode {
+        /**
+         * Dense matrix mode.
+         */
+        public static final int DENSE_MODE = 1;
+
+        /**
+         * Sparse matrix mode.
+         */
+        public static final int SPARSE_MODE = 2;
+
+        /**
+         * Mixed direct matrix mode.
+         */
+        public static final int DIRECT_MODE = 3;
     }
 
+    public static class SolverMode {
+
+        /**
+         * dense LU factorization with LU solver - cusolverDnDgetrf
+         */
+        public static final int LU_DENSE = 1;
+
+        /**
+         * default QR factorization with solver for sparse matrix - cusolverSpDcsrlsvqr
+         */
+        public static final int QR_SPARSE = 2;
+
+        /**
+         *  Incomplete LU factorization solver for sparse matrix - cusparseDcsrilu02
+        */
+        public static final int ILU_SPARSE = 3;
+    }
 
     JNIDebugParameters(int code) {
         this.code = code;

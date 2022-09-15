@@ -60,7 +60,7 @@ int constraintSize(Constraint const &constraint) {
 
     default:
         printf("unknown constraint type \n");
-        exit(1);
+        exit(-1);
     }
 }
 
@@ -76,23 +76,40 @@ int geometricSetSize(Geometric const &geometric) {
         return 7 * 2;
     default:
         printf("unknown geometric type \n");
-        exit(1);
+        exit(-1);
     }
 }
 
 ComputationMode getComputationMode(int computationId) {
     switch (computationId) {
     case 1:
-        return ComputationMode::DENSE_LAYOUT;
+        return ComputationMode::DENSE_MODE;
     case 2:
-        return ComputationMode::SPARSE_LAYOUT;
+        return ComputationMode::SPARSE_MODE;
     case 3:
-        return ComputationMode::DIRECT_LAYOUT;
+        return ComputationMode::DIRECT_MODE;
+    case 4:
+        return ComputationMode::COMPACT_MODE;
     default:
         printf("unknown computation id !\n");
-        exit(1);
+        exit(-1);
     }
 }
+
+SolverMode getSolverMode(int solverModeId) {
+    switch (solverModeId) {
+    case 1:
+        return SolverMode::DENSE_LU;
+    case 2:
+        return SolverMode::SPARSE_QR;
+    case 3:
+        return SolverMode::SPARSE_ILU;
+    default:
+        printf("unknown solver mode id !\n");
+        exit(-1);
+    }
+}
+
 
 /// accWriteCooStiff
 ///
@@ -110,7 +127,7 @@ int tensorOpsCooStiffnesCoefficients(Geometric const &geometric) {
         return 19 * 4; // 19 - plusSubTensor * diagonal I (4)
     default:
         printf("unknown geometric type \n");
-        exit(1);
+        exit(-1);
     }
 }
 /// accWriteCooConstraint
@@ -169,8 +186,43 @@ int tensorOpsCooConstraintJacobian(Constraint const &constraint) {
         return 4;
     default:
         printf("unknown constraint type \n");
-        exit(1);
+        exit(-1);
     }
 }
+
+int tensorOpsCooConstraintHessian(Constraint const &constraint) {
+    switch (constraint.constraintTypeId) {
+    case CONSTRAINT_TYPE_ID_FIX_POINT:
+    case CONSTRAINT_TYPE_ID_PARAMETRIZED_XFIX:
+    case CONSTRAINT_TYPE_ID_PARAMETRIZED_YFIX:
+    case CONSTRAINT_TYPE_ID_CONNECT_2_POINTS:
+    case CONSTRAINT_TYPE_ID_HORIZONTAL_POINT:
+    case CONSTRAINT_TYPE_ID_VERTICAL_POINT:
+        return 0;
+    case CONSTRAINT_TYPE_ID_LINES_PARALLELISM:
+        /// 8 * tensor(4)
+        return 32;
+    case CONSTRAINT_TYPE_ID_LINES_PERPENDICULAR:
+        /// 8 * tensor(4)
+        return 32;
+    case CONSTRAINT_TYPE_ID_EQUAL_LENGTH:
+    case CONSTRAINT_TYPE_ID_PARAMETRIZED_LENGTH:
+    case CONSTRAINT_TYPE_ID_TANGENCY:
+    case CONSTRAINT_TYPE_ID_CIRCLE_TANGENCY:
+    case CONSTRAINT_TYPE_ID_DISTANCE_2_POINTS:
+    case CONSTRAINT_TYPE_ID_DISTANCE_POINT_LINE:
+        return 0;
+    case CONSTRAINT_TYPE_ID_ANGLE_2_LINES:
+        /// 8 * tensor(4)
+        return 32;
+    case CONSTRAINT_TYPE_ID_SET_HORIZONTAL:
+    case CONSTRAINT_TYPE_ID_SET_VERTICAL:
+        return 0;
+    default:
+        printf("unknown constraint type \n");
+        exit(-1);
+    }
+}
+
 
 } // namespace graph

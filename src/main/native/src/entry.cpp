@@ -62,17 +62,22 @@ int main(int argc, char* args[])
     //jni_setBooleanProperty  
     
         
-    jni_setLongProperty(&env, eclass, 12, (jlong) 3);  // settings::get()->COMPUTATION_MODE  = /// 12  - 1 - DENSE_LAYOUT , 2 - SPARSE_LAYOUT , *3 - DIRECT_LAYOUT
+    jni_setLongProperty(&env, eclass, 20, (jlong) 2);  // settings::get()->COMPUTATION_MODE = [ 1 - DENSE_LAYOUT , 2 - SPARSE_LAYOUT , *3 - DIRECT_LAYOUT ]
+
+    jni_setLongProperty(&env, eclass, 21, (jlong) 3); // settings::get()->SOLVER_MODE  = [ DENSE_LU = 1, SPARSE_QR = 2, SPARSE_ILU = 3, ]
 
 
     jni_setBooleanProperty(&env, eclass, 8, (jboolean) true);  // settings::get()->DEBUG_SOLVER_CONVERGENCE = false; 
-    jni_setBooleanProperty(&env, eclass, 9, (jboolean) true);  // settings::get()->DEBUG_CHECK_ARG = false;
+    jni_setBooleanProperty(&env, eclass, 9, (jboolean) false);  // settings::get()->DEBUG_CHECK_ARG = false;
     jni_setBooleanProperty(&env, eclass, 2, (jboolean) true);  // settings::get()->DEBUG_TENSOR_A= true;
-    jni_setBooleanProperty(&env, eclass, 3, (jboolean) true);  // settings::get()->DEBUG_TENSOR_B= true;
+    jni_setBooleanProperty(&env, eclass, 3, (jboolean) false);  // settings::get()->DEBUG_TENSOR_B= true;
 
-    jni_setBooleanProperty(&env, eclass, 7, (jboolean) true);  // settings::get()->SOLVER_INC_HESSIAN = false;
+    jni_setBooleanProperty(&env, eclass, 24, (jboolean) false); // settings::get()->SOLVER_INC_HESSIAN = false;
     
-    
+    jni_setBooleanProperty(&env, eclass, 31, (jboolean) true); // settings::get()->DEBUG_COO_FORMAT  = false;
+
+
+    /// ----------------------------------------------------------------------------------------------------- //
 
     err = jni_initComputationContext(&env, eclass);
 

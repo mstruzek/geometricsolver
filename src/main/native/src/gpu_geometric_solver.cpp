@@ -22,7 +22,7 @@ GPUGeometricSolver::GPUGeometricSolver() {
     }
 
     /// Linear system solver
-    linearSystem = std::make_shared<GPULinearSystem>(stream);
+    solverSystem = std::make_shared<GPUSolverSystem>(stream);
 
     ///  Computation Context
     _computationContext = (std::make_shared<GPUComputationContext>(stream));
@@ -34,7 +34,7 @@ GPUGeometricSolver::~GPUGeometricSolver() {
         _computation.reset();
     }
 
-    linearSystem.reset();
+    solverSystem.reset();
 
     _computationContext.reset();
 }
@@ -70,7 +70,7 @@ void GPUGeometricSolver::initComputation(cudaError_t *error) {
     long computationId = 0L;
 
     _computation =
-        std::make_shared<GPUComputation>(computationId, stream, linearSystem, _computationContext, this);
+        std::make_shared<GPUComputation>(computationId, stream, solverSystem, _computationContext, this);
     *error = cudaPeekAtLastError();
 }
 

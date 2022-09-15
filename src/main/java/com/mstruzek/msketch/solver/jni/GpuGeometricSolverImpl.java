@@ -1,6 +1,7 @@
 package com.mstruzek.msketch.solver.jni;
 
 import com.mstruzek.jni.JNIDebugParameters;
+import com.mstruzek.jni.JNIDebugParameters.SolverMode;
 import com.mstruzek.jni.JNISolverGate;
 import com.mstruzek.msketch.*;
 import com.mstruzek.msketch.solver.GeometricSolver;
@@ -11,7 +12,7 @@ import com.mstruzek.msketch.solver.StateReporter;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.mstruzek.jni.JNIDebugParameters.Computation.*;
+import static com.mstruzek.jni.JNIDebugParameters.ComputationMode.*;
 import static com.mstruzek.jni.JNISolverGate.JNI_SUCCESS;
 import static java.util.stream.Collectors.toCollection;
 
@@ -53,17 +54,18 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 //       JNIDebugParameters.DEBUG.setBooleanProperty(false);
 
         JNIDebugParameters.STREAM_CAPTURING.setBooleanProperty(false);
-        JNIDebugParameters.COMPUTATION_MODE.setLongProperty(DENSE_MODE);
+        JNIDebugParameters.COMPUTATION_MODE.setLongProperty(DIRECT_MODE);
+        JNIDebugParameters.SOLVER_MODE.setLongProperty(SolverMode.QR_SPARSE);
 //        JNIDebugParameters.COMPUTATION_MODE.setLongProperty(SPARSE_LAYOUT);
 //        JNIDebugParameters.COMPUTATION_MODE.setLongProperty(DIRECT_LAYOUT);
 
-        JNIDebugParameters.CU_SOLVER_EPSILON.setDoubleProperty(1e-3);
+        JNIDebugParameters.SOLVER_EPSILON.setDoubleProperty(1e-3);
 
         /// synchronize cuda stream
         JNIDebugParameters.DEBUG_CHECK_ARG.setBooleanProperty(true);
 
 
-        JNIDebugParameters.SOLVER_INC_HESSIAN.setBooleanProperty(true);
+        JNIDebugParameters.SOLVER_INC_HESSIAN.setBooleanProperty(false);
 
         JNIDebugParameters.DEBUG_TENSOR_SV.setBooleanProperty(false);
 

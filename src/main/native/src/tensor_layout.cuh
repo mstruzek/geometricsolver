@@ -112,17 +112,21 @@ class SparseLayout {
             const int row_at = cooRowInd[offset + t];
             const int col_at = cooColInd[offset + t];
             if (row_at == row && col_at == col) {
-                /// write value into coo vector - reuse COO patern applied in first round 
-                cooVal[offset + t] = value;     /// 1 Xwrite into cache L2
+                /// write value into coo vector - reuse COO patern applied in first round
+                cooVal[offset + t] = value; /// 1 Xwrite into cache L2
             } else if (row_at == -1 && col_at == -1) {
                 /// SET VALUE
-                cooRowInd[offset + t] = row;    /// 3 Xwrite into cache L2
+                cooRowInd[offset + t] = row; /// 3 Xwrite into cache L2
                 cooColInd[offset + t] = col;
                 cooVal[offset + t] = value;
                 return;
             }
         }
     }
+
+    /// NOTES: format COO budowac jako journal zdarzen set() , plus(new_record)
+    ///         na koncu przeprwadzamy redukcje do thrust::reduce_by_key() [ coo compaction ]
+    ///         na koncu konwersja csr !
 
     __GPU_DEV_INLF__ void add(int row, int col, double value) {
         /// 128 byte cache line - contention in a warp
@@ -135,12 +139,22 @@ class SparseLayout {
             const int row_at = cooRowInd[offset + t];
             const int col_at = cooColInd[offset + t];
             if (row_at == row && col_at == col) {
-                /// override value
-                cooVal[offset + t] += value; /// 1 XWrite into cache L2
+                ///
+                /// HESSIAN - istnieje niebezpieczenstow RMW zapisu do tej samej komorki Non-Atomic (RMW)
+                ///
+                /// SharedLock __shared__[ row? ]  __atomicAdd_block
+                ///
+                /// cooVal[offset + t] += value; /// 1 XWrite into cache L2
+                /// 
+                if (gridDim.x == 1) {
+                    atomicAdd_block(&cooVal[offset + t], value);
+                } else {
+                    atomicAdd(&cooVal[offset + t], value);
+                }                
                 return;
             } else if (row_at == -1 && col_at == -1) {
                 /// SET VALUE
-                cooRowInd[offset + t] = row;  /// 3 XWrite into cache L2 
+                cooRowInd[offset + t] = row; /// 3 XWrite into cache L2
                 cooColInd[offset + t] = col;
                 cooVal[offset + t] = value;
                 return;
@@ -163,12 +177,12 @@ class SparseLayout {
     }
 
   private:
-    const int baseOffset;      /// base offset for jacobian , transponse jacobina or hessian*
-    const int * __restrict__ accWriteOffset; /// cub::exclusive_scan , offset for this Constraint or Geometric Block
+    const int baseOffset;                   /// base offset for jacobian , transponse jacobina or hessian*
+    const int *__restrict__ accWriteOffset; /// cub::exclusive_scan , offset for this Constraint or Geometric Block
 
-    int * __restrict__ cooRowInd; /// COO row indicies
-    int * __restrict__ cooColInd; /// COO column indicies
-    double * __restrict__ cooVal; /// COO values
+    int *__restrict__ cooRowInd; /// COO row indicies
+    int *__restrict__ cooColInd; /// COO column indicies
+    double *__restrict__ cooVal; /// COO values
 };
 
 //=================================================================================
@@ -214,13 +228,15 @@ template <typename DataType> class BlockIterator {
 
 //=================================================================================
 
-/// Direct Access - no permission checks !
+/// Direct Access - no permission checks !  
+/// 
+/// ---- z HESSIANEM - wektor P jest skorumpowany ( non-unique coordinates ).
 ///
 class DirectSparseLayout {
   public:
     __GPU_DEV_INLF__ DirectSparseLayout() : baseOffset(0), accOffset(NULL), P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
 
-    __GPU_DEV_INLF__ DirectSparseLayout(int baseOffset, const int * _accOffset, const int * _P, const int *_cooRowInd, const int *_cooColInd, double *_cooVal)
+    __GPU_DEV_INLF__ DirectSparseLayout(int baseOffset, const int *_accOffset, const int *_P, const int *_cooRowInd, const int *_cooColInd, double *_cooVal)
         : baseOffset(baseOffset), accOffset(_accOffset), P(_P), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {
         iterator.reset();
     }
@@ -245,6 +261,15 @@ class DirectSparseLayout {
             int at_col = cooColInd[threadOffset + itr];
             if (at_row == row && at_col == col) {
                 
+                ///
+                /// HESSIAN - komponenty macierzy skorelowane na punktach uczestnicza czesci tego bloku.
+                ///
+                //if (gridDim.x == 1) {
+                //    atomicAdd_block(&cooVal[P[threadOffset + itr]], value);
+                //} else {
+                //    atomicAdd(&cooVal[P[threadOffset + itr]], value);
+                //}    
+
                 cooVal[P[threadOffset + itr]] += value; /// 1 XWrite into L2 memory
                 return;
             } else if (at_row == -1 && at_col == -1) {
@@ -256,13 +281,14 @@ class DirectSparseLayout {
         // SET
         unsigned offset = iterator.next();
         /// override value - inversed indicies
-        cooVal[P[threadOffset + offset]] = value;       /// 1 XWrite into L2 memory
+
+        cooVal[P[threadOffset + offset]] = value; /// 1 XWrite into L2 memory
     }
 
     __GPU_DEV_INLF__ double get(int row, int col) {
         int threadId = iterator.thread_id();
         int threadOffset = baseOffset + accOffset[threadId];
-        int nextOffset = baseOffset + accOffset[threadId + 1]; 
+        int nextOffset = baseOffset + accOffset[threadId + 1];
         int blockSize = nextOffset - threadOffset;
 
         // GET
@@ -280,16 +306,76 @@ class DirectSparseLayout {
     BlockIterator<int> iterator{};
 
   private:
-    int baseOffset; /// base offset for Jacobian, or Transposed Jacobian, or Hessian.
-    const int * __restrict__ accOffset; /// thread acc offset
-    const int * __restrict__ P;         /// direct indicies dense vector
+    int baseOffset;                    /// base offset for Jacobian, or Transposed Jacobian, or Hessian.
+    const int *__restrict__ accOffset; /// thread acc offset
+    const int *__restrict__ P;         /// direct indicies dense vector
 
-    double * __restrict__ cooVal; /// COO values
+    double *__restrict__ cooVal; /// COO values
 
 #define __BEFORE_TRANSFORMATION__
-    const int * __restrict__ cooRowInd; /// COO row computed at first round of SparseLayout mode
-    const int * __restrict__ cooColInd; /// COO col computed at first round of SparseLayout mode
+    const int *__restrict__ cooRowInd; /// COO row computed at first round of SparseLayout mode
+    const int *__restrict__ cooColInd; /// COO col computed at first round of SparseLayout mode
 };
+
+//=================================================================================
+
+/// <summary>
+///  Compact Layout - store column, row, and value as journal of "writes"
+///  After completion this session, coo object have to be sorted and reduced (std::plus<double>)
+/// </summary>
+class CompactLayout {
+  public:
+    __GPU_DEV_INLF__ CompactLayout() : baseOffset(0), accWriteOffset(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
+
+    __GPU_DEV_INLF__ CompactLayout(int baseOffset, const int *_accWriteOffset, int *_cooRowInd, int *_cooColInd, double *_cooVal)
+        : baseOffset(baseOffset), accWriteOffset(_accWriteOffset), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {}
+
+    __GPU_DEV_INLF__ void set(int row, int col, double value) {
+        int threadId = iterator.thread_id();
+        int offset = baseOffset + accWriteOffset[threadId];        
+        int itr_offset = iterator.value();
+
+        cooRowInd[offset + itr_offset] = row; /// 3 Xwrite into cache L2
+        cooColInd[offset + itr_offset] = col;
+        cooVal[offset + itr_offset] = value;
+    }
+
+    __GPU_DEV_INLF__ void add(int row, int col, double value) {
+        int threadId = iterator.thread_id();
+        int offset = baseOffset + accWriteOffset[threadId];
+        int itr_offset = iterator.value();
+
+        cooRowInd[offset + itr_offset] = row; /// 3 Xwrite into cache L2
+        cooColInd[offset + itr_offset] = col;
+        cooVal[offset + itr_offset] = value;
+    }
+
+    __GPU_DEV_INLF__ double get(int row, int col) {
+        int threadId = iterator.thread_id();
+        int offset = baseOffset + accWriteOffset[threadId];
+        int nextOffset = baseOffset + accWriteOffset[threadId + 1];
+        int blockSize = nextOffset - offset;        /// BLOCK_SIZE <= 32
+
+        for (int t = 0; t < blockSize; ++t) {
+            if (cooRowInd[offset + t] == row && cooColInd[offset + t] == col) {
+                return cooVal[offset + t];
+            }
+        }
+        return 0.0; /// invalidate computation state
+    }
+
+  private:
+    BlockIterator<int> iterator{}; /// this session iterator
+
+  private:
+    const int baseOffset;                   /// base offset for jacobian , transponse jacobina or hessian*
+    const int *__restrict__ accWriteOffset; /// cub::exclusive_scan , offset for this Constraint or Geometric Block
+
+    int *__restrict__ cooRowInd; /// COO row indicies
+    int *__restrict__ cooColInd; /// COO column indicies
+    double *__restrict__ cooVal; /// COO values
+};
+
 
 //=================================================================================
 
@@ -463,12 +549,12 @@ template <typename LLayout> class AdapterTensor : public Tensor<LLayout> {
 
     __GPU_DEV_INLF__ void setValue(int row, int col, double const &value) {
         ///
-        Tensor<LLayout>::setValue(col, row, value); 
+        Tensor<LLayout>::setValue(col, row, value);
     }
 
-    __GPU_DEV_INLF__ void setSubTensor(int row, int col, Tensor<graph::BlockLayout> const &mt) { 
+    __GPU_DEV_INLF__ void setSubTensor(int row, int col, Tensor<graph::BlockLayout> const &mt) {
         ///
-        Tensor<LLayout>::plusSubTensor(col, row, mt.transpose()); 
+        Tensor<LLayout>::plusSubTensor(col, row, mt.transpose());
     }
 };
 

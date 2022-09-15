@@ -1,7 +1,7 @@
 #ifndef _CU_ALLOCATOR_H_
 #define _CU_ALLOCATOR_H_
 
-#include "cuda_runtime.h"
+#include "cuda_runtime_api.h"
 #include "stdio.h"
 
 #include <memory>

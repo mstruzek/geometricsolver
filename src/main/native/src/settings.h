@@ -4,27 +4,29 @@ namespace settings
 {
 
 struct Settings
-{
-    bool DEBUG                      = false;        /// 0
-    bool KERNEL_PRE                 = true;         /// 1
-    bool DEBUG_TENSOR_A             = false;        /// 2
-    bool DEBUG_TENSOR_B             = false;        /// 3
-    bool DEBUG_TENSOR_SV            = false;        /// 4
+{   
+    bool DEBUG_TENSOR_A             = false;        /// 1
+    bool DEBUG_TENSOR_B             = false;        /// 2
+    bool DEBUG                      = false;        /// 3    
+    bool DEBUG_TENSOR_SV            = false;        /// 4    
+    bool CLOCK_MILLISECONDS         = true;         /// 5
     bool CLOCK_NANOSECONDS          = true;         /// 6
-    bool SOLVER_INC_HESSIAN         = false;        /// 7
+    
     bool DEBUG_SOLVER_CONVERGENCE   = false;        /// 8
     bool DEBUG_CHECK_ARG            = false;        /// 9
+                 
+    int COMPUTATION_MODE            = 1;            /// 20  - 1 - DENSE_MODE , 2 - SPARSE_MODE , *3 - DIRECT_MODE
+    int SOLVER_MODE                 = 1;            /// 21  - 1 - 
+    bool SOLVER_INC_HESSIAN         = false;        /// 24
+
+    double SOLVER_LWORK_FACTOR      = 1.0;          /// 26
+    double SOLVER_EPSILON           = 10.0;         /// 27
+
     bool DEBUG_CSR_FORMAT           = false;        /// 30
     bool DEBUG_COO_FORMAT           = false;        /// 31
 
-    bool STREAM_CAPTURING           = false;        /// 100
 
-    unsigned GRID_SIZE              = 1;            /// 10
-    unsigned BLOCK_SIZE             = 512;          /// 11
-    unsigned COMPUTATION_MODE       = 1;            /// 12  - 1 - DENSE_LAYOUT , 2 - SPARSE_LAYOUT , *3 - DIRECT_LAYOUT
-
-    double CU_SOLVER_LWORK_FACTOR   = 1.0;          /// 21
-    double CU_SOLVER_EPSILON        = 10.0;         /// 22
+    bool STREAM_CAPTURING = false; /// 60
 };
 
 /**

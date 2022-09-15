@@ -1,13 +1,11 @@
 #ifndef _SOLVER_KERNEL_CUH_
 #define _SOLVER_KERNEL_CUH_
 
-#include "cuda_runtime.h"
+#include "cuda_runtime_api.h"
 #include "math.h"
 #include "stdio.h"
 
 #include "model.cuh"
-
-#include "tensor_layout.cuh"
 
 #include "computation_state.cuh"
 

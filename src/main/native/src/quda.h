@@ -1,7 +1,7 @@
 #ifndef _QUDA_CUH_
 #define _QUDA_CUH_
 
-#include "cuda_runtime.h"
+#include "cuda_runtime_api.h"
 #include "device_launch_parameters.h"
 
 #include <stdio.h>
@@ -186,7 +186,7 @@ template <typename Type> class dev_vector {
     /// <param name="memory"></param>
     /// <param name="size"></param>
     /// <param name="stream"></param>
-    dev_vector(Type *memory, size_t size, cudaStream_t stream) : memory(memory), size(size), stream(stream), owner(false) {}
+    dev_vector(Type *memory, size_t size, cudaStream_t stream = nullptr) : memory(memory), size(size), stream(stream), owner(false) {}
 
     /// <summary>
     /// Helper utility for pinned memory vector.
