@@ -110,7 +110,6 @@ SolverMode getSolverMode(int solverModeId) {
     }
 }
 
-
 /// accWriteCooStiff
 ///
 /// __device__ __host__ COO tensor format requirments
@@ -190,7 +189,8 @@ int tensorOpsCooConstraintJacobian(Constraint const &constraint) {
     }
 }
 
-int tensorOpsCooConstraintHessian(Constraint const &constraint) {
+int tensorOpsCooConstraintHessian(Constraint const &constraint) { 
+    //
     switch (constraint.constraintTypeId) {
     case CONSTRAINT_TYPE_ID_FIX_POINT:
     case CONSTRAINT_TYPE_ID_PARAMETRIZED_XFIX:
@@ -220,9 +220,7 @@ int tensorOpsCooConstraintHessian(Constraint const &constraint) {
         return 0;
     default:
         printf("unknown constraint type \n");
-        exit(-1);
     }
 }
-
 
 } // namespace graph

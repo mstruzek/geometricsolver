@@ -97,6 +97,7 @@
     <ClCompile Include="src\solver\gpu_solver_dense_lu.cpp" />
     <ClCompile Include="src\solver\gpu_solver_sparse_ilu02.cpp" />
     <ClCompile Include="src\solver\gpu_solver_sparse_qr.cpp" />
+    <ClInclude Include="src\format_encoder.h" />
     <ClInclude Include="src\gpu_allocator.h" />
     <ClInclude Include="src\gpu_utility.h" />
     <ClInclude Include="src\kernel_traits.h" />
@@ -111,6 +112,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </CudaCompile>
     <ClCompile Include="src\gpu_utility.cpp" />
+    <CudaCompile Include="src\format_encoder.cu" />
     <CudaCompile Include="src\model.cu">
       <FileType>Document</FileType>
     </CudaCompile>

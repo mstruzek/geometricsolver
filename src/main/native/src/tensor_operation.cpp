@@ -159,7 +159,7 @@ void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *c
     if (settings::get()->DEBUG_COO_FORMAT) {
         checkCudaStatus(cudaStreamSynchronize(stream));
         utility::stdout_vector(utility::dev_vector<int>{cooRowInd, (size_t)nnz, stream}, "cooRowInd --- Xsoort");
-        utility::stdout_vector(utility::dev_vector<int>{cooColInd, (size_t)(m + 1), stream}, "cooColInd --- Xsoort");
+        utility::stdout_vector(utility::dev_vector<int>{cooColInd, (size_t)nnz, stream}, "cooColInd --- Xsoort");
     }
 
     /// create csrRowPtrA    -  async execution
@@ -220,7 +220,8 @@ void TensorOperation::invertPermuts(int n, int *PT, int *INV) {
     }
 }
 
-void TensorOperation::stdout_coo_tensor(cudaStream_t stream, int m, int n, int nnz, int *d_cooRowInd, int *d_cooColInd, double *d_cooVal) {
+
+void TensorOperation::stdout_coo_tensor(cudaStream_t stream, int m, int n, int nnz, int *d_cooRowInd, int *d_cooColInd, double *d_cooVal, const char* title) {
 
     utility::host_vector<int> cooRowInd{(size_t)nnz};
     utility::host_vector<int> cooColInd{(size_t)nnz};
@@ -232,11 +233,7 @@ void TensorOperation::stdout_coo_tensor(cudaStream_t stream, int m, int n, int n
 
     cudaStreamSynchronize(stream);
 
-    /// all indicies withe value in coo format
-    for (int T = 0; T < nnz; ++T) {
-        utility::infoLog(" %d , %d %d  -  %7.3f  \n", T, cooRowInd[T], cooColInd[T], cooVal[T]);
-    }
-
+    utility::infoLog( "\n---- %s\n", title);
     /// Stdout ad m x n format
     int idx = 0;
     for (int T = 0; T < m; ++T) {
@@ -249,6 +246,27 @@ void TensorOperation::stdout_coo_tensor(cudaStream_t stream, int m, int n, int n
             }
         }
         utility::infoLog(" \n ");
+    }
+    utility::infoLog("\n");
+}
+
+
+void TensorOperation::stdout_coo_vector(cudaStream_t stream, int m, int n, int nnz, int *d_cooRowInd, int *d_cooColInd, double *d_cooVal,const char* title) {
+
+    utility::host_vector<int> cooRowInd{(size_t)nnz};
+    utility::host_vector<int> cooColInd{(size_t)nnz};
+    utility::host_vector<double> cooVal{(size_t)nnz};
+
+    cooRowInd.memcpy_of(utility::dev_vector<int>(d_cooRowInd, nnz, stream), stream);
+    cooColInd.memcpy_of(utility::dev_vector<int>(d_cooColInd, nnz, stream), stream);
+    cooVal.memcpy_of(utility::dev_vector<double>(d_cooVal, nnz, stream), stream);
+
+    cudaStreamSynchronize(stream);
+
+    utility::infoLog("\n--- %s \n", title);
+    /// all indicies withe value in coo format
+    for (int T = 0; T < nnz; ++T) {
+        utility::infoLog(" %d , %d %d  -  %7.3f  \n", T, cooRowInd[T], cooColInd[T], cooVal[T]);
     }
     utility::infoLog("\n");
 }

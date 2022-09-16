@@ -78,7 +78,7 @@ class TensorOperation {
 
 
     /// <summary>
-    /// host debug function. fetch device coo vectors stdout in tensor form m x n
+    /// debug function. stdout device coo vectors.
     /// </summary>
     /// <param name="stream"></param>
     /// <param name="m"></param>
@@ -87,8 +87,23 @@ class TensorOperation {
     /// <param name="d_cooRowInd"></param>
     /// <param name="d_cooColInd"></param>
     /// <param name="d_cooVal"></param>
-    void stdout_coo_tensor(cudaStream_t stream, int m, int n, int nnz, int *d_cooRowInd, int *d_cooColInd,
-                           double *d_cooVal);
+    /// <param name="title"></param>
+    void stdout_coo_vector(cudaStream_t stream, int m, int n, int nnz, int *d_cooRowInd, int *d_cooColInd, double *d_cooVal,
+                                            const char *title);
+
+    /// <summary>
+    /// debug function. stdout coo vector in tensor layout.
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <param name="m"></param>
+    /// <param name="n"></param>
+    /// <param name="nnz"></param>
+    /// <param name="d_cooRowInd"></param>
+    /// <param name="d_cooColInd"></param>
+    /// <param name="d_cooVal"></param>
+    /// <param name="title"></param>
+    void stdout_coo_tensor(cudaStream_t stream, int m, int n, int nnz, int *d_cooRowInd, int *d_cooColInd, double *d_cooVal,
+                                            const char *title);
 
   private:
          

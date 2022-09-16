@@ -479,15 +479,15 @@ template <typename Layout> __device__ void setStiffnessMatrix_FreePoint(int rc, 
     graph::TensorBlock Ks = graph::SmallTensor::diagonal(SPRING_LOW);
     graph::TensorBlock Km = Ks.multiplyC(-1);
 
-    mt.plusSubTensor(rc + 0, rc + 0, Km);
-    mt.plusSubTensor(rc + 0, rc + 2, Ks);
+    mt.setSubTensor(rc + 0, rc + 0, Km);
+    mt.setSubTensor(rc + 0, rc + 2, Ks);
 
-    mt.plusSubTensor(rc + 2, rc + 0, Ks);
-    mt.plusSubTensor(rc + 2, rc + 2, Km.multiplyC(2.0));
-    mt.plusSubTensor(rc + 2, rc + 4, Ks);
+    mt.setSubTensor(rc + 2, rc + 0, Ks);
+    mt.setSubTensor(rc + 2, rc + 2, Km.multiplyC(2.0));
+    mt.setSubTensor(rc + 2, rc + 4, Ks);
 
-    mt.plusSubTensor(rc + 4, rc + 2, Ks);
-    mt.plusSubTensor(rc + 4, rc + 4, Km);
+    mt.setSubTensor(rc + 4, rc + 2, Ks);
+    mt.setSubTensor(rc + 4, rc + 4, Km);
 }
 
 ///
@@ -510,16 +510,16 @@ template <typename Layout> __device__ void setStiffnessMatrix_Line(int rc, graph
     graph::TensorBlock Ksb = Ks.multiplyC(-1).plus(Kb.multiplyC(-1));
 
     // wiersz pierwszy
-    mt.plusSubTensor(rc + 0, rc + 0, Ks.multiplyC(-1));
-    mt.plusSubTensor(rc + 0, rc + 2, Ks);
-    mt.plusSubTensor(rc + 2, rc + 0, Ks);
-    mt.plusSubTensor(rc + 2, rc + 2, Ksb);
-    mt.plusSubTensor(rc + 2, rc + 4, Kb);
-    mt.plusSubTensor(rc + 4, rc + 2, Kb);
-    mt.plusSubTensor(rc + 4, rc + 4, Ksb);
-    mt.plusSubTensor(rc + 4, rc + 6, Ks);
-    mt.plusSubTensor(rc + 6, rc + 4, Ks);
-    mt.plusSubTensor(rc + 6, rc + 6, Ks.multiplyC(-1));
+    mt.setSubTensor(rc + 0, rc + 0, Ks.multiplyC(-1));
+    mt.setSubTensor(rc + 0, rc + 2, Ks);
+    mt.setSubTensor(rc + 2, rc + 0, Ks);
+    mt.setSubTensor(rc + 2, rc + 2, Ksb);
+    mt.setSubTensor(rc + 2, rc + 4, Kb);
+    mt.setSubTensor(rc + 4, rc + 2, Kb);
+    mt.setSubTensor(rc + 4, rc + 4, Ksb);
+    mt.setSubTensor(rc + 4, rc + 6, Ks);
+    mt.setSubTensor(rc + 6, rc + 4, Ks);
+    mt.setSubTensor(rc + 6, rc + 6, Ks.multiplyC(-1));
 }
 
 ///
@@ -548,16 +548,16 @@ template <typename Layout> __device__ void setStiffnessMatrix_Circle(int rc, gra
     graph::TensorBlock Ksb = Ks.multiplyC(-1).plus(Kb.multiplyC(-1));
 
     // wiersz pierwszy
-    mt.plusSubTensor(rc + 0, rc + 0, Ks.multiplyC(-1));
-    mt.plusSubTensor(rc + 0, rc + 2, Ks);
-    mt.plusSubTensor(rc + 2, rc + 0, Ks);
-    mt.plusSubTensor(rc + 2, rc + 2, Ksb);
-    mt.plusSubTensor(rc + 2, rc + 4, Kb);
-    mt.plusSubTensor(rc + 4, rc + 2, Kb);
-    mt.plusSubTensor(rc + 4, rc + 4, Ksb);
-    mt.plusSubTensor(rc + 4, rc + 6, Ks);
-    mt.plusSubTensor(rc + 6, rc + 4, Ks);
-    mt.plusSubTensor(rc + 6, rc + 6, Ks.multiplyC(-1));
+    mt.setSubTensor(rc + 0, rc + 0, Ks.multiplyC(-1));
+    mt.setSubTensor(rc + 0, rc + 2, Ks);
+    mt.setSubTensor(rc + 2, rc + 0, Ks);
+    mt.setSubTensor(rc + 2, rc + 2, Ksb);
+    mt.setSubTensor(rc + 2, rc + 4, Kb);
+    mt.setSubTensor(rc + 4, rc + 2, Kb);
+    mt.setSubTensor(rc + 4, rc + 4, Ksb);
+    mt.setSubTensor(rc + 4, rc + 6, Ks);
+    mt.setSubTensor(rc + 6, rc + 4, Ks);
+    mt.setSubTensor(rc + 6, rc + 6, Ks.multiplyC(-1));
 }
 
 ///
@@ -573,31 +573,31 @@ template <typename Layout> __device__ void setStiffnessMatrix_Arc(int rc, graph:
     graph::TensorBlock mKb = Kb.multiplyC(-1);
     graph::TensorBlock KsKbm = mKs.plus(mKb);
 
-    mt.plusSubTensor(rc + 0, rc + 0, mKs);
-    mt.plusSubTensor(rc + 0, rc + 8, Ks); // a
+    mt.setSubTensor(rc + 0, rc + 0, mKs);
+    mt.setSubTensor(rc + 0, rc + 8, Ks); // a
 
-    mt.plusSubTensor(rc + 2, rc + 2, mKs);
-    mt.plusSubTensor(rc + 2, rc + 8, Ks); // b
+    mt.setSubTensor(rc + 2, rc + 2, mKs);
+    mt.setSubTensor(rc + 2, rc + 8, Ks); // b
 
-    mt.plusSubTensor(rc + 4, rc + 4, mKs);
-    mt.plusSubTensor(rc + 4, rc + 10, Ks); // c
+    mt.setSubTensor(rc + 4, rc + 4, mKs);
+    mt.setSubTensor(rc + 4, rc + 10, Ks); // c
 
-    mt.plusSubTensor(rc + 6, rc + 6, mKs);
-    mt.plusSubTensor(rc + 6, rc + 12, Ks); // d
+    mt.setSubTensor(rc + 6, rc + 6, mKs);
+    mt.setSubTensor(rc + 6, rc + 12, Ks); // d
 
-    mt.plusSubTensor(rc + 8, rc + 0, Ks);
-    mt.plusSubTensor(rc + 8, rc + 2, Ks);
-    mt.plusSubTensor(rc + 8, rc + 8, KsKbm.multiplyC(2.0));
-    mt.plusSubTensor(rc + 8, rc + 10, Kb);
-    mt.plusSubTensor(rc + 8, rc + 12, Kb); // p1
+    mt.setSubTensor(rc + 8, rc + 0, Ks);
+    mt.setSubTensor(rc + 8, rc + 2, Ks);
+    mt.setSubTensor(rc + 8, rc + 8, KsKbm.multiplyC(2.0));
+    mt.setSubTensor(rc + 8, rc + 10, Kb);
+    mt.setSubTensor(rc + 8, rc + 12, Kb); // p1
 
-    mt.plusSubTensor(rc + 10, rc + 4, Ks);
-    mt.plusSubTensor(rc + 10, rc + 8, Kb);
-    mt.plusSubTensor(rc + 10, rc + 10, KsKbm); // p2
+    mt.setSubTensor(rc + 10, rc + 4, Ks);
+    mt.setSubTensor(rc + 10, rc + 8, Kb);
+    mt.setSubTensor(rc + 10, rc + 10, KsKbm); // p2
 
-    mt.plusSubTensor(rc + 12, rc + 6, Ks);
-    mt.plusSubTensor(rc + 12, rc + 8, Kb);
-    mt.plusSubTensor(rc + 12, rc + 12, KsKbm); // p3
+    mt.setSubTensor(rc + 12, rc + 6, Ks);
+    mt.setSubTensor(rc + 12, rc + 8, Kb);
+    mt.setSubTensor(rc + 12, rc + 12, KsKbm); // p3
 }
 
 ///
@@ -2229,6 +2229,46 @@ template <typename Layout>
 __device__ void setHessianTensorConstraintSetVertical(int tID, graph::Constraint const *constraint, ComputationState *ec, graph::Tensor<Layout> &mt);
 
 /// ============================ CONSTRAINT HESSIAN MATRIX  ===============================
+
+/// ----------------------------------------------------------------------------------------
+
+// this functio exists also in model.cu
+__device__ int tensorOpsCooConstraintHessianCount(graph::Constraint const &constraint) {
+    //
+    switch (constraint.constraintTypeId) {
+    case CONSTRAINT_TYPE_ID_FIX_POINT:
+    case CONSTRAINT_TYPE_ID_PARAMETRIZED_XFIX:
+    case CONSTRAINT_TYPE_ID_PARAMETRIZED_YFIX:
+    case CONSTRAINT_TYPE_ID_CONNECT_2_POINTS:
+    case CONSTRAINT_TYPE_ID_HORIZONTAL_POINT:
+    case CONSTRAINT_TYPE_ID_VERTICAL_POINT:
+        return 0;
+    case CONSTRAINT_TYPE_ID_LINES_PARALLELISM:
+        /// 8 * tensor(4)
+        return 32;
+    case CONSTRAINT_TYPE_ID_LINES_PERPENDICULAR:
+        /// 8 * tensor(4)
+        return 32;
+    case CONSTRAINT_TYPE_ID_EQUAL_LENGTH:
+    case CONSTRAINT_TYPE_ID_PARAMETRIZED_LENGTH:
+    case CONSTRAINT_TYPE_ID_TANGENCY:
+    case CONSTRAINT_TYPE_ID_CIRCLE_TANGENCY:
+    case CONSTRAINT_TYPE_ID_DISTANCE_2_POINTS:
+    case CONSTRAINT_TYPE_ID_DISTANCE_POINT_LINE:
+        return 0;
+    case CONSTRAINT_TYPE_ID_ANGLE_2_LINES:
+        /// 8 * tensor(4)
+        return 32;
+    case CONSTRAINT_TYPE_ID_SET_HORIZONTAL:
+    case CONSTRAINT_TYPE_ID_SET_VERTICAL:
+        return 0;
+    default:
+        printf("unknown constraint type \n");
+        return 0;
+    }
+}
+
+/// ============================ CONSTRAINT HESSIAN MATRIX  ===============================
 /// <summary>
 /// Evaluate Constraint Hessian Matrix  (FI)' - ((dfi/dq)`)/dq
 /// </summary>
@@ -2243,6 +2283,11 @@ template <typename Tensor> __device__ void EvaluateConstraintHessian_Impl(int tI
     /// COLUMN_ORDER - tensor A
     if (tID < N) {
         const graph::Constraint *constraint = ec->getConstraint(tID);
+        
+        /// tensor operation this constraint will write into A
+        if (tensorOpsCooConstraintHessianCount(*constraint) == 0)
+            return;
+
         switch (constraint->constraintTypeId) {
         case CONSTRAINT_TYPE_ID_FIX_POINT:
             setHessianTensorConstraintFixPoint(tID, constraint, ec, mt);

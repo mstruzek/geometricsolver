@@ -56,16 +56,17 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         JNIDebugParameters.STREAM_CAPTURING.setBooleanProperty(false);
         JNIDebugParameters.COMPUTATION_MODE.setLongProperty(DIRECT_MODE);
         JNIDebugParameters.SOLVER_MODE.setLongProperty(SolverMode.QR_SPARSE);
-//        JNIDebugParameters.COMPUTATION_MODE.setLongProperty(SPARSE_LAYOUT);
+
+        //        JNIDebugParameters.COMPUTATION_MODE.setLongProperty(SPARSE_LAYOUT);
 //        JNIDebugParameters.COMPUTATION_MODE.setLongProperty(DIRECT_LAYOUT);
 
         JNIDebugParameters.SOLVER_EPSILON.setDoubleProperty(1e-3);
 
         /// synchronize cuda stream
-        JNIDebugParameters.DEBUG_CHECK_ARG.setBooleanProperty(true);
+        JNIDebugParameters.DEBUG_CHECK_ARG.setBooleanProperty(false);
 
 
-        JNIDebugParameters.SOLVER_INC_HESSIAN.setBooleanProperty(false);
+        JNIDebugParameters.SOLVER_INC_HESSIAN.setBooleanProperty(true);
 
         JNIDebugParameters.DEBUG_TENSOR_SV.setBooleanProperty(false);
 

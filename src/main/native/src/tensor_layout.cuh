@@ -554,8 +554,14 @@ template <typename LLayout> class AdapterTensor : public Tensor<LLayout> {
 
     __GPU_DEV_INLF__ void setSubTensor(int row, int col, Tensor<graph::BlockLayout> const &mt) {
         ///
+        Tensor<LLayout>::setSubTensor(col, row, mt.transpose());
+    }
+
+    __GPU_DEV_INLF__ void plusSubTensor(int row, int col, Tensor<graph::BlockLayout> const &mt) {    
+        /// only hessian
         Tensor<LLayout>::plusSubTensor(col, row, mt.transpose());
     }
+
 };
 
 // transponsed operations

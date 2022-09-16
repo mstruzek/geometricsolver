@@ -41,7 +41,7 @@ struct ComputationState {
         return &geometrics[offset];
     }
 
-    __GPU_DEV_INL__ graph::Constraint *getConstraint(int constraintId) const {
+    __host__ __GPU_DEV_INL__ graph::Constraint *getConstraint(int constraintId) const {
         const size_t offset = constraintOffset[constraintId];
         return &constraints[offset];
     }

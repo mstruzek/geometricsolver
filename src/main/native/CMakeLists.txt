@@ -54,6 +54,7 @@ find_package(CUDAToolkit 11.7)
 
 add_library(${PROJECT_SHARED_LIBRARY} SHARED
 		src/solver_kernel.cu
+		src/format_encoder.cu
 		src/model.cu
 		src/quda.cpp
         src/cuerror.cpp
@@ -66,7 +67,7 @@ add_library(${PROJECT_SHARED_LIBRARY} SHARED
         src/solver/gpu_solver_dense_lu.cpp
         src/solver/gpu_solver_sparse_ilu02.cpp
         src/solver/gpu_solver_sparse_qr.cpp
-        src/tensor_operation.cpp
+        src/tensor_operation.cpp		
         src/com_mstruzek_jni_JNISolverGate.cpp
 		)
 

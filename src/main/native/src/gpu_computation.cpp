@@ -29,7 +29,7 @@ namespace solver {
 
 GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::shared_ptr<GPUSolverSystem> solverSystem,
                                std::shared_ptr<GPUComputationContext> cc, GPUGeometricSolver *solver)
-    : computationId(computationId), solverSystem(solverSystem), tensorOperation(stream), stream(stream), computationContext(cc) {
+    : computationId(computationId), solverSystem(solverSystem), tensorOperation(stream), formatEncoder(stream), stream(stream), computationContext(cc) {
 
     /// HOST_PAGEABLE
 
@@ -100,12 +100,17 @@ void GPUComputation::preInitializeData() {
         accCooWriteStiffTensor = utility::accumulatedValue(geometrics, graph::tensorOpsCooStiffnesCoefficients);
         /// accumulated COO - Jacobian
         accCooWriteJacobianTensor = utility::accumulatedValue(constraints, graph::tensorOpsCooConstraintJacobian);
-        /// accumuldate COO - Hessian
-        accCooWriteHessianTensor = utility::accumulatedValue(constraints, graph::tensorOpsCooConstraintHessian);
+
+        if (settings::get()->SOLVER_INC_HESSIAN) {
+            /// accumuldate COO - Hessian
+            accCooWriteHessianTensor = utility::accumulatedValue(constraints, graph::tensorOpsCooConstraintHessian);
+        } else {
+            accCooWriteHessianTensor = std::vector<int, gpu_allocator<int>>(0);
+        }
 
         if (accCooWriteHessianTensor.size() > 1 && computationMode == ComputationMode::DIRECT_MODE) {
             fprintf(stderr, "[solver.gpu] error ! direct layout mode is not available for Hessian matrix evaluation ! \n");
-            exit(-1);
+            // exit(-1);
         }
     }
 
@@ -176,10 +181,15 @@ void GPUComputation::memcpyComputationToDevice() {
 
         d_PT = utility::dev_vector<int>(cooWritesSize, stream);
         d_INV_PT = utility::dev_vector<int>(cooWritesSize, stream);
-        d_cooRowInd_tmp = utility::dev_vector<int>(cooWritesSize, stream);
+        d_cooRowInd_order = utility::dev_vector<int>(cooWritesSize, stream);
 
         /// rows = m + 1
-        d_csrRowPtrA = utility::dev_vector<int>(dimension + 1, stream);
+        if (computationMode == ComputationMode::COMPACT_MODE) {
+            d_csrRowPtrA = utility::dev_vector<int>(nnz, stream);
+        } else {
+            d_csrRowPtrA = utility::dev_vector<int>(dimension + 1, stream);
+        }
+
         d_csrColIndA = utility::dev_vector<int>(nnz, stream);
         d_csrValA = utility::dev_vector<double>(nnz, stream);
     }
@@ -278,6 +288,8 @@ void GPUComputation::PreInitializeComputationState(ComputationState *ev, int itr
         ev->cooColInd = d_cooColInd; /// SparseLayout access
         ev->cooVal = d_cooVal;
 
+        utility::memsetAsync(d_cooVal.data(), 0, d_cooVal.get_size(), stream);
+
         ev->INV_P = d_INV_PT; /// SparseLayout(1) + DirectLayout(*)
     }
 }
@@ -305,7 +317,8 @@ int GPUComputation::getSharedMemoryRequirments(ComputationLayout computationLayo
 
     /// shared memory - BlockIterator requirments !
     int sharedMemory = 0;
-    if (computationLayout == ComputationLayout::DIRECT_LAYOUT) {
+
+    if (computationLayout == ComputationLayout::DIRECT_LAYOUT || computationLayout == ComputationLayout::COMPACT_LAYOUT) {
         int elements = max(geometrics.size(), constraints.size());
         int blockSize = min(DEFAULT_BLOCK_DIM, elements);
         sharedMemory = blockSize * sizeof(int);
@@ -328,13 +341,14 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, Computatio
     if (settings::get()->DEBUG_COO_FORMAT) {
         cudaStreamSynchronize(stream);
         /// intermediate result from conversion
-        tensorOperation.stdout_coo_tensor(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal);
+        tensorOperation.stdout_coo_vector(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal, "coo -K");
     }
 
     /// ---------------------------------------------------------------------------------------- ///
     ///                                 KERNEL ( Hessian Tensor - K )                            ///
     /// ---------------------------------------------------------------------------------------- ///
     if (settings::get()->SOLVER_INC_HESSIAN) {
+        // constraint with Hessian tensor
         EvaluateConstraintHessian(stream, sharedMemory, dev_ev, constraints.size());
         validateStream;
     }
@@ -352,7 +366,7 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, Computatio
     if (settings::get()->DEBUG_COO_FORMAT) {
         cudaStreamSynchronize(stream);
         /// intermediate result from conversion
-        tensorOperation.stdout_coo_tensor(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal);
+        tensorOperation.stdout_coo_vector(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal, "coo Jacobian");
     }
 
     ///  Transposed Jacobian - Uperr Tensor
@@ -368,7 +382,7 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, Computatio
     if (settings::get()->DEBUG_COO_FORMAT) {
         cudaStreamSynchronize(stream);
         /// intermediate result from conversion
-        tensorOperation.stdout_coo_tensor(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal);
+        tensorOperation.stdout_coo_vector(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal, "coo JacobianT");
     }
 }
 
@@ -393,7 +407,7 @@ void GPUComputation::DebugTensorConstruction(ComputationState *ev) {
 
     if (settings::get()->DEBUG_TENSOR_A) {
         /// ---------------------------------------------------------------------------------------- ///
-        ///                             KERNEL ( stdout tensor at gpu )                              ///
+        ///                             KERNEL ( stdout tensor )                                     ///
         /// ---------------------------------------------------------------------------------------- ///
         ///
         switch (computationMode) {
@@ -402,7 +416,8 @@ void GPUComputation::DebugTensorConstruction(ComputationState *ev) {
             break;
         case ComputationMode::SPARSE_MODE:
         case ComputationMode::DIRECT_MODE:
-            tensorOperation.stdout_coo_tensor(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal);
+        case ComputationMode::COMPACT_MODE:
+            tensorOperation.stdout_coo_tensor(stream, dimension, dimension, nnz, d_cooRowInd_order, d_csrColIndA, d_csrValA, " --- A*");
             break;
         }
     }
@@ -496,21 +511,30 @@ void GPUComputation::CudaGraphCaptureAndLaunch(cudaGraphExec_t graphExec) {
 }
 
 ComputationLayout GPUComputation::selectComputationLayout(int itr) {
+
     ComputationLayout computationLayout;
 
     switch (computationMode) {
+
     case ComputationMode::DENSE_MODE:
-        computationLayout = ComputationLayout::DENSE_LAYOUT;
+        return ComputationLayout::DENSE_LAYOUT;
         break;
+
     case ComputationMode::SPARSE_MODE:
         computationLayout = ComputationLayout::SPARSE_LAYOUT;
         break;
+
     case ComputationMode::DIRECT_MODE:
         computationLayout = ComputationLayout::DIRECT_LAYOUT;
         if (itr == FIRST_ROUND) {
             computationLayout = ComputationLayout::SPARSE_LAYOUT;
         }
         break;
+
+    case ComputationMode::COMPACT_MODE:
+        computationLayout = ComputationLayout::COMPACT_LAYOUT;
+        break;
+
     default:
         fprintf(stderr, "[solver] computation mode not recognized ! %d \n", computationMode);
         exit(-1);
@@ -520,21 +544,27 @@ ComputationLayout GPUComputation::selectComputationLayout(int itr) {
 
 void GPUComputation::PostProcessTensorA(int round, ComputationLayout computationLayout) {
 
+    const int m = dimension;
+    const int n = dimension;
+
+    /// non-zeror elements temporary storage
+    int nnz_csr = 0;
+
     switch (computationLayout) {
+    /// ------------------------------------------------------------------------------------- ///
     case ComputationLayout::DENSE_LAYOUT:
         /// nothing, matrix build in dense format
         break;
 
+    /// ------------------------------------------------------------------------------------- ///
     case ComputationLayout::SPARSE_LAYOUT:
         if (round == FIRST_ROUND) {
-            const int m = dimension;
-            const int n = dimension;
             ///  memset -1 przed iteracja
-            d_cooRowInd_tmp.memcpy_of(d_cooRowInd, stream);
+            d_cooRowInd_order.memcpy_of(d_cooRowInd, stream);
             d_csrColIndA.memcpy_of(d_cooColInd, stream);
 
             ///  destructive operation - in-place  Xcoosort !!! requirment for solver and DirectLayout
-            tensorOperation.convertToCsr(m, n, nnz, d_cooRowInd_tmp, d_csrColIndA, d_csrRowPtrA, d_PT);
+            tensorOperation.convertToCsr(m, n, nnz, d_cooRowInd_order, d_csrColIndA, d_csrRowPtrA, d_PT);
             validateStream;
 
             /// gather d_csrValuA from cooValues;
@@ -543,7 +573,7 @@ void GPUComputation::PostProcessTensorA(int round, ComputationLayout computation
             if (settings::get()->DEBUG_COO_FORMAT) {
                 cudaStreamSynchronize(stream);
                 /// intermediate result from conversion
-                tensorOperation.stdout_coo_tensor(stream, m, n, nnz, d_cooRowInd_tmp, d_csrColIndA, d_csrValA);
+                tensorOperation.stdout_coo_tensor(stream, m, n, nnz, d_cooRowInd_order, d_csrColIndA, d_csrValA, " --- tensor A");
             }
 
             /// evaluate inverted permutation vector
@@ -556,10 +586,22 @@ void GPUComputation::PostProcessTensorA(int round, ComputationLayout computation
         }
         break;
 
+    /// ------------------------------------------------------------------------------------- ///
     case ComputationLayout::DIRECT_LAYOUT:
         /// direct format
         d_csrValA.memcpy_of(d_cooVal, stream);
         break;
+
+    /// ------------------------------------------------------------------------------------- ///
+    case ComputationLayout::COMPACT_LAYOUT:
+
+        /// input COO non compress format, this is journal Of commands [ K + Jacobian + JacobianT + Hessian ]        
+        formatEncoder.compactToCsr(nnz, m, d_cooRowInd, d_cooColInd, d_cooVal, d_csrRowPtrA, d_csrColIndA, d_csrValA, nnz_csr);
+
+        /// output in CSR
+        nnz = nnz_csr;
+
+    /// ------------------------------------------------------------------------------------- ///
     default:
         exit(-1);
     }
@@ -577,7 +619,9 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
     /// prepare local offset context
     result.store(NULL, std::memory_order_seq_cst);
 
-    checkCudaStatus(cudaStreamSynchronize(stream));
+    checkCudaStatus(cudaPeekAtLastError());
+
+    // checkCudaStatus(cudaStreamSynchronize(stream));
 
     evaluationWatch.setStopTick();
 

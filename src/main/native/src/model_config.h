@@ -70,7 +70,7 @@ enum class ComputationMode {
     /// 
     /// Afterwards SoA vector is compacted into COO format.
     /// 
-    COMPACT_MODE = 3,
+    COMPACT_MODE = 4,
 };
 
 

@@ -18,6 +18,7 @@
 #include "solver_stat.h"
 
 #include "tensor_operation.h"
+#include "format_encoder.h"
 
 #include "gpu_geometric_solver.h"
 
@@ -170,9 +171,13 @@ class GPUComputation {
     std::shared_ptr<GPUComputationContext> computationContext;
 
     std::shared_ptr<solver::GPUSolverSystem> solverSystem;
-
+   
     /// conversion from COO to CSR format for linear sparse solver
     TensorOperation tensorOperation;
+
+    /// COO journal format conversion to CSR canonical form.
+    FormatEncoder formatEncoder;
+
 
     cudaStream_t stream;
 
@@ -287,8 +292,8 @@ class GPUComputation {
     /// not-transformed column vector of indicies, Coordinate Format COO ( initialized once )
     utility::dev_vector<int> d_cooColInd;
 
-    /// transformed in first-iteration
-    utility::dev_vector<int> d_cooRowInd_tmp;
+    /// transformed in first-iteration - in ordered [d_cooRowInd_order, d_csrColIndA, d_cooVal]
+    utility::dev_vector<int> d_cooRowInd_order;
 
     /// transformed in first-iteration -->  directly to csrColInd
     // int *d_cooColInd_tmp = NULL;
