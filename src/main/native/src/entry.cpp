@@ -1155,7 +1155,7 @@ int main(int argc, char* args[])
     jni_setBooleanProperty(&env, eclass, 2, (jboolean) false);  // settings::get()->DEBUG_TENSOR_B= true;
 
     jni_setBooleanProperty(&env, eclass, 3, (jboolean) false); // settings::get()->DEBUG= true;
-    jni_setBooleanProperty(&env, eclass, 4, (jboolean) true); // settings::get()->DEBUG_TENSOR_SV= true;
+    jni_setBooleanProperty(&env, eclass, 4, (jboolean) false); // settings::get()->DEBUG_TENSOR_SV= true;
 
     jni_setBooleanProperty(&env, eclass, 24, (jboolean) true); // settings::get()->SOLVER_INC_HESSIAN = false;
     
@@ -1169,7 +1169,7 @@ int main(int argc, char* args[])
 
     model_circle_line_tangetn_perpendicular(env, eclass);
 
-    //model_6x10(env, eclass);
+   //model_6x10(env, eclass);
       
 
     /// ----------------------------------------------------------------------------------------------------- //

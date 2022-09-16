@@ -135,9 +135,7 @@ void GPUSolverSparseILU02::performAnalysisIncompleteLU(int m, int n, int nnz, in
     if (CUSPARSE_STATUS_ZERO_PIVOT == status) {
         fprintf(stderr,"A(%d,%d) is missing\n", structural_zero, structural_zero);
         *singularity = structural_zero;
-
         /// usprawnic naprowadzic solver na "CSR non empty pattern on diagonal" ! A[size + (coffSize) ] blad bliski zera w R(na wiezach) !
-
         return;
     }
 
@@ -190,6 +188,13 @@ void GPUSolverSparseILU02::solveSystem(int m, int n, int nnz, int *csrRowPtr, in
         return;
     }
 
+    // *************************************************************************** //        
+    int enable_boost = 1;
+    double tol = 1e-10;    
+    double boost_val = 1e-10;
+
+    checkCusparseStatus(cusparseDcsrilu02_numericBoost(handle, info_M, enable_boost, &tol, &boost_val));
+
     // *************************************************************************** //    
     /// step 5: M = L * U
     status = cusparseDcsrilu02(handle, m, nnz, descr_M, csrVal, csrRowPtr, csrColInd, info_M, policy_M, pBuffer);    
@@ -203,14 +208,15 @@ void GPUSolverSparseILU02::solveSystem(int m, int n, int nnz, int *csrRowPtr, in
     /// POLICY - no level information ?? ( SYNCHRONIZED request )
     status = cusparseXcsrilu02_zeroPivot(handle, info_M, &numerical_zero);
     if (CUSPARSE_STATUS_ZERO_PIVOT == status) {        
-        fprintf(stderr, "[solver.ilu02]  U(%d,%d) is zero  - matrix A is not invertible \n", numerical_zero, numerical_zero);
+        fprintf(stderr, "[solver.ilu02]  U(%d,%d) is zero  - matrix A is not invertible ( advice : numeric boost )\n", numerical_zero, numerical_zero);
         *singularity = numerical_zero;
-
-        ///
-        /// usprawnic naprowadzic solver na "CSR non empty pattern on diagonal" !
-        /// 
         return;
     }
+
+    // *************************************************************************** //
+    enable_boost = 0;
+    checkCusparseStatus(cusparseDcsrilu02_numericBoost(handle, info_M, enable_boost, &tol, &boost_val));
+
 
     // *************************************************************************** //
     /// step 6: solve L*z = b

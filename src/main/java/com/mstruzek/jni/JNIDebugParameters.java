@@ -132,7 +132,7 @@ public enum JNIDebugParameters {
         public static final int QR_SPARSE = 2;
 
         /**
-         *  Incomplete LU factorization solver for sparse matrix - cusparseDcsrilu02
+         *  Incomplete LU factorization solver for sparse matrix - cusparseDcsrilu02 - Precondition
         */
         public static final int ILU_SPARSE = 3;
     }

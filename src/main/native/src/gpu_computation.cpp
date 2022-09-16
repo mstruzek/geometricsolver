@@ -163,14 +163,14 @@ void GPUComputation::memcpyComputationToDevice() {
             cooWritesSize += accCooWriteHessianTensor[accCooWriteHessianTensor.size() - 1];
         }
 
-        if (false) {
-            /// fillin diagonal with 0 indicies form [size, size + coffSize]
-            cooWritesSize += coffSize;
-        }
+
+        /// __fillInDiagonal__  for `iLU02 solver
+        /// fillin diagonal with 0 indicies form [size, size + coffSize] // 
+        cooWritesSize += coffSize;
 
         // non-zero elements (coo/csr)
         nnz = cooWritesSize;            /// data storage nnz (CompactLayout)
-        nnz_sv = cooWritesSize;        /// computation nnz
+        nnz_sv = cooWritesSize;         /// computation nnz
 
         /// sparse layout , first itr only
         d_cooVal = utility::dev_vector<double>(cooWritesSize, stream);
@@ -345,6 +345,7 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, Computatio
         tensorOperation.stdout_coo_vector(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal, "coo -K");
     }
 
+    
     /// ---------------------------------------------------------------------------------------- ///
     ///                                 KERNEL ( Hessian Tensor - K )                            ///
     /// ---------------------------------------------------------------------------------------- ///
@@ -354,13 +355,13 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, Computatio
         validateStream;
     }
 
-    /// Lower Tensor
-    /// (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix
-    ///
 
     /// ---------------------------------------------------------------------------------------- ///
     ///                                 KERNEL ( Lower Jacobian )                                ///
     /// ---------------------------------------------------------------------------------------- ///
+    /// Lower Tensor
+    /// (Wq); /// Jq = d(Fi)/dq --- write without intermediary matrix
+    ///
     EvaluateConstraintJacobian(stream, sharedMemory, dev_ev, constraints.size());
     validateStream;
 
@@ -370,20 +371,31 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, Computatio
         tensorOperation.stdout_coo_vector(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal, "coo Jacobian");
     }
 
-    ///  Transposed Jacobian - Uperr Tensor
-    ///  (Wq)';  Jq' = (d(Fi)/dq)' --- transposed - write without
-    ///  intermediary matrix
 
     /// ---------------------------------------------------------------------------------------- ///
     ///                                 KERNEL ( Upper Jacobian )                                ///
     /// ---------------------------------------------------------------------------------------- ///
+    ///  Transposed Jacobian - Uperr Tensor
+    ///  (Wq)';  Jq' = (d(Fi)/dq)' --- transposed - write without
+    ///  intermediary matrix
     EvaluateConstraintTRJacobian(stream, sharedMemory, dev_ev, constraints.size());
     validateStream;
+  
 
+    /// ---------------------------------------------------------------------------------------- ///
+    ///                                 KERNEL ( Fill In Zeror )                                 ///
+    /// ---------------------------------------------------------------------------------------- ///
+    if (computationLayout != ComputationLayout::DENSE_LAYOUT) {
+        EvaluateFillInDiagonalValue(stream, dev_ev, 1e-10, coffSize);
+        validateStream;
+    }
+
+
+    /// ---------------------------------------------------------------------------------------- ///
     if (settings::get()->DEBUG_COO_FORMAT) {
         cudaStreamSynchronize(stream);
-        /// intermediate result from conversion
-        tensorOperation.stdout_coo_vector(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal, "coo JacobianT");
+        /// intermediate result COO or Journal COO
+        tensorOperation.stdout_coo_vector(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal, "coo A - evaluated");
     }
 }
 

@@ -180,4 +180,15 @@ KERNEL_EXECUTOR void EvaluateConstraintTRJacobian(cudaStream_t stream, int NS, C
 KERNEL_EXECUTOR void EvaluateConstraintHessian(cudaStream_t stream, int NS, ComputationState *ecdata, size_t N);
 
 
+/// =======================================================================================
+/// <summary>
+/// Fill-In diagonal with value - iLU02 solver requirments.
+/// </summary>
+/// <param name="stream">[in]</param>
+/// <param name="ecdata">[in]</param>
+/// <param name="value">[in] numerical zero </param>
+/// <param name="coeffSize">[in]cefficient size</param>
+/// <returns></returns>
+KERNEL_EXECUTOR void EvaluateFillInDiagonalValue(cudaStream_t stream, ComputationState *ecdata, double value, size_t coeffSize);
+
 #endif // #ifndef _SOLVER_KERNEL_CUH_

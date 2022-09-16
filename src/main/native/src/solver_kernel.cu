@@ -456,9 +456,9 @@ KERNEL_EXECUTOR void ComputeStiffnessMatrix(cudaStream_t stream, int NS, Computa
 
     const unsigned GRID_DIM = GeometricKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = GeometricKernelTraits.BLOCK_DIM;
-    const unsigned MEM_SHARED = NS;
+    const unsigned SHARED_MEMORY = NS;
 
-    __ComputeStiffnessMatrix__<<<GRID_DIM, BLOCK_DIM, MEM_SHARED, stream>>>(ecdata, N);
+    __ComputeStiffnessMatrix__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, N);
 }
 
 /// -1 * b from equation reduction
@@ -1592,9 +1592,9 @@ KERNEL_EXECUTOR void EvaluateConstraintJacobian(cudaStream_t stream, int NS, Com
 
     const unsigned GRID_DIM = ConstraintKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = ConstraintKernelTraits.BLOCK_DIM;
-    const unsigned MEM_SHARED = NS;
+    const unsigned SHARED_MEMORY = NS;
 
-    __EvaluateConstraintJacobian__<<<GRID_DIM, BLOCK_DIM, MEM_SHARED, stream>>>(ecdata, N);
+    __EvaluateConstraintJacobian__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, N);
 }
 
 /// =======================================================================================
@@ -1751,9 +1751,9 @@ KERNEL_EXECUTOR void EvaluateConstraintTRJacobian(cudaStream_t stream, int NS, C
 
     const unsigned GRID_DIM = ConstraintKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = ConstraintKernelTraits.BLOCK_DIM;
-    const unsigned MEM_SHARED = NS;
+    const unsigned SHARED_MEMORY = NS;
 
-    __EvaluateConstraintTRJacobian__<<<GRID_DIM, BLOCK_DIM, MEM_SHARED, stream>>>(ecdata, N);
+    __EvaluateConstraintTRJacobian__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, N);
 }
 
 ///
@@ -2441,9 +2441,9 @@ KERNEL_EXECUTOR void EvaluateConstraintHessian(cudaStream_t stream, int NS, Comp
 
     const unsigned GRID_DIM = ConstraintKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = ConstraintKernelTraits.BLOCK_DIM;
-    const unsigned MEM_SHARED = NS;
+    const unsigned SHARED_MEMORY = NS;
 
-    __EvaluateConstraintHessian__<<<GRID_DIM, BLOCK_DIM, MEM_SHARED, stream>>>(ecdata, N);
+    __EvaluateConstraintHessian__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, N);
 }
 
 ///
@@ -2770,6 +2770,71 @@ __device__ void setHessianTensorConstraintSetHorizontal(int tID, graph::Constrai
 template <typename Layout>
 __device__ void setHessianTensorConstraintSetVertical(int tID, graph::Constraint const *constraint, ComputationState *ec, graph::Tensor<Layout> &mt) {
     /// empty
+}
+
+/// =======================================================================================
+
+/// <summary>
+/// Kerenl fill SoA with diagonal value
+/// </summary>
+/// <param name="ecdata"></param>
+/// <param name="value"></param>
+/// <param name="N"></param>
+/// <returns></returns>
+__global__ void __fillInDiagonalValue__(ComputationState *__restrict__ ecdata, double value, size_t coeffSize) {
+
+    /// From Kernel Reference Addressing
+    const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
+    const unsigned offset = threadId * ELEMENTS_PER_THREAD;
+
+#ifdef TENSOR_SPARSE_LAYOUT
+    ComputationState *__restrict__ ec = static_cast<ComputationState *>(ecdata);
+
+    int *const __restrict__ cooRowInd = ec->cooRowInd;
+    int *const __restrict__ cooColInd = ec->cooColInd;
+    double *const __restrict__ cooVal = ec->cooVal;
+
+    const int nnz = ec->nnz;
+    const int dimension = ec->dimension;    
+    const int diagonalBase = (dimension - coeffSize) + offset;
+    const int beginOffset = (nnz - coeffSize) + offset;              /// hessian possibly not evaluated !
+
+    for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
+        int ID = beginOffset + T;
+        int diagonalId = diagonalBase + T;
+        if (ID < nnz) {
+            cooRowInd[ID] = diagonalId;
+            cooColInd[ID] = diagonalId;
+            cooVal[ID] = value;
+        }
+    }
+
+#endif
+}
+
+/// =======================================================================================
+/// <summary>
+/// Fill-In diagonal with value - iLU02 solver requirments.
+///
+/// Prevents structural zero in sparse matrix.
+/// </summary>
+/// <param name="stream">[in]</param>
+/// <param name="ecdata">[in]</param>
+/// <param name="value">[in] numerical zero </param>
+/// <param name="coeffSize">[in]cefficient size</param>
+/// <returns></returns>
+KERNEL_EXECUTOR void EvaluateFillInDiagonalValue(cudaStream_t stream, ComputationState *ecdata, double value, size_t coeffSize) {
+
+    typedef KernelTraits<ELEMENTS_PER_THREAD, DEFAULT_BLOCK_DIM> CoefficientKernelTraits_t;
+    const CoefficientKernelTraits_t CoefficientKernelTraits(coeffSize);
+
+    const unsigned GRID_DIM = CoefficientKernelTraits.GRID_DIM;
+    const unsigned BLOCK_DIM = CoefficientKernelTraits.BLOCK_DIM;
+    const unsigned SHARED_MEMORY = 0;
+
+    /// ILU02 - numerical zero ( value )
+
+    __fillInDiagonalValue__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, value, coeffSize);
 }
 
 #undef DEFAULT_BLOCK_DIM

@@ -1,4 +1,4 @@
-#ifndef __COMPUTATION_STATE_H_ 
+#ifndef __COMPUTATION_STATE_H_
 #define __COMPUTATION_STATE_H_
 
 #include "device_launch_parameters.h"
@@ -11,13 +11,11 @@
 #define M_PI 3.14159265358979323846 // pi
 #endif
 
-struct ComputationState {  
+struct ComputationState {
 
-    ComputationState() : INV_P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL), singularity(-1) 
-    {}
+    ComputationState() : INV_P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL), singularity(-1) {}
 
 #ifdef __NVCC__
-    
 
     __GPU_DEV_INL__ graph::Vector const &getPoint(int pointId) const {
         int offset = pointOffset[pointId];
@@ -53,7 +51,7 @@ struct ComputationState {
 
 #endif
 
-        /// computation unique id
+    /// computation unique id
     int cID;
 
     /// device variable cuBlas
@@ -62,19 +60,19 @@ struct ComputationState {
     /// cublasDnrm2(...)
     double norm;
 
-    double *A;
+    double *__restrict__ A;
 
     /// State Vector  [ SV = SV + dx ] , previous task -- "lineage"
-    double *SV;
+    double *__restrict__ SV;
 
     /// przyrosty   [ A * dx = b ]
-    double *dx;
+    double * __restrict__ dx;
 
     ///  right hand side vector - these are Fi / Fq
-    double *b;
+    double *__restrict__ b;
 
     ///  eventually synchronized into 'norm field on the host
-    double *dev_norm;
+    double *__restrict__ dev_norm;
 
     /// wektor stanu geometric structure - effectievly consts
     size_t size;
@@ -91,22 +89,22 @@ struct ComputationState {
     NVector<graph::Parameter> parameters;
 
     // NVector direct map
-    const int *pointOffset;
+    const int *__restrict__ pointOffset;
 
     // NVector direct map
-    const int *geometricOffset;
+    const int *__restrict__ geometricOffset;
 
     // NVector direct map
-    const int *constraintOffset;
+    const int *__restrict__ constraintOffset;
 
     /// paramater offs from given ID
-    const int *parameterOffset;
+    const int *__restrict__ parameterOffset;
 
     /// Accumulative offs with geometric size evaluation function,  [ 0, ... , N ]
-    const int *accGeometricSize;
+    const int *__restrict__ accGeometricSize;
 
     /// Accumulative offs with constraint size evaluation function, [ 0, ... , N ]
-    const int *accConstraintSize;
+    const int *__restrict__ accConstraintSize;
 
     /// computation mode applied
     ComputationMode computationMode;
@@ -115,13 +113,13 @@ struct ComputationState {
     ComputationLayout computationLayout;
 
     /// Relative Offsets - Accumulated Writes in COO format from kernel into  Stiff Tensor
-    const int *accCooWriteStiffTensor;
+    const int *__restrict__ accCooWriteStiffTensor;
 
     /// Relative Offsets - Accumulated Writes in COO format from kernel into Jacobian Tensor
-    const int *accCooWriteJacobianTensor;
-    
-    /// Relative Offsets -  Accumulate writes in COO format form kernel into Hessian Tensor 
-    const int *accCooWriteHessianTensor;
+    const int *__restrict__ accCooWriteJacobianTensor;
+
+    /// Relative Offsets -  Accumulate writes in COO format form kernel into Hessian Tensor
+    const int *__restrict__ accCooWriteHessianTensor;
 
     /// non-zero elements in coo or csr ; nnz =  cooWritesStiffSize + 2 * cooWirtesJacobianSize + optional(hessian)*
     int nnz;
@@ -136,19 +134,16 @@ struct ComputationState {
     const int *INV_P;
 
     /// not-transformed row vector of indicies, Coordinate Format COO
-    int *cooRowInd;
+    int *__restrict__ cooRowInd;
 
     /// not-transformed column vector of indicies, Coordinate Format COO
-    int *cooColInd;
+    int *__restrict__ cooColInd;
 
     /// COO vector of values, Coordinate Format COO, or CSR format sorted
-    double *cooVal;
+    double *__restrict__ cooVal;
 
-    /// tensor A solver response - -1 invertible otherwise exect index of diagonal element 
+    /// tensor A solver response - -1 invertible otherwise exect index of diagonal element
     int singularity;
-
 };
-
-
 
 #endif // __COMPUTATION_STATE_H_

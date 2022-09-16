@@ -8,7 +8,9 @@
 namespace solver {
 
 /// <summary>
-/// Naprowadzic solver ma³ym zabyrzeniem na przekatnej A(size+,size+) = ~0.00001) tak aby zmusic solver do ( csr[r],csr[c] )
+/// Solver is configured wiht numerBoost routine so it is possible to change the cut-off for numeric zero value with some tolerance.
+/// 
+/// Preconditioner 
 /// </summary>
 class GPUSolverSparseILU02 {
 
@@ -128,8 +130,8 @@ class GPUSolverSparseILU02 {
     /// crvsv2 - factor 
     const double alpha = 1.;
     
-    const cusparseSolvePolicy_t policy_M = CUSPARSE_SOLVE_POLICY_USE_LEVEL;   /// ??? "to disable level information"
-    const cusparseSolvePolicy_t policy_L = CUSPARSE_SOLVE_POLICY_USE_LEVEL; /// CUSPARSE_SOLVE_POLICY_NO_LEVEL
+    const cusparseSolvePolicy_t policy_M = CUSPARSE_SOLVE_POLICY_NO_LEVEL; /// ??? "to disable level information"
+    const cusparseSolvePolicy_t policy_L = CUSPARSE_SOLVE_POLICY_NO_LEVEL; /// CUSPARSE_SOLVE_POLICY_NO_LEVEL
     
     const cusparseSolvePolicy_t policy_U = CUSPARSE_SOLVE_POLICY_USE_LEVEL; /// more parallelism for non-unitary diagonal ( structura_zero )
 
