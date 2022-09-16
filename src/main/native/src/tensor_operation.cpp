@@ -59,7 +59,7 @@ void TensorOperation::vectorNorm(int n, double *x, double *result) {
 
     checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, result));
 
-    if (settings::get()->DEBUG_SOLVER_CONVERGENCE) {
+    if (settings::DEBUG_SOLVER_CONVERGENCE) {
         checkCudaStatus(cudaStreamSynchronize(stream));
         printf("[cublas.norm] constraint evalutated norm  = %e \n", *result);
     } else {
@@ -72,7 +72,7 @@ void TensorOperation::cublasAPIDaxpy(int n, const double *alpha, const double *x
 
     checkCublasStatus(::cublasDaxpy(cublasHandle, n, alpha, x, incx, y, incy));
 
-    if (settings::get()->DEBUG_SOLVER_CONVERGENCE) {
+    if (settings::DEBUG_SOLVER_CONVERGENCE) {
         checkCudaStatus(cudaStreamSynchronize(stream));
         printf("[cublas.norm] cublasDaxpy \n");
     }
@@ -82,7 +82,7 @@ void TensorOperation::memsetD32I(int *devPtr, int value, size_t size, cudaStream
 
     kernelMemsetD32I(stream, devPtr, value, size);
 
-    if (settings::get()->DEBUG_CHECK_ARG) {
+    if (settings::DEBUG_CHECK_ARG) {
         /// block and wait for execution
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
@@ -149,14 +149,14 @@ void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *c
         exit(1);
     }
 
-    if (settings::get()->DEBUG_CHECK_ARG) {
+    if (settings::DEBUG_CHECK_ARG) {
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
     // prior action :: if the Stream Ordered Memory Allocator ???
 
     gatherVector<int>(nnz, CUDA_R_32F, PT1, PT2, PT);
 
-    if (settings::get()->DEBUG_COO_FORMAT) {
+    if (settings::DEBUG_COO_FORMAT) {
         checkCudaStatus(cudaStreamSynchronize(stream));
         utility::stdout_vector(utility::dev_vector<int>{cooRowInd, (size_t)nnz, stream}, "cooRowInd --- Xsoort");
         utility::stdout_vector(utility::dev_vector<int>{cooColInd, (size_t)nnz, stream}, "cooColInd --- Xsoort");
@@ -173,7 +173,7 @@ void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *c
 
     checkCudaStatus(cudaStreamSynchronize(stream));
 
-    if (settings::get()->DEBUG_CSR_FORMAT) {
+    if (settings::DEBUG_CSR_FORMAT) {
         checkCudaStatus(cudaStreamSynchronize(stream));
         utility::stdout_vector(utility::dev_vector<int>{csrRowInd, (size_t)(m + 1), stream}, "csrRowInd -- CSR result !");
     }
@@ -214,7 +214,7 @@ void TensorOperation::invertPermuts(int n, int *PT, int *INV) {
 
     inversePermutationVector(stream, PT, INV, n);
 
-    if (settings::get()->DEBUG_CHECK_ARG) {
+    if (settings::DEBUG_CHECK_ARG) {
         /// block and wait for execution
         checkCudaStatus(cudaStreamSynchronize(stream));
     }

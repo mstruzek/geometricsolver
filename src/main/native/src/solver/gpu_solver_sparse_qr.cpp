@@ -80,7 +80,7 @@ void GPUSolverSparseQR::solveSystem(int m, int n, int nnz, int *csrRowPtrA, int 
         }
     }
 
-    if (settings::get()->DEBUG_CSR_FORMAT) {
+    if (settings::DEBUG_CSR_FORMAT) {
         checkCudaStatus(cudaStreamSynchronize(stream));
         utility::stdout_vector(utility::dev_vector<int>(csrRowPtrA, nnz), "d_csrRowPtrA");
         utility::stdout_vector(utility::dev_vector<int>(csrColIndA, nnz), "d_csrColIndA");
@@ -97,7 +97,7 @@ void GPUSolverSparseQR::solveSystem(int m, int n, int nnz, int *csrRowPtrA, int 
         exit(-1);
     }
 
-    if (settings::get()->DEBUG_CHECK_ARG) {
+    if (settings::DEBUG_CHECK_ARG) {
         checkCudaStatus(cudaStreamSynchronize(stream));
         fprintf(stdout, "[cusolverSP] singularity   = %d \n", *singularity);
     }
@@ -121,7 +121,7 @@ GPUSolverSparseQR::~GPUSolverSparseQR() {
 }
 
 void GPUSolverSparseQR::validateStreamState() {
-    if (settings::get()->DEBUG_CHECK_ARG) {
+    if (settings::DEBUG_CHECK_ARG) {
         /// submitted kernel into  cuda driver
         checkCudaStatus(cudaPeekAtLastError());
         /// block and wait for execution

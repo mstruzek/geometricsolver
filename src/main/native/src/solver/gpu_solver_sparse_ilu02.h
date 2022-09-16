@@ -10,7 +10,7 @@ namespace solver {
 /// <summary>
 /// Solver is configured wiht numerBoost routine so it is possible to change the cut-off for numeric zero value with some tolerance.
 /// 
-/// Preconditioner 
+/// Preconditioner ! => BigStab
 /// </summary>
 class GPUSolverSparseILU02 {
 

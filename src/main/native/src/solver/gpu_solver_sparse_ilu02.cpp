@@ -240,7 +240,7 @@ void GPUSolverSparseILU02::solveSystem(int m, int n, int nnz, int *csrRowPtr, in
 
     // *************************************************************************** //
     *singularity = -1;
-    if (settings::get()->DEBUG) {
+    if (settings::DEBUG) {
         fprintf(stderr, "[solver.ILU02] solver routine completed !");
     }
 
@@ -262,13 +262,13 @@ GPUSolverSparseILU02::~GPUSolverSparseILU02() {
 
     checkCusparseStatus(cusparseDestroy(handle));
 
-    if (settings::get()->DEBUG) {
+    if (settings::DEBUG) {
         fprintf(stderr, "[solver.ILU02] destroy solver completed !");
     }
 }
 
 void GPUSolverSparseILU02::validateStreamState() {
-    if (settings::get()->DEBUG_CHECK_ARG) {
+    if (settings::DEBUG_CHECK_ARG) {
         /// submitted kernel into  cuda driver
         checkCudaStatus(cudaPeekAtLastError());
         /// block and wait for execution

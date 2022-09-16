@@ -73,15 +73,15 @@ class StopWatchAdapter {
     }
 
     __int64 delta() {
-        return (settings::get()->CLOCK_NANOSECONDS) ? nanos.delta() : millis.delta();
+        return (settings::CLOCK_NANOSECONDS) ? nanos.delta() : millis.delta();
     }
 
     __int64 getStartTick() const {
-        return (settings::get()->CLOCK_NANOSECONDS) ? nanos.startTick :  millis.startTick;
+        return (settings::CLOCK_NANOSECONDS) ? nanos.startTick :  millis.startTick;
     }
 
     __int64 getStopTick() const { 
-        return (settings::get()->CLOCK_NANOSECONDS) ? nanos.stopTick : millis.stopTick;
+        return (settings::CLOCK_NANOSECONDS) ? nanos.stopTick : millis.stopTick;
     }
 
   private:

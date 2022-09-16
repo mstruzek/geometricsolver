@@ -25,6 +25,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CUDA_ARCHITECTURES 75)
 
+
+
+
+
 if(WIN32)
     set(CMAKE_CUDA_FLAGS "${CUDAFLAGS} -Xcompiler \"/Zc:__cplusplus\"")
 endif()
@@ -34,6 +38,8 @@ endif()
 set(PROJECT_SHARED_LIBRARY libgsketcherjni)
 set(PROJECT_TEST_EXECUTABLE gsketcherjnie)
 
+#
+set(TEST_EXECUTABLE OFF)
 
 
 # Local test configurations:    ://      NVIDIA-SMI 515.48.07    ://      Driver Version: 515.48.07       ://      CUDA Version: 11.7
@@ -94,12 +100,32 @@ target_include_directories(${PROJECT_SHARED_LIBRARY} PRIVATE PUBLIC
 
 ############################################     \\\entry test executable file        
 
-add_executable(${PROJECT_TEST_EXECUTABLE} src/entry.cpp )
+if(TEST_EXECUTABLE)
+
+add_executable(${PROJECT_TEST_EXECUTABLE} src/entry.cpp 
+		src/solver_kernel.cu
+		src/format_encoder.cu
+		src/model.cu
+		src/quda.cpp
+        src/cuerror.cpp
+        src/settings.cpp
+		src/gpu_utility.cpp
+        src/gpu_computation.cpp
+        src/gpu_geometric_solver.cpp
+        src/gpu_computation_context.cpp	
+        src/gpu_solver_system.cpp
+        src/solver/gpu_solver_dense_lu.cpp
+        src/solver/gpu_solver_sparse_ilu02.cpp
+        src/solver/gpu_solver_sparse_qr.cpp
+        src/tensor_operation.cpp		
+        src/com_mstruzek_jni_JNISolverGate.cpp	
+		)
 
 
 target_include_directories(${PROJECT_TEST_EXECUTABLE} PUBLIC 
         JNI::JNI)
-target_include_directories(${PROJECT_TEST_EXECUTABLE} PUBLIC 
+
+target_include_directories(${PROJECT_TEST_EXECUTABLE} PUBLIC
         ${JAVA_INCLUDE_PATH} 
         ${JAVA_INCLUDE_PATH2})
 
@@ -108,10 +134,11 @@ target_link_libraries(${PROJECT_TEST_EXECUTABLE} PUBLIC
         CUDA::cublas 
         CUDA::cusolver
         CUDA::cusparse)
-target_include_directories(${PROJECT_TEST_EXECUTABLE} PRIVATE PUBLIC 
+
+target_include_directories(${PROJECT_TEST_EXECUTABLE} PUBLIC 
         CUDA::cudart 
         CUDA::cublas 
         CUDA::cusolver
         CUDA::cusparse)
 
-target_link_libraries(${PROJECT_TEST_EXECUTABLE} PUBLIC ${PROJECT_SHARED_LIBRARY})
+endif()

@@ -60,9 +60,9 @@ GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::sha
         return;
     }
 
-    this->computationMode = graph::getComputationMode(settings::get()->COMPUTATION_MODE);
+    this->computationMode = graph::getComputationMode(settings::COMPUTATION_MODE.value());
 
-    this->solverMode = graph::getSolverMode(settings::get()->SOLVER_MODE);
+    this->solverMode = graph::getSolverMode(settings::SOLVER_MODE.value());
 
     this->evaluationWatch.setStartTick();
 
@@ -101,7 +101,7 @@ void GPUComputation::preInitializeData() {
         /// accumulated COO - Jacobian
         accCooWriteJacobianTensor = utility::accumulatedValue(constraints, graph::tensorOpsCooConstraintJacobian);
 
-        if (settings::get()->SOLVER_INC_HESSIAN) {
+        if (settings::SOLVER_INC_HESSIAN) {
             /// accumuldate COO - Hessian
             accCooWriteHessianTensor = utility::accumulatedValue(constraints, graph::tensorOpsCooConstraintHessian);
         } else {
@@ -159,7 +159,7 @@ void GPUComputation::memcpyComputationToDevice() {
         cooWirtesJacobianSize = accCooWriteJacobianTensor[accCooWriteJacobianTensor.size() - 1];
         int cooWritesSize = cooWritesStiffSize + cooWirtesJacobianSize * 2; /// +HESSIAN if computed
 
-        if (settings::get()->SOLVER_INC_HESSIAN) {
+        if (settings::SOLVER_INC_HESSIAN) {
             cooWritesSize += accCooWriteHessianTensor[accCooWriteHessianTensor.size() - 1];
         }
 
@@ -230,7 +230,7 @@ void GPUComputation::computationResultHandlerDelegate(cudaStream_t stream, cudaE
 }
 
 void GPUComputation::validateStreamState() {
-    if (settings::get()->DEBUG_CHECK_ARG) {
+    if (settings::DEBUG_CHECK_ARG) {
         /// submitted kernel into  cuda driver
         checkCudaStatus(cudaPeekAtLastError());
         /// block and wait for execution
@@ -339,7 +339,7 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, Computatio
     ComputeStiffnessMatrix(stream, sharedMemory, dev_ev, geometrics.size());
     validateStream;
 
-    if (settings::get()->DEBUG_COO_FORMAT) {
+    if (settings::DEBUG_COO_FORMAT) {
         cudaStreamSynchronize(stream);
         /// intermediate result from conversion
         tensorOperation.stdout_coo_vector(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal, "coo -K");
@@ -349,7 +349,7 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, Computatio
     /// ---------------------------------------------------------------------------------------- ///
     ///                                 KERNEL ( Hessian Tensor - K )                            ///
     /// ---------------------------------------------------------------------------------------- ///
-    if (settings::get()->SOLVER_INC_HESSIAN) {
+    if (settings::SOLVER_INC_HESSIAN) {
         // constraint with Hessian tensor
         EvaluateConstraintHessian(stream, sharedMemory, dev_ev, constraints.size());
         validateStream;
@@ -365,7 +365,7 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, Computatio
     EvaluateConstraintJacobian(stream, sharedMemory, dev_ev, constraints.size());
     validateStream;
 
-    if (settings::get()->DEBUG_COO_FORMAT) {
+    if (settings::DEBUG_COO_FORMAT) {
         cudaStreamSynchronize(stream);
         /// intermediate result from conversion
         tensorOperation.stdout_coo_vector(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal, "coo Jacobian");
@@ -392,7 +392,7 @@ void GPUComputation::DeviceConstructTensorA(ComputationState *dev_ev, Computatio
 
 
     /// ---------------------------------------------------------------------------------------- ///
-    if (settings::get()->DEBUG_COO_FORMAT) {
+    if (settings::DEBUG_COO_FORMAT) {
         cudaStreamSynchronize(stream);
         /// intermediate result COO or Journal COO
         tensorOperation.stdout_coo_vector(stream, dimension, dimension, nnz, d_cooRowInd, d_cooColInd, d_cooVal, "coo A - evaluated");
@@ -418,7 +418,7 @@ void GPUComputation::DeviceConstructTensorB(ComputationState *dev_ev, cudaStream
 
 void GPUComputation::DebugTensorConstruction(ComputationState *ev) {
 
-    if (settings::get()->DEBUG_TENSOR_A) {
+    if (settings::DEBUG_TENSOR_A) {
         /// ---------------------------------------------------------------------------------------- ///
         ///                             KERNEL ( stdout tensor )                                     ///
         /// ---------------------------------------------------------------------------------------- ///
@@ -435,7 +435,7 @@ void GPUComputation::DebugTensorConstruction(ComputationState *ev) {
         }
     }
 
-    if (settings::get()->DEBUG_TENSOR_B) {
+    if (settings::DEBUG_TENSOR_B) {
         /// ---------------------------------------------------------------------------------------- ///
         ///                             KERNEL ( stdout tensor at gpu )                              ///
         /// ---------------------------------------------------------------------------------------- ///
@@ -444,7 +444,7 @@ void GPUComputation::DebugTensorConstruction(ComputationState *ev) {
 }
 
 void GPUComputation::DebugTensorSV(ComputationState *ev) {
-    if (settings::get()->DEBUG_TENSOR_SV) {
+    if (settings::DEBUG_TENSOR_SV) {
         /// ---------------------------------------------------------------------------------------- ///
         ///                             KERNEL ( stdout state vector  )                              ///
         /// ---------------------------------------------------------------------------------------- ///
@@ -580,7 +580,7 @@ void GPUComputation::PostProcessTensorA(int round, ComputationLayout computation
             /// gather d_csrValuA from cooValues;
             tensorOperation.gatherVector<double>(nnz, CUDA_R_64F, d_cooVal, d_PT, d_csrValA);
 
-            if (settings::get()->DEBUG_COO_FORMAT) {
+            if (settings::DEBUG_COO_FORMAT) {
                 cudaStreamSynchronize(stream);
                 /// intermediate result from conversion
                 tensorOperation.stdout_coo_tensor(stream, m, n, nnz, d_cooRowInd_order, d_csrColIndA, d_csrValA, " --- tensor A");
@@ -606,7 +606,7 @@ void GPUComputation::PostProcessTensorA(int round, ComputationLayout computation
     case ComputationLayout::COMPACT_LAYOUT:
 
 
-         if (settings::get()->DEBUG_COO_FORMAT) {
+         if (settings::DEBUG_COO_FORMAT) {
             cudaStreamSynchronize(stream);
             /// intermediate result from conversion
             tensorOperation.stdout_coo_vector(stream, m, n, nnz, d_cooRowInd, d_cooColInd, d_cooVal, " --- A journal coo format");
@@ -615,7 +615,7 @@ void GPUComputation::PostProcessTensorA(int round, ComputationLayout computation
         /// input COO non compress format, this is journal Of commands [ K + Jacobian + JacobianT + Hessian ]        
         formatEncoder.compactToCsr(nnz, m, d_cooRowInd, d_cooColInd, d_cooVal, d_cooRowInd_order, d_csrRowPtrA, d_csrColIndA, d_csrValA, nnz_sv);
                 
-        if (settings::get()->DEBUG_CSR_FORMAT) {
+        if (settings::DEBUG_CSR_FORMAT) {
             cudaStreamSynchronize(stream);
             /// intermediate result from conversion
             tensorOperation.stdout_coo_vector(stream, m, n, nnz_sv, d_cooRowInd_order, d_csrColIndA, d_csrValA, " --- A coo canonical");
@@ -688,7 +688,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
         /// ----------------------------------------------------------------------------------------------- ///
         /// ---------------------------------- Graph Capturing Mechanism ---------------------------------- ///
 
-        if (settings::get()->STREAM_CAPTURING) {
+        if (settings::STREAM_CAPTURING) {
             /// stream caputure capability
             checkCudaStatus(cudaStreamBeginCapture(stream, cudaStreamCaptureModeGlobal));
         }
@@ -697,7 +697,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
 
         DeviceConstructTensorB(dev_ev, stream);
 
-        if (settings::get()->STREAM_CAPTURING) {
+        if (settings::STREAM_CAPTURING) {
             CudaGraphCaptureAndLaunch(graphExec);
         }
 
@@ -714,7 +714,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
 
 #undef H_DEBUG
 
-        if (settings::get()->DEBUG_CSR_FORMAT) {
+        if (settings::DEBUG_CSR_FORMAT) {
             cudaStreamSynchronize(stream);
             utility::stdout_vector(d_csrRowPtrA, "d_csrRowPtrA");
         }
@@ -760,7 +760,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
             solverSystem->solveSystemSP(m, n, nnz_sv, d_csrRowPtrA, d_csrColIndA, d_csrValA, dev_b, dev_dx, singularity);
             validateStream;
 
-            if (settings::get()->DEBUG_CHECK_ARG) {
+            if (settings::DEBUG_CHECK_ARG) {
                 checkCudaStatus(cudaStreamSynchronize(stream));
                 if (*singularity != -1) {
                     fprintf(stderr, "[solver] tensor A is not invertible at index = %d \n", *singularity);
@@ -815,7 +815,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
 
     checkCudaStatus(cudaStreamSynchronize(stream));
 
-    if (settings::get()->DEBUG) {
+    if (settings::DEBUG) {
         ReportComputationResult(computation);
     }
 
@@ -855,7 +855,7 @@ void GPUComputation::computationResultHandler(cudaStream_t stream, cudaError_t s
         return;
     }
 
-    if (settings::get()->DEBUG) {
+    if (settings::DEBUG) {
         fprintf(stdout, "[result/handler]- computationId (%d)  \n", computation->cID);
         fprintf(stdout, "[result/handler]- norm (%e) \n", computation->norm);
     }
@@ -863,7 +863,7 @@ void GPUComputation::computationResultHandler(cudaStream_t stream, cudaError_t s
     bool const last = computation->cID == (CMAX - 1);
     bool const isNan = isnan(computation->norm);
     bool const isNotConvertible = computation->singularity != -1;
-    double const CONVERGENCE = settings::get()->SOLVER_EPSILON;
+    double const CONVERGENCE = settings::SOLVER_EPSILON.value();
 
     bool stopComputation = (computation->norm < CONVERGENCE) || isNan || last || isNotConvertible;
     if (stopComputation) {
@@ -878,7 +878,7 @@ void GPUComputation::computationResultHandler(cudaStream_t stream, cudaError_t s
 
 void GPUComputation::BuildSolverStat(ComputationState *computation, solver::SolverStat *stat) {
 
-    const double SOLVER_EPSILON = (settings::get()->SOLVER_EPSILON);
+    const double SOLVER_EPSILON = settings::SOLVER_EPSILON.value();
     const int iter = computation->cID;
 
     stat->startTime = solverWatch.getStartTick();

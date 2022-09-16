@@ -220,6 +220,7 @@ int tensorOpsCooConstraintHessian(Constraint const &constraint) {
         return 0;
     default:
         printf("unknown constraint type \n");
+        return 0;
     }
 }
 

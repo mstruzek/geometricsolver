@@ -52,14 +52,14 @@ void GPUSolverDenseLU::solveSystem(double *A, double *b, int N) {
         ///  !!!!Remark: getrf uses fastest implementation with large workspace of n m*n
 
         /// prealocate additional buffer before LU factorization
-        Lwork = (int)(Lwork * settings::get()->SOLVER_LWORK_FACTOR);
+        Lwork = (int)(Lwork * settings::SOLVER_LWORK_FACTOR.value());
 
         checkCudaStatus(cudaMallocAsync((void **)&Workspace, Lwork * sizeof(double), stream));
         checkCudaStatus(cudaMallocAsync((void **)&devIpiv, N * sizeof(double), stream));
 
         checkCudaStatus(cudaStreamSynchronize(stream));
 
-        if (settings::get()->DEBUG) {
+        if (settings::DEBUG) {
             printf("[ LU ] workspace attached, 'Lwork' (workspace size)  = %d \n", Lwork);
         }
     }
@@ -75,7 +75,7 @@ void GPUSolverDenseLU::solveSystem(double *A, double *b, int N) {
     int hInfo = 0;
 
     /// dont check matrix determinant
-    if (settings::get()->DEBUG_CHECK_ARG) {
+    if (settings::DEBUG_CHECK_ARG) {
         checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, 1 * sizeof(int), cudaMemcpyDeviceToHost, stream));
         checkCudaStatus(cudaStreamSynchronize(stream));
         if (hInfo < 0) {
@@ -88,7 +88,7 @@ void GPUSolverDenseLU::solveSystem(double *A, double *b, int N) {
         }
     }
 
-    if (settings::get()->DEBUG) {
+    if (settings::DEBUG) {
         printf("[ LU ] factorization success ! \n");
     }
 
@@ -104,7 +104,7 @@ void GPUSolverDenseLU::solveSystem(double *A, double *b, int N) {
     */
 
     /// dont check arguments
-    if (settings::get()->DEBUG_CHECK_ARG) {
+    if (settings::DEBUG_CHECK_ARG) {
         /// inspect computation requirments
         checkCudaStatus(cudaMemcpyAsync(&hInfo, devInfo, sizeof(int), cudaMemcpyDeviceToHost, stream));
         checkCudaStatus(cudaStreamSynchronize(stream));
@@ -116,7 +116,7 @@ void GPUSolverDenseLU::solveSystem(double *A, double *b, int N) {
     }
 
     /// suspected data vector to be presetend in vector b  // B
-    if (settings::get()->DEBUG) {
+    if (settings::DEBUG) {
         printf("[ LU ] system solved ! \n");
     }
 }
@@ -134,7 +134,7 @@ GPUSolverDenseLU::~GPUSolverDenseLU() {
     
     checkCuSolverStatus(cusolverDnDestroy(handle));
     
-    if (settings::get()->DEBUG) {
+    if (settings::DEBUG) {
         printf("[dense.LU] solver destroy success ! \n");
     }
 }

@@ -167,7 +167,7 @@ void FormatEncoder::compactToCsr(int nnz, int m, int *d_cooRowIndA, int *d_cooCo
 
     /// ------------------------------------------------------------------------------ ///
 
-    if (settings::get()->DEBUG) {
+    if (settings::DEBUG) {
         fprintf(stderr, "[encoder.csr] tensor representation in CSR done !\n");
     }
 }
