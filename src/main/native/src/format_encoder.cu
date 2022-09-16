@@ -75,14 +75,16 @@ struct coordinate_equal {
 };
 
 ///
-/// Coordinate Comparator ; sort by row and sort by column
+/// Coordinate Comparator ; sort by column and sort by column
 ///
 struct coordinate_compare {
     __device__ bool operator()(cooCoordinate left, cooCoordinate right) {
         if (left.get<ELEMENT_COO_ROW>() < right.get<ELEMENT_COO_ROW>())
             return true;
-        if (left.get<ELEMENT_COO_COLUMN>() < right.get<ELEMENT_COO_COLUMN>())
-            return true;
+        if (left.get<ELEMENT_COO_ROW>() == right.get<ELEMENT_COO_ROW>()) {
+            if (left.get<ELEMENT_COO_COLUMN>() < right.get<ELEMENT_COO_COLUMN>())
+                return true;       
+        }
         return false;
     }
 };
@@ -96,11 +98,13 @@ struct coordinate_compare {
 /// <param name="d_cooRowInd">[in]</param>
 /// <param name="d_cooColIndA">[in]</param>
 /// <param name="d_cooVal">[in]</param>
+/// <param name="d_cooRowInd_order">[out] ordered indcies coo</param>
 /// <param name="d_csrRowInd">[out]</param>
 /// <param name="d_csrColIndA">[out]</param>
 /// <param name="d_csrVal">[out]</param>
 /// <param name="onnz">[out] non-zero elements after reduction</param>
-void FormatEncoder::compactToCsr(int nnz, int m, int *d_cooRowIndA, int *d_cooColIndA, double *d_cooValA, int *d_csrRowPtr, int *d_csrColInd, double *d_csrVal,
+void FormatEncoder::compactToCsr(int nnz, int m, int *d_cooRowIndA, int *d_cooColIndA, double *d_cooValA, int* d_cooRowInd_order, int *d_csrRowPtr, int *d_csrColInd,
+                                 double *d_csrVal,
                                  int &onnz) {
 
     /// intput iteratory - no copy COO journal format
@@ -115,8 +119,8 @@ void FormatEncoder::compactToCsr(int nnz, int m, int *d_cooRowIndA, int *d_cooCo
     thrust::device_ptr<double> d_cooVal_end = thrust::device_ptr<double>(&d_cooValA[nnz]);
 
     /// output iterators - no copy COO compact form
-    thrust::device_ptr<int> o_cooRowPtrA_begin = thrust::device_ptr<int>(d_csrRowPtr);
-    thrust::device_ptr<int> o_cooRowPtrA_end = thrust::device_ptr<int>(&d_csrRowPtr[nnz]);
+    thrust::device_ptr<int> o_cooRowPtrA_begin = thrust::device_ptr<int>(d_cooRowInd_order);
+    thrust::device_ptr<int> o_cooRowPtrA_end = thrust::device_ptr<int>(&d_cooRowInd_order[nnz]);
 
     thrust::device_ptr<int> o_cooColIndA_begin = thrust::device_ptr<int>(d_csrColInd);
     thrust::device_ptr<int> o_cooColIndA_end = thrust::device_ptr<int>(&d_csrColInd[nnz]);
@@ -153,7 +157,7 @@ void FormatEncoder::compactToCsr(int nnz, int m, int *d_cooRowIndA, int *d_cooCo
         
     cusparseStatus_t status;
     /// create csrRowPtrA    -  async execution
-    status = cusparseXcoo2csr(handle, d_csrRowPtr, nnz_c, m, d_csrRowPtr, CUSPARSE_INDEX_BASE_ZERO);
+    status = cusparseXcoo2csr(handle, d_cooRowInd_order, nnz_c, m, d_csrRowPtr, CUSPARSE_INDEX_BASE_ZERO);
     if (status != CUSPARSE_STATUS_SUCCESS) {
         auto errorName = cusparseGetErrorName(status);
         auto errorStr = cusparseGetErrorString(status);

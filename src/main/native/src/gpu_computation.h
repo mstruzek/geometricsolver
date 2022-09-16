@@ -280,6 +280,9 @@ class GPUComputation {
     /// non-zero elements in coo/scr tensor A
     int nnz;
 
+    /// non-zero elements in csr format for sparse solver ( this is for compuation ). 
+    int nnz_sv;
+
     /// offset value for kernel Jacobian writes
     int cooWritesStiffSize;
 

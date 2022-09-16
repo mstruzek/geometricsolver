@@ -112,6 +112,11 @@ public enum JNIDebugParameters {
          * Mixed direct matrix mode.
          */
         public static final int DIRECT_MODE = 3;
+
+        /**
+         * Journal COO format that is post-processed into canonical CSR form.
+         */
+        public static final int COMPACT_MODE = 4;
     }
 
     public static class SolverMode {

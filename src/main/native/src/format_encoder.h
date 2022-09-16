@@ -25,7 +25,8 @@ class FormatEncoder {
     /// <param name="d_csrColIndA">[out]</param>
     /// <param name="d_csrVal">[out]</param>
     /// <param name="onnz">[out] non-zero elements after reduction</param>
-    void compactToCsr(int nnz, int m, int *d_cooRowIndA, int *d_cooColIndA, double *d_cooValA, int *d_csrRowPtr, int *d_csrColInd, double *d_csrVal, int &onnz);
+    void compactToCsr(int nnz, int m, int *d_cooRowIndA, int *d_cooColIndA, double *d_cooValA, int *d_cooRowInd_order, int *d_csrRowPtr, int *d_csrColInd,
+                      double *d_csrVal, int &onnz);
 
     ~FormatEncoder();    
 

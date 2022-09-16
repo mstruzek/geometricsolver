@@ -162,6 +162,7 @@ class SparseLayout {
         }
     }
 
+    /// [-not-used]
     __GPU_DEV_INLF__ double get(int row, int col) const {
         int threadId = blockIdx.x * blockDim.x + threadIdx.x;
         int offset = baseOffset + accWriteOffset[threadId];
@@ -173,7 +174,7 @@ class SparseLayout {
                 return cooVal[offset + t];
             }
         }
-        return 0.0; /// invalidate computation state
+        return NAN; /// invalidate computation state
     }
 
   private:
@@ -190,7 +191,7 @@ class SparseLayout {
 /// Local Thread Index Storage
 template <typename DataType> class BlockIterator {
   public:
-    __GPU_DEV_INLF__ BlockIterator() {
+    __GPU_DEV_INL__ BlockIterator() {
 
         /// 128 byte cache line
         extern __shared__ DataType kernel_shared[];
@@ -202,21 +203,21 @@ template <typename DataType> class BlockIterator {
         slot = kernel_shared;
     }
 
-    __GPU_DEV_INLF__ void reset(DataType value = DataType()) { slot[threadIdx.x] = value; }
+    __GPU_DEV_INL__ void reset(DataType value = DataType()) { slot[threadIdx.x] = value; }
 
-    __GPU_DEV_INLF__ DataType next() {
+    __GPU_DEV_INL__ DataType next() {
         DataType value = slot[threadIdx.x];
         ++slot[threadIdx.x];
         return value;
     }
 
-    __GPU_DEV_INLF__ DataType value() {
+    __GPU_DEV_INL__ DataType value() {
         DataType value = slot[threadIdx.x];
         return value;
     }
 
     /// kernel absolute threadId
-    __GPU_DEV_INLF__ int thread_id() { return threadId; }
+    __GPU_DEV_INL__ int thread_id() { return threadId; }
 
   private:
     /// kernel shared reference
@@ -234,7 +235,9 @@ template <typename DataType> class BlockIterator {
 ///
 class DirectSparseLayout {
   public:
-    __GPU_DEV_INLF__ DirectSparseLayout() : baseOffset(0), accOffset(NULL), P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
+    __GPU_DEV_INLF__ DirectSparseLayout() : baseOffset(0), accOffset(NULL), P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) { 
+        iterator.reset(); 
+    }
 
     __GPU_DEV_INLF__ DirectSparseLayout(int baseOffset, const int *_accOffset, const int *_P, const int *_cooRowInd, const int *_cooColInd, double *_cooVal)
         : baseOffset(baseOffset), accOffset(_accOffset), P(_P), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {
@@ -285,6 +288,7 @@ class DirectSparseLayout {
         cooVal[P[threadOffset + offset]] = value; /// 1 XWrite into L2 memory
     }
 
+    /// [-not-used]
     __GPU_DEV_INLF__ double get(int row, int col) {
         int threadId = iterator.thread_id();
         int threadOffset = baseOffset + accOffset[threadId];
@@ -319,21 +323,30 @@ class DirectSparseLayout {
 
 //=================================================================================
 
-/// <summary>
-///  Compact Layout - store column, row, and value as journal of "writes"
-///  After completion this session, coo object have to be sorted and reduced (std::plus<double>)
-/// </summary>
+/// 
+/// Compact Layout - store column, row, and value as journal of "writes"
+///  
+/// After completion this session, coo object have to be sorted and reduced (std::plus<double>)
+/// 
+/// No need to set any global memory as single atomic operation !
+/// 
 class CompactLayout {
   public:
-    __GPU_DEV_INLF__ CompactLayout() : baseOffset(0), accWriteOffset(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {}
+    __GPU_DEV_INLF__ CompactLayout() : baseOffset(0), accWriteOffset(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) { 
+        //
+        iterator.reset(); 
+    }
 
     __GPU_DEV_INLF__ CompactLayout(int baseOffset, const int *_accWriteOffset, int *_cooRowInd, int *_cooColInd, double *_cooVal)
-        : baseOffset(baseOffset), accWriteOffset(_accWriteOffset), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {}
+        : baseOffset(baseOffset), accWriteOffset(_accWriteOffset), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {
+        //
+        iterator.reset();
+    }
 
     __GPU_DEV_INLF__ void set(int row, int col, double value) {
         int threadId = iterator.thread_id();
         int offset = baseOffset + accWriteOffset[threadId];        
-        int itr_offset = iterator.value();
+        int itr_offset = iterator.next();
 
         cooRowInd[offset + itr_offset] = row; /// 3 Xwrite into cache L2
         cooColInd[offset + itr_offset] = col;
@@ -343,13 +356,14 @@ class CompactLayout {
     __GPU_DEV_INLF__ void add(int row, int col, double value) {
         int threadId = iterator.thread_id();
         int offset = baseOffset + accWriteOffset[threadId];
-        int itr_offset = iterator.value();
+        int itr_offset = iterator.next();
 
         cooRowInd[offset + itr_offset] = row; /// 3 Xwrite into cache L2
         cooColInd[offset + itr_offset] = col;
         cooVal[offset + itr_offset] = value;
     }
 
+    /// [-not-used]
     __GPU_DEV_INLF__ double get(int row, int col) {
         int threadId = iterator.thread_id();
         int offset = baseOffset + accWriteOffset[threadId];
@@ -404,6 +418,7 @@ template <typename LLayout = BlockLayout> class Tensor {
 
     __GPU_DEV_INLF__ void setValue(int row, int col, double const &value) { u.set(offset_row + row, offset_col + col, value); }
 
+    /// [-not-used]
     __GPU_DEV_INL__ double getValue(int row, int col) const { return u.get(offset_row + row, offset_col + col); }
 
     __GPU_DEV_INLF__ void plusSubTensor(int row, int col, Tensor<graph::BlockLayout> const &mt) {
@@ -468,10 +483,11 @@ template <typename LLayout = BlockLayout> class Tensor {
     }
 
     friend class Tensor<graph::BlockLayout>;
-    friend class Tensor<graph::SparseLayout>;
     friend class Tensor<graph::DenseLayout>;
+    friend class Tensor<graph::SparseLayout>;    
     friend class Tensor<graph::DirectSparseLayout>;
-
+    friend class Tensor<graph::CompactLayout>;
+    
   private:
     bool intention; /// vector put operation vertical if true / horizontal otherwise
     LLayout u;
@@ -496,6 +512,13 @@ __GPU_DEV_INLF__ Tensor<DirectSparseLayout> tensorDevMem(DirectSparseLayout layo
     Tensor<DirectSparseLayout> tensor(layout, intention);
     return tensor;
 }
+
+__GPU_DEV_INLF__ Tensor<CompactLayout> tensorDevMem(CompactLayout layout, bool intention, int offset_row, int offset_col) {
+    Tensor<CompactLayout> tensor(layout, intention, offset_row, offset_col);
+    return tensor;
+}
+
+
 
 __GPU_DEV_INLF__ Tensor<BlockLayout> make_block_tensor(double a00, double a01, double a10, double a11) {
     return Tensor<graph::BlockLayout>(a00, a10, a01, a11);

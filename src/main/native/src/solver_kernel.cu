@@ -427,6 +427,11 @@ __global__ void __ComputeStiffnessMatrix__(ComputationState *ecdata, size_t N) {
         ///
         ComputeStiffnessMatrix_Impl(tID, ecdata, tensorDirect, N);
         ///
+    } else if (computationLayout == ComputationLayout::COMPACT_LAYOUT) {
+        graph::CompactLayout compactLayout = graph::CompactLayout(baseOffset, accWriteOffset, cooRowInd, cooColInd, cooVal);
+        graph::Tensor<graph::CompactLayout> tensorCompactLayout = graph::tensorDevMem(compactLayout, intention, offset_row, offset_col);
+        ///
+        ComputeStiffnessMatrix_Impl(tID, ecdata, tensorCompactLayout, N);
     }
 #endif
     else {
@@ -451,7 +456,7 @@ KERNEL_EXECUTOR void ComputeStiffnessMatrix(cudaStream_t stream, int NS, Computa
 
     const unsigned GRID_DIM = GeometricKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = GeometricKernelTraits.BLOCK_DIM;
-    const unsigned MEM_SHARED =  NS;
+    const unsigned MEM_SHARED = NS;
 
     __ComputeStiffnessMatrix__<<<GRID_DIM, BLOCK_DIM, MEM_SHARED, stream>>>(ecdata, N);
 }
@@ -1525,7 +1530,7 @@ __global__ void __EvaluateConstraintJacobian__(ComputationState *ecdata, size_t 
 
     const int constraintOffset = ec->size + ec->accConstraintSize[tId];
 #ifdef TENSOR_SPARSE_LAYOUT
-    const int * INV_P = ec->INV_P;
+    const int *INV_P = ec->INV_P;
     int const baseOffset = ec->cooWritesStiffSize;             /// into coo vector
     const int *accWriteOffset = ec->accCooWriteJacobianTensor; /// relative coo offset
     int *const cooRowInd = ec->cooRowInd;
@@ -1557,6 +1562,12 @@ __global__ void __EvaluateConstraintJacobian__(ComputationState *ecdata, size_t 
         graph::Tensor<graph::DirectSparseLayout> tensorDirect = graph::tensorDevMem(directLayout, intention);
         ///
         EvaluateConstraintJacobian_Impl(tId, ecdata, tensorDirect, N);
+        ///
+    } else if (computationLayout == ComputationLayout::COMPACT_LAYOUT) {
+        graph::CompactLayout compactLayout = graph::CompactLayout(baseOffset, accWriteOffset, cooRowInd, cooColInd, cooVal);
+        graph::Tensor<graph::CompactLayout> tensorCompactLayout = graph::tensorDevMem(compactLayout, intention, offset_row, offset_col);
+        ///
+        EvaluateConstraintJacobian_Impl(tId, ecdata, tensorCompactLayout, N);
         ///
     }
 #endif
@@ -1711,6 +1722,12 @@ __global__ void __EvaluateConstraintTRJacobian__(ComputationState *ecdata, size_
         ///
         EvaluateConstraintTRJacobian_Impl(tId, ecdata, directLayoutAdapter, N);
         ///
+    } else if (computationLayout == ComputationLayout::COMPACT_LAYOUT) {
+        graph::CompactLayout compactLayout = graph::CompactLayout(baseOffset, accWriteOffset, cooRowInd, cooColInd, cooVal);
+        graph::AdapterTensor<graph::CompactLayout> compactLayoutAdapter = graph::transposeTensorDevMem(compactLayout, intention, offset_row, offset_col);
+        ///
+        EvaluateConstraintTRJacobian_Impl(tId, ecdata, compactLayoutAdapter, N);
+        ///
     }
 #endif
     else {
@@ -1727,7 +1744,7 @@ __global__ void __EvaluateConstraintTRJacobian__(ComputationState *ecdata, size_
 /// <param name="ecdata"></param>
 /// <param name="N"></param>
 /// <returns></returns>
-KERNEL_EXECUTOR void EvaluateConstraintTRJacobian(cudaStream_t stream, int NS,  ComputationState *ecdata, size_t N) {
+KERNEL_EXECUTOR void EvaluateConstraintTRJacobian(cudaStream_t stream, int NS, ComputationState *ecdata, size_t N) {
 
     typedef KernelTraits<OBJECTS_PER_THREAD, DEFAULT_BLOCK_DIM> ConstraintKernelTraits_t;
     const ConstraintKernelTraits_t ConstraintKernelTraits(N);
@@ -2283,7 +2300,7 @@ template <typename Tensor> __device__ void EvaluateConstraintHessian_Impl(int tI
     /// COLUMN_ORDER - tensor A
     if (tID < N) {
         const graph::Constraint *constraint = ec->getConstraint(tID);
-        
+
         /// tensor operation this constraint will write into A
         if (tensorOpsCooConstraintHessianCount(*constraint) == 0)
             return;
@@ -2394,6 +2411,13 @@ __global__ void __EvaluateConstraintHessian__(ComputationState *ecdata, size_t N
         EvaluateConstraintHessian_Impl(tId, ecdata, tensorDirect, N);
         ///
         return;
+    } else if (computationLayout == ComputationLayout::COMPACT_LAYOUT) {
+        graph::CompactLayout compactLayout = graph::CompactLayout(baseOffset, accWriteOffset, cooRowInd, cooColInd, cooVal);
+        graph::Tensor<graph::CompactLayout> tensorDirect = graph::tensorDevMem(compactLayout, intention, offset_row, offset_col);
+        ///
+        EvaluateConstraintHessian_Impl(tId, ecdata, tensorDirect, N);
+        ///
+        return;
     }
 #endif
     else {
@@ -2417,7 +2441,7 @@ KERNEL_EXECUTOR void EvaluateConstraintHessian(cudaStream_t stream, int NS, Comp
 
     const unsigned GRID_DIM = ConstraintKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = ConstraintKernelTraits.BLOCK_DIM;
-    const unsigned MEM_SHARED = NS ;
+    const unsigned MEM_SHARED = NS;
 
     __EvaluateConstraintHessian__<<<GRID_DIM, BLOCK_DIM, MEM_SHARED, stream>>>(ecdata, N);
 }

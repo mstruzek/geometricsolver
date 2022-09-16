@@ -408,8 +408,8 @@ template <typename Type> void stdout_vector(host_vector<Type> &vector, const cha
     const size_t size = vector.get_size();
     const Type *data = vector.data();
     infoLog(VECTOR_HEADER, title, size);
-    int i = (int)size;
-    while (i-- > 0) {
+    int i = -1;
+    while (++i <size) {
         printer<Type>(i, data[i]);
     }
     infoLog(LINE_SEPARATOR);

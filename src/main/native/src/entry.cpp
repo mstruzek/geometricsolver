@@ -1144,20 +1144,22 @@ int main(int argc, char* args[])
     //jni_setBooleanProperty  
     
         
-    jni_setLongProperty(&env, eclass, 20, (jlong) 3);  // settings::get()->COMPUTATION_MODE = [ 1 - DENSE_LAYOUT , 2 - SPARSE_LAYOUT , *3 - DIRECT_LAYOUT ]
+    jni_setLongProperty(&env, eclass, 20, (jlong) 2);  // settings::get()->COMPUTATION_MODE = [ 1 - DENSE_MODE , 2 - SPARSE_MODE , *3 - DIRECT_MODE , 4 - COMPACT_MODE ]
 
-    jni_setLongProperty(&env, eclass, 21, (jlong) 2); // settings::get()->SOLVER_MODE  = [ DENSE_LU = 1, SPARSE_QR = 2, SPARSE_ILU = 3, ]
+    jni_setLongProperty(&env, eclass, 21, (jlong) 3); // settings::get()->SOLVER_MODE  = [ DENSE_LU = 1, SPARSE_QR = 2, SPARSE_ILU = 3, ]
 
 
     jni_setBooleanProperty(&env, eclass, 8, (jboolean) true);  // settings::get()->DEBUG_SOLVER_CONVERGENCE = false; 
-    jni_setBooleanProperty(&env, eclass, 9, (jboolean) false);  // settings::get()->DEBUG_CHECK_ARG = false;
+    jni_setBooleanProperty(&env, eclass, 9, (jboolean) true);  // settings::get()->DEBUG_CHECK_ARG = false;
     jni_setBooleanProperty(&env, eclass, 1, (jboolean) false);  // settings::get()->DEBUG_TENSOR_A= true;
-    jni_setBooleanProperty(&env, eclass, 2, (jboolean) true);  // settings::get()->DEBUG_TENSOR_B= true;
+    jni_setBooleanProperty(&env, eclass, 2, (jboolean) false);  // settings::get()->DEBUG_TENSOR_B= true;
 
     jni_setBooleanProperty(&env, eclass, 3, (jboolean) false); // settings::get()->DEBUG= true;
+    jni_setBooleanProperty(&env, eclass, 4, (jboolean) true); // settings::get()->DEBUG_TENSOR_SV= true;
 
     jni_setBooleanProperty(&env, eclass, 24, (jboolean) true); // settings::get()->SOLVER_INC_HESSIAN = false;
     
+    jni_setBooleanProperty(&env, eclass, 30, (jboolean) false); // settings::get()->DEBUG_CSR_FORMAT  = false;
     jni_setBooleanProperty(&env, eclass, 31, (jboolean) false); // settings::get()->DEBUG_COO_FORMAT  = false;
 
     err = jni_initComputationContext(&env, eclass);
@@ -1165,9 +1167,9 @@ int main(int argc, char* args[])
     
     //model_single_line(env, eclass);
 
-    //model_circle_line_tangetn_perpendicular(env, eclass);
+    model_circle_line_tangetn_perpendicular(env, eclass);
 
-    model_6x10(env, eclass);
+    //model_6x10(env, eclass);
       
 
     /// ----------------------------------------------------------------------------------------------------- //

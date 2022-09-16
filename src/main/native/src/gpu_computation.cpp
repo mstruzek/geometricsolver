@@ -169,7 +169,8 @@ void GPUComputation::memcpyComputationToDevice() {
         }
 
         // non-zero elements (coo/csr)
-        nnz = cooWritesSize;
+        nnz = cooWritesSize;            /// data storage nnz (CompactLayout)
+        nnz_sv = cooWritesSize;        /// computation nnz
 
         /// sparse layout , first itr only
         d_cooVal = utility::dev_vector<double>(cooWritesSize, stream);
@@ -417,7 +418,7 @@ void GPUComputation::DebugTensorConstruction(ComputationState *ev) {
         case ComputationMode::SPARSE_MODE:
         case ComputationMode::DIRECT_MODE:
         case ComputationMode::COMPACT_MODE:
-            tensorOperation.stdout_coo_tensor(stream, dimension, dimension, nnz, d_cooRowInd_order, d_csrColIndA, d_csrValA, " --- A*");
+            tensorOperation.stdout_coo_tensor(stream, dimension, dimension, nnz_sv, d_cooRowInd_order, d_csrColIndA, d_csrValA, " --- A*");
             break;
         }
     }
@@ -547,9 +548,6 @@ void GPUComputation::PostProcessTensorA(int round, ComputationLayout computation
     const int m = dimension;
     const int n = dimension;
 
-    /// non-zeror elements temporary storage
-    int nnz_csr = 0;
-
     switch (computationLayout) {
     /// ------------------------------------------------------------------------------------- ///
     case ComputationLayout::DENSE_LAYOUT:
@@ -595,12 +593,23 @@ void GPUComputation::PostProcessTensorA(int round, ComputationLayout computation
     /// ------------------------------------------------------------------------------------- ///
     case ComputationLayout::COMPACT_LAYOUT:
 
+
+         if (settings::get()->DEBUG_COO_FORMAT) {
+            cudaStreamSynchronize(stream);
+            /// intermediate result from conversion
+            tensorOperation.stdout_coo_vector(stream, m, n, nnz, d_cooRowInd, d_cooColInd, d_cooVal, " --- A journal coo format");
+        }
+
         /// input COO non compress format, this is journal Of commands [ K + Jacobian + JacobianT + Hessian ]        
-        formatEncoder.compactToCsr(nnz, m, d_cooRowInd, d_cooColInd, d_cooVal, d_csrRowPtrA, d_csrColIndA, d_csrValA, nnz_csr);
+        formatEncoder.compactToCsr(nnz, m, d_cooRowInd, d_cooColInd, d_cooVal, d_cooRowInd_order, d_csrRowPtrA, d_csrColIndA, d_csrValA, nnz_sv);
+                
+        if (settings::get()->DEBUG_CSR_FORMAT) {
+            cudaStreamSynchronize(stream);
+            /// intermediate result from conversion
+            tensorOperation.stdout_coo_vector(stream, m, n, nnz_sv, d_cooRowInd_order, d_csrColIndA, d_csrValA, " --- A coo canonical");
+        }
 
-        /// output in CSR
-        nnz = nnz_csr;
-
+        break;
     /// ------------------------------------------------------------------------------------- ///
     default:
         exit(-1);
@@ -729,7 +738,6 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
 #endif
             /// uaktualniamy punkty SV = SV + delta
             StateVectorAddDelta(dev_SV[round], dev_b);
-            DebugTensorSV(dev_ev);
             break;
 
         case SolverMode::SPARSE_QR:
@@ -737,7 +745,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
             /// ---------------------------------------------------------------------------------------- ///
             ///                             Sparse - Solver                                              ///
             /// ---------------------------------------------------------------------------------------- ///
-            solverSystem->solveSystemSP(m, n, nnz, d_csrRowPtrA, d_csrColIndA, d_csrValA, dev_b, dev_dx, singularity);
+            solverSystem->solveSystemSP(m, n, nnz_sv, d_csrRowPtrA, d_csrColIndA, d_csrValA, dev_b, dev_dx, singularity);
             validateStream;
 
             if (settings::get()->DEBUG_CHECK_ARG) {
@@ -760,7 +768,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
 
         computationContext->SolverStop(round);
 
-        DebugTensorSV(dev_ev);
+        DebugTensorSV(ev);
 
         /// ---------------------------------------------------------------------------------------- ///
         ///                             Set Computation Callback - Epsilon                           ///
