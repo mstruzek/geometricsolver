@@ -113,7 +113,7 @@ void GPUComputation::preInitializeData() {
 
         if (accCooWriteHessianTensor.size() > 1 && computationMode == ComputationMode::DIRECT_MODE) {
             fprintf(stderr, "[solver.gpu] error ! direct layout mode is not available for Hessian matrix evaluation ! \n");
-            exit(-1);
+            //exit(-1);
         }
     }
 
@@ -360,6 +360,9 @@ void GPUComputation::PreInitializeComputationState(ComputationState *ev, int itr
 
         utility::memsetAsync(d_cooVal.data(), 0, d_cooVal.get_size(), stream);
 
+        if (computationLayout== ComputationLayout::DIRECT_LAYOUT) {
+            //tensorOperation.identityPermutation(nnz, d_INV_PT);
+        }
         ev->INV_P = d_INV_PT; /// SparseLayout(1) + DirectLayout(*)
     }
 }
@@ -649,12 +652,6 @@ void GPUComputation::PostProcessTensorA(int round, ComputationLayout computation
             /// gather d_csrValuA from cooValues;
             tensorOperation.gatherVector<double>(nnz, CUDA_R_64F, d_cooVal, d_PT, d_csrValA);
 
-            if (settings::DEBUG_COO_FORMAT) {
-                cudaStreamSynchronize(stream);
-                /// intermediate result from conversion
-                tensorOperation.stdout_coo_tensor(stream, m, n, nnz, d_cooRowInd_order, d_csrColIndA, d_csrValA, " --- tensor A");
-            }
-
             /// evaluate inverted permutation vector
             tensorOperation.invertPermuts(nnz, d_PT, d_INV_PT);
 
@@ -663,19 +660,31 @@ void GPUComputation::PostProcessTensorA(int round, ComputationLayout computation
             tensorOperation.gatherVector<double>(nnz, CUDA_R_64F, d_cooVal, d_PT, d_csrValA);
             validateStream;
         }
+
+         if (settings::DEBUG_CSR_FORMAT) {
+            cudaStreamSynchronize(stream);
+            /// intermediate result from conversion
+            tensorOperation.stdout_coo_vector(stream, m, n, nnz, d_cooRowInd_order, d_csrColIndA, d_csrValA, " --- tensor coo A");
+        }
         break;
 
     /// ------------------------------------------------------------------------------------- ///
     case ComputationLayout::DIRECT_LAYOUT:
         /// direct format
         d_csrValA.memcpy_of(d_cooVal, stream);
+        
+        if (settings::DEBUG_CSR_FORMAT) {
+            cudaStreamSynchronize(stream);
+            /// intermediate result from conversion
+            tensorOperation.stdout_coo_vector(stream, m, n, nnz, d_cooRowInd_order, d_csrColIndA, d_csrValA, " --- tensor coo A *");
+        }
+
         break;
 
     /// ------------------------------------------------------------------------------------- ///
     case ComputationLayout::COMPACT_LAYOUT:
 
-
-         if (settings::DEBUG_COO_FORMAT) {
+        if (settings::DEBUG_COO_FORMAT) {
             cudaStreamSynchronize(stream);
             /// intermediate result from conversion
             tensorOperation.stdout_coo_vector(stream, m, n, nnz, d_cooRowInd, d_cooColInd, d_cooVal, " --- A journal coo format");
@@ -694,6 +703,11 @@ void GPUComputation::PostProcessTensorA(int round, ComputationLayout computation
     /// ------------------------------------------------------------------------------------- ///
     default:
         exit(-1);
+    }
+
+    if (settings::DEBUG_CSR_FORMAT) {
+        cudaStreamSynchronize(stream);
+        utility::stdout_vector(d_csrRowPtrA, "d_csrRowPtrA");
     }
 }
 
@@ -780,13 +794,6 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
         computationContext->PrepStop(round);
 
         DebugTensorConstruction(ev);
-
-#undef H_DEBUG
-
-        if (settings::DEBUG_CSR_FORMAT) {
-            cudaStreamSynchronize(stream);
-            utility::stdout_vector(d_csrRowPtrA, "d_csrRowPtrA");
-        }
 
         ///
         ///  ConstraintGetFullNorm

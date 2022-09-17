@@ -267,13 +267,13 @@ class DirectSparseLayout {
                 ///
                 /// HESSIAN - komponenty macierzy skorelowane na punktach uczestnicza czesci tego bloku.
                 ///
-                //if (gridDim.x == 1) {
-                //    atomicAdd_block(&cooVal[P[threadOffset + itr]], value);
-                //} else {
-                //    atomicAdd(&cooVal[P[threadOffset + itr]], value);
-                //}    
+                if (gridDim.x == 1) {
+                    atomicAdd_block(&cooVal[P[threadOffset + itr]], value);
+                } else {
+                    atomicAdd(&cooVal[P[threadOffset + itr]], value);
+                }    
 
-                cooVal[P[threadOffset + itr]] += value; /// 1 XWrite into L2 memory
+                //cooVal[P[threadOffset + itr]] += value; /// 1 XWrite into L2 memory
                 return;
             } else if (at_row == -1 && at_col == -1) {
                 // SET value

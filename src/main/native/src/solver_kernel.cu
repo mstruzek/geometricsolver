@@ -20,7 +20,7 @@
 
 void _kernelExecution_debug(const char *kernelName, unsigned gridDim, unsigned blockDim, unsigned sharedMemory) {
     ///
-    fprintf(stdout, "\n kernel ( grid %d  block %d  shared %d ) (( %s ))  ", gridDim, blockDim, sharedMemory, kernelName);
+    fprintf(stdout, "kernel ( grid %d  block %d  shared %d ) (( %s )) \n", gridDim, blockDim, sharedMemory, kernelName);
     return;
 }
 
@@ -80,23 +80,13 @@ void compactPermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStrea
 /// <returns></returns>
 __global__ void __inversePermuationVector__(const int *__restrict__ INP, int *__restrict__ OUTP, size_t N) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
-    const unsigned offset = ELEMENTS_PER_THREAD * threadId;
-    const unsigned upperLimit = offset + ELEMENTS_PER_THREAD;
+    const unsigned offset = ELEMENTS_PER_THREAD * threadId;    
 
-    if (upperLimit <= N) {
-
-///  ?????   warning C4068: nieznana pragma �unroll� nvcc
-///
-#pragma unroll
-        for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
+    for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
+        if (offset + T < N) {
             OUTP[INP[offset + T]] = offset + T;
-        }
-    } else {
-        const unsigned remainder = N - offset;
-        for (int T = 0; T < remainder; ++T) {
-            if (offset + T < N) {
-                OUTP[INP[offset + T]] = offset + T;
-            }
+        } else {
+            return;
         }
     }
 }
@@ -125,16 +115,16 @@ void inversePermutationVector(cudaStream_t stream, int *INP, int *OUTP, size_t N
 
 /// =======================================================================================
 
-__global__ void __kernelMemsetD32I__(int * devPtr, int value, size_t size) {
+__global__ void __kernelMemsetD32I__(int *devPtr, int value, size_t size) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
-    const unsigned offset = ELEMENTS_PER_THREAD * threadId;    
+    const unsigned offset = ELEMENTS_PER_THREAD * threadId;
 
-    for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {    
+    for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
         if (offset + T < size) {
             devPtr[offset + T] = value;
         } else {
-            return;     
-        }        
+            return;
+        }
     }
 }
 /// =======================================================================================
@@ -453,8 +443,6 @@ __global__ void __ComputeStiffnessMatrix__(ComputationState *ecdata, size_t N) {
         log_error("[gpu/tensor] computation mode unknown \n");
     }
 }
-
-
 
 /// =======================================================================================
 /// <summary>
@@ -2809,6 +2797,9 @@ __global__ void __fillInDiagonalValue__(ComputationState *__restrict__ ecdata, d
     /// From Kernel Reference Addressing
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
     const unsigned offset = threadId * ELEMENTS_PER_THREAD;
+        
+    const ComputationLayout computationLayout = ecdata->computationLayout;
+    const int *__restrict__ P = ecdata->INV_P;
 
 #ifdef TENSOR_SPARSE_LAYOUT
     ComputationState *__restrict__ ec = static_cast<ComputationState *>(ecdata);
@@ -2818,17 +2809,21 @@ __global__ void __fillInDiagonalValue__(ComputationState *__restrict__ ecdata, d
     double *const __restrict__ cooVal = ec->cooVal;
 
     const int nnz = ec->nnz;
-    const int dimension = ec->dimension;    
+    const int dimension = ec->dimension;
     const int diagonalBase = (dimension - coeffSize) + offset;
-    const int beginOffset = (nnz - coeffSize) + offset;              /// hessian possibly not evaluated !
-
+    const int beginOffset = (nnz - coeffSize) + offset; /// hessian possibly not evaluated !
+    
     for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
         int ID = beginOffset + T;
         int diagonalId = diagonalBase + T;
         if (ID < nnz) {
-            cooRowInd[ID] = diagonalId;
-            cooColInd[ID] = diagonalId;
-            cooVal[ID] = value;
+            if (computationLayout == ComputationLayout::DIRECT_LAYOUT) {
+                cooVal[P[ID]] = value;
+            } else {
+                cooRowInd[ID] = diagonalId;
+                cooColInd[ID] = diagonalId;
+                cooVal[ID] = value;
+            }
         }
     }
 

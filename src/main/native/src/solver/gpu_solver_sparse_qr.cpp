@@ -80,13 +80,6 @@ void GPUSolverSparseQR::solveSystem(int m, int n, int nnz, int *csrRowPtrA, int 
         }
     }
 
-    if (settings::DEBUG_CSR_FORMAT) {
-        checkCudaStatus(cudaStreamSynchronize(stream));
-        utility::stdout_vector(utility::dev_vector<int>(csrRowPtrA, nnz), "d_csrRowPtrA");
-        utility::stdout_vector(utility::dev_vector<int>(csrColIndA, nnz), "d_csrColIndA");
-        utility::stdout_vector(utility::dev_vector<double>(csrValA, nnz), "d_csrValA");
-    }
-
     cusolverStatus_t cusolverStatus;
 
     cusolverStatus = cusolverSpDcsrlsvqr(handle, m, nnz, descrA, csrValA, csrRowPtrA, csrColIndA, b, tolerance, schema, x, singularity);

@@ -78,6 +78,14 @@ class TensorOperation {
 
 
     /// <summary>
+    /// Create ACC permutation vector [0, 1, 2, ....]
+    /// </summary>
+    /// <param name="nnz"></param>
+    /// <param name="PT"></param>
+    void identityPermutation(int nnz, int *PT);
+
+
+    /// <summary>
     /// debug function. stdout device coo vectors.
     /// </summary>
     /// <param name="stream"></param>

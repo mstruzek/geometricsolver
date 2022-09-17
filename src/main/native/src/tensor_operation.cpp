@@ -61,7 +61,7 @@ void TensorOperation::vectorNorm(int n, double *x, double *result) {
 
     if (settings::DEBUG_SOLVER_CONVERGENCE) {
         checkCudaStatus(cudaStreamSynchronize(stream));
-        printf("[cublas.norm] constraint evalutated norm  = %e \n", *result);
+        printf("\n[cublas.norm] constraint evalutated norm  = %e \n", *result);
     } else {
         // blad na cublas RESULT jest lokalny  zawsze
         /// checkCublasStatus(cublasDnrm2(cublasHandle, n, x, 1, result))
@@ -88,6 +88,8 @@ void TensorOperation::memsetD32I(int *devPtr, int value, size_t size, cudaStream
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
 }
+
+
 
 /// <summary>
 /// Transform COO storage format to CSR storage format.
@@ -157,12 +159,6 @@ void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *c
 
     gatherVector<int>(nnz, CUDA_R_32F, PT1, PT2, PT);
 
-    if (settings::DEBUG_COO_FORMAT) {
-        checkCudaStatus(cudaStreamSynchronize(stream));
-        utility::stdout_vector(utility::dev_vector<int>{cooRowInd, (size_t)nnz, stream}, "cooRowInd --- Xsoort");
-        utility::stdout_vector(utility::dev_vector<int>{cooColInd, (size_t)nnz, stream}, "cooColInd --- Xsoort");
-    }
-
     /// create csrRowPtrA    -  async execution
     status = cusparseXcoo2csr(sparseHandle, cooRowInd, nnz, m, csrRowInd, CUSPARSE_INDEX_BASE_ZERO);
     if (status != CUSPARSE_STATUS_SUCCESS) {
@@ -173,11 +169,6 @@ void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *c
     }
 
     checkCudaStatus(cudaStreamSynchronize(stream));
-
-    if (settings::DEBUG_CSR_FORMAT) {
-        checkCudaStatus(cudaStreamSynchronize(stream));
-        utility::stdout_vector(utility::dev_vector<int>{csrRowInd, (size_t)(m + 1), stream}, "csrRowInd -- CSR result !");
-    }
 
     return;
 }
@@ -219,6 +210,12 @@ void TensorOperation::invertPermuts(int n, int *PT, int *INV) {
         /// block and wait for execution
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
+}
+
+
+void TensorOperation::identityPermutation(int nnz, int *PT) {
+ 
+    checkCusparseStatus(cusparseCreateIdentityPermutation(sparseHandle, nnz, PT));
 }
 
 
