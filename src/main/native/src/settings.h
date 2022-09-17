@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _SETTINGS_H_
+#define _SETTINGS_H_
+
 
 namespace settings {
 
@@ -90,3 +92,6 @@ int setLongProperty(int id, long value);
 int setDoubleProperty(int id, double value);
 
 } // namespace settings
+
+
+#endif // !_SETTINGS_H_

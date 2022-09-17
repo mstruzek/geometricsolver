@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _FORMAT_ENCODER_H_
+#define _FORMAT_ENCODER_H_
+
 
 #include "cuda_runtime_api.h"
 
@@ -35,3 +37,6 @@ class FormatEncoder {
 
     cusparseHandle_t handle;
 };
+
+
+#endif // !_FORMAT_ENCODER_H_

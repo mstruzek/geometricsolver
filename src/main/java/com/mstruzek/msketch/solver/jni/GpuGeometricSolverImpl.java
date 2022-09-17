@@ -55,7 +55,13 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
         JNIDebugParameters.STREAM_CAPTURING.setBooleanProperty(false);
 
+        /// OK :
         JNIDebugParameters.COMPUTATION_MODE.setLongProperty(COMPACT_MODE);
+
+        // ERROR: zawiesza JAVE
+        // JNIDebugParameters.COMPUTATION_MODE.setLongProperty(DIRECT_MODE);
+
+
         JNIDebugParameters.SOLVER_MODE.setLongProperty(SolverMode.QR_SPARSE);
 
         //        JNIDebugParameters.COMPUTATION_MODE.setLongProperty(SPARSE_LAYOUT);

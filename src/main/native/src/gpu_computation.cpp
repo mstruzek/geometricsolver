@@ -2,6 +2,8 @@
 
 #include "cuda_runtime_api.h"
 
+#include "cudaTypedefs.h"
+
 #include <functional>
 #include <numeric>
 #include <typeinfo>
@@ -10,6 +12,8 @@
 
 #include "model.cuh"
 #include "solver_kernel.cuh"
+
+#include "model_config.h"
 
 #include "quda.h"
 #include "stop_watch.h"
@@ -69,56 +73,56 @@ GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::sha
     /// setup all dependent structure for device , accSize or accOffset
     preInitializeData();
 
+    requestMemoryInformation();
+
     /// prepera allocation and transfer structures onto device
     memcpyComputationToDevice();
 
     printf("[solver] model stage consistent !\n");
-}
 
-//////////////////===================================
+    stdoutModelInformation();
+
+    requestMemoryInformation();
+}
 
 void GPUComputation::preInitializeData() {
 
     /// mapping from point Id => point dest offset
-    pointOffset = utility::stateOffset(points, [](auto point) { return point->id; });
+    utility::stateOffset(points, utility::uniqueElementId, pointOffset);
+    utility::stateOffset(geometrics, utility::uniqueElementId, geometricOffset);
+    utility::stateOffset(constraints, utility::uniqueElementId, constraintOffset);   
+    utility::stateOffset(parameters, utility::uniqueElementId, parameterOffset);
 
-    geometricOffset = utility::stateOffset(geometrics, [](auto geometric) { return geometric->id; });
-
-    constraintOffset = utility::stateOffset(constraints, [](auto constraint) { return constraint->id; });
-
-    /// this is mapping from Id => parameter dest offset
-    parameterOffset = utility::stateOffset(parameters, [](auto parameter) { return parameter->id; });
-
-    /// accumalted position of geometric block
-    accGeometricSize = utility::accumulatedValue(geometrics, graph::geometricSetSize);
-
+    /// accumalted position of geometric block    
+    utility::accumulatedValue(geometrics, graph::geometricSetSize, accGeometricSize);    
     /// accumulated position of constrain block
-    accConstraintSize = utility::accumulatedValue(constraints, graph::constraintSize);
+    utility::accumulatedValue(constraints, graph::constraintSize, accConstraintSize);
 
     if (computationMode != ComputationMode::DENSE_MODE) {
         /// accumulated COO - K
-        accCooWriteStiffTensor = utility::accumulatedValue(geometrics, graph::tensorOpsCooStiffnesCoefficients);
+        utility::accumulatedValue(geometrics, graph::tensorOpsCooStiffnesCoefficients, accCooWriteStiffTensor);
         /// accumulated COO - Jacobian
-        accCooWriteJacobianTensor = utility::accumulatedValue(constraints, graph::tensorOpsCooConstraintJacobian);
+        utility::accumulatedValue(constraints, graph::tensorOpsCooConstraintJacobian, accCooWriteJacobianTensor);
 
         if (settings::SOLVER_INC_HESSIAN) {
             /// accumuldate COO - Hessian
-            accCooWriteHessianTensor = utility::accumulatedValue(constraints, graph::tensorOpsCooConstraintHessian);
+            utility::accumulatedValue(constraints, graph::tensorOpsCooConstraintHessian, accCooWriteHessianTensor);
         } else {
-            accCooWriteHessianTensor = std::vector<int, gpu_allocator<int>>(0);
+            accCooWriteHessianTensor = std::vector<int, gpu_allocator<int>>(EMPTY_VALUE);
         }
 
         if (accCooWriteHessianTensor.size() > 1 && computationMode == ComputationMode::DIRECT_MODE) {
             fprintf(stderr, "[solver.gpu] error ! direct layout mode is not available for Hessian matrix evaluation ! \n");
-            // exit(-1);
+            exit(-1);
         }
     }
 
-    /// `A` tensor internal structure dimensions
-    size = std::accumulate(geometrics.begin(), geometrics.end(), 0, [](auto acc, auto const &geometric) { return acc + graph::geometricSetSize(geometric); });
+    using utility::map_reduce_element;
 
-    coffSize =
-        std::accumulate(constraints.begin(), constraints.end(), 0, [](auto acc, auto const &constraint) { return acc + graph::constraintSize(constraint); });
+    /// `A` tensor internal structure dimensions        
+    size = std::accumulate(geometrics.begin(), geometrics.end(), INIT_VALUE, map_reduce_element(graph::geometricSetSize));
+
+    coffSize = std::accumulate(constraints.begin(), constraints.end(), INIT_VALUE, map_reduce_element(graph::constraintSize));
 
     dimension = size + coffSize;
 }
@@ -133,7 +137,7 @@ void GPUComputation::memcpyComputationToDevice() {
     ///         Host Computation with references to Device
     /// ============================================================
 
-    /// const data in computation
+    // const data in computation
     d_points = utility::dev_vector(points, stream);
     d_geometrics = utility::dev_vector(geometrics, stream);
     d_constraints = utility::dev_vector(constraints, stream);
@@ -150,29 +154,30 @@ void GPUComputation::memcpyComputationToDevice() {
 
     if (computationMode != ComputationMode::DENSE_MODE) {
         // ComputationMode::SPARSE_LAYOUT  || ComputationMode::DIRECT_LAYOUT
-        /// accumulated COO
+        // accumulated COO
         d_accCooWriteStiffTensor = utility::dev_vector(accCooWriteStiffTensor, stream);
         d_accCooWriteJacobianTensor = utility::dev_vector(accCooWriteJacobianTensor, stream);
         d_accCooWriteHessianTensor = utility::dev_vector(accCooWriteHessianTensor, stream);
 
         cooWritesStiffSize = accCooWriteStiffTensor[accCooWriteStiffTensor.size() - 1];
         cooWirtesJacobianSize = accCooWriteJacobianTensor[accCooWriteJacobianTensor.size() - 1];
-        int cooWritesSize = cooWritesStiffSize + cooWirtesJacobianSize * 2; /// +HESSIAN if computed
+        int cooWritesSize = cooWritesStiffSize + cooWirtesJacobianSize * 2;                     
 
+        // +HESSIAN if computed
         if (settings::SOLVER_INC_HESSIAN) {
             cooWritesSize += accCooWriteHessianTensor[accCooWriteHessianTensor.size() - 1];
         }
 
 
-        /// __fillInDiagonal__  for `iLU02 solver
-        /// fillin diagonal with 0 indicies form [size, size + coffSize] // 
+        // __fillInDiagonal__  for sparse solvers -- `!?! iLU02 solver
+        // fillin diagonal with 0 indicies form [size, size + coffSize] // 
         cooWritesSize += coffSize;
 
         // non-zero elements (coo/csr)
-        nnz = cooWritesSize;            /// data storage nnz (CompactLayout)
-        nnz_sv = cooWritesSize;         /// computation nnz
+        nnz = cooWritesSize;            // data storage nnz (CompactLayout)
+        nnz_sv = cooWritesSize;         // computation nnz
 
-        /// sparse layout , first itr only
+        // sparse layout , first itr only
         d_cooVal = utility::dev_vector<double>(cooWritesSize, stream);
         d_cooRowInd = utility::dev_vector<int>(cooWritesSize, stream);
         d_cooColInd = utility::dev_vector<int>(cooWritesSize, stream);
@@ -184,7 +189,7 @@ void GPUComputation::memcpyComputationToDevice() {
         d_INV_PT = utility::dev_vector<int>(cooWritesSize, stream);
         d_cooRowInd_order = utility::dev_vector<int>(cooWritesSize, stream);
 
-        /// rows = m + 1
+        // rows = m + 1
         if (computationMode == ComputationMode::COMPACT_MODE) {
             d_csrRowPtrA = utility::dev_vector<int>(nnz, stream);
         } else {
@@ -195,16 +200,17 @@ void GPUComputation::memcpyComputationToDevice() {
         d_csrValA = utility::dev_vector<double>(nnz, stream);
     }
 
-    /// ?// single  data-plane transfer
+    // ?// single  data-plane transfer
 
     // if (!parameters.empty()) {
     //     utility::memcpyAsync(&d_parameterOffset, parameterOffset.data(), parameterOffset.size(), stream);
     // }
 
     const size_t N = dimension;
-    ///
-    ///  [ GPU ] tensors `A` `x` `dx` `b`  ------------------------
-    ///
+
+    //
+    //  [ GPU ] tensors `A` `x` `dx` `b`  ------------------------
+    //
     if (computationMode == ComputationMode::DENSE_MODE) {
         dev_A = utility::dev_vector<double>(N * N, stream);
     }
@@ -212,10 +218,73 @@ void GPUComputation::memcpyComputationToDevice() {
     dev_dx = utility::dev_vector<double>(N, stream);
 
     for (int itr = 0; itr < CMAX; itr++) {
-        /// each computation data with its own StateVector
+
+        // memory menager - why not Cotroll allocation and dealocation , or single allocation  (( double* dev_SV )) check!
+        // 
+        // each computation data with its own StateVector
         dev_SV.push_back(utility::dev_vector<double>{N, stream});
     }
 }
+
+
+void GPUComputation::stdoutModelInformation() {
+           
+    using utility::lastIndexValue;
+    printf("\n----------------------------------------------");
+    /// parametry modelu wejsciowe
+    printf("\n#Model information                            :");
+    printf("\n points       [C]                             : %llu", points.size());
+    printf("\n geometrics   [C]                             : %llu", geometrics.size());
+    printf("\n constraints  [C]                             : %llu", constraints.size());
+    printf("\n parameters   [C]                             : %llu", parameters.size());
+    /// parametry pochodne
+    printf("\n----------------------------------------------");               
+    printf("\n point offset                                 : %llu  (%4d)", pointOffset.size(), lastIndexValue(pointOffset));
+    printf("\n constraint offset                            : %llu  (%4d)", constraintOffset.size(), lastIndexValue(constraintOffset));
+    printf("\n parameter offset                             : %llu  (%4d)", parameterOffset.size(), lastIndexValue(parameterOffset));
+    printf("\n acc geometric size                           : %llu  (%4d)", accGeometricSize.size(), lastIndexValue(accGeometricSize));
+    printf("\n acc constraint size                          : %llu  (%4d)", accConstraintSize.size(), lastIndexValue(accConstraintSize));    
+    printf("\n----------------------------------------------");
+    printf("\n Computation Mode                             : %s", getComputationName(computationMode));
+    printf("\n size                                         : %d", size);
+    printf("\n coffSize                                     : %d", coffSize);
+    printf("\n dimension                                    : %d", dimension);    
+    printf("\n----------------------------------------------");
+    printf("\n acc coo K tensor                             : %llu  (%4d)", accCooWriteStiffTensor.size(), lastIndexValue(accCooWriteStiffTensor));
+    printf("\n acc coo Jacobian tensor                      : %llu  (%4d)", accCooWriteJacobianTensor.size(), lastIndexValue(accCooWriteJacobianTensor));
+    printf("\n acc coo Hessian tensor                       : %llu  (%4d)", accCooWriteHessianTensor.size(), lastIndexValue(accCooWriteHessianTensor));
+    printf("\n nnz ( non-zero )                             : %d", nnz);    
+    printf("\n----------------------------------------------");
+    printf("\n");
+}
+
+#define DEVICE_ID 0
+
+void GPUComputation::requestMemoryInformation() {
+
+    cudaMemPool_t mempool;
+    cudaDeviceGetDefaultMemPool(&mempool, DEVICE_ID); /// default DEVICE level memory pool  , it seems not per application !
+        
+    cuuint64_t attr1_ReservedMemCurrent; /// Amount of backing memory currently allocated for the mempool.
+    cuuint64_t attr2_ReservedMemHigh;    /// High watermark of backing memory allocated for the mempool since the last time it was reset.
+    cuuint64_t attr3_UsedMemCurrent;     /// Amount of memory from the pool that is currently in use by the application.
+    cuuint64_t attr4_UsedMemHigh; ///  High watermark of the amount of memory from the pool that was in use by the application since the last time it was reset.
+
+    checkCudaStatus(cudaMemPoolGetAttribute(mempool, cudaMemPoolAttrReservedMemCurrent, &attr1_ReservedMemCurrent));
+    checkCudaStatus(cudaMemPoolGetAttribute(mempool, cudaMemPoolAttrReservedMemHigh, &attr2_ReservedMemHigh));
+    checkCudaStatus(cudaMemPoolGetAttribute(mempool, cudaMemPoolAttrUsedMemCurrent, &attr3_UsedMemCurrent));
+    checkCudaStatus(cudaMemPoolGetAttribute(mempool, cudaMemPoolAttrUsedMemHigh, &attr4_UsedMemHigh));
+
+    printf("\n----------------------------------------------");
+    printf("\n#Memory pool                                  :");
+    printf("\n Reserved Mem Current [C]                     : ( %llu )", attr1_ReservedMemCurrent);
+    printf("\n Reserved Mem High    [C]                     : ( %llu )", attr2_ReservedMemHigh);
+    printf("\n Used Mem Current     [C]                     : ( %llu )", attr3_UsedMemCurrent);
+    printf("\n Used Mem High        [C]                     : ( %llu )", attr4_UsedMemHigh);
+    printf("\n----------------------------------------------");
+    printf("\n");
+}
+
 
 GPUComputation *GPUComputation::_registerComputation = nullptr;
 

@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef _SOLVER_WATCH_H_
+#define _SOLVER_WATCH_H_
 
 namespace solver {
 
@@ -22,3 +22,5 @@ struct SolverStat {
 };
 
 } // namespace solver
+
+#endif // _SOLVER_WATCH_H_

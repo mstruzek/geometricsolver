@@ -97,6 +97,7 @@
     <ClCompile Include="src\solver\gpu_solver_dense_lu.cpp" />
     <ClCompile Include="src\solver\gpu_solver_sparse_ilu02.cpp" />
     <ClCompile Include="src\solver\gpu_solver_sparse_qr.cpp" />
+    <ClCompile Include="src\model_config.cpp" />
     <ClInclude Include="src\format_encoder.h" />
     <ClInclude Include="src\gpu_allocator.h" />
     <ClInclude Include="src\gpu_utility.h" />

@@ -104,14 +104,36 @@ class GPUComputation {
     int updateParametersValues(int parameterId[], double value[], int size);
 
   private:
+
+
     void preInitializeData();
 
+    /// <summary>
+    /// Transfer constant data evaluated from model into device solver context.
+    /// <summary>
     void memcpyComputationToDevice();
+
+    /// <summary>
+    /// Stdout host evaluated information from model definition
+    /// <summary>
+    void stdoutModelInformation();
+
+    /// <summary>
+    /// Stdout current memory pool information
+    /// </summary>
+    void requestMemoryInformation();
 
     void computationResultHandler(cudaStream_t stream, cudaError_t status, void *userData);
 
-    void SetComputationHandler(ComputationState *compState);
+    /// <summary>
+    /// Static mechanizm for cudaStreamCallback registrtaion of data
+    /// </summary>
+    /// <param name="compState"></param>
+    void SetComputationHandler(ComputationState *computationState);
 
+    /// <summary>
+    /// [debug] Check actual submited command into driver and synchronize to validate execution of prior kernel
+    /// </summary>
     void validateStreamState();
 
     void PreInitializeComputationState(ComputationState *ev, int itr, ComputationLayout computationLayout);

@@ -63,8 +63,9 @@ add_library(${PROJECT_SHARED_LIBRARY} SHARED
 		src/format_encoder.cu
 		src/model.cu
 		src/quda.cpp
-        src/cuerror.cpp
+        src/cuerror.cpp		
         src/settings.cpp
+		src/model_config.cpp
 		src/gpu_utility.cpp
         src/gpu_computation.cpp
         src/gpu_geometric_solver.cpp
@@ -108,6 +109,7 @@ add_executable(${PROJECT_TEST_EXECUTABLE} src/entry.cpp
 		src/model.cu
 		src/quda.cpp
         src/cuerror.cpp
+		src/model_config.cpp
         src/settings.cpp
 		src/gpu_utility.cpp
         src/gpu_computation.cpp

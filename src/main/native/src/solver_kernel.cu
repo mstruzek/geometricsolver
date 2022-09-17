@@ -107,24 +107,16 @@ void inversePermutationVector(cudaStream_t stream, int *INP, int *OUTP, size_t N
 
 /// =======================================================================================
 
-__global__ void __kernelMemsetD32I__(int *__restrict__ devPtr, int value, size_t size) {
+__global__ void __kernelMemsetD32I__(int * devPtr, int value, size_t size) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
-    const unsigned offset = ELEMENTS_PER_THREAD * threadId;
-    const unsigned upperLimit = offset + ELEMENTS_PER_THREAD;
+    const unsigned offset = ELEMENTS_PER_THREAD * threadId;    
 
-    if (upperLimit <= size) {
-
-#pragma unroll
-        for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
+    for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {    
+        if (offset + T < size) {
             devPtr[offset + T] = value;
-        }
-    } else {
-        const unsigned remainder = size - offset;
-        for (int T = 0; T < remainder; ++T) {
-            if (offset + T < size) {
-                devPtr[offset + T] = value;
-            }
-        }
+        } else {
+            return;     
+        }        
     }
 }
 /// =======================================================================================

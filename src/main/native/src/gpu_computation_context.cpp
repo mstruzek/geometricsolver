@@ -58,9 +58,11 @@ GPUComputationContext::~GPUComputationContext() {
         utility::freeAsync(dev_norm[itr], stream);
     }
 
+    #define CHECK_ERORR
+
     for (int itr = 0; itr < CMAX; itr++) {
         // #observations
-        checkCudaStatus(cudaEventDestroy(prepStart[itr]));
+        cudaEventDestroy(prepStart[itr]);
         checkCudaStatus(cudaEventDestroy(prepStop[itr]));
         checkCudaStatus(cudaEventDestroy(computeStart[itr]));
         checkCudaStatus(cudaEventDestroy(computeStop[itr]));

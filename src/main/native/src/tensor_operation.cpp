@@ -81,8 +81,9 @@ void TensorOperation::cublasAPIDaxpy(int n, const double *alpha, const double *x
 void TensorOperation::memsetD32I(int *devPtr, int value, size_t size, cudaStream_t stream) {
 
     kernelMemsetD32I(stream, devPtr, value, size);
-
+            
     if (settings::DEBUG_CHECK_ARG) {
+        checkCudaStatus(cudaPeekAtLastError());
         /// block and wait for execution
         checkCudaStatus(cudaStreamSynchronize(stream));
     }

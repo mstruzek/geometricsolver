@@ -132,5 +132,13 @@ enum ComputationLayout {
 };
 
 
+/// <summary>
+/// computation name 
+/// </summary>
+/// <param name="computationMode"></param>
+/// <returns></returns>
+const char *getComputationName(ComputationMode computationMode);
+
+
 
 #endif // _MODEL_CONFIG_H

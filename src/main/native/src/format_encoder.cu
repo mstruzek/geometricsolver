@@ -151,7 +151,7 @@ void FormatEncoder::compactToCsr(int nnz, int m, int *d_cooRowIndA, int *d_cooCo
     /// compressed COO format
     size_t nnz_c = std::distance(o_cooVal_begin, last.second);
  
-    onnz = nnz_c;
+    onnz = static_cast<int>(nnz_c);
     
     /// ------------------------------------------------------------------------------ ///
         
