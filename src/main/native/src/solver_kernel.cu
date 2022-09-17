@@ -1,5 +1,7 @@
 ﻿#include "solver_kernel.cuh"
 
+#include "stdio.h"
+
 #include "kernel_traits.h"
 #include "tensor_layout.cuh"
 
@@ -13,6 +15,22 @@
 
 #define TENSOR_SPARSE_LAYOUT
 //#undef TENSOR_SPARSE_LAYOUT
+
+/// ---------------------------------------------------------------------------------------
+
+void _kernelExecution_debug(const char *kernelName, unsigned gridDim, unsigned blockDim, unsigned sharedMemory) {
+    ///
+    fprintf(stdout, "\n kernel ( grid %d  block %d  shared %d ) (( %s ))  ", gridDim, blockDim, sharedMemory, kernelName);
+    return;
+}
+
+#define KERNEL_INFO_DEBUG 1
+
+#ifdef KERNEL_INFO_DEBUG
+#define KERNEL_EXECUTION_INFO(kernelName, gridDim, blockDim, sharedMemory) _kernelExecution_debug(kernelName, gridDim, blockDim, sharedMemory);
+#else
+#define KERNEL_EXECUTION_INFO(kernelName, gridDim, blockDim, sharedMemory)
+#endif
 
 /// =======================================================================================
 /// <summary>
@@ -134,8 +152,10 @@ KERNEL_EXECUTOR void kernelMemsetD32I(cudaStream_t stream, int *devPtr, int valu
     KernelTraits<ELEMENTS_PER_THREAD, DEF_BLOCK_DIM> MemsetKernelTraits{size};
     unsigned GRID_DIM = MemsetKernelTraits.GRID_DIM;
     unsigned BLOCK_DIM = MemsetKernelTraits.BLOCK_DIM;
+    unsigned SHARED_MEMORY = 0;
+    KERNEL_EXECUTION_INFO("__kernelMemsetD32I__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
 
-    __kernelMemsetD32I__<<<GRID_DIM, BLOCK_DIM, 0, stream>>>(devPtr, value, size);
+    __kernelMemsetD32I__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(devPtr, value, size);
 }
 
 /// =======================================================================================
@@ -190,6 +210,7 @@ KERNEL_EXECUTOR void CopyIntoStateVector(cudaStream_t stream, double *SV, graph:
     const PointKernelTraits_t PointKernelTraits(size);
     const unsigned GRID_DIM = PointKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = PointKernelTraits.BLOCK_DIM;
+    KERNEL_EXECUTION_INFO("__CopyIntoStateVector__", GRID_DIM, BLOCK_DIM, 0);
 
     __CopyIntoStateVector__<<<GRID_DIM, BLOCK_DIM, 0, stream>>>(SV, points, size);
 }
@@ -245,6 +266,7 @@ KERNEL_EXECUTOR void CopyFromStateVector(cudaStream_t stream, graph::Point *poin
     const PointKernelTraits_t PointKernelTraits(size);
     const unsigned GRID_DIM = PointKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = PointKernelTraits.BLOCK_DIM;
+    KERNEL_EXECUTION_INFO("__CopyFromStateVector__", GRID_DIM, BLOCK_DIM, 0);
 
     __CopyFromStateVector__<<<GRID_DIM, BLOCK_DIM, 0, stream>>>(points, SV, size);
 }
@@ -299,9 +321,10 @@ KERNEL_EXECUTOR void StateVectorAddDifference(cudaStream_t stream, double *SV, d
 
     const unsigned GRID_DIM = PointKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = PointKernelTraits.BLOCK_DIM;
-    const unsigned NS = 0;
+    const unsigned SHARED_MEMORY = 0;
+    KERNEL_EXECUTION_INFO("__StateVectorAddDifference__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
 
-    __StateVectorAddDifference__<<<GRID_DIM, BLOCK_DIM, NS, stream>>>(SV, dx, N);
+    __StateVectorAddDifference__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(SV, dx, N);
 }
 
 /// ==================================== STIFFNESS MATRIX =================================
@@ -431,6 +454,8 @@ __global__ void __ComputeStiffnessMatrix__(ComputationState *ecdata, size_t N) {
     }
 }
 
+
+
 /// =======================================================================================
 /// <summary>
 /// Compute Stiffness Matrix on each geometric object.
@@ -449,6 +474,7 @@ KERNEL_EXECUTOR void ComputeStiffnessMatrix(cudaStream_t stream, int NS, Computa
     const unsigned GRID_DIM = GeometricKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = GeometricKernelTraits.BLOCK_DIM;
     const unsigned SHARED_MEMORY = NS;
+    KERNEL_EXECUTION_INFO("__ComputeStiffnessMatrix__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
 
     __ComputeStiffnessMatrix__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, N);
 }
@@ -637,7 +663,7 @@ template <typename Layout> __device__ void setForceIntensity_Arc(int row, graph:
 ///
 /// Evaluate Force Intensity ==============================================================
 ///
-__global__ void EvaluateForceIntensity_Impl(ComputationState *ecdata, size_t N) {
+__global__ void __EvaluateForceIntensity__(ComputationState *ecdata, size_t N) {
 
     /// Kernel Reference Addressing
     int tId = blockDim.x * blockIdx.x + threadIdx.x;
@@ -691,9 +717,10 @@ KERNEL_EXECUTOR void EvaluateForceIntensity(cudaStream_t stream, ComputationStat
 
     const unsigned GRID_DIM = GeometricKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = GeometricKernelTraits.BLOCK_DIM;
-    const unsigned NS = 0;
+    const unsigned SHARED_MEMORY = 0;
+    KERNEL_EXECUTION_INFO("__EvaluateForceIntensity__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
 
-    EvaluateForceIntensity_Impl<<<GRID_DIM, BLOCK_DIM, NS, stream>>>(ecdata, N);
+    __EvaluateForceIntensity__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, N);
 }
 
 ///
@@ -1048,9 +1075,10 @@ KERNEL_EXECUTOR void EvaluateConstraintValue(cudaStream_t stream, ComputationSta
 
     const unsigned GRID_DIM = ConstraintKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = ConstraintKernelTraits.BLOCK_DIM;
-    const unsigned NS = 0;
+    const unsigned SHARED_MEMORY = 0;
+    KERNEL_EXECUTION_INFO("__EvaluateConstraintJacobian__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
 
-    __EvaluateConstraintValue__<<<GRID_DIM, BLOCK_DIM, NS, stream>>>(ecdata, N);
+    __EvaluateConstraintValue__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, N);
 }
 
 ///
@@ -1585,6 +1613,7 @@ KERNEL_EXECUTOR void EvaluateConstraintJacobian(cudaStream_t stream, int NS, Com
     const unsigned GRID_DIM = ConstraintKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = ConstraintKernelTraits.BLOCK_DIM;
     const unsigned SHARED_MEMORY = NS;
+    KERNEL_EXECUTION_INFO("__EvaluateConstraintJacobian__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
 
     __EvaluateConstraintJacobian__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, N);
 }
@@ -1744,6 +1773,7 @@ KERNEL_EXECUTOR void EvaluateConstraintTRJacobian(cudaStream_t stream, int NS, C
     const unsigned GRID_DIM = ConstraintKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = ConstraintKernelTraits.BLOCK_DIM;
     const unsigned SHARED_MEMORY = NS;
+    KERNEL_EXECUTION_INFO("__EvaluateConstraintTRJacobian__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
 
     __EvaluateConstraintTRJacobian__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, N);
 }
@@ -2434,6 +2464,7 @@ KERNEL_EXECUTOR void EvaluateConstraintHessian(cudaStream_t stream, int NS, Comp
     const unsigned GRID_DIM = ConstraintKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = ConstraintKernelTraits.BLOCK_DIM;
     const unsigned SHARED_MEMORY = NS;
+    KERNEL_EXECUTION_INFO("__EvaluateConstraintHessian__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
 
     __EvaluateConstraintHessian__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, N);
 }
@@ -2823,7 +2854,7 @@ KERNEL_EXECUTOR void EvaluateFillInDiagonalValue(cudaStream_t stream, Computatio
     const unsigned GRID_DIM = CoefficientKernelTraits.GRID_DIM;
     const unsigned BLOCK_DIM = CoefficientKernelTraits.BLOCK_DIM;
     const unsigned SHARED_MEMORY = 0;
-
+    KERNEL_EXECUTION_INFO("__fillInDiagonalValue__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
     /// ILU02 - numerical zero ( value )
 
     __fillInDiagonalValue__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, value, coeffSize);

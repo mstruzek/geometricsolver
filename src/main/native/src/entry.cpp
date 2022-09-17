@@ -1153,7 +1153,7 @@ int main(int argc, char* args[])
 
     settings::DEBUG_SOLVER_CONVERGENCE.reset(true); // jni_setBooleanProperty(&env, eclass, 8, (jboolean) true);  // settings::DEBUG_SOLVER_CONVERGENCE = false;
     settings::DEBUG_CHECK_ARG.reset(true);          // jni_setBooleanProperty(&env, eclass, 9, (jboolean) true);  // settings::DEBUG_CHECK_ARG = false;
-    settings::DEBUG_TENSOR_A.reset(false);           // jni_setBooleanProperty(&env, eclass, 1, (jboolean) false);  // settings::DEBUG_TENSOR_A= true;
+    settings::DEBUG_TENSOR_A.reset(true);           // jni_setBooleanProperty(&env, eclass, 1, (jboolean) false);  // settings::DEBUG_TENSOR_A= true;
     settings::DEBUG_TENSOR_B.reset(false);           // jni_setBooleanProperty(&env, eclass, 2, (jboolean) false);  // settings::DEBUG_TENSOR_B= true;
 
     settings::DEBUG.reset(false);                   // jni_setBooleanProperty(&env, eclass, 3, (jboolean) false); // settings::DEBUG= true;
@@ -1168,9 +1168,9 @@ int main(int argc, char* args[])
     
     //model_single_line(env, eclass);
 
-   // model_circle_line_tangetn_perpendicular(env, eclass);
+    model_circle_line_tangetn_perpendicular(env, eclass);
 
-   model_6x10(env, eclass);
+   //model_6x10(env, eclass);
       
 
     /// ----------------------------------------------------------------------------------------------------- //
