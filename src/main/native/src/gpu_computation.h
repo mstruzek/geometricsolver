@@ -26,8 +26,6 @@
 
 #define OBJECTS_PER_THREAD 1
 
-#define ELEMENTS_PER_THREAD 4
-
 namespace solver {
 
 class GPUGeometricSolver;
@@ -357,7 +355,6 @@ class GPUComputation {
 
 #undef OBJECTS_PER_THREAD
 
-#undef ELEMENTS_PER_THREAD
 
 } // namespace solver
 

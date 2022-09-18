@@ -157,6 +157,7 @@ void TensorOperation::convertToCsr(int m, int n, int nnz, int *cooRowInd, int *c
     }
     // prior action :: if the Stream Ordered Memory Allocator ???
 
+    /// compact permutation
     gatherVector<int>(nnz, CUDA_R_32F, PT1, PT2, PT);
 
     /// create csrRowPtrA    -  async execution

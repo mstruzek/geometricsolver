@@ -24,6 +24,11 @@ void _kernelExecution_debug(const char *kernelName, unsigned gridDim, unsigned b
     return;
 }
 
+void _kernelExecution_debug(const char *kernelName, dim3 gridDim, dim3 blockDim, unsigned sharedMemory) {
+    ///
+    _kernelExecution_debug(kernelName, gridDim.x, blockDim.x, sharedMemory);
+}
+
 #define KERNEL_INFO_DEBUG 1
 
 #ifdef KERNEL_INFO_DEBUG
@@ -32,45 +37,8 @@ void _kernelExecution_debug(const char *kernelName, unsigned gridDim, unsigned b
 #define KERNEL_EXECUTION_INFO(kernelName, gridDim, blockDim, sharedMemory)
 #endif
 
-/// =======================================================================================
-/// <summary>
-/// Kernel Permuatation compaction routine  PT[i] = P1[P2[i]] .
-/// </summary>
-/// </summary>
-/// <param name="nnz"></param>
-/// <param name="PT1"></param>
-/// <param name="PT2"></param>
-/// <param name="PT"></param>
-/// <returns></returns>
-__global__ void __compactPermutationVector__(int nnz, const int *__restrict__ PT1, const int *__restrict__ PT2, int *__restrict__ PT) {
 
-    int tId = blockDim.x * blockIdx.x + threadIdx.x;
-
-#define ROUTINE_ELEMENT_RANGE 4
-
-    if (threadIdx.x < nnz) {
-        int indicie = PT2[tId];
-        PT[tId] = PT1[indicie];
-    }
-}
-
-/// =======================================================================================
-/// <summary>
-///  Kernel Permutation compaction routine. Kernel Executor.  PT[i] = PT1[PT2[i]] .
-/// </summary>
-/// <param name="K_gridDim"></param>
-/// <param name="K_blockDim"></param>
-/// <param name="K_stream"></param>
-/// <param name="nnz"></param>
-/// <param name="PT1"></param>
-/// <param name="PT2"></param>
-/// <param name="PT"></param>
-void compactPermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream, int nnz, int *PT1, int *PT2, int *PT) {
-
-    __compactPermutationVector__<<<K_gridDim, K_blockDim, 0, K_stream>>>(nnz, PT1, PT2, PT);
-}
-
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Inverse COO INP map - This is Direct Form !
 /// </summary>
@@ -80,18 +48,12 @@ void compactPermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStrea
 /// <returns></returns>
 __global__ void __inversePermuationVector__(const int *__restrict__ INP, int *__restrict__ OUTP, size_t N) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
-    const unsigned offset = ELEMENTS_PER_THREAD * threadId;    
-
-    for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
-        if (offset + T < N) {
-            OUTP[INP[offset + T]] = offset + T;
-        } else {
-            return;
-        }
+    for (int T = threadId; T < N; T += blockDim.x * gridDim.x) {        
+        OUTP[INP[T]] = T;
     }
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Inverse COO indicies map ;  this is Direct Form !
 /// </summary>
@@ -103,31 +65,32 @@ __global__ void __inversePermuationVector__(const int *__restrict__ INP, int *__
 /// <param name="N">size of intput/output vector</param>
 /// <returns></returns>
 void inversePermutationVector(cudaStream_t stream, int *INP, int *OUTP, size_t N) {
+    constexpr const unsigned DEF_BLOCK_DIM = 256;
+    constexpr const unsigned DEF_GRID_DIM = 64;
 
-    constexpr const unsigned DEF_BLOCK_DIM = 1024;
+    constexpr const dim3 GRID_DIM(DEF_GRID_DIM); /// computation Priority
+    constexpr const dim3 BLOCK_DIM(DEF_BLOCK_DIM);
+    constexpr const unsigned int SHARED_MEMORY = 0;
 
-    KernelTraits<ELEMENTS_PER_THREAD, DEF_BLOCK_DIM> CompressKernelTraits{N};
-    unsigned GRID_DIM = CompressKernelTraits.GRID_DIM;
-    unsigned BLOCK_DIM = CompressKernelTraits.BLOCK_DIM;
-
-    __inversePermuationVector__<<<GRID_DIM, BLOCK_DIM, 0, stream>>>(INP, OUTP, N);
+    __inversePermuationVector__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(INP, OUTP, N);
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
+
+/// -------------------------------------------------------------------------------------- //
+
+#define ITERATE for
+
+/// Twofold decress in computation time  , coalesce global memory access !
 
 __global__ void __kernelMemsetD32I__(int *devPtr, int value, size_t size) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
-    const unsigned offset = ELEMENTS_PER_THREAD * threadId;
-
-    for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
-        if (offset + T < size) {
-            devPtr[offset + T] = value;
-        } else {
-            return;
-        }
+    ITERATE(int T = threadId; T < size; T += blockDim.x * gridDim.x) { 
+        devPtr[T] = value; 
     }
 }
-/// =======================================================================================
+
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// memset vector of type CUDA_R32I value of extent size
 /// </summary>
@@ -137,56 +100,38 @@ __global__ void __kernelMemsetD32I__(int *devPtr, int value, size_t size) {
 /// <param name="size"></param>
 /// <returns></returns>
 KERNEL_EXECUTOR void kernelMemsetD32I(cudaStream_t stream, int *devPtr, int value, size_t size) {
-    constexpr const unsigned DEF_BLOCK_DIM = 1024;
-
-    KernelTraits<ELEMENTS_PER_THREAD, DEF_BLOCK_DIM> MemsetKernelTraits{size};
-    unsigned GRID_DIM = MemsetKernelTraits.GRID_DIM;
-    unsigned BLOCK_DIM = MemsetKernelTraits.BLOCK_DIM;
-    unsigned SHARED_MEMORY = 0;
+    constexpr const unsigned DEF_BLOCK_DIM = 1024;              
+    constexpr const unsigned DEF_GRID_DIM = 16;
+    
+    constexpr const dim3 GRID_DIM(DEF_GRID_DIM);                /// computation Priority
+    constexpr const dim3 BLOCK_DIM(DEF_BLOCK_DIM);
+    constexpr const unsigned int SHARED_MEMORY = 0;
     KERNEL_EXECUTION_INFO("__kernelMemsetD32I__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
 
     __kernelMemsetD32I__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(devPtr, value, size);
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 
 template <typename... Args> __device__ void log_error(const char *formatStr, Args... args) {
     ///
     ::printf(formatStr, args...);
 }
 
-///  ======================================================================================
+///  ---------------------------------------------------------------------------------------
 
 /// --------------- [ KERNEL# GPU ]
 
 __global__ void __CopyIntoStateVector__(double *__restrict__ SV, const graph::Point *__restrict__ points, size_t size) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
-    const unsigned offset = threadId * ELEMENTS_PER_THREAD;
-    const unsigned upper_limit = offset + ELEMENTS_PER_THREAD;
-
-    if (upper_limit <= size) {
-
-#pragma unroll
-        for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
-            const unsigned IDX = offset + T;
-            SV[2 * IDX + 0] = points[IDX].x;
-            SV[2 * IDX + 1] = points[IDX].y;
-        }
-
-    } else {
-        const unsigned REMAINDER = size - offset;
-
-        for (int T = 0; T < REMAINDER; ++T) {
-            const unsigned IDX = offset + T;
-            if (IDX < size) {
-                SV[2 * IDX + 0] = points[IDX].x;
-                SV[2 * IDX + 1] = points[IDX].y;
-            }
-        }
+    for (int T = threadId; T < size; T = blockDim.x * gridDim.x) {
+        SV[2 * T + 0] = points[T].x;
+        SV[2 * T + 1] = points[T].y;
     }
 }
 
-/// =======================================================================================
+/// 
+/// ---------------------------------------------------------------------------------------
 /// <summary>
 /// Initialize State vector from actual points (without point id).
 /// Reference mapping exists in Evaluation.pointOffset
@@ -195,52 +140,33 @@ __global__ void __CopyIntoStateVector__(double *__restrict__ SV, const graph::Po
 /// <returns></returns>
 KERNEL_EXECUTOR void CopyIntoStateVector(cudaStream_t stream, double *SV, graph::Point *points, size_t size) {
 
-    typedef KernelTraits<ELEMENTS_PER_THREAD, DEFAULT_BLOCK_DIM> PointKernelTraits_t;
+    constexpr const unsigned DEF_BLOCK_DIM = 256;
+    constexpr const unsigned DEF_GRID_DIM = 64;
 
-    const PointKernelTraits_t PointKernelTraits(size);
-    const unsigned GRID_DIM = PointKernelTraits.GRID_DIM;
-    const unsigned BLOCK_DIM = PointKernelTraits.BLOCK_DIM;
-    KERNEL_EXECUTION_INFO("__CopyIntoStateVector__", GRID_DIM, BLOCK_DIM, 0);
+    constexpr const dim3 GRID_DIM(DEF_GRID_DIM); /// computation Priority
+    constexpr const dim3 BLOCK_DIM(DEF_BLOCK_DIM);
+    constexpr const unsigned int SHARED_MEMORY = 0;
+    KERNEL_EXECUTION_INFO("__CopyIntoStateVector__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
 
-    __CopyIntoStateVector__<<<GRID_DIM, BLOCK_DIM, 0, stream>>>(SV, points, size);
+    __CopyIntoStateVector__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(SV, points, size);
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Move computed position from State Vector into corresponding point object.
 /// </summary>
 /// <param name="ec"></param>
 /// <returns></returns>
 __global__ void __CopyFromStateVector__(graph::Point *__restrict__ points, const double *__restrict__ SV, size_t size) {
-
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
-    const unsigned offset = threadId * ELEMENTS_PER_THREAD;
-    const unsigned upper_limit = offset + ELEMENTS_PER_THREAD;
-
-    if (upper_limit <= size) { ///  standard case
-
-#pragma unroll
-        for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
-            const unsigned IDX = offset + T;
-            graph::Point *point = &points[IDX];
-            point->x = SV[2 * IDX + 0];
-            point->y = SV[2 * IDX + 1];
-        }
-    } else {
-        const unsigned REMAINDER = size - offset;
-
-        for (int T = 0; T < REMAINDER; ++T) {
-            const unsigned IDX = offset + T;
-            if (IDX < size) {
-                graph::Point *point = &points[IDX];
-                point->x = SV[2 * IDX + 0];
-                point->y = SV[2 * IDX + 1];
-            }
-        }
+    for (int T = threadId; T < size; T += blockDim.x * gridDim.x) {
+        graph::Point *point = &points[T];
+        point->x = SV[2 * T + 0];
+        point->y = SV[2 * T + 1];
     }
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Move computed position from State Vector into corresponding point object.
 /// </summary>
@@ -251,17 +177,18 @@ __global__ void __CopyFromStateVector__(graph::Point *__restrict__ points, const
 /// <returns></returns>
 KERNEL_EXECUTOR void CopyFromStateVector(cudaStream_t stream, graph::Point *points, double *SV, size_t size) {
 
-    typedef KernelTraits<ELEMENTS_PER_THREAD, DEFAULT_BLOCK_DIM> PointKernelTraits_t;
+    constexpr const unsigned DEF_BLOCK_DIM = 256;
+    constexpr const unsigned DEF_GRID_DIM = 64;
 
-    const PointKernelTraits_t PointKernelTraits(size);
-    const unsigned GRID_DIM = PointKernelTraits.GRID_DIM;
-    const unsigned BLOCK_DIM = PointKernelTraits.BLOCK_DIM;
+    constexpr const dim3 GRID_DIM(DEF_GRID_DIM); /// computation Priority
+    constexpr const dim3 BLOCK_DIM(DEF_BLOCK_DIM);
+    constexpr const unsigned int SHARED_MEMORY = 0;
     KERNEL_EXECUTION_INFO("__CopyFromStateVector__", GRID_DIM, BLOCK_DIM, 0);
 
     __CopyFromStateVector__<<<GRID_DIM, BLOCK_DIM, 0, stream>>>(points, SV, size);
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Accumulate difference from newton-raphson method;  SV[] = SV[] + dx;
 /// </summary>
@@ -271,31 +198,13 @@ KERNEL_EXECUTOR void CopyFromStateVector(cudaStream_t stream, graph::Point *poin
 /// <returns></returns>
 __global__ void __StateVectorAddDifference__(double *__restrict__ SV, const double *__restrict__ dx, size_t N) {
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
-    const unsigned offset = threadId * ELEMENTS_PER_THREAD;
-    const unsigned upper_limit = offset + ELEMENTS_PER_THREAD;
-
-    if (upper_limit > N) {
-
-        const unsigned REMAINDER = N - offset;
-        for (int T = 0; T < REMAINDER; ++T) {
-            const unsigned IDX = offset + T;
-            if (IDX < N) {
-                SV[2 * IDX + 0] += dx[2 * IDX + 0];
-                SV[2 * IDX + 1] += dx[2 * IDX + 1];
-            }
-        }
-    } else {
-
-#pragma unroll
-        for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
-            const unsigned IDX = offset + T;
-            SV[2 * IDX + 0] += dx[2 * IDX + 0];
-            SV[2 * IDX + 1] += dx[2 * IDX + 1];
-        }
-    }
+    for (int T = threadId; T < N; T += blockDim.x * gridDim.x) {
+        SV[2 * T + 0] += dx[2 * T + 0];
+        SV[2 * T + 1] += dx[2 * T + 1];
+    } 
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Accumulate difference from newton-raphson method;  SV[] = SV[] + dx;
 /// </summary>
@@ -306,12 +215,12 @@ __global__ void __StateVectorAddDifference__(double *__restrict__ SV, const doub
 /// <returns></returns>
 KERNEL_EXECUTOR void StateVectorAddDifference(cudaStream_t stream, double *SV, double *dx, size_t N) {
 
-    typedef KernelTraits<ELEMENTS_PER_THREAD, DEFAULT_BLOCK_DIM> PointKernelTraits_t;
-    const PointKernelTraits_t PointKernelTraits(N);
+    constexpr const unsigned DEF_BLOCK_DIM = 256;
+    constexpr const unsigned DEF_GRID_DIM = 64;
 
-    const unsigned GRID_DIM = PointKernelTraits.GRID_DIM;
-    const unsigned BLOCK_DIM = PointKernelTraits.BLOCK_DIM;
-    const unsigned SHARED_MEMORY = 0;
+    constexpr const dim3 GRID_DIM(DEF_GRID_DIM); /// computation Priority
+    constexpr const dim3 BLOCK_DIM(DEF_BLOCK_DIM);
+    constexpr const unsigned int SHARED_MEMORY = 0;
     KERNEL_EXECUTION_INFO("__StateVectorAddDifference__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
 
     __StateVectorAddDifference__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(SV, dx, N);
@@ -386,7 +295,7 @@ template <typename Layout> __device__ void ComputeStiffnessMatrix_Impl(int tID, 
     return;
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 
 __global__ void __ComputeStiffnessMatrix__(ComputationState *ecdata, size_t N) {
 
@@ -409,9 +318,7 @@ __global__ void __ComputeStiffnessMatrix__(ComputationState *ecdata, size_t N) {
     int offset_row = 0;
     int offset_col = 0;
 #endif
-
     /// RUNTIME DISPATCH
-
     if (computationLayout == ComputationLayout::DENSE_LAYOUT) {
         graph::DenseLayout denseLayout = graph::DenseLayout(ec->dimension, 0, 0, ec->A);
         graph::Tensor<graph::DenseLayout> tensor = graph::tensorDevMem(denseLayout, 0, 0);
@@ -444,7 +351,7 @@ __global__ void __ComputeStiffnessMatrix__(ComputationState *ecdata, size_t N) {
     }
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Compute Stiffness Matrix on each geometric object.
 /// Single cuda thread is responsible for evalution of an assigned geometric object.
@@ -1048,7 +955,7 @@ __global__ void __EvaluateConstraintValue__(ComputationState *ecdata, size_t N) 
     }
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Evaluate constraint values for right-hand-side vector.
 /// </summary>
@@ -1526,7 +1433,7 @@ template <typename Tensor> __device__ void EvaluateConstraintJacobian_Impl(int t
     }
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 __global__ void __EvaluateConstraintJacobian__(ComputationState *ecdata, size_t N) {
 
     /// From Kernel Reference Addressing
@@ -1584,7 +1491,7 @@ __global__ void __EvaluateConstraintJacobian__(ComputationState *ecdata, size_t 
     }
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Evaluate Constraint Jacobian (FI) - (dfi/dq)   lower slice matrix of A
 /// </summary>
@@ -1606,7 +1513,7 @@ KERNEL_EXECUTOR void EvaluateConstraintJacobian(cudaStream_t stream, int NS, Com
     __EvaluateConstraintJacobian__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(ecdata, N);
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Evaluate Constraint Transposed Jacobian  (FI)' - (dfi/dq)'   tr-transponowane - upper slice matrix  of A
 /// </summary>
@@ -1680,7 +1587,7 @@ template <typename Tensor> __device__ void EvaluateConstraintTRJacobian_Impl(int
     }
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 ///
 /// </summary>
@@ -1744,7 +1651,7 @@ __global__ void __EvaluateConstraintTRJacobian__(ComputationState *ecdata, size_
     }
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Evaluate Constraint Transposed Jacobian  (FI)' - (dfi/dq)'   tr-transponowane - upper slice matrix  of A
 /// </summary>
@@ -2374,7 +2281,7 @@ template <typename Tensor> __device__ void EvaluateConstraintHessian_Impl(int tI
     }
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 
 __global__ void __EvaluateConstraintHessian__(ComputationState *ecdata, size_t N) {
     /// Kernel Reference Addressing
@@ -2435,7 +2342,7 @@ __global__ void __EvaluateConstraintHessian__(ComputationState *ecdata, size_t N
     }
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Evaluate Constraint Hessian Matrix  (FI)' - ((dfi/dq)`)/dq
 /// </summary>
@@ -2783,7 +2690,7 @@ __device__ void setHessianTensorConstraintSetVertical(int tID, graph::Constraint
     /// empty
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 
 /// <summary>
 /// Kerenl fill SoA with diagonal value
@@ -2794,10 +2701,9 @@ __device__ void setHessianTensorConstraintSetVertical(int tID, graph::Constraint
 /// <returns></returns>
 __global__ void __fillInDiagonalValue__(ComputationState *__restrict__ ecdata, double value, size_t coeffSize) {
 
-    /// From Kernel Reference Addressing
+    //// From Kernel Reference Addressing            
     const unsigned threadId = blockDim.x * blockIdx.x + threadIdx.x;
-    const unsigned offset = threadId * ELEMENTS_PER_THREAD;
-        
+
     const ComputationLayout computationLayout = ecdata->computationLayout;
     const int *__restrict__ P = ecdata->INV_P;
 
@@ -2810,27 +2716,25 @@ __global__ void __fillInDiagonalValue__(ComputationState *__restrict__ ecdata, d
 
     const int nnz = ec->nnz;
     const int dimension = ec->dimension;
-    const int diagonalBase = (dimension - coeffSize) + offset;
-    const int beginOffset = (nnz - coeffSize) + offset; /// hessian possibly not evaluated !
+    const int diagonalBase = dimension - coeffSize;
+    const int beginOffset = nnz - coeffSize; /// hessian possibly not evaluated !
     
-    for (int T = 0; T < ELEMENTS_PER_THREAD; ++T) {
+    for (int T = threadId; T < coeffSize; T += blockDim.x * gridDim.x) {
         int ID = beginOffset + T;
         int diagonalId = diagonalBase + T;
-        if (ID < nnz) {
-            if (computationLayout == ComputationLayout::DIRECT_LAYOUT) {
-                cooVal[P[ID]] = value;
-            } else {
-                cooRowInd[ID] = diagonalId;
-                cooColInd[ID] = diagonalId;
-                cooVal[ID] = value;
-            }
+        if (computationLayout == ComputationLayout::DIRECT_LAYOUT) {
+            cooVal[P[ID]] = value;
+        } else {
+            cooRowInd[ID] = diagonalId;
+            cooColInd[ID] = diagonalId;
+            cooVal[ID] = value;
         }
     }
 
 #endif
 }
 
-/// =======================================================================================
+/// ----------------------------------------------------------------------------------------
 /// <summary>
 /// Fill-In diagonal with value - iLU02 solver requirments.
 ///
@@ -2841,14 +2745,14 @@ __global__ void __fillInDiagonalValue__(ComputationState *__restrict__ ecdata, d
 /// <param name="value">[in] numerical zero </param>
 /// <param name="coeffSize">[in]cefficient size</param>
 /// <returns></returns>
-KERNEL_EXECUTOR void EvaluateFillInDiagonalValue(cudaStream_t stream, ComputationState *ecdata, double value, size_t coeffSize) {
+KERNEL_EXECUTOR void EvaluateFillInDiagonalValue(cudaStream_t stream, ComputationState *ecdata, double value, size_t coeffSize) {       
+    constexpr const unsigned DEF_BLOCK_DIM = 256;
+    constexpr const unsigned DEF_GRID_DIM = 16;
 
-    typedef KernelTraits<ELEMENTS_PER_THREAD, DEFAULT_BLOCK_DIM> CoefficientKernelTraits_t;
-    const CoefficientKernelTraits_t CoefficientKernelTraits(coeffSize);
+    constexpr const dim3 GRID_DIM(DEF_GRID_DIM); /// computation Priority
+    constexpr const dim3 BLOCK_DIM(DEF_BLOCK_DIM);
+    constexpr const unsigned int SHARED_MEMORY = 0;
 
-    const unsigned GRID_DIM = CoefficientKernelTraits.GRID_DIM;
-    const unsigned BLOCK_DIM = CoefficientKernelTraits.BLOCK_DIM;
-    const unsigned SHARED_MEMORY = 0;
     KERNEL_EXECUTION_INFO("__fillInDiagonalValue__", GRID_DIM, BLOCK_DIM, SHARED_MEMORY);
     /// ILU02 - numerical zero ( value )
 

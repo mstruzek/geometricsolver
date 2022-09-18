@@ -145,12 +145,12 @@ class SparseLayout {
                 /// SharedLock __shared__[ row? ]  __atomicAdd_block
                 ///
                 /// cooVal[offset + t] += value; /// 1 XWrite into cache L2
-                /// 
+                ///
                 if (gridDim.x == 1) {
                     atomicAdd_block(&cooVal[offset + t], value);
                 } else {
                     atomicAdd(&cooVal[offset + t], value);
-                }                
+                }
                 return;
             } else if (row_at == -1 && col_at == -1) {
                 /// SET VALUE
@@ -229,15 +229,13 @@ template <typename DataType> class BlockIterator {
 
 //=================================================================================
 
-/// Direct Access - no permission checks !  
-/// 
+/// Direct Access - no permission checks !
+///
 /// ---- z HESSIANEM - wektor P jest skorumpowany ( non-unique coordinates ).
 ///
 class DirectSparseLayout {
   public:
-    __GPU_DEV_INLF__ DirectSparseLayout() : baseOffset(0), accOffset(NULL), P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) { 
-        iterator.reset(); 
-    }
+    __GPU_DEV_INLF__ DirectSparseLayout() : baseOffset(0), accOffset(NULL), P(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) { iterator.reset(); }
 
     __GPU_DEV_INLF__ DirectSparseLayout(int baseOffset, const int *_accOffset, const int *_P, const int *_cooRowInd, const int *_cooColInd, double *_cooVal)
         : baseOffset(baseOffset), accOffset(_accOffset), P(_P), cooRowInd(_cooRowInd), cooColInd(_cooColInd), cooVal(_cooVal) {
@@ -263,17 +261,30 @@ class DirectSparseLayout {
             int at_row = cooRowInd[threadOffset + itr];
             int at_col = cooColInd[threadOffset + itr];
             if (at_row == row && at_col == col) {
-                
-                ///
-                /// HESSIAN - komponenty macierzy skorelowane na punktach uczestnicza czesci tego bloku.
-                ///
+
+///
+/// HESSIAN - komponenty macierzy skorelowane na punktach uczestnicza czesci tego bloku.
+///         https://stackoverflow.com/questions/22367238/cuda-atomic-operation-performance-in-different-scenarios
+/// 
+///         https://developer.nvidia.com/blog/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/
+/// 
+///         https://www.micc.unifi.it/bertini/download/gpu-programming-basics/2017/gpu_cuda_5.pdf
+/// 
+///         time : 25.49 ms                              - 96 block each of 256 threads 
+///                 In [3]: (2<<24) * 96 * 256
+//                  Out[3] : 824,633,720,832             - total Atomic Writes / same address in global memory !
+/// 
+#define RMW_SET_DATA 1
+
+#ifdef RMW_SET_DATA
                 if (gridDim.x == 1) {
                     atomicAdd_block(&cooVal[P[threadOffset + itr]], value);
                 } else {
                     atomicAdd(&cooVal[P[threadOffset + itr]], value);
-                }    
-
-                //cooVal[P[threadOffset + itr]] += value; /// 1 XWrite into L2 memory
+                }
+#else
+                cooVal[P[threadOffset + itr]] += value; /// 1 XWrite into L2 memory
+#endif
                 return;
             } else if (at_row == -1 && at_col == -1) {
                 // SET value
@@ -323,18 +334,18 @@ class DirectSparseLayout {
 
 //=================================================================================
 
-/// 
+///
 /// Compact Layout - store column, row, and value as journal of "writes"
-///  
+///
 /// After completion this session, coo object have to be sorted and reduced (std::plus<double>)
-/// 
+///
 /// No need to set any global memory as single atomic operation !
-/// 
+///
 class CompactLayout {
   public:
-    __GPU_DEV_INLF__ CompactLayout() : baseOffset(0), accWriteOffset(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) { 
+    __GPU_DEV_INLF__ CompactLayout() : baseOffset(0), accWriteOffset(NULL), cooRowInd(NULL), cooColInd(NULL), cooVal(NULL) {
         //
-        iterator.reset(); 
+        iterator.reset();
     }
 
     __GPU_DEV_INLF__ CompactLayout(int baseOffset, const int *_accWriteOffset, int *_cooRowInd, int *_cooColInd, double *_cooVal)
@@ -345,7 +356,7 @@ class CompactLayout {
 
     __GPU_DEV_INLF__ void set(int row, int col, double value) {
         int threadId = iterator.thread_id();
-        int offset = baseOffset + accWriteOffset[threadId];        
+        int offset = baseOffset + accWriteOffset[threadId];
         int itr_offset = iterator.next();
 
         cooRowInd[offset + itr_offset] = row; /// 3 Xwrite into cache L2
@@ -368,7 +379,7 @@ class CompactLayout {
         int threadId = iterator.thread_id();
         int offset = baseOffset + accWriteOffset[threadId];
         int nextOffset = baseOffset + accWriteOffset[threadId + 1];
-        int blockSize = nextOffset - offset;        /// BLOCK_SIZE <= 32
+        int blockSize = nextOffset - offset; /// BLOCK_SIZE <= 32
 
         for (int t = 0; t < blockSize; ++t) {
             if (cooRowInd[offset + t] == row && cooColInd[offset + t] == col) {
@@ -389,7 +400,6 @@ class CompactLayout {
     int *__restrict__ cooColInd; /// COO column indicies
     double *__restrict__ cooVal; /// COO values
 };
-
 
 //=================================================================================
 
@@ -484,10 +494,10 @@ template <typename LLayout = BlockLayout> class Tensor {
 
     friend class Tensor<graph::BlockLayout>;
     friend class Tensor<graph::DenseLayout>;
-    friend class Tensor<graph::SparseLayout>;    
+    friend class Tensor<graph::SparseLayout>;
     friend class Tensor<graph::DirectSparseLayout>;
     friend class Tensor<graph::CompactLayout>;
-    
+
   private:
     bool intention; /// vector put operation vertical if true / horizontal otherwise
     LLayout u;
@@ -517,8 +527,6 @@ __GPU_DEV_INLF__ Tensor<CompactLayout> tensorDevMem(CompactLayout layout, bool i
     Tensor<CompactLayout> tensor(layout, intention, offset_row, offset_col);
     return tensor;
 }
-
-
 
 __GPU_DEV_INLF__ Tensor<BlockLayout> make_block_tensor(double a00, double a01, double a10, double a11) {
     return Tensor<graph::BlockLayout>(a00, a10, a01, a11);
@@ -580,11 +588,10 @@ template <typename LLayout> class AdapterTensor : public Tensor<LLayout> {
         Tensor<LLayout>::setSubTensor(col, row, mt.transpose());
     }
 
-    __GPU_DEV_INLF__ void plusSubTensor(int row, int col, Tensor<graph::BlockLayout> const &mt) {    
+    __GPU_DEV_INLF__ void plusSubTensor(int row, int col, Tensor<graph::BlockLayout> const &mt) {
         /// only hessian
         Tensor<LLayout>::plusSubTensor(col, row, mt.transpose());
     }
-
 };
 
 // transponsed operations

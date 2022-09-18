@@ -25,26 +25,7 @@
 //#undef TENSOR_SPARSE_LAYOUT
 
 
-#ifndef ELEMENTS_PER_THREAD
-#define ELEMENTS_PER_THREAD 4
-#endif
-
 #define KERNEL_EXECUTOR
-
-/// ===========================================================================================
-/// <summary>
-///  Kernel Permutation compaction routine. Kernel Dispatcher.
-/// </summary>
-/// <param name="K_gridDim"></param>
-/// <param name="K_blockDim"></param>
-/// <param name="K_stream"></param>
-/// <param name="nnz"></param>
-/// <param name="PT1"></param>
-/// <param name="PT2"></param>
-/// <param name="PT"></param>
-KERNEL_EXECUTOR void compactPermutationVector(unsigned K_gridDim, unsigned K_blockDim, cudaStream_t K_stream, int nnz,
-                                             int *PT1, int *PT2, int *PT);
-
 
 /// ===========================================================================================
 /// <summary>
