@@ -15,7 +15,7 @@ public class GCModelReader implements Closeable {
 
     private static final String HEADER_PREFIX = "#";
     private static final int START_PREFIX = 0;
-    private static final Pattern HEADER_FIELD_PATTERN = Pattern.compile("^#(--.*): (.*)$");
+    private static final Pattern HEADER_FIELD_PATTERN = Pattern.compile("^#(--.*):\\s(.*)$");
 
     private static final String FILE_FORMAT_VERSION = "V1";
     private static final String HEADER_SIGNATURE = "--signature";

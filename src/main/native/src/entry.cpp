@@ -1143,7 +1143,7 @@ int main(int argc, char* args[])
 
     //jni_setBooleanProperty  
     
-    settings::COMPUTATION_MODE.reset((int)ComputationMode::SPARSE_MODE);                // settings::COMPUTATION_MODE = [ 1 - DENSE_MODE , 2 - SPARSE_MODE , *3 - DIRECT_MODE , 4 - COMPACT_MODE ]
+    settings::COMPUTATION_MODE.reset((int)ComputationMode::COMPACT_MODE);                // settings::COMPUTATION_MODE = [ 1 - DENSE_MODE , 2 - SPARSE_MODE , *3 - DIRECT_MODE , 4 - COMPACT_MODE ]
     settings::SOLVER_MODE.reset((int)SolverMode::SPARSE_QR);                            // settings::SOLVER_MODE  = [ DENSE_LU = 1, SPARSE_QR = 2, SPARSE_ILU = 3, ] 
         
     //jni_setLongProperty(&env, eclass, 20, (jlong) 2);  // settings::COMPUTATION_MODE = [ 1 - DENSE_MODE , 2 - SPARSE_MODE , *3 - DIRECT_MODE , 4 - COMPACT_MODE ]

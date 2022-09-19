@@ -33,10 +33,13 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
     }
 
     @Override
-    public TensorDouble makeMatrix2D(int rowSize, int colSize, double initValue) {
-        SparseDoubleTensor2DImpl matrix2D = new SparseDoubleTensor2DImpl(rowSize, colSize);
+    public TensorDouble makeMatrix2D(int rowSize, int colSize, double initValue, boolean capture) {
+        TensorDouble matrix2D = new SparseDoubleTensor2DImpl(rowSize, colSize);
         if (initValue != 0.0) {
             matrix2D.reset(initValue);
+        }
+        if(capture) {
+            matrix2D = new CaptureCooDoubleMatrix2D(matrix2D);
         }
         return matrix2D;
     }

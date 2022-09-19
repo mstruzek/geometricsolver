@@ -2,11 +2,9 @@ package com.mstruzek.msketch.solver;
 
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.impl.SparseDoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
 import com.mstruzek.msketch.*;
-import com.mstruzek.msketch.matrix.PointUtility;
-import com.mstruzek.msketch.matrix.TensorDouble;
+import com.mstruzek.msketch.matrix.*;
 
 import java.time.Instant;
 import java.util.concurrent.*;
@@ -57,7 +55,7 @@ public class GeometricSolverImpl implements GeometricSolver {
         accLUWatch.reset();
 
 //        Default Matrix Creator for middle matrices !
-//        MatrixDoubleCreator.setInstance(ColtMatrixCreator.INSTANCE);  // [ #[ #[ HEAVY ]# ]# ]
+        MatrixDoubleCreator.setInstance(ColtMatrixCreator.INSTANCE);  // [ #[ #[ HEAVY ]# ]# ]
     }
 
 
@@ -134,8 +132,10 @@ public class GeometricSolverImpl implements GeometricSolver {
          * Executor - Scheduler - A scheduler , B scheduler - ForkJoinPoll
          */
 
+        boolean capture = false;
 
-        A = TensorDouble.matrix2D(dimension, dimension, 0.0);
+        A = TensorDouble.matrix2D(dimension, dimension, 0.0, capture);
+
         Fq = TensorDouble.matrix2D(size, size, 0.0);
 
         Wq = TensorDouble.matrix2D(coffSize, size, 0.0);
@@ -207,6 +207,11 @@ public class GeometricSolverImpl implements GeometricSolver {
                 A.setSubMatrix(size, 0, Wq);
                 A.setSubMatrix(0, size, Wq.transpose());
 
+                CaptureCooDoubleMatrix2D cooA = A.unwrap(CaptureCooDoubleMatrix2D.class);
+                if (cooA != null) {
+                    cooA.log(StateReporter.getInstance());
+                }
+
                 DoubleMatrix2D tensorA = MatrixDoubleUtility.toSparse(A);
                 return tensorA;
             });
@@ -227,7 +232,7 @@ public class GeometricSolverImpl implements GeometricSolver {
                 matrix2DA = tensorATask.get();
 
             } catch (InterruptedException | ExecutionException e) {
-                reporter.writelnf(" [error] tensor calculation pre processing ! %s",  e.getMessage());
+                reporter.writelnf(" [error] tensor calculation pre processing ! %s", e.getMessage());
                 e.printStackTrace(System.out);
                 solverStat.convergence = false;
                 return solverStat;
@@ -251,11 +256,6 @@ public class GeometricSolverImpl implements GeometricSolver {
 
             LUDecompositionQuick LU = new LUDecompositionQuick();
             LU.decompose(matrix2DA);
-
-            if (StateReporter.isDebugEnabled()) {
-//                TensorDouble tensorLU = TensorDouble.matrixDoubleFrom(LU.getLU());
-//                reporter.writeln(TensorDouble.writeToString(tensorLU));
-            }
 
             if (LU.isNonsingular()) {
                 LU.solve(matrix1Db);

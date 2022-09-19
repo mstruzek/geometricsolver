@@ -197,7 +197,10 @@ public interface TensorDouble {
     }
 
     static TensorDouble matrix2D(int rowSize, int colSize, double initValue) {
-        return MatrixDoubleCreator.getInstance().makeMatrix2D(rowSize, colSize, initValue);
+        return MatrixDoubleCreator.getInstance().makeMatrix2D(rowSize, colSize, initValue, false);
+    }
+    static TensorDouble matrix2D(int rowSize, int colSize, double initValue, boolean capture) {
+        return MatrixDoubleCreator.getInstance().makeMatrix2D(rowSize, colSize, initValue, capture);
     }
 
     /**

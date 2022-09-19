@@ -43,9 +43,10 @@ public abstract class MatrixDoubleCreator {
      * @param rowSize
      * @param colSize
      * @param initValue
+     * @param capture
      * @return
      */
-    public abstract TensorDouble makeMatrix2D(int rowSize, int colSize, double initValue);
+    public abstract TensorDouble makeMatrix2D(int rowSize, int colSize, double initValue, boolean capture);
 
     /**
      * Column oriented matrix one dimensional - vector.

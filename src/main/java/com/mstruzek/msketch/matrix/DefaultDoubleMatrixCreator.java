@@ -42,7 +42,7 @@ public class DefaultDoubleMatrixCreator extends MatrixDoubleCreator {
     }
 
     @Override
-    public TensorDouble makeMatrix2D(int rowSize, int colSize, double initValue) {
+    public TensorDouble makeMatrix2D(int rowSize, int colSize, double initValue, boolean capture) {
         TensorDouble2D mt = new TensorDouble2D(rowSize, colSize);
         mt.reset(initValue);
         return mt;

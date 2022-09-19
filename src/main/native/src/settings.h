@@ -37,8 +37,8 @@ static ConfigurationKey<6, bool> CLOCK_NANOSECONDS = ConfigurationKey<6, bool>(t
 
 static ConfigurationKey<8, bool> DEBUG_SOLVER_CONVERGENCE = ConfigurationKey<8, bool>(false);
 static ConfigurationKey<9, bool> DEBUG_CHECK_ARG = ConfigurationKey<9, bool>(false);
-static ConfigurationKey<20, int> COMPUTATION_MODE = ConfigurationKey<20, int>(1);
 
+static ConfigurationKey<20, int> COMPUTATION_MODE = ConfigurationKey<20, int>(1);
 static ConfigurationKey<21, int> SOLVER_MODE = ConfigurationKey<21, int>(1);
 static ConfigurationKey<24, bool> SOLVER_INC_HESSIAN = ConfigurationKey<24, bool>(false);
 static ConfigurationKey<26, double> SOLVER_LWORK_FACTOR = ConfigurationKey<26, double>(1.0);

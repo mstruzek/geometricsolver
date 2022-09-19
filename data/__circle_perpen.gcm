@@ -1,0 +1,84 @@
+#--signature: GeometricConstraintSolver  2009-2022
+#--file-format: V1
+
+#--definition-begin: 
+
+Descriptor(Point) ID(1)    PX(1.412918e+02) PY(1.871210e+02);
+Descriptor(Point) ID(2)    PX(4.073828e+02) PY(1.849912e+02);
+Descriptor(Point) ID(5)    PX(1.470453e+02) PY(5.363204e+02);
+Descriptor(Point) ID(6)    PX(4.770962e+02) PY(5.441715e+02);
+Descriptor(Point) ID(9)    PX(3.657048e+02) PY(3.209492e+02);
+Descriptor(Point) ID(10)   PX(4.080708e+02) PY(7.655358e+02);
+Descriptor(Point) ID(13)   PX(2.308111e+02) PY(3.700039e+02);
+Descriptor(Point) ID(14)   PX(4.030414e+02) PY(3.223774e+02);
+Descriptor(Point) ID(17)   PX(3.714370e+02) PY(6.216765e+02);
+Descriptor(Point) ID(18)   PX(3.700083e+02) PY(5.441715e+02);
+Descriptor(Point) ID(21)   PX(4.993690e+02) PY(2.918824e+02);
+Descriptor(Point) ID(22)   PX(6.679876e+02) PY(3.001707e+02);
+Descriptor(Point) ID(25)   PX(9.792189e+02) PY(6.087809e+02);
+Descriptor(Point) ID(26)   PX(9.846864e+02) PY(8.275215e+02);
+Descriptor(Point) ID(29)   PX(3.074712e+02) PY(8.867804e+02);
+Descriptor(Point) ID(30)   PX(4.823796e+02) PY(9.018861e+02);
+Descriptor(Point) ID(33)   PX(5.198131e+02) PY(1.142813e+03);
+Descriptor(Point) ID(34)   PX(9.075172e+02) PY(1.175267e+03);
+Descriptor(Point) ID(37)   PX(4.377322e+01) PY(7.454732e+02);
+Descriptor(Point) ID(38)   PX(3.710896e+02) PY(7.251610e+02);
+Descriptor(Point) ID(41)   PX(5.425628e+02) PY(8.198130e+02);
+Descriptor(Point) ID(42)   PX(1.090277e+03) PY(8.275215e+02);
+Descriptor(Point) ID(45)   PX(1.293608e+03) PY(9.362680e+02);
+Descriptor(Point) ID(46)   PX(1.671155e+03) PY(8.462996e+02);
+Descriptor(Point) ID(49)   PX(9.706020e+02) PY(1.638633e+03);
+Descriptor(Point) ID(50)   PX(1.639001e+03) PY(1.634268e+03);
+Descriptor(Point) ID(53)   PX(1.246979e+03) PY(2.366487e+03);
+Descriptor(Point) ID(54)   PX(1.873000e+03) PY(2.256000e+03);
+Descriptor(Point) ID(57)   PX(1.401525e+03) PY(9.580809e+02);
+Descriptor(Point) ID(58)   PX(1.574103e+03) PY(1.047018e+03);
+Descriptor(Point) ID(61)   PX(1.362680e+03) PY(1.806802e+03);
+Descriptor(Point) ID(62)   PX(1.702152e+03) PY(1.903681e+03);
+
+Descriptor(GeometricObject) ID(0)    TYPE(Line)     P1(1)    P2(2)    P3(-1);
+Descriptor(GeometricObject) ID(1)    TYPE(Line)     P1(5)    P2(6)    P3(-1);
+Descriptor(GeometricObject) ID(2)    TYPE(Line)     P1(9)    P2(10)   P3(-1);
+Descriptor(GeometricObject) ID(3)    TYPE(Circle)   P1(13)   P2(14)   P3(-1);
+Descriptor(GeometricObject) ID(4)    TYPE(Circle)   P1(17)   P2(18)   P3(-1);
+Descriptor(GeometricObject) ID(5)    TYPE(Circle)   P1(21)   P2(22)   P3(-1);
+Descriptor(GeometricObject) ID(6)    TYPE(Circle)   P1(25)   P2(26)   P3(-1);
+Descriptor(GeometricObject) ID(7)    TYPE(Circle)   P1(29)   P2(30)   P3(-1);
+Descriptor(GeometricObject) ID(8)    TYPE(Circle)   P1(33)   P2(34)   P3(-1);
+Descriptor(GeometricObject) ID(9)    TYPE(Line)     P1(37)   P2(38)   P3(-1);
+Descriptor(GeometricObject) ID(10)   TYPE(Line)     P1(41)   P2(42)   P3(-1);
+Descriptor(GeometricObject) ID(11)   TYPE(Line)     P1(45)   P2(46)   P3(-1);
+Descriptor(GeometricObject) ID(12)   TYPE(Line)     P1(49)   P2(50)   P3(-1);
+Descriptor(GeometricObject) ID(13)   TYPE(Line)     P1(53)   P2(54)   P3(-1);
+Descriptor(GeometricObject) ID(14)   TYPE(Circle)   P1(57)   P2(58)   P3(-1);
+Descriptor(GeometricObject) ID(15)   TYPE(Circle)   P1(61)   P2(62)   P3(-1);
+
+
+Descriptor(Constraint) ID(12)   TYPE(Tangency)           K(1)     L(2)     M(13)    N(14)    PARAM(-1);
+Descriptor(Constraint) ID(13)   TYPE(Tangency)           K(9)     L(10)    M(13)    N(14)    PARAM(-1);
+Descriptor(Constraint) ID(14)   TYPE(Tangency)           K(5)     L(6)     M(13)    N(14)    PARAM(-1);
+Descriptor(Constraint) ID(15)   TYPE(Tangency)           K(5)     L(6)     M(17)    N(18)    PARAM(-1);
+Descriptor(Constraint) ID(16)   TYPE(Tangency)           K(9)     L(10)    M(21)    N(22)    PARAM(-1);
+Descriptor(Constraint) ID(27)   TYPE(Tangency)           K(41)    L(42)    M(25)    N(26)    PARAM(-1);
+Descriptor(Constraint) ID(28)   TYPE(Tangency)           K(41)    L(42)    M(33)    N(34)    PARAM(-1);
+Descriptor(Constraint) ID(29)   TYPE(Tangency)           K(37)    L(38)    M(29)    N(30)    PARAM(-1);
+Descriptor(Constraint) ID(30)   TYPE(Tangency)           K(37)    L(38)    M(17)    N(18)    PARAM(-1);
+Descriptor(Constraint) ID(31)   TYPE(LinesParallelism)   K(41)    L(42)    M(38)    N(37)    PARAM(-1);
+Descriptor(Constraint) ID(32)   TYPE(LinesPerpendicular) K(6)     L(5)     M(10)    N(9)     PARAM(-1);
+Descriptor(Constraint) ID(33)   TYPE(LinesPerpendicular) K(38)    L(37)    M(10)    N(9)     PARAM(-1);
+Descriptor(Constraint) ID(34)   TYPE(LinesPerpendicular) K(2)     L(1)     M(9)     N(10)    PARAM(-1);
+Descriptor(Constraint) ID(35)   TYPE(SetVertical)        K(10)    L(9)     M(0)     N(0)     PARAM(-1);
+Descriptor(Constraint) ID(36)   TYPE(LinesPerpendicular) K(21)    L(22)    M(25)    N(26)    PARAM(-1);
+Descriptor(Constraint) ID(37)   TYPE(SetVertical)        K(25)    L(26)    M(0)     N(0)     PARAM(-1);
+Descriptor(Constraint) ID(38)   TYPE(LinesParallelism)   K(29)    L(30)    M(33)    N(34)    PARAM(-1);
+Descriptor(Constraint) ID(39)   TYPE(LinesPerpendicular) K(33)    L(34)    M(17)    N(18)    PARAM(-1);
+Descriptor(Constraint) ID(40)   TYPE(LinesParallelism)   K(29)    L(30)    M(41)    N(42)    PARAM(-1);
+Descriptor(Constraint) ID(51)   TYPE(LinesParallelism)   K(49)    L(50)    M(61)    N(62)    PARAM(-1);
+Descriptor(Constraint) ID(52)   TYPE(Tangency)           K(49)    L(50)    M(61)    N(62)    PARAM(-1);
+Descriptor(Constraint) ID(53)   TYPE(LinesParallelism)   K(57)    L(58)    M(49)    N(50)    PARAM(-1);
+Descriptor(Constraint) ID(54)   TYPE(Tangency)           K(45)    L(46)    M(57)    N(58)    PARAM(-1);
+Descriptor(Constraint) ID(56)   TYPE(LinesParallelism)   K(49)    L(50)    M(57)    N(58)    PARAM(-1);
+
+
+#--definition-end: 
+
