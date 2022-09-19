@@ -31,10 +31,16 @@ public interface GeometricSolver {
 
 
     static GeometricSolver createInstance(GeometricSolverType solverType) {
-        return switch (solverType) {
-            case CPU_SOLVER -> new GeometricSolverImpl();
-            case GPU_SOLVER -> new GpuGeometricSolverImpl();
+        GeometricSolver solver = null;
+        switch (solverType) {
+            case CPU_SOLVER:
+                solver = new GeometricSolverImpl();
+                break;
+            case GPU_SOLVER:
+                solver = new GpuGeometricSolverImpl();
+                break;
         };
+        return solver;
     }
 
 }

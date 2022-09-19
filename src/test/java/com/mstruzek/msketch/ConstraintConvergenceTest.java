@@ -434,10 +434,10 @@ public class ConstraintConvergenceTest {
 
         out.println(tensorDouble.toString());
 
-        TensorDouble hessian = constraint.getHessian(, 1.0);
-        if(hessian != null){
-            out.println(TensorDouble.writeToString(hessian));
-        }
+//        TensorDouble hessian = constraint.getHessian(tensorDouble, 1.0);
+//        if(hessian != null){
+//            out.println(TensorDouble.writeToString(hessian));
+//        }
     }
 
     private static <T extends GeometricObject> T registerGeometric(T geometricObject) {

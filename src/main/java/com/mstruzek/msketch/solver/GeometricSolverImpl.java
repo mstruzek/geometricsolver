@@ -56,6 +56,9 @@ public class GeometricSolverImpl implements GeometricSolver {
 
 //        Default Matrix Creator for middle matrices !
         MatrixDoubleCreator.setInstance(ColtMatrixCreator.INSTANCE);  // [ #[ #[ HEAVY ]# ]# ]
+
+        /// tolerance for zero elements !
+        DoubleMatrix2D.TOLERANCE = true;
     }
 
 
@@ -71,6 +74,7 @@ public class GeometricSolverImpl implements GeometricSolver {
         final TensorDouble A;               /// Macierz głowna ukladu rownan liniowych
         final TensorDouble Fq;              /// Macierz sztywnosci ukladu obiektow zawieszonych na sprezynach.
         final TensorDouble Wq;              /// d(FI)/dq - Jacobian Wiezow
+        final TensorDouble Mcf;              /// Macierz dopelnien zerami - coefficients size
 
         /// HESSIAN
         final TensorDouble Hs;
@@ -132,7 +136,7 @@ public class GeometricSolverImpl implements GeometricSolver {
          * Executor - Scheduler - A scheduler , B scheduler - ForkJoinPoll
          */
 
-        boolean capture = false;
+        boolean capture = true;
 
         A = TensorDouble.matrix2D(dimension, dimension, 0.0, capture);
 
@@ -140,6 +144,12 @@ public class GeometricSolverImpl implements GeometricSolver {
 
         Wq = TensorDouble.matrix2D(coffSize, size, 0.0);
         Hs = TensorDouble.matrix2D(size, size, 0.0);
+
+        Mcf = TensorDouble.matrix2D(coffSize, coffSize, 0.0);
+
+
+        ///
+        PointUtility.setDiagonalZero(Mcf);
 
         /// macierz sztywnosci stala w czasie
         GeometricObject.evaluateStiffnessMatrix(Fq);
@@ -206,6 +216,8 @@ public class GeometricSolverImpl implements GeometricSolver {
 
                 A.setSubMatrix(size, 0, Wq);
                 A.setSubMatrix(0, size, Wq.transpose());
+
+                A.setSubMatrix(size, size, Mcf);
 
                 CaptureCooDoubleMatrix2D cooA = A.unwrap(CaptureCooDoubleMatrix2D.class);
                 if (cooA != null) {

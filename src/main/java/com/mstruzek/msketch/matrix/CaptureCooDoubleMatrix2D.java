@@ -4,6 +4,7 @@ import cern.colt.matrix.impl.SparseDoubleMatrix2D;
 import com.mstruzek.msketch.Vector;
 import com.mstruzek.msketch.solver.StateReporter;
 
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.TreeMap;
 
@@ -15,8 +16,7 @@ public class CaptureCooDoubleMatrix2D implements TensorDouble {
 
     private int idx = 0;
 
-
-    private static class TensorCoo implements Comparable<TensorCoo> {
+    private class TensorCoo implements Comparable<TensorCoo> {
         public final int i;
         public final int i1;
 
@@ -38,16 +38,14 @@ public class CaptureCooDoubleMatrix2D implements TensorDouble {
             return Objects.hash(i, i1);
         }
 
-        public static TensorCoo of(int i, int i1) {
+        public TensorCoo of(int i, int i1) {
             return new TensorCoo(i, i1);
         }
 
         @Override
-        public int compareTo(TensorCoo o) {
-            if (i > o.i) return 1;
-            else if (i == o.i && i1 > o.i1) return 1;
-            else if (i == o.i && i1 == o.i1) return 0;
-            return -1;
+        public int compareTo(TensorCoo other) {
+            return Comparator.<TensorCoo>comparingInt(coo -> coo.i * delegate.width() + coo.i1)
+                .compare(this, other);
         }
     }
 
@@ -63,8 +61,10 @@ public class CaptureCooDoubleMatrix2D implements TensorDouble {
 
     public void log(StateReporter reporter) {
         reporter.writelnf("------ COO format , nnz ( %d )  [ %d , %d ]", idx, this.delegate.width(), this.delegate.height());
+        int i = 0;
         for (var entry : tensorCooValue.entrySet()) {
-            reporter.writelnf("( %d , %d ) , %e ", entry.getKey().i, entry.getKey().i1, entry.getValue());
+            reporter.writelnf("%3d , %d  %d - %7.3f ",i,  entry.getKey().i, entry.getKey().i1, entry.getValue());
+            i++;
         }
         reporter.writelnf("------");
     }
@@ -129,7 +129,11 @@ public class CaptureCooDoubleMatrix2D implements TensorDouble {
         unwrap.forEachNonZero((i, i1, v) -> {
             int row = offsetRow + i;
             int column = offsetCol + i1;
-            tensorCooValue.put(TensorCoo.of(row, column), v);
+            Double g = tensorCooValue.get(new TensorCoo(row, column));
+            if(g != null) {
+                throw new Error("---");
+            }
+            tensorCooValue.put(new TensorCoo(row, column), v);
             return v;
         });
         this.delegate.setSubMatrix(offsetRow, offsetCol, mt);
@@ -143,7 +147,7 @@ public class CaptureCooDoubleMatrix2D implements TensorDouble {
             throw new IllegalStateException("expected sparse double tensor !");
         }
         unwrap.forEachNonZero((i, i1, v) -> {
-            TensorCoo coo = TensorCoo.of(offsetRow + i, offsetCol + i1);
+            TensorCoo coo = new TensorCoo(offsetRow + i, offsetCol + i1);
             Double value = tensorCooValue.get(coo);
             if (value == null) {
                 value = v;

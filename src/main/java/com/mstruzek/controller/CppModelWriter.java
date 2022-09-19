@@ -103,13 +103,25 @@ public class CppModelWriter implements Closeable {
     }
 
     private String geometricTypeName(GeometricType primitiveType) {
-        return switch (primitiveType) {
-            case FreePoint -> "GEOMETRIC_TYPE_ID_FREE_POINT";
-            case Line -> "GEOMETRIC_TYPE_ID_LINE";
-            case Circle -> "GEOMETRIC_TYPE_ID_CIRCLE";
-            case FixLine -> "GEOMETRIC_TYPE_ID_FIX_LINE";
-            case Arc -> "GEOMETRIC_TYPE_ID_ARC";
+        String name = "";
+        switch (primitiveType) {
+            case FreePoint:
+                name = "GEOMETRIC_TYPE_ID_FREE_POINT";
+                break;
+            case Line:
+                name = "GEOMETRIC_TYPE_ID_LINE";
+                break;
+            case Circle:
+                name = "GEOMETRIC_TYPE_ID_CIRCLE";
+                break;
+            case FixLine:
+                name = "GEOMETRIC_TYPE_ID_FIX_LINE";
+                break;
+            case Arc:
+                name = "GEOMETRIC_TYPE_ID_ARC";
+                break;
         };
+        return name;
     }
 
     public void writeConstraints() throws IOException {
@@ -134,25 +146,61 @@ public class CppModelWriter implements Closeable {
     }
 
     private String constraintTypeName(ConstraintType constraintType) {
-        return switch (constraintType) {
-            case FixPoint -> "CONSTRAINT_TYPE_ID_FIX_POINT";
-            case ParametrizedXFix -> "CONSTRAINT_TYPE_ID_PARAMETRIZED_XFIX";
-            case ParametrizedYFix -> "CONSTRAINT_TYPE_ID_PARAMETRIZED_YFIX";
-            case Connect2Points -> "CONSTRAINT_TYPE_ID_CONNECT_2_POINTS";
-            case HorizontalPoint -> "CONSTRAINT_TYPE_ID_HORIZONTAL_POINT";
-            case VerticalPoint -> "CONSTRAINT_TYPE_ID_VERTICAL_POINT";
-            case LinesParallelism -> "CONSTRAINT_TYPE_ID_LINES_PARALLELISM";
-            case LinesPerpendicular -> "CONSTRAINT_TYPE_ID_LINES_PERPENDICULAR";
-            case EqualLength -> "CONSTRAINT_TYPE_ID_EQUAL_LENGTH";
-            case ParametrizedLength -> "CONSTRAINT_TYPE_ID_PARAMETRIZED_LENGTH";
-            case Tangency -> "CONSTRAINT_TYPE_ID_TANGENCY";
-            case CircleTangency -> "CONSTRAINT_TYPE_ID_CIRCLE_TANGENCY";
-            case Distance2Points -> "CONSTRAINT_TYPE_ID_DISTANCE_2_POINTS";
-            case DistancePointLine -> "CONSTRAINT_TYPE_ID_DISTANCE_POINT_LINE";
-            case Angle2Lines -> "CONSTRAINT_TYPE_ID_ANGLE_2_LINES";
-            case SetHorizontal -> "CONSTRAINT_TYPE_ID_SET_HORIZONTAL";
-            case SetVertical -> "CONSTRAINT_TYPE_ID_SET_VERTICAL";
+        String name = "";
+        switch (constraintType) {
+            case FixPoint :
+                name = "CONSTRAINT_TYPE_ID_FIX_POINT";
+                break;
+            case ParametrizedXFix :
+                name = "CONSTRAINT_TYPE_ID_PARAMETRIZED_XFIX";
+                break;
+            case ParametrizedYFix :
+                name = "CONSTRAINT_TYPE_ID_PARAMETRIZED_YFIX";
+                break;
+            case Connect2Points :
+                name = "CONSTRAINT_TYPE_ID_CONNECT_2_POINTS";
+                break;
+            case HorizontalPoint :
+                name = "CONSTRAINT_TYPE_ID_HORIZONTAL_POINT";
+                break;
+            case VerticalPoint :
+                name = "CONSTRAINT_TYPE_ID_VERTICAL_POINT";
+                break;
+            case LinesParallelism :
+                name = "CONSTRAINT_TYPE_ID_LINES_PARALLELISM";
+                break;
+            case LinesPerpendicular :
+                name = "CONSTRAINT_TYPE_ID_LINES_PERPENDICULAR";
+                break;
+            case EqualLength :
+                name = "CONSTRAINT_TYPE_ID_EQUAL_LENGTH";
+                break;
+            case ParametrizedLength :
+                name = "CONSTRAINT_TYPE_ID_PARAMETRIZED_LENGTH";
+                break;
+            case Tangency :
+                name = "CONSTRAINT_TYPE_ID_TANGENCY";
+                break;
+            case CircleTangency :
+                name = "CONSTRAINT_TYPE_ID_CIRCLE_TANGENCY";
+                break;
+            case Distance2Points :
+                name = "CONSTRAINT_TYPE_ID_DISTANCE_2_POINTS";
+                break;
+            case DistancePointLine :
+                name = "CONSTRAINT_TYPE_ID_DISTANCE_POINT_LINE";
+                break;
+            case Angle2Lines :
+                name = "CONSTRAINT_TYPE_ID_ANGLE_2_LINES";
+                break;
+            case SetHorizontal :
+                name = "CONSTRAINT_TYPE_ID_SET_HORIZONTAL";
+                break;
+            case SetVertical :
+                name = "CONSTRAINT_TYPE_ID_SET_VERTICAL";
+                break;
         };
+        return name;
     }
 
     public void writeClose() throws IOException {

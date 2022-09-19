@@ -66,13 +66,20 @@ public class GCModelReader implements Closeable {
             final String descriptorType = requiredField(m, "Descriptor");
 
             switch (descriptorType) {
-                case DESCRIPTOR_POINT ->                processDescriptorPoint(m);
-                case DESCRIPTOR_GEOMETRIC_PRIMITIVE ->  processDescriptorPrimitive(m);
-                case DESCRIPTOR_PARAMETER ->            processDescriptorParameter(m);
-                case DESCRIPTOR_CONSTRAINT ->           processDescriptorConstraint(m);
-                default -> {
+                case DESCRIPTOR_POINT :
+                    processDescriptorPoint(m);
+                    break;
+                case DESCRIPTOR_GEOMETRIC_PRIMITIVE :
+                    processDescriptorPrimitive(m);
+                    break;
+                case DESCRIPTOR_PARAMETER :
+                    processDescriptorParameter(m);
+                    break;
+                case DESCRIPTOR_CONSTRAINT :
+                    processDescriptorConstraint(m);
+                    break;
+                default:
                     throw new Error("unrecognized object " + input);
-                }
             }
         }
     }

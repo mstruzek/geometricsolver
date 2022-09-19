@@ -55,6 +55,8 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
         JNIDebugParameters.STREAM_CAPTURING.setBooleanProperty(false);
 
+        JNIDebugParameters.DEBUG_CSR_FORMAT.setBooleanProperty(true);
+
         /// OK :
         JNIDebugParameters.COMPUTATION_MODE.setLongProperty(COMPACT_MODE);
 
@@ -75,6 +77,9 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         JNIDebugParameters.SOLVER_INC_HESSIAN.setBooleanProperty(false);
 
         JNIDebugParameters.DEBUG_TENSOR_SV.setBooleanProperty(false);
+
+
+
 
 //        JNIDebugParameters.GRID_SIZE.setLongProperty(4); // NOT_USED
 //        JNIDebugParameters.BLOCK_SIZE.setLongProperty(512);

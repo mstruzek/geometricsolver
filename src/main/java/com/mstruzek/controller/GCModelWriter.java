@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
@@ -69,7 +70,7 @@ public class GCModelWriter implements Closeable {
             Point P1 = ModelRegistry.dbPoint.getOrDefault(geometricObject.getP1(), Point.EMPTY);
             Point P2 = ModelRegistry.dbPoint.getOrDefault(geometricObject.getP2(), Point.EMPTY);
             Point P3 = ModelRegistry.dbPoint.getOrDefault(geometricObject.getP3(), Point.EMPTY);
-            for (Point point : Stream.of(P1, P2, P3).filter(point -> !Objects.equals(point, Point.EMPTY)).toList()) {
+            for (Point point : Stream.of(P1, P2, P3).filter(point -> !Objects.equals(point, Point.EMPTY)).collect(Collectors.toList())) {
                 buff.write("Descriptor(Point)");
                 buff.write(format("%-9s", " ID(" + ObjectSerializer.writeToString(point.getId()) + ")"));
                 buff.write(" PX(" + ObjectSerializer.writeToString(point.getX()) + ")");
@@ -111,7 +112,7 @@ public class GCModelWriter implements Closeable {
     }
 
     public void writeConstraints() throws IOException {
-        for (Constraint constraint : ModelRegistry.dbConstraint.values().stream().filter(Constraint::isPersistent).toList()) {
+        for (Constraint constraint : ModelRegistry.dbConstraint.values().stream().filter(Constraint::isPersistent).collect(Collectors.toList())) {
             int cID = constraint.getConstraintId();
             ConstraintType constraintType = constraint.getConstraintType();
             int K = constraint.getK();

@@ -352,7 +352,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
                 double a11 = smd.sm[3];
                 viewPart.setQuick(0, 0, a00);
                 viewPart.setQuick(0, 1, a01);
-                viewPart.setQuick(1, 0, a10);
+                  viewPart.setQuick(1, 0, a10);
                 viewPart.setQuick(1, 1, a11);
                 return this;
             }

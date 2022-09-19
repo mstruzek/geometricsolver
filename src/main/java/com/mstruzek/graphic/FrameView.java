@@ -1,4 +1,4 @@
-package com.mstruzek.graphic;
+ package com.mstruzek.graphic;
 
 import com.mstruzek.controller.ActiveKey;
 import com.mstruzek.controller.Controller;
@@ -449,10 +449,16 @@ public class FrameView extends JFrame {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        final GeometricSolverType solverType = switch (actionCommand) {
-                            case COMMAND_CPU -> GeometricSolverType.CPU_SOLVER;
-                            case COMMAND_GPU -> GeometricSolverType.GPU_SOLVER;
-                            default -> throw new Error("illegal solver action" + e.getActionCommand());
+                        final GeometricSolverType solverType;
+                        switch (actionCommand) {
+                            case COMMAND_CPU:
+                                solverType = GeometricSolverType.CPU_SOLVER;
+                                break;
+                            case COMMAND_GPU:
+                                solverType = GeometricSolverType.GPU_SOLVER;
+                                break;
+                            default:
+                                throw new Error("illegal solver action" + e.getActionCommand());
                         };
                         controller.setSolverType(solverType);
                     }

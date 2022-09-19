@@ -49,4 +49,11 @@ public class PointUtility {
             stateVector.setQuick(i, 0 , defaultValue);
         }
     }
+
+    public static void setDiagonalZero(TensorDouble mcf) {
+        int coefficients = mcf.width();
+        for(int i = 0; i < coefficients ; i++) {
+            mcf.setQuick(i,i, 0.0);
+        }
+    }
 }

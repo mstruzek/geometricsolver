@@ -17,10 +17,9 @@ public enum ConstraintType {
         @Override
         public String getHelp() {
 
-            return """
-                Zamocowanie punktu w stałym aktualnym położeniu.
-                K - punkt do zamocowania
-                """;
+            String description = "Zamocowanie punktu w stałym aktualnym położeniu.\n" +
+                "K - punkt do zamocowania\n";
+            return description;
         }
 
         @Override
@@ -40,11 +39,10 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Zamocowanie punktu w polozeniu X okreslonym wartoscia parametru P
-                K - punkt ( x )
-                P - sparametryzowane polozenie x
-                """;
+            String description = "Zamocowanie punktu w polozeniu X okreslonym wartoscia parametru P\n" +
+                "K - punkt ( x ) \n" +
+                "P - sparametryzowane polozenie x\n";
+            return description;
         }
 
         @Override
@@ -64,11 +62,10 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Zamocowanie punktu w polozeniu Y okreslonym wartoscia parametru P
-                K - punkt ( y )
-                P - sparametryzowane polozenie y
-                """;
+            String description = "Zamocowanie punktu w polozeniu Y okreslonym wartoscia parametru P\n" +
+                "K - punkt ( y )\n" +
+                "P - sparametryzowane polozenie y\n";
+            return description;
         }
 
         @Override
@@ -88,11 +85,10 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Zamocowanie punktów na te same współrzędne - Coincident Constraint
-                K - pierwszy punkt
-                L - drugi punkt
-                """;
+            String description = "Zamocowanie punktów na te same współrzędne - Coincident Constraint\n" +
+                "K - pierwszy punkt\n" +
+                "L - drugi punkt\n";
+            return description;
         }
 
         @Override
@@ -112,11 +108,10 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Zamocowanie punktów na te same współrzędne w osi X - Coincident Constraint
-                K - pierwszy punkt
-                L - drugi punkt
-                """;
+            String description = "Zamocowanie punktów na te same współrzędne w osi X - Coincident Constraint\n" +
+                "K - pierwszy punkt\n" +
+                "L - drugi punkt\n";
+            return description;
         }
 
         @Override
@@ -136,11 +131,10 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Zamocowanie punktów na te same współrzędne w osi Y - Coincident Constraint
-                K - pierwszy punkt
-                L - drugi punkt
-                """;
+            String description = "Zamocowanie punktów na te same współrzędne w osi Y - Coincident Constraint\n" +
+                "K - pierwszy punkt\n" +
+                "L - drugi punkt\n";
+            return description;
         }
 
         @Override
@@ -160,13 +154,12 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Więz odpowiedzialny za równoległość dwóch lini - Parallel Constraint
-                K - punkt 1 linii 1
-                L - punkt 2 linii 1
-                M - punkt 1 linii 2
-                N - punkt 2 linii 2
-                """;
+            String description = "Więz odpowiedzialny za równoległość dwóch lini - Parallel Constraint\n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n" +
+                "M - punkt 1 linii 2\n" +
+                "N - punkt 2 linii 2\n";
+            return description;
         }
 
         @Override
@@ -186,13 +179,13 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Więz odpowiedzialny za prostopadłość dwóch linii - Perpendicular Constraint
-                K - punkt 1 linii 1
-                L - punkt 2 linii 1
-                M - punkt 1 linii 2
-                N - punkt 2 linii 2
-                punkty M,N -moga byc punktami nalezacymi do FixLine""";
+            String description = "Więz odpowiedzialny za prostopadłość dwóch linii - Perpendicular Constraint\n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n" +
+                "M - punkt 1 linii 2\n" +
+                "N - punkt 2 linii 2\n" +
+                "punkty M,N -moga byc punktami nalezacymi do FixLine";
+            return description;
         }
 
         @Override
@@ -212,13 +205,12 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Więz zgodnej długośći dwóch lini\s
-                K - punkt 1 linii 1
-                L - punkt 2 linii 1
-                M - punkt 1 linii 2
-                N - punkt 2 linii 2
-                """;
+            String description = "Więz zgodnej długośći dwóch lini\n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n" +
+                "M - punkt 1 linii 2\n" +
+                "N - punkt 2 linii 2\n";
+            return description;
         }
 
         @Override
@@ -238,14 +230,13 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Więz opisuje zależność relacji pomiędzy długościami dwóch wektorów opisany parametrem P.              
-                K - punkt 1 linii 1
-                L - punkt 2 linii 1
-                M - punkt 1 linii 2
-                N - punkt 2 linii 2
-                P - parametr relacji względnej
-                """;
+            String description = "Więz opisuje zależność relacji pomiędzy długościami dwóch wektorów opisany parametrem P.\n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n" +
+                "M - punkt 1 linii 2\n" +
+                "N - punkt 2 linii 2\n" +
+                "P - parametr relacji względnej\n";
+            return description;
         }
 
         @Override
@@ -265,13 +256,12 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Więz opisuje styczność lini do okręgu.
-                K - punkt 1 na linii 1
-                L - punkt 2 na linii 1
-                M - srodek okregu 1
-                N - promien okregu 1
-                """;
+            String description = "Więz opisuje styczność lini do okręgu.\n" +
+                "K - punkt 1 na linii 1\n" +
+                "L - punkt 2 na linii 1\n" +
+                "M - srodek okregu 1\n" +
+                "N - promien okregu 1\n";
+            return description;
         }
 
         @Override
@@ -280,7 +270,9 @@ public enum ConstraintType {
         }
 
     },
-    /** Stycznosc dwóch okręgów */
+    /**
+     * Stycznosc dwóch okręgów
+     */
     CircleTangency {
         @Override
         public int size() {
@@ -289,13 +281,12 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Więz opisuje stycznosc okręgu do okręgu. Także skumulowaną długość odcinków.\s
-                K - srodek okregu 1
-                L - srodek okregu 1
-                M - srodek okregu 2
-                N - promien okregu 2
-                """;
+            String description = "Więz opisuje stycznosc okręgu do okręgu. Także skumulowaną długość odcinków.\n" +
+                "K - srodek okregu 1\n" +
+                "L - srodek okregu 1\n" +
+                "M - srodek okregu 2\n" +
+                "N - promien okregu 2\n";
+            return description;
         }
 
         @Override
@@ -318,12 +309,11 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Więz odległości określony dla punktu L od punkt K opisany parametrem P.
-                K - punkt 1
-                L - punkt 2
-                P - parametr - dystans.
-                """;
+            String description = "Więz odległości określony dla punktu L od punkt K opisany parametrem P.\n" +
+                "K - punkt 1\n" +
+                "L - punkt 2\n" +
+                "P - parametr - dystans.\n";
+            return description;
         }
 
         @Override
@@ -343,13 +333,12 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Więz odległośći punktu M od lini wyrażonej punktem K i punktem L. Dystans opisany parametrem P.
-                K - punkt 1 linii 1
-                L - punkt 2 linii 1
-                M - punkt odlegly o P od prostej
-                P - parametr
-                """;
+            String description = "Więz odległośći punktu M od lini wyrażonej punktem K i punktem L. Dystans opisany parametrem P.\n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n" +
+                "M - punkt odlegly o P od prostej\n" +
+                "P - parametr\n";
+            return description;
         }
 
         @Override
@@ -369,14 +358,13 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Więz kątowy pomiedzy wektorami opisany parametrem P.
-                K - punkt 1 linii 1
-                L - punkt 2 linii 1
-                M - punkt 1 linii 2
-                N - punkt 2 linii 2
-                P - parametr ( deg )
-                """;
+            String description = "Więz kątowy pomiedzy wektorami opisany parametrem P.\n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n" +
+                "M - punkt 1 linii 2\n" +
+                "N - punkt 2 linii 2\n" +
+                "P - parametr ( deg )\n";
+            return description;
         }
 
         @Override
@@ -396,12 +384,11 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Więz opisuje równoległość lini do osi współrzędnych 0-X.
-                K - punkt 1 linii 1
-                L - punkt 2 linii 1
-                """;
+            String description = "Więz opisuje równoległość lini do osi współrzędnych 0-X.\n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n";
 
+            return description;
         }
 
         @Override
@@ -421,11 +408,10 @@ public enum ConstraintType {
 
         @Override
         public String getHelp() {
-            return """
-                Więz opisuje równoległość lini do osi 0-Y.
-                K - punkt 1 linii 1
-                L - punkt 2 linii 1
-                """;
+            String description = "Więz opisuje równoległość lini do osi 0-Y.\n" +
+                "K - punkt 1 linii 1\n" +
+                "L - punkt 2 linii 1\n";
+            return description;
         }
 
         @Override
