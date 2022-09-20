@@ -189,11 +189,11 @@ public abstract class Constraint implements ConstraintInterface {
         return persistent;
     }
 
-    public boolean isBoundWith(int id) {
-        if(getK() != -1 && getK() == id) return true;
-        if(getL() != -1 && getL() == id) return true;
-        if(getM() != -1 && getM() == id) return true;
-        if(getN() != -1 && getN() == id) return true;
+    public boolean isBoundWith(int pointId) {
+        if(getK() != -1 && getK() == pointId) return true;
+        if(getL() != -1 && getL() == pointId) return true;
+        if(getM() != -1 && getM() == pointId) return true;
+        if(getN() != -1 && getN() == pointId) return true;
         return false;
     }
 }

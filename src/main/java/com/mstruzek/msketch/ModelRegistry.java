@@ -6,6 +6,7 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.mstruzek.msketch.solver.SolverStat;
 
+import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -125,9 +126,12 @@ public class ModelRegistry {
     }
 
     @JniModel
-    public static void removeConstraint(int constraintId) {
-        dbConstraint.remove(constraintId);
+    public static void removeConstraint(Constraint constraint) {
+        int parameterId = constraint.getParameter();
+        if(parameterId != -1) dbParameter.remove(parameterId);
+        dbConstraint.remove(constraint.getConstraintId());
     }
+
 
     @JniModel
     public static void removePoint(int pointId) {
@@ -135,10 +139,11 @@ public class ModelRegistry {
     }
 
     @JniModel
-    public static void removePrimitives(int primitiveId) {
-        dbPrimitives.remove(primitiveId);
+    public static void removeGeometric(GeometricObject primitive) {
+        Arrays.stream(primitive.associatedConstraints()).forEach(ModelRegistry::removeConstraint);
+        Arrays.stream(primitive.getAllPointsId()).forEach(ModelRegistry::removePoint);
+        dbPrimitives.remove(primitive.getPrimitiveId());
     }
-
     /**
      * All destructive/constructive changes applied into model.
      * - changes applied into model ( register/unregister )
@@ -162,6 +167,7 @@ public class ModelRegistry {
         final HashCode hashCode = hasher.hash();
         return hashCode.padToLong();
     }
+
     public static final int DELIMITER = 0x7C7D;
 
     public static SolverStat modelDefaultStats() {

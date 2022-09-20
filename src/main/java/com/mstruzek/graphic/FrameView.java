@@ -25,7 +25,7 @@ import static com.mstruzek.graphic.Property.*;
 
 public class FrameView extends JFrame {
 
-    public static final int L_WIDTH = 920;
+    public static final int L_WIDTH = 1620;
     public static final int R_HEIGHT = 1400;
     public static final int L_HEIGHT = 1400;
     public static final int R_WIDTH = 1420;
@@ -39,7 +39,7 @@ public class FrameView extends JFrame {
     public static final Color CONSTRAINT_PANEL_BACKGROUND_COLOR = new Color(244, 249, 192);
     public static final Color HELP_PANEL_BACKGROUND_COLOR = new Color(100, 255, 100, 50);
     public static final Color SKETCH_INFO_BORDER_COLOR = Color.darkGray;
-    public static final Color SKETCH_INFO_BACKGROUND_COLOR = new Color(250, 200, 200);
+    public static final Color SKETCH_INFO_BACKGROUND_COLOR = new Color(131, 188, 252);
     public static final Color FRAME_BACKGROUND_COLOR = null; /// Default Wash
     public static final String FRAME_TITLE = "GCS GeometricSolver 2009-2022";
     public static final int SOLVER_PANEL_HEIGHT = 140;

@@ -26,7 +26,7 @@ public class MySketch extends JPanel implements MouseInputListener {
      *
      */
     private static final long serialVersionUID = 1L;
-    public static final int S_WIDTH = 920;
+    public static final int S_WIDTH = 1320;
     public static final int S_HEIGHT = 1000;
     public static final Color CONTROL_GUIDES_COLOR = new Color(57, 172, 115);
     public static final Color SYSTEM_COORDINATE_OX_COLOR = Color.RED;

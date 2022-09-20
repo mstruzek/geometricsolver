@@ -178,8 +178,7 @@ public class MyTables extends JPanel {
     private void tableDeleteConstraint() {
         final int i = constTable.getSelectionModel().getMinSelectionIndex();
         if (i < 0) return;
-        Constraint constraint =
-            ModelRegistry.dbConstraint.values()
+        Constraint constraint = ModelRegistry.dbConstraint.values()
                 .stream()
                 .filter(Constraint::isPersistent).skip(i)
                 .findFirst()
@@ -195,51 +194,37 @@ public class MyTables extends JPanel {
                 }
             }
         }
-        ModelRegistry.removeConstraint(constraint.getConstraintId());
+        ModelRegistry.removeConstraint(constraint);
         mtm.fireTableRowsDeleted(i, i);
     }
 
     private void tableDeletePrimitive() {
+
         final int i = primiTable.getSelectionModel().getMinSelectionIndex();
         if (i < 0) {
             return;
         }
 
-        final GeometricObject primitive =
-            ModelRegistry.dbPrimitives.values()
+        final GeometricObject geometric = ModelRegistry.dbPrimitives.values()
                 .stream()
                 .skip(i)
                 .findFirst()
                 .orElseThrow(() -> new IndexOutOfBoundsException("primitive : " + i));
 
-        final int id = primitive.getPrimitiveId();
-
-
-        for (Constraint constraint : primitive.associatedConstraints()) {
-            int parameterId = constraint.getParameter();
-            if (parameterId != -1) {
-                ModelRegistry.removeParameter(parameterId);
-            }
-            ModelRegistry.removeConstraint(constraint.getConstraintId());
-        }
-
-        // usun wiezy zalezne odlaczamy wszelkie wiezy z modelu
-        HashSet<Integer> removeConstraints = new HashSet<>();
-        for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
-            if (!constraint.isPersistent()) continue;
-            boolean isBoundWith = Stream.of(primitive.getP1(),
-                primitive.getP2(), primitive.getP3()).anyMatch(constraint::isBoundWith);
+        /*
+         * przeszukaj wszystkie za aplikowane wiezy !
+         */
+        HashSet<Constraint> removable = new HashSet<>();
+        for (Constraint c : ModelRegistry.dbConstraint.values()) {
+            if (!c.isPersistent()) continue;
+            boolean isBoundWith = Stream.of(geometric.getP1(),geometric.getP2(), geometric.getP3()).anyMatch(c::isBoundWith);
             if (isBoundWith) {
-                removeConstraints.add(constraint.getConstraintId());
+                removable.add(c);
             }
         }
-        removeConstraints.forEach(ModelRegistry::removeConstraint);
+        removable.forEach(ModelRegistry::removeConstraint);
 
-        //usun punkty
-        for (int pi : primitive.getAllPointsId()) {
-            ModelRegistry.removePoint(pi);
-        }
-        ModelRegistry.removePrimitives(id);
+        ModelRegistry.removeGeometric(geometric);
 
         Events.send(EventType.REBUILD_TABLES, null);
 //        ptm.fireTableRowsDeleted(i, i);

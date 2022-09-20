@@ -78,9 +78,6 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
 
         JNIDebugParameters.DEBUG_TENSOR_SV.setBooleanProperty(false);
 
-
-
-
 //        JNIDebugParameters.GRID_SIZE.setLongProperty(4); // NOT_USED
 //        JNIDebugParameters.BLOCK_SIZE.setLongProperty(512);
 //        JNIDebugParameters.DEBUG_TENSOR_A.setBooleanProperty(false);
