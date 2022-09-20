@@ -136,9 +136,16 @@ public interface TensorDouble {
     /**
      * Transposes an mxn matrix into an nxm matrix. Each row of the input matrix becomes a column in the
      * output matrix.
-     * @return transposed cloned matrix.
+     * @return transposed matrix in-place evaluated if possible.
      */
     TensorDouble transpose();
+
+    /**
+     * Transposes an mxn matrix into an nxm matrix. Each row of the input matrix becomes a column in the
+     * output matrix.
+     * @return new instance of transposed matrix (`copy).
+     */
+    TensorDouble transposeC();
 
     /**
      * Reset matrix fill with constant value.

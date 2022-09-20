@@ -81,6 +81,11 @@ public class ScalarTensorDouble implements TensorDouble {
     }
 
     @Override
+    public TensorDouble transposeC() {
+        throw new IllegalStateException("not implemented");
+    }
+
+    @Override
     public TensorDouble reset(double value) {
         return null;
     }

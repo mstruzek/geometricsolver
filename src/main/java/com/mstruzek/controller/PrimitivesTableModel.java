@@ -22,6 +22,7 @@ public class PrimitivesTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowId, int colmId) {
         int out;
+        /// Parrallel Modification Exception
         GeometricObject primitive = ModelRegistry.dbPrimitives.values().toArray(new GeometricObject[0])[rowId];
         switch (colmId) {
             case 0:

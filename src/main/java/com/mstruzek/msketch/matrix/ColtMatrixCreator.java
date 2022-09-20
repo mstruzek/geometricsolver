@@ -237,6 +237,11 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
         }
 
         @Override
+        public TensorDouble transposeC() {
+            throw new Error("not implemented");
+        }
+
+        @Override
         public TensorDouble reset(double value) {
             this.mt.assign(value);
             return this;
@@ -356,11 +361,16 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
 
             SparseDoubleMatrix2D doubleMatrix2D = mt.unwrap(SparseDoubleMatrix2D.class);
             if (null != doubleMatrix2D) {
+/// viewPart.assign() // także  DenseMatricies !!
                 DoubleMatrix2D viewPart = this.mt.viewPart(offsetRow, offsetCol, doubleMatrix2D.rows(), doubleMatrix2D.columns());
-                viewPart.assign(doubleMatrix2D);
+                doubleMatrix2D.forEachNonZero((i, i1, v) -> {
+                    /// odczyt jest efektywny
+/// zapis na wspolrzed  key = i * columns + i1 , , addressy nie przenosza sie w identycznym schemacie !
+                    viewPart.setQuick(i, i1, v);
+                    return v;
+                });
                 return this;
             }
-
             throw new Error("not implemented");
         }
 
@@ -410,7 +420,20 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
 
         @Override
         public TensorDouble transpose() {
-            return new SparseDoubleTensor2DImpl(this.mt.viewDice());
+                return new SparseDoubleTensor2DImpl(this.mt.viewDice());
+        }
+
+        @Override
+        public TensorDouble transposeC() {
+            int rows = this.mt.columns();
+            int columns = this.mt.rows();
+            /* copy transposed tensor */
+            SparseDoubleMatrix2D transposed = new SparseDoubleMatrix2D(rows, columns);
+            this.mt.forEachNonZero((i, i1, v) ->  {
+                transposed.setQuick(i1, i, v);
+                return v;
+            });
+            return new SparseDoubleTensor2DImpl(transposed);
         }
 
         @Override

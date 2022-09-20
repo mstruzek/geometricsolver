@@ -123,6 +123,11 @@ public class SmallTensorDouble implements TensorDouble {
     }
 
     @Override
+    public TensorDouble transposeC() {
+        throw new IllegalStateException("no implementation");
+    }
+
+    @Override
     public TensorDouble reset(double value) {
         throw new IllegalStateException("no implementation");
     }

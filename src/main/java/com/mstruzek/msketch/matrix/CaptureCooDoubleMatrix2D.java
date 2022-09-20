@@ -24,7 +24,7 @@ public class CaptureCooDoubleMatrix2D {
     public void forEach(int r, int c, TensorDouble tensor) {
         SparseDoubleMatrix2D unwrap = tensor.unwrap(SparseDoubleMatrix2D.class);
         if (unwrap == null)
-            throw new IllegalStateException("SparseDoubleMatrix2D implementation required ! ");
+            return;
 
         unwrap.forEachNonZero(new IntIntDoubleFunction() {
             @Override
@@ -39,14 +39,14 @@ public class CaptureCooDoubleMatrix2D {
 
     /**
      * Treat each element of a tensor as transposed matrix.
-     * @param r output tensor row offset
-     * @param c output tensor column offset
+     * @param r      output tensor row offset
+     * @param c      output tensor column offset
      * @param tensor input tensor
      */
     public void forEachTranspose(int r, int c, TensorDouble tensor) {
         SparseDoubleMatrix2D unwrap = tensor.unwrap(SparseDoubleMatrix2D.class);
         if (unwrap == null)
-            throw new IllegalStateException("SparseDoubleMatrix2D implementation required ! ");
+            return;
 
         unwrap.forEachNonZero(new IntIntDoubleFunction() {
             @Override
@@ -58,8 +58,6 @@ public class CaptureCooDoubleMatrix2D {
             }
         });
     }
-
-
 
 
     public void log(StateReporter reporter) {

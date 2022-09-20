@@ -1,6 +1,5 @@
 package com.mstruzek.msketch.solver;
 
-import cern.colt.map.OpenIntDoubleHashMap;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
@@ -46,7 +45,6 @@ public class GeometricSolverImpl implements GeometricSolver {
 
     @Override
     public void setup() {
-
         StateReporter.DebugEnabled = false;
 
         reporter = StateReporter.getInstance();
@@ -55,9 +53,8 @@ public class GeometricSolverImpl implements GeometricSolver {
         accEvoWatch.reset();
         accLUWatch.reset();
 
-//        Default Matrix Creator for middle matrices !
+        //        Default Matrix Creator for middle matrices !
         MatrixDoubleCreator.setInstance(ColtMatrixCreator.INSTANCE);  // [ #[ #[ HEAVY ]# ]# ]
-
         /// tolerance for zero elements !
     }
 
@@ -131,14 +128,13 @@ public class GeometricSolverImpl implements GeometricSolver {
         // - reference locations for Jacobian and Hessian evaluation !
         PointLocation.setup();
 
-
-        /**
+        /*
          * Executor - Scheduler - A scheduler , B scheduler - ForkJoinPoll
          */
-        DoubleMatrix2D.SET_QUICK_ZERO_TOLERANCE = true;
-        boolean NON_ZERO_CAPTURE = false;
-        A = TensorDouble.matrix2D(dimension, dimension, 0.0);
+        DoubleMatrix2D.SET_QUICK_ZERO_TOLERANCE = true;     /// setQuick - tolerance
+        final boolean NON_ZERO_CAPTURE = false;
 
+        A = TensorDouble.matrix2D(dimension, dimension, 0.0);
 
         Fq = TensorDouble.matrix2D(size, size, 0.0);
 
@@ -146,7 +142,6 @@ public class GeometricSolverImpl implements GeometricSolver {
         Hs = TensorDouble.matrix2D(size, size, 0.0);
 
         Mcf = TensorDouble.matrix2D(coffSize, coffSize, 0.0);
-
 
         ///
         PointUtility.setDiagonalZero(Mcf);
@@ -197,11 +192,13 @@ public class GeometricSolverImpl implements GeometricSolver {
 /// macierz `A
 
             Future<DoubleMatrix2D> tensorATask = executorService.submit(() -> {
-                /// zerujemy macierz A
+                /// zeruje macierz A
                 A.reset(0.0);
 
                 /// JACOBIAN
                 Constraint.getFullJacobian(Wq);                     /// Jq = d(Fi)/dq
+                TensorDouble WqT = Wq.transposeC();                 /// JqT  - transposedC - copy effective computation
+                //WqT = Wq.transpose();                             /// JqT  - transposedC -
 
                 Hs.reset(0.0);
 
@@ -211,19 +208,23 @@ public class GeometricSolverImpl implements GeometricSolver {
                 A.plusSubMatrix(0, 0, Hs);                   /// procedure ADD
 
                 A.setSubMatrix(size, 0, Wq);
-                A.setSubMatrix(0, size, Wq.transpose());
+
+
+                A.setSubMatrix(0, size, WqT);
 
                 A.setSubMatrix(size, size, Mcf);
 
-                if(NON_ZERO_CAPTURE) {
+                if (NON_ZERO_CAPTURE) {
                     CaptureCooDoubleMatrix2D captureNonZero = new CaptureCooDoubleMatrix2D(dimension);
-                    captureNonZero.forEach(0,0, Fq);
-                    captureNonZero.forEach(0,0, Hs); // GPU hessian
+                    captureNonZero.forEach(0, 0, Fq);
+                    captureNonZero.forEach(0, 0, Hs);        /// --  GPU hessian
                     captureNonZero.forEach(size, 0, Wq);
-                    captureNonZero.forEachTranspose(0, size, Wq);
+                    captureNonZero.forEach(0, size, WqT);
                     captureNonZero.forEach(size, size, Mcf);
                     // -------------- stdout -----------------
-                    captureNonZero.log(StateReporter.getInstance());
+                    if (StateReporter.isDebugEnabled()) {
+                        captureNonZero.log(StateReporter.getInstance());
+                    }
                 }
 
                 DoubleMatrix2D tensorA = MatrixDoubleUtility.toSparse(A);

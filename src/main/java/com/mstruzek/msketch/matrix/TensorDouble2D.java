@@ -249,6 +249,11 @@ public class TensorDouble2D implements TensorDouble {
     }
 
     @Override
+    public TensorDouble transposeC() {
+        return transpose();
+    }
+
+    @Override
     public TensorDouble reset(double value) {
         for (int i = 0; i < height(); i++)
             for (int j = 0; j < width(); j++)
