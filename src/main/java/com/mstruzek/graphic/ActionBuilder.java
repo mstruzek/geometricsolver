@@ -7,8 +7,8 @@ import java.util.concurrent.ExecutorService;
 
 public class ActionBuilder {
 
-    public static JButton build(String name, Icon icon, String description, int keyEvent, ActionListener actionListener,
-                                ExecutorService executorService) {
+    public static JButton create(String name, Icon icon, String description, int keyEvent, ActionListener actionListener,
+                                 ExecutorService executorService) {
 
         AbstractAction action = new AbstractAction(name, icon) {
             @Override
