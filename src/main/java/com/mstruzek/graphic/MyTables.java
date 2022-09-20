@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.stream.Stream;
 
@@ -100,23 +101,24 @@ public class MyTables extends JPanel {
         add(consScrollPane);
         add(variaScrollPane);
 
-        Events.addListener(EventType.REBUILD_TABLES, (eventType, arguments) -> {
+        Events.addAwtListener(EventType.REBUILD_TABLES, (eventType, arguments) -> {
             ptm.fireTableChanged(new TableModelEvent(ptm, 0, ptm.getRowCount(), TableModelEvent.ALL_COLUMNS, TableModelEvent.DELETE));
             vtm.fireTableChanged(new TableModelEvent(vtm, 0, vtm.getRowCount(), TableModelEvent.ALL_COLUMNS, TableModelEvent.DELETE));
             mtm.fireTableChanged(new TableModelEvent(mtm, 0, mtm.getRowCount(), TableModelEvent.ALL_COLUMNS, TableModelEvent.DELETE));
         });
 
-        Events.addListener(EventType.PRIMITIVE_TABLE_INSERT, (eventType, arguments) -> {
+        Events.addAwtListener(EventType.PRIMITIVE_TABLE_INSERT, (eventType, arguments) -> {
             int rowCount = ptm.getRowCount();
             ptm.fireTableRowsInserted(rowCount, rowCount);
+
         });
 
-        Events.addListener(CONSTRAINT_TABLE_INSERT, (eventType, arguments) -> {
+        Events.addAwtListener(CONSTRAINT_TABLE_INSERT, (eventType, arguments) -> {
             int rowCount = mtm.getRowCount();
             mtm.fireTableRowsInserted(rowCount, rowCount);
         });
 
-        Events.addListener(PARAMETER_TABLE_INSERT, (eventType, arguments) -> {
+        Events.addAwtListener(PARAMETER_TABLE_INSERT, (eventType, arguments) -> {
             int rowCount = vtm.getRowCount();
             vtm.fireTableRowsInserted(rowCount, rowCount);
         });
@@ -176,55 +178,42 @@ public class MyTables extends JPanel {
     }
 
     private void tableDeleteConstraint() {
-        final int i = constTable.getSelectionModel().getMinSelectionIndex();
-        if (i < 0) return;
-        Constraint constraint = ModelRegistry.dbConstraint.values()
-                .stream()
-                .filter(Constraint::isPersistent).skip(i)
-                .findFirst()
-                .orElseThrow(() -> new IndexOutOfBoundsException("constraint: " + i));
+        int[] selectedRows = constTable.getSelectedRows();
 
-        int parId = constraint.getParameter();
-        if (parId >= 0) {
-            Parameter[] parameters = ModelRegistry.dbParameter().values().toArray(new Parameter[]{});
-            for (int k = 0; k < parameters.length; k++) {
-                if (parameters[k].getId() == parId) {
-                    ModelRegistry.removeParameter(parId);
-                    vtm.fireTableRowsDeleted(k, k);
-                }
+        HashSet<Parameter> attachedParameters = new HashSet<>();
+        HashSet<Constraint> selectedObjects = new HashSet<>();
+        Arrays.stream(selectedRows).map(idx -> (Integer) constTable.getValueAt(idx, 0)).mapToObj(ModelRegistry.dbConstraint::get).forEach(constraint -> {
+            int parameterId = constraint.getParameter();
+            if (parameterId != -1) {
+                attachedParameters.add(ModelRegistry.dbParameter.get(parameterId));
             }
-        }
-        ModelRegistry.removeConstraint(constraint);
-        mtm.fireTableRowsDeleted(i, i);
+            selectedObjects.add(constraint);
+
+        });
+        attachedParameters.forEach(ModelRegistry::removeParameter);
+        selectedObjects.forEach(ModelRegistry::removeConstraint);
+
+        Events.send(EventType.REBUILD_TABLES, null);
     }
 
     private void tableDeletePrimitive() {
+        int[] selectedRows = primiTable.getSelectedRows();
 
-        final int i = primiTable.getSelectionModel().getMinSelectionIndex();
-        if (i < 0) {
-            return;
-        }
-
-        final GeometricObject geometric = ModelRegistry.dbPrimitives.values()
-                .stream()
-                .skip(i)
-                .findFirst()
-                .orElseThrow(() -> new IndexOutOfBoundsException("primitive : " + i));
-
-        /*
-         * przeszukaj wszystkie za aplikowane wiezy !
-         */
-        HashSet<Constraint> removable = new HashSet<>();
-        for (Constraint c : ModelRegistry.dbConstraint.values()) {
-            if (!c.isPersistent()) continue;
-            boolean isBoundWith = Stream.of(geometric.getP1(),geometric.getP2(), geometric.getP3()).anyMatch(c::isBoundWith);
-            if (isBoundWith) {
-                removable.add(c);
+        HashSet<Constraint> attachedCons = new HashSet<>();
+        HashSet<GeometricObject> selectedObjects = new HashSet<>();
+        Arrays.stream(selectedRows).map(idx -> (Integer) primiTable.getValueAt(idx, 0)).mapToObj(ModelRegistry.dbPrimitives::get).forEach(geometric -> {
+            for (Constraint c : ModelRegistry.dbConstraint.values()) {
+                if (!c.isPersistent()) continue;
+                boolean isBoundWith = Stream.of(geometric.getP1(), geometric.getP2(), geometric.getP3()).anyMatch(c::isBoundWith);
+                if (isBoundWith) {
+                    attachedCons.add(c);
+                }
             }
-        }
-        removable.forEach(ModelRegistry::removeConstraint);
+            selectedObjects.add(geometric);
+        });
+        attachedCons.forEach(ModelRegistry::removeConstraint);
+        selectedObjects.forEach(ModelRegistry::removeGeometric);
 
-        ModelRegistry.removeGeometric(geometric);
 
         Events.send(EventType.REBUILD_TABLES, null);
 //        ptm.fireTableRowsDeleted(i, i);

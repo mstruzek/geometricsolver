@@ -122,7 +122,7 @@ public class SolverStatPanel extends JPanel {
                     .addComponent(f_accTime))
         );
 
-        Events.addListener(EventType.SOLVER_STAT_CHANGE, new Events.EventHandler() {
+        Events.addAwtListener(EventType.SOLVER_STAT_CHANGE, new Events.EventHandler() {
             @Override
             public void call(String eventType, Object[] arguments) {
                 SolverStat stat = (SolverStat) arguments[0];

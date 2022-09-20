@@ -416,11 +416,8 @@ public class FrameView extends JFrame {
             ms.repaintLater();
         });
 
-        Events.addListener(EventType.CONTROLLER_ERROR, (eventType, arguments) -> {
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(this, (String) arguments[0], "Application Error", JOptionPane.ERROR_MESSAGE);
-
-            });
+        Events.addAwtListener(EventType.CONTROLLER_ERROR, (eventType, arguments) -> {
+            JOptionPane.showMessageDialog(this, (String) arguments[0], "Application Error", JOptionPane.ERROR_MESSAGE);
         });
 
         ActionListener solverActionListener = new ActionListener() {

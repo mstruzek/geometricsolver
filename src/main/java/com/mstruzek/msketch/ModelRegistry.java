@@ -126,6 +126,12 @@ public class ModelRegistry {
     }
 
     @JniModel
+    public static void removeParameter(Parameter parameter) {
+        dbParameter.remove(parameter.getId());
+    }
+
+
+    @JniModel
     public static void removeConstraint(Constraint constraint) {
         int parameterId = constraint.getParameter();
         if(parameterId != -1) dbParameter.remove(parameterId);
@@ -182,6 +188,7 @@ public class ModelRegistry {
         return solverStat;
 
     }
+
 }
 
 

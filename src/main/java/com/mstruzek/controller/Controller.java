@@ -6,9 +6,10 @@ import com.mstruzek.msketch.solver.GeometricSolverType;
 import com.mstruzek.msketch.solver.SolverStat;
 
 import java.io.File;
-import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+
+import static com.mstruzek.controller.EventType.REBUILD_TABLES;
 
 
 public class Controller implements ControllerInterface {
@@ -114,9 +115,15 @@ public class Controller implements ControllerInterface {
 
         try (GCModelReader modelReader = new GCModelReader(selectedFile)) {
 
-            modelReader.readModel();
-
+            Events.DISABLE = true;
+            try {
+                modelReader.readModel();
+            } finally {
+                Events.DISABLE = false;
+            }
             updateModelConsistency();
+
+            Events.send(REBUILD_TABLES, new Object[]{});
 
         } catch (Exception e) {
             Reporter.notify("[error] read model from file : " + selectedFile, e);
