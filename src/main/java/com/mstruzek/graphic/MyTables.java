@@ -7,15 +7,10 @@ import com.mstruzek.msketch.ModelRegistry;
 import com.mstruzek.msketch.Parameter;
 
 import javax.swing.*;
-import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.stream.Stream;
@@ -44,8 +39,9 @@ public class MyTables extends JPanel {
     final JTable primiTable;
     final JTable variaTable;
 
-    final ContextMenuPopup popoupConstaint;
-    final ContextMenuPopup popupPrimitives;
+    public static final String DELETE_ACTION = "DELETE";
+    final ContextActionSelector constraintActionSelector = new ContextActionSelector();
+    final ContextActionSelector geometricActionSelector = new ContextActionSelector();
 
     public MyTables() {
         super();
@@ -64,27 +60,14 @@ public class MyTables extends JPanel {
         primiTable = new JTable(ptm);
         variaTable = new JTable(vtm);
 
+        constraintActionSelector.registerAction(DELETE_ACTION, event -> tableDeleteConstraint());
+        geometricActionSelector.registerAction(DELETE_ACTION, event -> tableDeletePrimitive());
 
-        popoupConstaint = new ContextMenuPopup(e -> tableDeleteConstraint());
-        popupPrimitives = new ContextMenuPopup(e -> tableDeletePrimitive());
+        constTable.addMouseListener(constraintActionSelector);
+        constTable.addMouseMotionListener(constraintActionSelector);
 
-        MouseInputAdapter mouseInputListener = new MouseInputAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                final JTable eventSourceTable = (JTable) e.getSource();
-                if (eventSourceTable.equals(constTable)) {
-                    popoupConstaint.show(e.getComponent(), e.getX(), e.getY());
-                } else if (eventSourceTable.equals(primiTable)) {
-                    popupPrimitives.show(e.getComponent(), e.getX(), e.getY());
-                }
-            }
-
-        };
-        constTable.addMouseListener(mouseInputListener);
-        constTable.addMouseMotionListener(mouseInputListener);
-
-        primiTable.addMouseListener(mouseInputListener);
-        primiTable.addMouseMotionListener(mouseInputListener);
+        primiTable.addMouseListener(geometricActionSelector);
+        primiTable.addMouseMotionListener(geometricActionSelector);
 
         setColumnsPreferredWidth();
 
@@ -125,56 +108,22 @@ public class MyTables extends JPanel {
     }
 
     private void setColumnsPreferredWidth() {
-        TableColumn column = null;
-        for (int i = 0; i < 8; i++) { //8
-            column = constTable.getColumnModel().getColumn(i);
-            switch (i) {
-                case 0:
-                    //column.setPreferredWidth(30);
-                    break;
-                case 1:
-                    column.setPreferredWidth(120);
-                    break;
-                case 2:
-                    column.setPreferredWidth(8);
-                    break;
-                case 3:
-                    column.setPreferredWidth(8);
-                    break;
-                case 4:
-                    column.setPreferredWidth(8);
-                    break;
-                case 5:
-                    column.setPreferredWidth(8);
-                    break;
-                case 6:
-                    column.setPreferredWidth(8);
-                    break;
-                case 7:
-                    column.setPreferredWidth(60);
-                    break;
-            }
-        }
-        for (int i = 0; i < 5; i++) {
-            column = primiTable.getColumnModel().getColumn(i);
-            switch (i) {
-                case 0:
-                    column.setPreferredWidth(10);
-                    break;
-                case 1:
-                    column.setPreferredWidth(200);
-                    break;
-                case 2:
-                    column.setPreferredWidth(10);
-                    break;
-                case 3:
-                    column.setPreferredWidth(10);
-                    break;
-                case 4:
-                    column.setPreferredWidth(10);
-                    break;
-            }
-        }
+        //// constraints
+//        constTable.getColumnModel().getColumn(0).setPreferredWidth(30);
+        constTable.getColumnModel().getColumn(1).setPreferredWidth(120);
+        constTable.getColumnModel().getColumn(2).setPreferredWidth(8);
+        constTable.getColumnModel().getColumn(3).setPreferredWidth(8);
+        constTable.getColumnModel().getColumn(4).setPreferredWidth(8);
+        constTable.getColumnModel().getColumn(5).setPreferredWidth(8);
+        constTable.getColumnModel().getColumn(6).setPreferredWidth(8);
+        constTable.getColumnModel().getColumn(7).setPreferredWidth(60);
+
+        //// geometric objects
+        primiTable.getColumnModel().getColumn(0).setPreferredWidth(10);
+        primiTable.getColumnModel().getColumn(1).setPreferredWidth(200);
+        primiTable.getColumnModel().getColumn(2).setPreferredWidth(10);
+        primiTable.getColumnModel().getColumn(3).setPreferredWidth(10);
+        primiTable.getColumnModel().getColumn(4).setPreferredWidth(10);
     }
 
     private void tableDeleteConstraint() {
@@ -214,34 +163,7 @@ public class MyTables extends JPanel {
         attachedCons.forEach(ModelRegistry::removeConstraint);
         selectedObjects.forEach(ModelRegistry::removeGeometric);
 
-
         Events.send(EventType.REBUILD_TABLES, null);
 //        ptm.fireTableRowsDeleted(i, i);
-    }
-
-
-    /**
-     * Klasa wenwetrzna odpowiedzialna za
-     * widok podczas usuwania elementu z tabeli
-     * wystarczy ze tabela implementuje interfejs
-     * {@link TableModelRemovable}
-     * @author root
-     */
-    class ContextMenuPopup extends JPopupMenu implements ActionListener {
-
-        private final ActionListener delegate;
-
-        ContextMenuPopup(ActionListener delegate) {
-            super();
-            this.delegate = delegate;
-            JMenuItem bt = new JMenuItem("DELETE");
-            bt.addActionListener(this);
-            this.add(bt);
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            delegate.actionPerformed(e);
-        }
     }
 }
