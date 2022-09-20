@@ -19,16 +19,13 @@ repositories {
     }*/
 }
 
-
 compileJava {
     targetCompatibility = 17
     sourceCompatibility = 17
 }
 
 dependencies {
-//    implementation group: 'colt', name: 'colt', version: '1.2.0'      // original 46 byte code -  java 1.2
-    implementation group: 'io.jenetics', name: 'colt', version: '2.0.0-SNAPSHOT'      // original 46 byte code -  java 1.2
-
+    implementation group: 'colt', name: 'colt-c', version: '2.0.0-SNAPSHOT'      // original 46 byte code -  java 1.2
     implementation group: 'gov.nist.math', name: 'jama', version: '1.0.3'
     implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre'
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'

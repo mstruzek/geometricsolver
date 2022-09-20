@@ -1,4 +1,4 @@
- package com.mstruzek.graphic;
+package com.mstruzek.graphic;
 
 import com.mstruzek.controller.ActiveKey;
 import com.mstruzek.controller.Controller;
@@ -39,8 +39,8 @@ public class FrameView extends JFrame {
     public static final int CONSOLE_OUTPUT_HEIGHT = 420;
 
 
-    public static final Color ON_CPU_COLOR = new Color(0,  181, 245);
-    public static final Color ON_GPU_COLOR = new Color(118,185, 0);
+    public static final Color ON_CPU_COLOR = new Color(0, 181, 245);
+    public static final Color ON_GPU_COLOR = new Color(118, 185, 0);
     public static final Color CONSTRAINT_BORDER_COLOR = Color.DARK_GRAY;
     public static final Color CONSTRAINT_PANEL_BACKGROUND_COLOR = new Color(244, 249, 192);
     public static final Color HELP_PANEL_BACKGROUND_COLOR = new Color(100, 255, 100, 50);
@@ -459,7 +459,8 @@ public class FrameView extends JFrame {
                                 break;
                             default:
                                 throw new Error("illegal solver action" + e.getActionCommand());
-                        };
+                        }
+                        ;
                         controller.setSolverType(solverType);
                     }
                 });
@@ -517,12 +518,6 @@ public class FrameView extends JFrame {
         // GLOWNY ROZKLAD TOOLBAR I OKNO
         pane.add(jToolBar, BorderLayout.NORTH);
         pane.add(main, BorderLayout.CENTER);
-
-        // KONIEC
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        pack();
-        setVisible(true);
     }
 
     private void runSolver(Controller controller) {
