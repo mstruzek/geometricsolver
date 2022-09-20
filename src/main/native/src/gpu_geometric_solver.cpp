@@ -66,8 +66,8 @@ void GPUGeometricSolver::registerConstraintType(int id, int jconstraintTypeId, i
 }
 
 void GPUGeometricSolver::initComputation(cudaError_t *error) {
-
-    long computationId = 0L;
+    auto epoch = std::chrono::system_clock::now().time_since_epoch();           
+    long computationId = std::chrono::duration_cast<std::chrono::milliseconds>(epoch).count();
 
     _computation =
         std::make_shared<GPUComputation>(computationId, stream, solverSystem, _computationContext, this);

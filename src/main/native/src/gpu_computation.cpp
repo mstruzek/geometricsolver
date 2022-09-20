@@ -34,11 +34,8 @@ namespace solver {
 GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::shared_ptr<GPUSolverSystem> solverSystem,
                                std::shared_ptr<GPUComputationContext> cc, GPUGeometricSolver *solver)
     : computationId(computationId), solverSystem(solverSystem), tensorOperation(stream), formatEncoder(stream), stream(stream), computationContext(cc) {
-
-    /// HOST_PAGEABLE
-
+    /// 
     /// cuda_pinned_memory !
-
     /// change owner of computation state
     points = std::move(solver->points);
     geometrics = std::move(solver->geometrics);
@@ -72,8 +69,9 @@ GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::sha
 
     /// setup all dependent structure for device , accSize or accOffset
     preInitializeData();
-
-    requestMemoryInformation();
+        
+    /// computation snapshot
+    printf("init computationId %d \n", computationId);
 
     /// prepera allocation and transfer structures onto device
     memcpyComputationToDevice();
@@ -132,10 +130,9 @@ void GPUComputation::preInitializeData() {
 #define NEXT_ROUND(v) (v)
 
 void GPUComputation::memcpyComputationToDevice() {
-
-    /// ============================================================
+    /// ------------------------------------------------------------
     ///         Host Computation with references to Device
-    /// ============================================================
+    /// ------------------------------------------------------------
 
     // const data in computation
     d_points = utility::dev_vector(points, stream);
@@ -1020,7 +1017,7 @@ void GPUComputation::fillPointCoordinateVector(double *stateVector) {
         stateVector[2 * i + 1] = p.y;
     }
     stopWatch.setStopTick();
-    fprintf(stdout, "fillin state vector , delta[ns]: %llu ", stopWatch.delta());
+    //fprintf(stdout, "state vector memcpy - [ns]: %llu \n", stopWatch.delta());
 }
 
 int GPUComputation::updateConstraintState(int constraintId[], double vecX[], double vecY[], int size) {
@@ -1064,6 +1061,7 @@ void GPUComputation::updatePointCoordinateVector(double stateVector[]) {
 
 GPUComputation::~GPUComputation() {
     /// at least one solver computation
+    printf("computationId %d removed !\n", computationId);
 }
 
 } // namespace solver

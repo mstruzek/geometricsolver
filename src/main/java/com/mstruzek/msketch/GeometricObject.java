@@ -2,6 +2,7 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.TensorDouble;
 
+import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -43,7 +44,6 @@ public abstract class GeometricObject {
 
     /**
      * Funkcja do wyliczenia macierzy sztywnosci elementu - macierz szytnowsci Fq
-     *
      * @param row  row offset
      * @param col  column offset
      * @param dest destination matrix
@@ -88,7 +88,6 @@ public abstract class GeometricObject {
 
     /**
      * Zwraca id figury
-     *
      * @return
      */
     public int getPrimitiveId() {
@@ -97,7 +96,6 @@ public abstract class GeometricObject {
 
     /**
      * Zwraca rodzaj figury
-     *
      * @return
      */
     public GeometricType getType() {
@@ -106,7 +104,6 @@ public abstract class GeometricObject {
 
     /**
      * Funkcja zwraca pelny jakobian sil dla wszystkich elementow geometrycznych
-     *
      * @param mt
      */
     public static void evaluateStiffnessMatrix(TensorDouble mt) {
@@ -119,7 +116,6 @@ public abstract class GeometricObject {
 
     /**
      * Funkcja zwraca wartosc sil w sprezynach dla wszystkich punktow
-     *
      * @param dest destination matrix
      */
     public static void evaluateForceVector(TensorDouble dest) {
@@ -132,6 +128,11 @@ public abstract class GeometricObject {
 
     public Constraint[] associatedConstraints() {
         return constraints;
+    }
+
+    public BoundingBox getBoundingBox() {
+        return Arrays.stream(getAllPoints()).reduce(new BoundingBox(), BoundingBox::fillInPoint,
+            BoundingBox::fillInBoundingBox);
     }
 
 }

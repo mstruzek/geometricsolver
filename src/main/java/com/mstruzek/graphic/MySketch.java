@@ -192,6 +192,15 @@ public class MySketch extends JPanel implements MouseInputListener {
         pointStore.add(p);
     }
 
+    void repaintLater() {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                MySketch.this.repaint();
+            }
+        });
+    }
+
     @Override
     public void paint(Graphics g) {
         //promien punktu

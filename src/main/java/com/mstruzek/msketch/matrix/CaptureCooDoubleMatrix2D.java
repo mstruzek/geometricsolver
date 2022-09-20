@@ -1,20 +1,76 @@
 package com.mstruzek.msketch.matrix;
 
+import cern.colt.function.IntIntDoubleFunction;
 import cern.colt.matrix.impl.SparseDoubleMatrix2D;
-import com.mstruzek.msketch.Vector;
 import com.mstruzek.msketch.solver.StateReporter;
 
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.TreeMap;
 
-
 /**
  * Capture values in COO format into SoA and report to stdout.
  */
-public class CaptureCooDoubleMatrix2D implements TensorDouble {
+public class CaptureCooDoubleMatrix2D {
 
-    private int idx = 0;
+    private TreeMap<TensorCoo, Double> tensorCooValue = new TreeMap<>();
+
+    final int width;
+
+    public CaptureCooDoubleMatrix2D(int width) {
+        this.width = width;
+    }
+
+    public void forEach(int r, int c, TensorDouble tensor) {
+        SparseDoubleMatrix2D unwrap = tensor.unwrap(SparseDoubleMatrix2D.class);
+        if (unwrap == null)
+            throw new IllegalStateException("SparseDoubleMatrix2D implementation required ! ");
+
+        unwrap.forEachNonZero(new IntIntDoubleFunction() {
+            @Override
+            public double apply(int i, int i1, double v) {
+                TensorCoo key = new TensorCoo(r + i, c + i1);
+                if (tensorCooValue.get(key) != null) throw new IllegalStateException("key exists ! " + key);
+                tensorCooValue.put(key, v);
+                return v;
+            }
+        });
+    }
+
+    /**
+     * Treat each element of a tensor as transposed matrix.
+     * @param r output tensor row offset
+     * @param c output tensor column offset
+     * @param tensor input tensor
+     */
+    public void forEachTranspose(int r, int c, TensorDouble tensor) {
+        SparseDoubleMatrix2D unwrap = tensor.unwrap(SparseDoubleMatrix2D.class);
+        if (unwrap == null)
+            throw new IllegalStateException("SparseDoubleMatrix2D implementation required ! ");
+
+        unwrap.forEachNonZero(new IntIntDoubleFunction() {
+            @Override
+            public double apply(int i, int i1, double v) {
+                TensorCoo key = new TensorCoo(r + i1, c + i);
+                if (tensorCooValue.get(key) != null) throw new IllegalStateException("key exists ! " + key);
+                tensorCooValue.put(key, v);
+                return v;
+            }
+        });
+    }
+
+
+
+
+    public void log(StateReporter reporter) {
+        reporter.writelnf("------ COO format* , ");
+        int i = 0;
+        for (var entry : tensorCooValue.entrySet()) {
+            reporter.writelnf("%3d , %d  %d - %7.3f ", i, entry.getKey().i, entry.getKey().i1, entry.getValue());
+            i++;
+        }
+        reporter.writelnf("------");
+    }
 
     private class TensorCoo implements Comparable<TensorCoo> {
         public final int i;
@@ -44,144 +100,9 @@ public class CaptureCooDoubleMatrix2D implements TensorDouble {
 
         @Override
         public int compareTo(TensorCoo other) {
-            return Comparator.<TensorCoo>comparingInt(coo -> coo.i * delegate.width() + coo.i1)
+            return Comparator.<TensorCoo>comparingInt(coo -> coo.i * width + coo.i1)
                 .compare(this, other);
         }
     }
 
-    private TreeMap<TensorCoo, Double> tensorCooValue = new TreeMap<>();
-
-    TensorDouble delegate;
-
-    public CaptureCooDoubleMatrix2D(TensorDouble mt) {
-        super();
-        this.delegate = mt;
-        this.idx = 0;
-    }
-
-    public void log(StateReporter reporter) {
-        reporter.writelnf("------ COO format , nnz ( %d )  [ %d , %d ]", idx, this.delegate.width(), this.delegate.height());
-        int i = 0;
-        for (var entry : tensorCooValue.entrySet()) {
-            reporter.writelnf("%3d , %d  %d - %7.3f ",i,  entry.getKey().i, entry.getKey().i1, entry.getValue());
-            i++;
-        }
-        reporter.writelnf("------");
-    }
-
-
-    @Override
-    public int width() {
-        return this.delegate.width();
-    }
-
-    @Override
-    public int height() {
-        return this.delegate.height();
-    }
-
-    @Override
-    public double getQuick(int i, int i1) {
-        throw new IllegalStateException("only tensor A or view");
-    }
-
-    @Override
-    public TensorDouble plus(TensorDouble rhs) {
-        throw new IllegalStateException("only tensor A or view");
-    }
-
-    @Override
-    public TensorDouble mulitply(double c) {
-        throw new IllegalStateException("only tensor A or view");
-    }
-
-    @Override
-    public TensorDouble multiplyC(double c) {
-        throw new IllegalStateException("only tensor A or view");
-    }
-
-    @Override
-    public TensorDouble multiply(TensorDouble rhs) {
-        throw new IllegalStateException("only tensor A or view");
-    }
-
-    @Override
-    public void setQuick(int i, int i1, double v) {
-        throw new IllegalStateException("only tensor A or view");
-    }
-
-    @Override
-    public void plus(int r, int c, double value) {
-        throw new IllegalStateException("only tensor A or view");
-    }
-
-    @Override
-    public TensorDouble viewSpan(int row, int column, int height, int width) {
-        throw new IllegalStateException("only tensor A or view");
-    }
-
-    @Override
-    public TensorDouble setSubMatrix(int offsetRow, int offsetCol, TensorDouble mt) {
-        SparseDoubleMatrix2D unwrap = mt.unwrap(SparseDoubleMatrix2D.class);
-        if (unwrap == null) {
-            throw new IllegalStateException("expected sparse double tensor !");
-        }
-        unwrap.forEachNonZero((i, i1, v) -> {
-            int row = offsetRow + i;
-            int column = offsetCol + i1;
-            Double g = tensorCooValue.get(new TensorCoo(row, column));
-            if(g != null) {
-                throw new Error("---");
-            }
-            tensorCooValue.put(new TensorCoo(row, column), v);
-            return v;
-        });
-        this.delegate.setSubMatrix(offsetRow, offsetCol, mt);
-        return this;
-    }
-
-    @Override
-    public TensorDouble plusSubMatrix(int offsetRow, int offsetCol, TensorDouble mt) {
-        SparseDoubleMatrix2D unwrap = mt.unwrap(SparseDoubleMatrix2D.class);
-        if (unwrap == null) {
-            throw new IllegalStateException("expected sparse double tensor !");
-        }
-        unwrap.forEachNonZero((i, i1, v) -> {
-            TensorCoo coo = new TensorCoo(offsetRow + i, offsetCol + i1);
-            Double value = tensorCooValue.get(coo);
-            if (value == null) {
-                value = v;
-            }
-            tensorCooValue.put(coo, value);
-            return v;
-        });
-        this.delegate.plusSubMatrix(offsetRow, offsetCol, mt);
-        return this;
-    }
-
-    @Override
-    public TensorDouble setVector(int r, int c, Vector vector) {
-        throw new IllegalStateException("only tensor A or view");
-    }
-
-    @Override
-    public TensorDouble transpose() {
-        throw new IllegalStateException("only tensor A or view");
-    }
-
-    @Override
-    public TensorDouble reset(double value) {
-        this.idx = 0;
-        tensorCooValue.clear();
-        this.delegate.reset(value);
-        return this;
-    }
-
-    @Override
-    public <T> T unwrap(Class<T> clazz) {
-        if (CaptureCooDoubleMatrix2D.class.isAssignableFrom(clazz)) {
-            return (T) this;
-        }
-        return this.delegate.unwrap(clazz);
-    }
 }

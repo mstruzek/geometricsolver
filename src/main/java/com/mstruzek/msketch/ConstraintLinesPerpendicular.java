@@ -72,14 +72,12 @@ public class ConstraintLinesPerpendicular extends Constraint {
 
             /// K
             j = po.get(k_id);
-
             mt.setVector(0, j * 2, MN);
             /// L
             j = po.get(l_id);
             mt.setVector(0, j * 2, MN.product(-1.0));
             /// M
             j = po.get(m_id);
-
             mt.setVector(0, j * 2, KL);
             /// N
             j = po.get(n_id);

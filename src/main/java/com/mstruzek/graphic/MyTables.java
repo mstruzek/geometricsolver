@@ -16,6 +16,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.util.HashSet;
+import java.util.stream.Stream;
 
 import static com.mstruzek.controller.EventType.CONSTRAINT_TABLE_INSERT;
 import static com.mstruzek.controller.EventType.PARAMETER_TABLE_INSERT;
@@ -220,12 +222,27 @@ public class MyTables extends JPanel {
             }
             ModelRegistry.removeConstraint(constraint.getConstraintId());
         }
+
+        // usun wiezy zalezne odlaczamy wszelkie wiezy z modelu
+        HashSet<Integer> removeConstraints = new HashSet<>();
+        for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
+            if (!constraint.isPersistent()) continue;
+            boolean isBoundWith = Stream.of(primitive.getP1(),
+                primitive.getP2(), primitive.getP3()).anyMatch(constraint::isBoundWith);
+            if (isBoundWith) {
+                removeConstraints.add(constraint.getConstraintId());
+            }
+        }
+        removeConstraints.forEach(ModelRegistry::removeConstraint);
+
         //usun punkty
         for (int pi : primitive.getAllPointsId()) {
             ModelRegistry.removePoint(pi);
         }
         ModelRegistry.removePrimitives(id);
-        ptm.fireTableRowsDeleted(i, i);
+
+        Events.send(EventType.REBUILD_TABLES, null);
+//        ptm.fireTableRowsDeleted(i, i);
     }
 
 
@@ -234,7 +251,6 @@ public class MyTables extends JPanel {
      * widok podczas usuwania elementu z tabeli
      * wystarczy ze tabela implementuje interfejs
      * {@link TableModelRemovable}
-     *
      * @author root
      */
     class ContextMenuPopup extends JPopupMenu implements ActionListener {

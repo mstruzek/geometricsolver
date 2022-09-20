@@ -33,13 +33,10 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
     }
 
     @Override
-    public TensorDouble makeMatrix2D(int rowSize, int colSize, double initValue, boolean capture) {
+    public TensorDouble makeMatrix2D(int rowSize, int colSize, double initValue) {
         TensorDouble matrix2D = new SparseDoubleTensor2DImpl(rowSize, colSize);
         if (initValue != 0.0) {
             matrix2D.reset(initValue);
-        }
-        if(capture) {
-            matrix2D = new CaptureCooDoubleMatrix2D(matrix2D);
         }
         return matrix2D;
     }
@@ -352,7 +349,7 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
                 double a11 = smd.sm[3];
                 viewPart.setQuick(0, 0, a00);
                 viewPart.setQuick(0, 1, a01);
-                  viewPart.setQuick(1, 0, a10);
+                viewPart.setQuick(1, 0, a10);
                 viewPart.setQuick(1, 1, a11);
                 return this;
             }
@@ -363,7 +360,6 @@ final public class ColtMatrixCreator extends MatrixDoubleCreator {
                 viewPart.assign(doubleMatrix2D);
                 return this;
             }
-
 
             throw new Error("not implemented");
         }

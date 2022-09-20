@@ -2,6 +2,8 @@ package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.TensorDouble;
 
+import java.util.Set;
+
 /*
  * Wiez jedowymairowy,iloczyn skalarny,
  */
@@ -187,4 +189,11 @@ public abstract class Constraint implements ConstraintInterface {
         return persistent;
     }
 
+    public boolean isBoundWith(int id) {
+        if(getK() != -1 && getK() == id) return true;
+        if(getL() != -1 && getL() == id) return true;
+        if(getM() != -1 && getM() == id) return true;
+        if(getN() != -1 && getN() == id) return true;
+        return false;
+    }
 }

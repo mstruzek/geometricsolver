@@ -1,5 +1,6 @@
 package com.mstruzek.msketch.solver;
 
+import cern.colt.map.OpenIntDoubleHashMap;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.linalg.LUDecompositionQuick;
@@ -58,7 +59,6 @@ public class GeometricSolverImpl implements GeometricSolver {
         MatrixDoubleCreator.setInstance(ColtMatrixCreator.INSTANCE);  // [ #[ #[ HEAVY ]# ]# ]
 
         /// tolerance for zero elements !
-        DoubleMatrix2D.TOLERANCE = true;
     }
 
 
@@ -135,10 +135,10 @@ public class GeometricSolverImpl implements GeometricSolver {
         /**
          * Executor - Scheduler - A scheduler , B scheduler - ForkJoinPoll
          */
+        DoubleMatrix2D.SET_QUICK_ZERO_TOLERANCE = true;
+        boolean NON_ZERO_CAPTURE = false;
+        A = TensorDouble.matrix2D(dimension, dimension, 0.0);
 
-        boolean capture = true;
-
-        A = TensorDouble.matrix2D(dimension, dimension, 0.0, capture);
 
         Fq = TensorDouble.matrix2D(size, size, 0.0);
 
@@ -203,10 +203,6 @@ public class GeometricSolverImpl implements GeometricSolver {
                 /// JACOBIAN
                 Constraint.getFullJacobian(Wq);                     /// Jq = d(Fi)/dq
 
-                if (StateReporter.isDebugEnabled()) {
-//                reporter.writeln(MatrixDouble.writeToString(Wq));
-                }
-
                 Hs.reset(0.0);
 
                 Constraint.getFullHessian(Hs, SV, size);
@@ -219,9 +215,15 @@ public class GeometricSolverImpl implements GeometricSolver {
 
                 A.setSubMatrix(size, size, Mcf);
 
-                CaptureCooDoubleMatrix2D cooA = A.unwrap(CaptureCooDoubleMatrix2D.class);
-                if (cooA != null) {
-                    cooA.log(StateReporter.getInstance());
+                if(NON_ZERO_CAPTURE) {
+                    CaptureCooDoubleMatrix2D captureNonZero = new CaptureCooDoubleMatrix2D(dimension);
+                    captureNonZero.forEach(0,0, Fq);
+                    captureNonZero.forEach(0,0, Hs); // GPU hessian
+                    captureNonZero.forEach(size, 0, Wq);
+                    captureNonZero.forEachTranspose(0, size, Wq);
+                    captureNonZero.forEach(size, size, Mcf);
+                    // -------------- stdout -----------------
+                    captureNonZero.log(StateReporter.getInstance());
                 }
 
                 DoubleMatrix2D tensorA = MatrixDoubleUtility.toSparse(A);

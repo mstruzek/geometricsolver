@@ -44,7 +44,7 @@ public interface ControllerInterface {
     /**
      * Wprowadza zaklocenia na punktach
      */
-    void relaxControlPoints(double coefficient);
+    void relaxControlPoints();
 
     /**
      * Dodaj wiez do modelu

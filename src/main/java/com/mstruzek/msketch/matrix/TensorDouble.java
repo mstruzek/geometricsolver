@@ -155,7 +155,6 @@ public interface TensorDouble {
      */
     <T> T unwrap(Class<T> clazz);
 
-
     default void assertEqualDimensions(TensorDouble left, TensorDouble right) {
         if (left.width() != right.width() || left.height() != right.height()) {
             throw new Error("Matrices must be of the same dimension");
@@ -197,10 +196,7 @@ public interface TensorDouble {
     }
 
     static TensorDouble matrix2D(int rowSize, int colSize, double initValue) {
-        return MatrixDoubleCreator.getInstance().makeMatrix2D(rowSize, colSize, initValue, false);
-    }
-    static TensorDouble matrix2D(int rowSize, int colSize, double initValue, boolean capture) {
-        return MatrixDoubleCreator.getInstance().makeMatrix2D(rowSize, colSize, initValue, capture);
+        return MatrixDoubleCreator.getInstance().makeMatrix2D(rowSize, colSize, initValue);
     }
 
     /**
@@ -259,15 +255,16 @@ public interface TensorDouble {
      * @return array string
      */
     static String toStringData(String format, TensorDouble tensorDouble) {
+        final Locale lcl = Locale.ROOT;
         StringBuffer str = new StringBuffer();
         for (int i = 0; i < tensorDouble.height(); i++) {
-            String first = String.format(Locale.ROOT, format, tensorDouble.getQuick(i, 0));
+            String first = String.format(lcl, format, tensorDouble.getQuick(i, 0));
             str.append(first);
             for (int j = 1; j < tensorDouble.width(); j++) {
-                String cell = String.format(Locale.ROOT, "," + format, tensorDouble.getQuick(i, j));
+                String cell = String.format(lcl, "," + format, tensorDouble.getQuick(i, j));
                 str.append(cell);
             }
-            if (i < tensorDouble.width() - 1 || tensorDouble.width() == 1) str.append("\n");
+            str.append("\n");
         }
         return str.toString();
     }

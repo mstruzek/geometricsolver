@@ -19,17 +19,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Objects;
-import java.util.Random;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static com.mstruzek.graphic.Property.*;
 
 public class FrameView extends JFrame {
 
-    private static final long serialVersionUID = 1L;
     public static final int L_WIDTH = 920;
     public static final int R_HEIGHT = 1400;
     public static final int L_HEIGHT = 1400;
@@ -37,7 +32,6 @@ public class FrameView extends JFrame {
 
     public static final int CONSOLE_WIDTH = 920;
     public static final int CONSOLE_OUTPUT_HEIGHT = 420;
-
 
     public static final Color ON_CPU_COLOR = new Color(0, 181, 245);
     public static final Color ON_GPU_COLOR = new Color(118, 185, 0);
@@ -51,9 +45,7 @@ public class FrameView extends JFrame {
     public static final int SOLVER_PANEL_HEIGHT = 140;
     public static final int SOLVER_PANEL_WIDTH = 920;
 
-    /*
-     * Toolbar Actions
-     */
+    ///  Toolbar Actions
     public static final String COMMAND_LOAD = "Load";
     public static final String COMMAND_STORE = "Store";
     public static final String COMMAND_CLEAR = "Clear";
@@ -64,11 +56,19 @@ public class FrameView extends JFrame {
     public static final String COMMAND_DRAW_POINT = "Draw Point";
     public static final String COMMAND_REFRESH = "REFRESH";
     public static final String COMMAND_SOLVE = "SOLVE";
-    public static final String COMMAND_REPOS = "Repos";
+    public static final String COMMAND_REPOZ = "Repoz";
     public static final String COMMAND_RELAX = "Relax";
     public static final String COMMAND_CTRL = "CTRL";
     public static final String COMMAND_CPU = "CPU";
     public static final String COMMAND_GPU = "GPU";
+    public static final String DEFAULT_LOAD_DIRECTORY = "e:\\source\\gsketcher\\data\\";
+
+    /// acceptable model extension
+    public static final String FILE_EXTENSION_GCM = "gcs";
+    public static final String COMMAND_LOAD_MODEL_DESCRIPTION = "Load  model from ... ";
+    public static final String COMMAND_SOLVE_DESCRIPTION = "Run selected solver";
+    public static final String COMMAND_REPOZ_DESCRIPTION = "Reposition constraint";
+    public static final String COMMAND_RELAX_DESCRIPTION = "Relax geometric points and reposition !";
 
 
     private Container pane = getContentPane();
@@ -110,6 +110,9 @@ public class FrameView extends JFrame {
 
     final MySketch ms;
 
+    /// Single ordered executor
+    final ExecutorService controllerEventQueue = Executors.newSingleThreadExecutor();
+
     public FrameView(Controller controller) {
         super(FRAME_TITLE);
         this.controller = controller;
@@ -149,16 +152,6 @@ public class FrameView extends JFrame {
                 }
 
                 super.keyPressed(e);
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-
-                if (e.isControlDown() && e.getKeyCode() == 88) { /// key combination :  [ CTRL + X ]
-                    /// run solver round
-                    runSolver(controller);
-                }
-                super.keyReleased(e);
             }
         });
 
@@ -214,8 +207,7 @@ public class FrameView extends JFrame {
 
         left.add(panPoints);
 
-        // Dodawanie wiezow
-
+        /// Dodawanie wiezow
         JPanel constraintPanel = new JPanel();
         GroupLayout groupLayout = new GroupLayout(constraintPanel);
         constraintPanel.setLayout(groupLayout);
@@ -249,17 +241,12 @@ public class FrameView extends JFrame {
 
         combo.setSelectedItem(ConstraintType.FixPoint);
 
-        JButton constraintButton = new JButton("Add Constraint");
-        constraintButton.addActionListener(new ActionListener() {
-
+        JButton constraintButton = ActionBuilder.build("Add Constraint", null, "Add constraint into model", KeyEvent.VK_C, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ConstraintType constraintType = (ConstraintType) combo.getSelectedItem();
 
-                if (constraintType == null) {
-                    throw new Error("constraint type invalid !");
-                }
-                FrameView.this.controller.addConstraint(constraintType,
+                controller.addConstraint(constraintType,
                     ms.getPointK(),
                     ms.getPointL(),
                     ms.getPointM(),
@@ -269,7 +256,7 @@ public class FrameView extends JFrame {
                 ms.clearAll();
                 requestFocus();
             }
-        });
+        }, controllerEventQueue);
 
         /*
          * Constraint View default layout
@@ -318,7 +305,19 @@ public class FrameView extends JFrame {
 
         // ToolBar
         JToolBar jToolBar = new JToolBar();
-        JButton dload = new JButton(COMMAND_LOAD);
+        JButton dload = ActionBuilder.build(COMMAND_LOAD, null, COMMAND_LOAD_MODEL_DESCRIPTION, KeyEvent.VK_L, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser jFileChooser = new JFileChooser();
+                jFileChooser.setCurrentDirectory(new File(DEFAULT_LOAD_DIRECTORY));
+                jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", FILE_EXTENSION_GCM));
+                int response = jFileChooser.showOpenDialog(null);
+                if (response == JFileChooser.APPROVE_OPTION) {
+                    controller.readModelFrom(jFileChooser.getSelectedFile());
+                }
+            }
+        }, controllerEventQueue);
+
         JButton dstore = new JButton(COMMAND_STORE);
         JButton dclear = new JButton(COMMAND_CLEAR);
         JButton dnorm = new JButton(COMMAND_NORMAL1);
@@ -327,9 +326,33 @@ public class FrameView extends JFrame {
         JButton darc = new JButton(COMMAND_DRAW_ARC);
         JButton dpoint = new JButton(COMMAND_DRAW_POINT);
         JButton drefresh = new JButton(COMMAND_REFRESH);
-        JButton dsolve = new JButton(COMMAND_SOLVE);
-        JButton dreposition = new JButton(COMMAND_REPOS);
-        JButton drelaxe = new JButton(COMMAND_RELAX);
+
+        final JButton dsolve = ActionBuilder.build(COMMAND_SOLVE, null, COMMAND_SOLVE_DESCRIPTION, KeyEvent.VK_S, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                runSolver(controller);
+            }
+        }, controllerEventQueue);
+
+        final JButton dreposition = ActionBuilder.build(COMMAND_REPOZ, null, COMMAND_REPOZ_DESCRIPTION, KeyEvent.VK_Z, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                controller.evaluateGuidePoints();
+                ms.refreshContainers();
+                ms.repaintLater();
+            }
+        }, controllerEventQueue);
+
+        final JButton drelaxe = ActionBuilder.build(COMMAND_RELAX, null, COMMAND_RELAX_DESCRIPTION, KeyEvent.VK_X, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                controller.relaxControlPoints();
+                controller.evaluateGuidePoints();
+                ms.refreshContainers();
+                ms.repaintLater();
+            }
+        }, controllerEventQueue);
+
         JButton dctrl = new JButton(COMMAND_CTRL);
 
         JRadioButton onCPU = new JRadioButton("CPU colt", true);
@@ -343,25 +366,12 @@ public class FrameView extends JFrame {
         dsolve.setBackground(Color.GREEN);
         dctrl.setBackground(Color.CYAN);
 
-        dload.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser jFileChooser = new JFileChooser();
-                jFileChooser.setCurrentDirectory(new File("e:\\source\\gsketcher\\data\\"));
-                jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", "gcm"));
-                int response = jFileChooser.showOpenDialog(null);
-                if (response == JFileChooser.APPROVE_OPTION) {
-                    controller.readModelFrom(jFileChooser.getSelectedFile());
-                }
-            }
-        });
-
         dstore.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JFileChooser jFileChooser = new JFileChooser();
-                jFileChooser.setCurrentDirectory(new File("e:\\source\\gsketcher\\data\\"));
-                jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", "gcm"));
+                jFileChooser.setCurrentDirectory(new File(DEFAULT_LOAD_DIRECTORY));
+                jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", FILE_EXTENSION_GCM));
                 int response = jFileChooser.showSaveDialog(null);
                 if (response == JFileChooser.APPROVE_OPTION) {
                     controller.writeModelInto(jFileChooser.getSelectedFile());
@@ -373,7 +383,7 @@ public class FrameView extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 ModelRegistry.removeObjectsFromModel();
                 ms.refreshContainers();
-                ms.repaint();
+                ms.repaintLater();
                 clearTextArea();
                 Events.send(EventType.REBUILD_TABLES, null);
             }
@@ -389,36 +399,7 @@ public class FrameView extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ms.refreshContainers();
-                ms.repaint();
-            }
-        });
-
-        dsolve.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                runSolver(controller);
-            }
-        });
-
-        dreposition.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                controller.evaluateGuidePoints();
-                ms.refreshContainers();
-                ms.repaint();
-            }
-        });
-
-        drelaxe.addActionListener(new ActionListener() {
-
-            private final Random random = new Random();
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                double scale = random.nextDouble() / 7;
-                controller.relaxControlPoints(scale);
-                ms.refreshContainers();
-                ms.repaint();
+                ms.repaintLater();
             }
         });
 
@@ -426,13 +407,13 @@ public class FrameView extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ms.setControlGuidelines(!ms.isControlGuidelines());
-                ms.repaint();
+                ms.repaintLater();
             }
         });
 
         Events.addListener(EventType.REFRESH_N_REPAINT, (eventType, arguments) -> {
             ms.refreshContainers();
-            ms.repaint();
+            ms.repaintLater();
         });
 
         Events.addListener(EventType.CONTROLLER_ERROR, (eventType, arguments) -> {
@@ -458,7 +439,7 @@ public class FrameView extends JFrame {
                                 solverType = GeometricSolverType.GPU_SOLVER;
                                 break;
                             default:
-                                throw new Error("illegal solver action" + e.getActionCommand());
+                                throw new Error("illegal solveAction action" + e.getActionCommand());
                         }
                         ;
                         controller.setSolverType(solverType);
@@ -521,16 +502,9 @@ public class FrameView extends JFrame {
     }
 
     private void runSolver(Controller controller) {
-        CompletableFuture.runAsync(controller::solveSystem)
-            .thenRunAsync(() -> {
-                ms.refreshContainers();
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        ms.repaint();
-                    }
-                });
-            });
+        controller.solveSystem();
+        ms.refreshContainers();
+        ms.repaintLater();
     }
 
     private void clearTextArea() {

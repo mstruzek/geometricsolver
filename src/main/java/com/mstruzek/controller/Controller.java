@@ -6,6 +6,7 @@ import com.mstruzek.msketch.solver.GeometricSolverType;
 import com.mstruzek.msketch.solver.SolverStat;
 
 import java.io.File;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -173,8 +174,8 @@ public class Controller implements ControllerInterface {
     }
 
     @Override
-    public void relaxControlPoints(double coefficient) {
-        Model.relaxControlPoints(coefficient);
+    public void relaxControlPoints() {
+        Model.relaxControlPoints();
     }
 
     public static void main(String[] args) {

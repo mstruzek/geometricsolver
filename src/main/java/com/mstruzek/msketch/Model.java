@@ -7,16 +7,18 @@ import com.mstruzek.msketch.solver.GeometricSolverType;
 import com.mstruzek.msketch.solver.SolverStat;
 import com.mstruzek.msketch.solver.StateReporter;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import static com.mstruzek.controller.EventType.*;
 
 /**
  * Model w ktorej przechowujemy caly widok matematyczny naszego szkicownika
- *
  * @author root
  */
 public final class Model {
+
+    public static final double RELEXATION_PERCENTAGE = 0.07;
 
     private static GeometricSolver geometricSolver;
 
@@ -25,18 +27,18 @@ public final class Model {
 
     public static void shutdown() {
 
-        if(geometricSolver != null) {
+        if (geometricSolver != null) {
             geometricSolver.destroyDriver();
         }
     }
 
 
     public static void solveSystem(GeometricSolverType solverType) {
-        if(geometricSolver != null && geometricSolver.solverType() != solverType) {
+        if (geometricSolver != null && geometricSolver.solverType() != solverType) {
             geometricSolver.destroyDriver();
             geometricSolver = null;
         }
-        if(geometricSolver == null) {
+        if (geometricSolver == null) {
             geometricSolver = GeometricSolver.createInstance(solverType);
             geometricSolver.initializeDriver();
         }
@@ -194,15 +196,24 @@ public final class Model {
         ModelRegistry.dbPrimitives().values().forEach(GeometricObject::evaluateGuidePoints);
     }
 
-    public static void relaxControlPoints(double scale) {
+    private static final Random random = new Random();
+
+    public static void relaxControlPoints() {
+        BoundingBox graphBoundingBox = ModelRegistry.dbPrimitives.values().stream().flatMap(geometricObject -> Arrays.stream(geometricObject.getAllPoints()))
+            .reduce(new BoundingBox(),
+                BoundingBox::fillInPoint,
+                BoundingBox::fillInBoundingBox);
+
+        final double stage =  graphBoundingBox.length();
+
         for (GeometricObject geometricObject : ModelRegistry.dbPrimitives.values()) {
-            relaxPoint(geometricObject.getP1(), scale);
-            relaxPoint(geometricObject.getP1(), scale);
-            relaxPoint(geometricObject.getP1(), scale);
+            double length = geometricObject.getBoundingBox().length();
+            double scale  = length/stage * RELEXATION_PERCENTAGE;
+            relaxPoint(geometricObject.getP1(), scale );
+            relaxPoint(geometricObject.getP1(), scale );
+            relaxPoint(geometricObject.getP1(), scale );
         }
     }
-
-    private static Random random = new Random();
 
     private static void relaxPoint(int pID, double scale) {
         if (pID == -1) return;

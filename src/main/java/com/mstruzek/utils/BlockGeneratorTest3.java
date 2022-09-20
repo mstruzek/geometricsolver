@@ -6,8 +6,8 @@ import static java.lang.System.out;
 
 public class BlockGeneratorTest3 {
 
-    static final long N = 3;
-    static final long P = 5;
+    static final long N = 2;
+    static final long P = 2;
 
     static final double WIDTH = 50.0;
     static final double HEIGHT = 50.0;
