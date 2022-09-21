@@ -45,7 +45,7 @@ public class GeometricSolverImpl implements GeometricSolver {
 
     @Override
     public void setup() {
-        StateReporter.DebugEnabled = false;
+        StateReporter.DebugEnabled = true;
 
         reporter = StateReporter.getInstance();
 
@@ -132,7 +132,7 @@ public class GeometricSolverImpl implements GeometricSolver {
          * Executor - Scheduler - A scheduler , B scheduler - ForkJoinPoll
          */
         DoubleMatrix2D.SET_QUICK_ZERO_TOLERANCE = true;     /// setQuick - tolerance
-        final boolean NON_ZERO_CAPTURE = false;
+        final boolean NON_ZERO_CAPTURE = true;
 
         A = TensorDouble.matrix2D(dimension, dimension, 0.0);
 
@@ -196,7 +196,7 @@ public class GeometricSolverImpl implements GeometricSolver {
                 A.reset(0.0);
 
                 /// JACOBIAN
-                Constraint.getFullJacobian(Wq);                     /// Jq = d(Fi)/dq
+                Constraint.getFullJacobian(size, Wq);                     /// Jq = d(Fi)/dq
                 TensorDouble WqT = Wq.transposeC();                 /// JqT  - transposedC - copy effective computation
                 //WqT = Wq.transpose();                             /// JqT  - transposedC -
 
@@ -222,9 +222,9 @@ public class GeometricSolverImpl implements GeometricSolver {
                     captureNonZero.forEach(0, size, WqT);
                     captureNonZero.forEach(size, size, Mcf);
                     // -------------- stdout -----------------
-                    if (StateReporter.isDebugEnabled()) {
+//                    if (StateReporter.isDebugEnabled()) {
                         captureNonZero.log(StateReporter.getInstance());
-                    }
+//                    }
                 }
 
                 DoubleMatrix2D tensorA = MatrixDoubleUtility.toSparse(A);

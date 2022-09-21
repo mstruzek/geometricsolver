@@ -49,20 +49,20 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
         reporter.writeln(" [ GPU ] driver connection success");
     }
 
+    /**
+     * QR decomposition - solver convergence  , STABILITY!
+     */
     @Override
     public void setup() {
 //       JNIDebugParameters.DEBUG.setBooleanProperty(false);
 
         JNIDebugParameters.STREAM_CAPTURING.setBooleanProperty(false);
 
-        JNIDebugParameters.DEBUG_CSR_FORMAT.setBooleanProperty(false);
-
+        JNIDebugParameters.DEBUG_CSR_FORMAT.setBooleanProperty(true);
         /// OK :
         JNIDebugParameters.COMPUTATION_MODE.setLongProperty(COMPACT_MODE);
 
-        // ERROR: zawiesza JAVE
         // JNIDebugParameters.COMPUTATION_MODE.setLongProperty(DIRECT_MODE);
-
 
         JNIDebugParameters.SOLVER_MODE.setLongProperty(SolverMode.QR_SPARSE);
 

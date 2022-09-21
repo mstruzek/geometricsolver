@@ -1,8 +1,9 @@
 package com.mstruzek.msketch;
 
 import com.mstruzek.msketch.matrix.TensorDouble;
+import com.mstruzek.msketch.solver.StateReporter;
 
-import java.util.Set;
+import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 
 /*
  * Wiez jedowymairowy,iloczyn skalarny,
@@ -101,13 +102,16 @@ public abstract class Constraint implements ConstraintInterface {
 
     /**
      * Funkcja zwraca Jakobian ze wszystkich wiezow
+     * @param size
      * @param mt
      * @return macierz ,jakobian wiezow d(Wiezy)/dq
      */
-    public static void getFullJacobian(TensorDouble mt) {
+    public static void getFullJacobian(int size, TensorDouble mt) {
         int rowPos = 0;
-
         for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
+            if (StateReporter.isDebugEnabled()) {
+                StateReporter.getInstance().writelnf(constraint.descriptor(size+ rowPos));
+            }
             constraint.getJacobian(mt.viewSpan(rowPos, 0, constraint.size(), mt.width()));
             rowPos += constraint.size();
         }
@@ -195,5 +199,9 @@ public abstract class Constraint implements ConstraintInterface {
         if(getM() != -1 && getM() == pointId) return true;
         if(getN() != -1 && getN() == pointId) return true;
         return false;
+    }
+
+    public String descriptor(int rowId) {
+        return String.format("row %4d  consId % 3d  type | %-20s |  k % 3d  l % 3d  m % 3d  n % 3d  pId % 3d ", rowId, getConstraintId(), getConstraintType(), getK(), getL(), getM(), getN(), getParameter());
     }
 }

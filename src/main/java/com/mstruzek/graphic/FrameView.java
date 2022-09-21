@@ -18,10 +18,12 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URL;
 import java.util.Objects;
 import java.util.concurrent.*;
 
 import static com.mstruzek.graphic.Property.*;
+import static javax.swing.SwingConstants.VERTICAL;
 
 public class FrameView extends JFrame {
 
@@ -166,7 +168,7 @@ public class FrameView extends JFrame {
         left.setBackground(FRAME_BACKGROUND_COLOR);
         right.setBackground(FRAME_BACKGROUND_COLOR);
 
-        ///  left.setBorder(BorderFactory.createLineBorder(Color.CYAN));
+        /// left.setBorder(BorderFactory.createLineBorder(Color.CYAN));
         /// right.setBorder(BorderFactory.createLineBorder(Color.CYAN));
         main.add(left);
         main.add(right);
@@ -221,13 +223,17 @@ public class FrameView extends JFrame {
 
         /// -----------------------------------------------------------------
         /// Toolbar i srodkowe okno
-        JToolBar jToolBar = setupdActionToolBar(controller);
+        JToolBar actionToolbar = setupdActionToolBar(controller);
+
+        JToolBar constraintToolbar = setupConstraintToolBar(controller);
 
         /// -----------------------------------------------------------------
         ///
-        pane.add(jToolBar, BorderLayout.NORTH);
+        pane.add(actionToolbar, BorderLayout.NORTH);
+        pane.add(constraintToolbar, BorderLayout.WEST);
         pane.add(main, BorderLayout.CENTER);
     }
+
 
     private JPanel setupSketchInfoPanel() {
         JPanel panPoints = new JPanel();
@@ -319,6 +325,8 @@ public class FrameView extends JFrame {
         );
         return constraintPanel;
     }
+
+
 
     private JToolBar setupdActionToolBar(Controller controller) {
         // ToolBar
@@ -516,6 +524,42 @@ public class FrameView extends JFrame {
         jToolBar.add(onGPU);
         return jToolBar;
     }
+
+    private JToolBar setupConstraintToolBar(Controller controller) {
+        JToolBar toolbar = new JToolBar();
+        toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.Y_AXIS));
+        JButton consHorizontal = new JButton("H");
+        JButton consVertical = new JButton("V");
+        JButton consPerpendicular = new JButton("L");
+        JButton consPerallel = new JButton("LL");
+        JButton consConnect2Points = new JButton("C2");
+        JButton consTangency = new JButton("TG");
+        JButton consEqualLength = new JButton("Eq");
+        JButton consAngle2Lines = new JButton("A");
+        JButton consCircleTangency = new JButton("OT");
+        JButton consHorizontalPoint = new JButton("hP");
+        JButton consVerticalPoint = new JButton("vP");
+        JButton consFixPoint = new JButton("xP");
+
+        consHorizontal.setMinimumSize(new Dimension(30, 30));
+        consVertical.setMinimumSize(new Dimension(30, 30));
+
+        toolbar.add(consHorizontal, Component.CENTER_ALIGNMENT );
+        toolbar.add(consVertical , Component.CENTER_ALIGNMENT);
+        toolbar.add(consPerpendicular);
+        toolbar.add(consPerallel);
+        toolbar.add(consConnect2Points);
+        toolbar.add(consTangency);
+        toolbar.add(consEqualLength);
+        toolbar.add(consAngle2Lines);
+        toolbar.add(consCircleTangency);
+        toolbar.add(consHorizontalPoint);
+        toolbar.add(consVerticalPoint);
+        toolbar.add(consFixPoint);
+        toolbar.setOrientation(VERTICAL);
+        return toolbar;
+    }
+
 
     private void runSolver(Controller controller) {
         controller.solveSystem();
