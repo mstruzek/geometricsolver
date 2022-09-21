@@ -1,5 +1,6 @@
 package com.mstruzek.msketch;
 
+import com.mstruzek.controller.Reporter;
 import com.mstruzek.msketch.matrix.TensorDouble;
 import com.mstruzek.msketch.solver.StateReporter;
 
@@ -107,6 +108,11 @@ public abstract class Constraint implements ConstraintInterface {
      * @return macierz ,jakobian wiezow d(Wiezy)/dq
      */
     public static void getFullJacobian(int size, TensorDouble mt) {
+
+        if(StateReporter.isDebugEnabled()) {
+            StateReporter.getInstance().writelnf("------- Jacobian tensor ------- ");
+        }
+
         int rowPos = 0;
         for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
             if (StateReporter.isDebugEnabled()) {
@@ -157,6 +163,10 @@ public abstract class Constraint implements ConstraintInterface {
         double lagrange;        // wartosc aktualnego mnoznika
         TensorDouble conHs;
 
+        if(StateReporter.isDebugEnabled()) {
+            StateReporter.getInstance().writelnf("------- Hessian tensor ------- ");
+        }
+
         offset = 0;
         for (Constraint constraint : ModelRegistry.dbConstraint.values()) {
 
@@ -171,6 +181,10 @@ public abstract class Constraint implements ConstraintInterface {
                  * Evaluate hessian from constraint context and Lagrange coefficient.
                  */
                 constraint.getHessian(mt, lagrange);
+
+                if(StateReporter.isDebugEnabled()) {
+                    StateReporter.getInstance().writelnf(constraint.descriptor(offset));
+                }
             }
             /*
              *  zwiekszamy aktualny mnoznik Lagrage'a

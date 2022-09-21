@@ -1,6 +1,5 @@
 #include "gpu_solver_sparse_ilu02.h"
 
-
 #include "../cuerror.h"
 #include "../gpu_utility.h"
 #include "../quda.h"
@@ -8,8 +7,8 @@
 
 ///
 /// "warning C4996: 'cusparseCreateCsrsv2Info': please use cusparseSpSV instead"
-/// 
-#pragma warning(disable: 4996)
+///
+#pragma warning(disable : 4996)
 
 #ifdef DEBUG_GPU
 #define validateStream validateStreamState()
@@ -19,19 +18,20 @@
 
 namespace solver {
 
+#define CSR(d_csrVal, d_csrRowPtr, d_csrColInd) d_csrVal, d_csrRowPtr, d_csrColInd
 
-
+#define HANDLE_STATUS status =
 GPUSolverSparseILU02::GPUSolverSparseILU02(cudaStream_t stream) : stream(stream) {
     cusparseStatus_t status;
-    status = cusparseCreate(&handle);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf(stderr, "[solver.ilu02] error solver not initialized; ( %s ) %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
+    HANDLE_STATUS cusparseCreate(&handle);
+    if (!status) {
+        fprintf(stderr, "[solver.ilu02] error solver not initialized; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
 
-    status = cusparseSetStream(handle, stream);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf(stderr, "[solver.ilu02] error stream not associated; ( %s ) %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
+    HANDLE_STATUS cusparseSetStream(handle, stream);
+    if (!status) {
+        fprintf(stderr, "[solver.ilu02] error stream not associated;  %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
 }
@@ -79,34 +79,33 @@ void GPUSolverSparseILU02::setupSolverInfoStructures() {
     // *************************************************************************** //
 }
 
+
+
 void GPUSolverSparseILU02::requestEnsurePBufferSize(int m, int n, int nnz, int *d_csrRowPtr, int *d_csrColInd, double *d_csrVal) {
 
     cusparseStatus_t status;
-    // *************************************************************************** //    
-    
-    status = cusparseDcsrilu02_bufferSize(handle, m, nnz, descr_M, d_csrVal, d_csrRowPtr, d_csrColInd, info_M, &pBufferSize_M);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf(stderr, "[solver.ilu02] matrix M buffer size request failure ; (%s) %s \n", cusparseGetErrorName(status), 
-            cusparseGetErrorString(status));
+    // *************************************************************************** //
+
+    HANDLE_STATUS cusparseDcsrilu02_bufferSize(handle, m, nnz, descr_M, CSR(d_csrVal, d_csrRowPtr, d_csrColInd), info_M, &pBufferSize_M);
+    if (!status) {
+        fprintf(stderr, "[solver.ilu02] matrix M buffer size request failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
     // *************************************************************************** //
-    cusparseDcsrsv2_bufferSize(handle, trans_L, m, nnz, descr_L, d_csrVal, d_csrRowPtr, d_csrColInd, info_L, &pBufferSize_L);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf(stderr, "[solver.ilu02] matrix L buffer size request failure ; (%s) %s \n", cusparseGetErrorName(status), 
-            cusparseGetErrorString(status));
+    HANDLE_STATUS cusparseDcsrsv2_bufferSize(handle, trans_L, m, nnz, descr_L, CSR(d_csrVal, d_csrRowPtr, d_csrColInd), info_L, &pBufferSize_L);
+    if (!status) {
+        fprintf(stderr, "[solver.ilu02] matrix L buffer size request failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
     // *************************************************************************** //
-    cusparseDcsrsv2_bufferSize(handle, trans_U, m, nnz, descr_U, d_csrVal, d_csrRowPtr, d_csrColInd, info_U, &pBufferSize_U);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf(stderr, "[solver.ilu02] matrix U buffer size request failure ; (%s) %s \n", cusparseGetErrorName(status), 
-            cusparseGetErrorString(status));
+    HANDLE_STATUS cusparseDcsrsv2_bufferSize(handle, trans_U, m, nnz, descr_U, CSR(d_csrVal, d_csrRowPtr, d_csrColInd), info_U, &pBufferSize_U);
+    if (!status) {
+        fprintf(stderr, "[solver.ilu02] matrix U buffer size request failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
     // *************************************************************************** //
 
-    /// shared buffer between routines 
+    /// shared buffer between routines
     pBufferSize = max(pBufferSize_M, max(pBufferSize_L, pBufferSize_U));
 
     /// increase buffer capacity
@@ -118,50 +117,48 @@ void GPUSolverSparseILU02::requestEnsurePBufferSize(int m, int n, int nnz, int *
 void GPUSolverSparseILU02::performAnalysisIncompleteLU(int m, int n, int nnz, int *d_csrRowPtr, int *d_csrColInd, double *d_csrVal, int *singularity) {
 
     cusparseStatus_t status;
-	// *************************************************************************** //
-    // step 4: perform analysis of incomplete Cholesky on M
+    // *************************************************************************** //
+    // step 4: perform analysis of incomplete LU on M
     //         perform analysis of triangular solve on L
     //         perform analysis of triangular solve on U
     // The lower(upper) triangular part of M has the same sparsity pattern as L(U),
     // we can do analysis of csrilu0 and csrsv2 simultaneously.
 
-    status = cusparseDcsrilu02_analysis(handle, m, nnz, descr_M, d_csrVal, d_csrRowPtr, d_csrColInd, info_M, policy_M, pBuffer);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf(stderr, "[solver.ilu02] matrix M analysis failure ; (%s) %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
+    HANDLE_STATUS cusparseDcsrilu02_analysis(handle, m, nnz, descr_M, CSR(d_csrVal, d_csrRowPtr, d_csrColInd), info_M, policy_M, pBuffer);
+    if (!status) {
+        fprintf(stderr, "[solver.ilu02] matrix M analysis failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
 
-    status = cusparseXcsrilu02_zeroPivot(handle, info_M, &structural_zero);
-    if (CUSPARSE_STATUS_ZERO_PIVOT == status) {
-        fprintf(stderr,"A(%d,%d) is missing\n", structural_zero, structural_zero);
+    HANDLE_STATUS cusparseXcsrilu02_zeroPivot(handle, info_M, &structural_zero);
+    if (status == CUSPARSE_STATUS_ZERO_PIVOT) {
+        fprintf(stderr, "A(%d,%d) is missing\n", structural_zero, structural_zero); /// Structural Zero - means no elements in CSR on diagonal !
         *singularity = structural_zero;
-        /// usprawnic naprowadzic solver na "CSR non empty pattern on diagonal" ! A[size + (coffSize) ] blad bliski zera w R(na wiezach) !
         return;
     }
 
     // *************************************************************************** //
 
-    status = cusparseDcsrsv2_analysis(handle, trans_L, m, nnz, descr_L, d_csrVal, d_csrRowPtr, d_csrColInd, info_L, policy_L, pBuffer);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf(stderr, "[solver.ilu02] matrix L analysis failure ; (%s) %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
+    HANDLE_STATUS cusparseDcsrsv2_analysis(handle, trans_L, m, nnz, descr_L, CSR(d_csrVal, d_csrRowPtr, d_csrColInd), info_L, policy_L, pBuffer);
+    if (!status) {
+        fprintf(stderr, "[solver.ilu02] matrix L analysis failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
 
     // *************************************************************************** //
 
-    status = cusparseDcsrsv2_analysis(handle, trans_U, m, nnz, descr_U, d_csrVal, d_csrRowPtr, d_csrColInd, info_U, policy_U, pBuffer);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf(stderr, "[solver.ilu02] matrix U analysis failure ; (%s) %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
+    HANDLE_STATUS cusparseDcsrsv2_analysis(handle, trans_U, m, nnz, descr_U, CSR(d_csrVal, d_csrRowPtr, d_csrColInd), info_U, policy_U, pBuffer);
+    if (!status) {
+        fprintf(stderr, "[solver.ilu02] matrix U analysis failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
 
     // *************************************************************************** //
 }
 
-void GPUSolverSparseILU02::solveSystem(int m, int n, int nnz, int *csrRowPtr, int *csrColInd, double *csrVal, double *b, double *x, int *singularity) {
-
+void GPUSolverSparseILU02::tensorFactorization(int m, int n, int nnz, int *csrRowPtr, int *csrColInd, double *csrVal, double *b, double *x,
+                                                          int *singularity) {
     cusparseStatus_t status;
-    
     // *************************************************************************** //
     if (descr_M == NULL) {
         /// step 1: create a descriptor for M, L, U
@@ -173,68 +170,75 @@ void GPUSolverSparseILU02::solveSystem(int m, int n, int nnz, int *csrRowPtr, in
 
     // *************************************************************************** //
     /// step 3: query how much memory used in csrilu02 and csrsv2, and allocate the buffer
-    requestEnsurePBufferSize(m, n, nnz, csrRowPtr, csrColInd, csrVal);
+    requestEnsurePBufferSize(m, n, nnz, CSR(csrRowPtr, csrColInd, csrVal));
 
     /// step 3.1: ensure temporary vector Z equal to dimension size
-    if(m > d_z.get_size()) {
+    if (m > d_z.get_size()) {
         d_z = utility::dev_vector<double>{m};
     }
 
     // *************************************************************************** //
     /// step 4: perform analysis of incomplete LU on M
-    performAnalysisIncompleteLU(m, n, nnz, csrRowPtr, csrColInd, csrVal, singularity);
+    performAnalysisIncompleteLU(m, n, nnz, CSR(csrRowPtr, csrColInd, csrVal), singularity);
     if (*singularity > 0) {
         fprintf(stderr, "[solver.ilu02] matrix A is not invertible \n");
         return;
     }
 
-    // *************************************************************************** //        
+    // *************************************************************************** //
     int enable_boost = 1;
-    double tol = 1e-10;    
+    double tol = 1e-10;
     double boost_val = 1e-10;
 
     checkCusparseStatus(cusparseDcsrilu02_numericBoost(handle, info_M, enable_boost, &tol, &boost_val));
 
-    // *************************************************************************** //    
+    // *************************************************************************** //
     /// step 5: M = L * U
-    status = cusparseDcsrilu02(handle, m, nnz, descr_M, csrVal, csrRowPtr, csrColInd, info_M, policy_M, pBuffer);    
+    HANDLE_STATUS cusparseDcsrilu02(handle, m, nnz, descr_M, CSR(csrVal, csrRowPtr, csrColInd), info_M, policy_M, pBuffer);
     validateStream;
 
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf(stderr, "[solver.ilu02] Cholesky factorization failure ; (%s) %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
+    if (!status) {
+        fprintf(stderr, "[solver.ilu02] Cholesky factorization failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
 
     /// POLICY - no level information ?? ( SYNCHRONIZED request )
-    status = cusparseXcsrilu02_zeroPivot(handle, info_M, &numerical_zero);
-    if (CUSPARSE_STATUS_ZERO_PIVOT == status) {        
-        fprintf(stderr, "[solver.ilu02]  U(%d,%d) is zero  - matrix A is not invertible ( advice : numeric boost )\n", numerical_zero, numerical_zero);
-        *singularity = numerical_zero;
+    HANDLE_STATUS cusparseXcsrilu02_zeroPivot(handle, info_M, &num_zero);
+    if (status == CUSPARSE_STATUS_ZERO_PIVOT) {
+        fprintf(stderr, "[solver.ilu02]  U(%d,%d) is zero  - matrix A is not invertible ( advice : numeric boost )\n", num_zero, num_zero);
+        *singularity = num_zero;
         return;
     }
 
     // *************************************************************************** //
     enable_boost = 0;
     checkCusparseStatus(cusparseDcsrilu02_numericBoost(handle, info_M, enable_boost, &tol, &boost_val));
+}
 
+
+void GPUSolverSparseILU02::solveSystem(int m, int n, int nnz, int *csrRowPtr, int *csrColInd, double *csrVal, double *b, double *x, int *singularity) {
+
+    cusparseStatus_t status;
 
     // *************************************************************************** //
     /// step 6: solve L*z = b
-    status = cusparseDcsrsv2_solve(handle, trans_L, m, nnz, &alpha, descr_L, csrVal, csrRowPtr, csrColInd, info_L, b, d_z, policy_L, pBuffer);
+    HANDLE_STATUS cusparseDcsrsv2_solve(handle, trans_L, m, nnz, &alpha, descr_L, CSR(csrVal, csrRowPtr, csrColInd), info_L, b, d_z, policy_L, pBuffer);
     validateStream;
 
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf(stderr, "[solver.ilu02] matrix U analysis failure ; (%s) %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
+    if (!status) {
+        auto errorname = cusparseGetErrorName(status);
+        auto description = cusparseGetErrorString(status);
+        fprintf(stderr, "[solver.ilu02] matrix U analysis failure ; %s . %s \n", errorname, description);
         exit(-1);
     }
 
     // *************************************************************************** //
     /// step 7: solve U*x = z
-    status = cusparseDcsrsv2_solve(handle, trans_U, m, nnz, &alpha, descr_U, csrVal, csrRowPtr, csrColInd, info_U, d_z, x, policy_U, pBuffer);
+    HANDLE_STATUS cusparseDcsrsv2_solve(handle, trans_U, m, nnz, &alpha, descr_U, CSR(csrVal, csrRowPtr, csrColInd), info_U, d_z, x, policy_U, pBuffer);
     validateStream;
 
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf(stderr, "[solver.ilu02] matrix U analysis failure ; (%s) %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
+    if (!status) {
+        fprintf(stderr, "[solver.ilu02] matrix U analysis failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
 
@@ -250,12 +254,12 @@ void GPUSolverSparseILU02::solveSystem(int m, int n, int nnz, int *csrRowPtr, in
 GPUSolverSparseILU02::~GPUSolverSparseILU02() {
 
     if (descr_M) {
+        checkCusparseStatus(cusparseDestroyCsrilu02Info(info_M));
+
         checkCusparseStatus(cusparseDestroyMatDescr(descr_M));
         checkCusparseStatus(cusparseDestroyMatDescr(descr_L));
         checkCusparseStatus(cusparseDestroyMatDescr(descr_U));
-
-        checkCusparseStatus(cusparseDestroyCsrilu02Info(info_M));
-
+       
         checkCusparseStatus(cusparseDestroyCsrsv2Info(info_L));
         checkCusparseStatus(cusparseDestroyCsrsv2Info(info_U));
     }
@@ -275,5 +279,7 @@ void GPUSolverSparseILU02::validateStreamState() {
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
 }
+
+#undef CSR
 
 } // namespace solver

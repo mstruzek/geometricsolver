@@ -13,17 +13,18 @@
 
 namespace solver {
 
+#define HANDLE_STATUS status =
 GPUSolverSparseQR::GPUSolverSparseQR(cudaStream_t stream) : stream(stream) {
 
     cusolverStatus_t status;
-    status = cusolverSpCreate(&handle);
-    if (status != CUSOLVER_STATUS_SUCCESS) {
-        fprintf(stderr, "[cusolver/error] handler failure; ( %s ) \n", cusolverGetErrorName(status));
+    HANDLE_STATUS cusolverSpCreate(&handle);
+    if (!status) {
+        fprintf(stderr, "[cusolver.error] handler failure; %s \n", cusolverGetErrorName(status));
         exit(-1);
     }
-    cusolverSpSetStream(handle, stream);
-    if (status != CUSOLVER_STATUS_SUCCESS) {
-        fprintf(stderr, "[cusolver/error] set stream failure; ( %s ) \n", cusolverGetErrorName(status));
+    HANDLE_STATUS cusolverSpSetStream(handle, stream);
+    if (!status) {
+        fprintf(stderr, "[cusolver.error] set stream failure;  %s  \n", cusolverGetErrorName(status));
         exit(-1);
     }
 }
@@ -52,29 +53,29 @@ void GPUSolverSparseQR::configure(int parameterId, int valueInt, double valueDou
     }
 }
 
-void GPUSolverSparseQR::solveSystem(int m, int n, int nnz, int *csrRowPtrA, int *csrColIndA, double *csrValA, double *b, double *x, int *singularity) {    
+void GPUSolverSparseQR::solveSystem(int m, int n, int nnz, int *csrRowPtrA, int *csrColIndA, double *csrValA, double *b, double *x, int *singularity) {
     cusparseStatus_t status;
     if (!descrA) {
-        status = cusparseCreateMatDescr(&descrA);
-        if (status != CUSPARSE_STATUS_SUCCESS) {
-            fprintf(stderr, "[cusparse/error] matrix descriptor failure; ( %s ) %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
+        HANDLE_STATUS cusparseCreateMatDescr(&descrA);
+        if (!status) {
+            fprintf(stderr, "[sparse.error] matrix descriptor failure;  %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
             exit(-1);
         }
-        status = cusparseSetMatDiagType(descrA, CUSPARSE_DIAG_TYPE_NON_UNIT);
-        if (status != CUSPARSE_STATUS_SUCCESS) {
-            fprintf(stderr, "[cusparse/error] matrix descriptor set operation failure; ( %s ) %s \n", cusparseGetErrorName(status),
+        HANDLE_STATUS cusparseSetMatDiagType(descrA, CUSPARSE_DIAG_TYPE_NON_UNIT);
+        if (!status) {
+            fprintf(stderr, "[sparse.error] matrix descriptor set operation failure;  %s . %s \n", cusparseGetErrorName(status),
                     cusparseGetErrorString(status));
             exit(-1);
         }
-        status = cusparseSetMatIndexBase(descrA, CUSPARSE_INDEX_BASE_ZERO);
-        if (status != CUSPARSE_STATUS_SUCCESS) {
-            fprintf(stderr, "[cusparse/error] matrix descriptor set operation failure; ( %s ) %s \n", cusparseGetErrorName(status),
+        HANDLE_STATUS cusparseSetMatIndexBase(descrA, CUSPARSE_INDEX_BASE_ZERO);
+        if (!status) {
+            fprintf(stderr, "[sparse.error] matrix descriptor set operation failure;  %s . %s \n", cusparseGetErrorName(status),
                     cusparseGetErrorString(status));
             exit(-1);
         }
-        status = cusparseSetMatType(descrA, CUSPARSE_MATRIX_TYPE_GENERAL);
-        if (status != CUSPARSE_STATUS_SUCCESS) {
-            fprintf(stderr, "[cusparse/error] matrix descriptor set operation failure; ( %s ) %s \n", cusparseGetErrorName(status),
+        HANDLE_STATUS cusparseSetMatType(descrA, CUSPARSE_MATRIX_TYPE_GENERAL);
+        if (!status) {
+            fprintf(stderr, "[sparse.error] matrix descriptor set operation failure;  %s . %s \n", cusparseGetErrorName(status),
                     cusparseGetErrorString(status));
             exit(-1);
         }
@@ -86,7 +87,7 @@ void GPUSolverSparseQR::solveSystem(int m, int n, int nnz, int *csrRowPtrA, int 
     validateStream;
 
     if (cusolverStatus != CUSOLVER_STATUS_SUCCESS) {
-        fprintf(stderr, "[cusolver/error] csr QR solver operation failed ; ( %s ) \n", cusolverGetErrorName(cusolverStatus));
+        fprintf(stderr, "[cusolver.error] csr QR solver operation failed ; %s \n", cusolverGetErrorName(cusolverStatus));
         exit(-1);
     }
 
@@ -97,19 +98,18 @@ void GPUSolverSparseQR::solveSystem(int m, int n, int nnz, int *csrRowPtrA, int 
 }
 
 GPUSolverSparseQR::~GPUSolverSparseQR() {
-
-    cusparseStatus_t sparseStatus;
+    cusparseStatus_t status;
 
     if (descrA) {
-        sparseStatus = cusparseDestroyMatDescr(descrA);
-        if (sparseStatus != CUSPARSE_STATUS_SUCCESS) {
-            fprintf(stderr, "[cusparse] cusparse handle failure; ( %s ) %s \n", cusparseGetErrorName(sparseStatus), cusparseGetErrorString(sparseStatus));
+        HANDLE_STATUS cusparseDestroyMatDescr(descrA);
+        if (!status) {
+            fprintf(stderr, "[cusparse] cusparse handle failure; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         }
     }
     cusolverStatus_t cusolverStatus;
     cusolverStatus = cusolverSpDestroy(handle);
-    if (cusolverStatus != CUSOLVER_STATUS_SUCCESS) {
-        fprintf(stderr, "[cusolver/error] sovlerSP destroy; ( %s ) \n", cusolverGetErrorName(cusolverStatus));
+    if (!cusolverStatus) {
+        fprintf(stderr, "[cusolver.error] sovlerSP destroy; ( %s ) \n", cusolverGetErrorName(cusolverStatus));
     }
 }
 
@@ -121,4 +121,7 @@ void GPUSolverSparseQR::validateStreamState() {
         checkCudaStatus(cudaStreamSynchronize(stream));
     }
 }
+
+#undef HANDLE_STATUS
+
 } // namespace solver

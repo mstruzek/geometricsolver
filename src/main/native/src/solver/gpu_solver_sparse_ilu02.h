@@ -9,8 +9,7 @@ namespace solver {
 
 /// <summary>
 /// Solver is configured wiht numerBoost routine so it is possible to change the cut-off for numeric zero value with some tolerance.
-/// 
-/// Preconditioner ! => BigStab
+/// --- Preconditioner into BiCGSTAB ---
 /// </summary>
 class GPUSolverSparseILU02 {
 
@@ -30,16 +29,32 @@ class GPUSolverSparseILU02 {
     void configure(int parameterId, int valueInt, double valueDouble);
 
     /// <summary>
-    /// Execution plan for system of linear qeuations A * x = b
-    /// 
+    /// Tensor Incomplete LU factorization 
+    /// M = L * U
+    /// CSR(csrRowPtr, csrColInd, csrVal) 
     /// Incomplete-LU sparse factorization.
-    /// 
+    ///
     ///  A * x = L * U * x = b;
-    ///  
-    /// 0. Incomplete-LU factorization 
+    ///
+    /// 0. Incomplete-LU factorization
     ///   A ~~ L*U = M 
     /// 
-    /// 1. TRM solve
+    /// </summary>
+    /// <param name="m">[in]</param>
+    /// <param name="n">[in]</param>
+    /// <param name="nnz">[in]</param>
+    /// <param name="csrRowPtr">[in.out]</param>
+    /// <param name="csrColInd">[in.out]</param>
+    /// <param name="csrVal">[in.out]</param>
+    /// <param name="b">[in]</param>
+    /// <param name="x">[out]</param>
+    /// <param name="singularity"></param>
+    void tensorFactorization(int m, int n, int nnz, int *csrRowPtr, int *csrColInd, double *csrVal, double *b, double *x, int *singularity);
+
+    /// <summary>
+    /// Execution plan for system of linear qeuations A * x = b
+    /// 
+    /// 1. TRM solve        -- this is the routine !
     ///  L * z = b
     /// 
     /// 2. TRM solve
@@ -125,7 +140,7 @@ class GPUSolverSparseILU02 {
     int structural_zero;
 
     /// infex of structural zeror element form ILU factorization - singualrity
-    int numerical_zero;
+    int num_zero;
     
     /// crvsv2 - factor 
     const double alpha = 1.;
