@@ -45,7 +45,7 @@ public class GeometricSolverImpl implements GeometricSolver {
 
     @Override
     public void setup() {
-        StateReporter.DebugEnabled = true;
+        StateReporter.DebugEnabled = false;
 
         reporter = StateReporter.getInstance();
 
@@ -132,7 +132,7 @@ public class GeometricSolverImpl implements GeometricSolver {
          * Executor - Scheduler - A scheduler , B scheduler - ForkJoinPoll
          */
         DoubleMatrix2D.SET_QUICK_ZERO_TOLERANCE = true;     /// setQuick - tolerance
-        final boolean NON_ZERO_CAPTURE = true;
+        final boolean NON_ZERO_CAPTURE = false;
 
         A = TensorDouble.matrix2D(dimension, dimension, 0.0);
 

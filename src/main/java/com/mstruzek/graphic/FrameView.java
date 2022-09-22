@@ -7,6 +7,8 @@ import com.mstruzek.controller.Events;
 import com.mstruzek.msketch.ConstraintType;
 import com.mstruzek.msketch.ModelRegistry;
 import com.mstruzek.msketch.solver.GeometricSolverType;
+import com.mstruzek.utils.Dispatcher;
+import com.mstruzek.utils.Dispatchers;
 
 import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
@@ -18,9 +20,11 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.URL;
+import java.time.Instant;
 import java.util.Objects;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import static com.mstruzek.graphic.Property.*;
 import static javax.swing.SwingConstants.VERTICAL;
@@ -61,17 +65,14 @@ public class FrameView extends JFrame {
     public static final String COMMAND_REPOZ = "Repoz";
     public static final String COMMAND_RELAX = "Relax";
     public static final String COMMAND_CTRL = "CTRL";
-    public static final String COMMAND_CPU = "CPU";
-    public static final String COMMAND_GPU = "GPU";
     public static final String DEFAULT_LOAD_DIRECTORY = "e:\\source\\gsketcher\\data\\";
 
     /// acceptable model extension
-    public static final String FILE_EXTENSION_GCM = "gcs";
+    public static final String FILE_EXTENSION_GCM = "gcm";
     public static final String COMMAND_LOAD_MODEL_DESCRIPTION = "Load  model from ... ";
     public static final String COMMAND_SOLVE_DESCRIPTION = "Run selected solver";
     public static final String COMMAND_REPOZ_DESCRIPTION = "Reposition constraint";
     public static final String COMMAND_RELAX_DESCRIPTION = "Relax geometric points and reposition !";
-
 
     private Container pane = getContentPane();
 
@@ -112,7 +113,7 @@ public class FrameView extends JFrame {
     final MySketch ms;
 
     /// Single ordered executor
-    final ExecutorService controllerEventQueue = Executors.newSingleThreadExecutor();
+    final Dispatcher controllerEventQueue = Dispatchers.newDispatcher();
 
     public FrameView(Controller controller) {
         super(FRAME_TITLE);
@@ -213,7 +214,7 @@ public class FrameView extends JFrame {
         consoleScrollPane = new JScrollPane(consoleOutput);
         consoleScrollPane.setPreferredSize(new Dimension(CONSOLE_WIDTH, CONSOLE_OUTPUT_HEIGHT));
         consoleScrollPane.scrollRectToVisible(consoleOutput.getVisibleRect());
-        //redirectStdErrOut();
+        redirectStdErrOut();
 
         /// -----------------------------------------------------------------
         SolverStatPanel solverStatPanel = new SolverStatPanel();
@@ -223,7 +224,7 @@ public class FrameView extends JFrame {
 
         /// -----------------------------------------------------------------
         /// Toolbar i srodkowe okno
-        JToolBar actionToolbar = setupdActionToolBar(controller);
+        JToolBar actionToolbar = setupActionToolBar(controller);
 
         JToolBar constraintToolbar = setupConstraintToolBar(controller);
 
@@ -264,39 +265,41 @@ public class FrameView extends JFrame {
         consDescr.setFocusable(false);
         consDescr.setBackground(HELP_PANEL_BACKGROUND_COLOR);
 
-        final JComboBox combo = new JComboBox(ConstraintType.values());
+        final JComboBox<ConstraintType> combo = new JComboBox<>(ConstraintType.values());
         combo.setFocusable(false);
         combo.setPreferredSize(new Dimension(240, -1));
-        combo.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JComboBox cb = (JComboBox) e.getSource();
-                ConstraintType what = (ConstraintType) cb.getSelectedItem();
-                consDescr.setText(Objects.requireNonNull(what).getHelp());
-                if (consDescr.getParent() != null) {
-                    consDescr.getParent().repaint();
-                }
+        combo.addActionListener(e -> {
+            JComboBox<ConstraintType> cb = (JComboBox<ConstraintType>) e.getSource();
+            ConstraintType what = (ConstraintType) cb.getSelectedItem();
+            consDescr.setText(Objects.requireNonNull(what).getHelp());
+            if (consDescr.getParent() != null) {
+                consDescr.getParent().repaint();
             }
         });
 
         combo.setSelectedItem(ConstraintType.FixPoint);
 
-        JButton constraintButton = ActionBuilder.create("Add Constraint", null, "Add constraint into model", KeyEvent.VK_C, new ActionListener() {
+        AbstractAction action = new AbstractAction("Add Constraint", null) {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ConstraintType constraintType = (ConstraintType) combo.getSelectedItem();
+                controllerEventQueue.submit(() -> {
+                    ConstraintType constraintType = (ConstraintType) combo.getSelectedItem();
 
-                controller.addConstraint(constraintType,
-                    ms.getPointK(),
-                    ms.getPointL(),
-                    ms.getPointM(),
-                    ms.getPointN(),
-                    Double.parseDouble(parameterField.getText())
-                );
-                ms.clearAll();
-                requestFocus();
+                    controller.addConstraint(constraintType,
+                        ms.getPointK(),
+                        ms.getPointL(),
+                        ms.getPointM(),
+                        ms.getPointN(),
+                        Double.parseDouble(parameterField.getText())
+                    );
+                    ms.clearAll();
+                    requestFocus();
+                });
             }
-        }, controllerEventQueue);
+        };
+        action.putValue(Action.SHORT_DESCRIPTION, "Add constraint into model");
+        action.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
+        JButton constraintButton = new JButton(action);
 
         /// -----------------------------------------------------------------
         /*
@@ -326,104 +329,109 @@ public class FrameView extends JFrame {
         return constraintPanel;
     }
 
-
-
-    private JToolBar setupdActionToolBar(Controller controller) {
+    private JToolBar setupActionToolBar(Controller controller) {
         // ToolBar
         JToolBar jToolBar = new JToolBar();
         /// -----------------------------------------------------------------
-        JButton dLoad = ActionBuilder.create(COMMAND_LOAD, null, COMMAND_LOAD_MODEL_DESCRIPTION, KeyEvent.VK_L,
-            new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    JFileChooser jFileChooser = new JFileChooser();
-                    jFileChooser.setCurrentDirectory(new File(DEFAULT_LOAD_DIRECTORY));
-                    jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", FILE_EXTENSION_GCM));
-                    int response = jFileChooser.showOpenDialog(null);
-                    if (response == JFileChooser.APPROVE_OPTION) {
-                        FrameView.this.controller.readModelFrom(jFileChooser.getSelectedFile());
-                    }
+        AbstractAction loadAction = new AbstractAction(COMMAND_LOAD, null) {
+            @Override
+            public void actionPerformed(ActionEvent e1) {
+                JFileChooser jFileChooser = new JFileChooser();
+                jFileChooser.setCurrentDirectory(new File(DEFAULT_LOAD_DIRECTORY));
+                jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", FILE_EXTENSION_GCM));
+                int response = jFileChooser.showOpenDialog(null);
+                if (response == JFileChooser.APPROVE_OPTION) {
+                    controllerEventQueue.submit(() -> controller.readModelFrom(jFileChooser.getSelectedFile()));
                 }
-            }, controllerEventQueue);
+            }
+        };
+        loadAction.putValue(Action.SHORT_DESCRIPTION, COMMAND_LOAD_MODEL_DESCRIPTION);
+        loadAction.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_L);
+        JButton cLoad = new JButton(loadAction);
         /// -----------------------------------------------------------------
-        JButton dStore = new JButton(COMMAND_STORE);
-        JButton dClear = new JButton(COMMAND_CLEAR);
-        JButton dNorm = new JButton(COMMAND_NORMAL1);
-        JButton dLine = new JButton(COMMAND_DRAW_LINE);
-        JButton dCircle = new JButton(COMMAND_DRAW_CIRCLE);
-        JButton dArc = new JButton(COMMAND_DRAW_ARC);
-        JButton dPoint = new JButton(COMMAND_DRAW_POINT);
-        JButton dRefresh = new JButton(COMMAND_REFRESH);
+        JButton cStore = new JButton(COMMAND_STORE);
+        JButton cClear = new JButton(COMMAND_CLEAR);
+        JButton cNorm = new JButton(COMMAND_NORMAL1);
+        JButton cLine = new JButton(COMMAND_DRAW_LINE);
+        JButton cCircle = new JButton(COMMAND_DRAW_CIRCLE);
+        JButton cArc = new JButton(COMMAND_DRAW_ARC);
+        JButton cPoint = new JButton(COMMAND_DRAW_POINT);
+        JButton cRefresh = new JButton(COMMAND_REFRESH);
         /// -----------------------------------------------------------------
-        final JButton dSolve = ActionBuilder.create(COMMAND_SOLVE, null, COMMAND_SOLVE_DESCRIPTION, KeyEvent.VK_S,
-            new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    runSolver(FrameView.this.controller);
-                }
-            }, controllerEventQueue);
+        AbstractAction solveAction = new AbstractAction(COMMAND_SOLVE, null) {
+            @Override
+            public void actionPerformed(ActionEvent e1) {
+                controllerEventQueue.submit(() -> runSolver(FrameView.this.controller));
+            }
+        };
+        solveAction.putValue(Action.SHORT_DESCRIPTION, COMMAND_SOLVE_DESCRIPTION);
+        solveAction.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_S);
         /// -----------------------------------------------------------------
-        final JButton dReposition = ActionBuilder.create(COMMAND_REPOZ, null, COMMAND_REPOZ_DESCRIPTION, KeyEvent.VK_Z,
-            new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
+        AbstractAction repositionAction = new AbstractAction(COMMAND_REPOZ, null) {
+            @Override
+            public void actionPerformed(ActionEvent e1) {
+                controllerEventQueue.submit(() -> {
                     FrameView.this.controller.evaluateGuidePoints();
                     ms.refreshContainers();
                     ms.repaintLater();
-                }
-            }, controllerEventQueue);
+                });
+            }
+        };
+        repositionAction.putValue(Action.SHORT_DESCRIPTION, COMMAND_REPOZ_DESCRIPTION);
+        repositionAction.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_Z);
         /// -----------------------------------------------------------------
-        final JButton dRelaxe = ActionBuilder.create(COMMAND_RELAX, null, COMMAND_RELAX_DESCRIPTION, KeyEvent.VK_X,
-            new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
+        AbstractAction relaxeAction = new AbstractAction(COMMAND_RELAX, null) {
+            @Override
+            public void actionPerformed(ActionEvent e1) {
+                controllerEventQueue.submit(() -> {
                     FrameView.this.controller.relaxControlPoints();
                     FrameView.this.controller.evaluateGuidePoints();
                     ms.refreshContainers();
                     ms.repaintLater();
-                }
-            }, controllerEventQueue);
+                });
+            }
+        };
+        relaxeAction.putValue(Action.SHORT_DESCRIPTION, COMMAND_RELAX_DESCRIPTION);
+        relaxeAction.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_X);
         /// -----------------------------------------------------------------
-
-        JButton dCtrl = new JButton(COMMAND_CTRL);
-
-        dSolve.setBackground(Color.GREEN);
-        dCtrl.setBackground(Color.CYAN);
+        final JButton cSolve = new JButton(solveAction);
+        cSolve.setBackground(Color.GREEN);
         /// -----------------------------------------------------------------
-
-        dStore.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser jFileChooser = new JFileChooser();
-                jFileChooser.setCurrentDirectory(new File(DEFAULT_LOAD_DIRECTORY));
-                jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", FILE_EXTENSION_GCM));
-                int response = jFileChooser.showSaveDialog(null);
-                if (response == JFileChooser.APPROVE_OPTION) {
-                    FrameView.this.controller.writeModelInto(jFileChooser.getSelectedFile());
-                }
+        final JButton cReposition = new JButton(repositionAction);
+        /// -----------------------------------------------------------------
+        final JButton cRelaxe = new JButton(relaxeAction);
+        /// -----------------------------------------------------------------
+        JButton cCtrl = new JButton(COMMAND_CTRL);
+        cCtrl.setBackground(Color.CYAN);
+        /// -----------------------------------------------------------------
+        cStore.addActionListener(e -> {
+            JFileChooser jFileChooser = new JFileChooser();
+            jFileChooser.setCurrentDirectory(new File(DEFAULT_LOAD_DIRECTORY));
+            jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", FILE_EXTENSION_GCM));
+            int response = jFileChooser.showSaveDialog(null);
+            if (response == JFileChooser.APPROVE_OPTION) {
+                controllerEventQueue.submit(() -> controller.writeModelInto(jFileChooser.getSelectedFile()));
             }
         });
 
-        dClear.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        cClear.addActionListener(e -> controllerEventQueue.submit(() -> {
                 ModelRegistry.removeObjectsFromModel();
                 ms.refreshContainers();
                 ms.repaintLater();
                 clearTextArea();
                 Events.send(EventType.REBUILD_TABLES, null);
-            }
-        });
+            })
+        );
         /// -----------------------------------------------------------------
 
-        dNorm.addActionListener(e -> ms.setStateSketch(MySketchState.Normal));
-        dLine.addActionListener(e -> ms.setStateSketch(MySketchState.DrawLine));
-        dCircle.addActionListener(e -> ms.setStateSketch(MySketchState.DrawCircle));
-        dArc.addActionListener(e -> ms.setStateSketch(MySketchState.DrawArc));
-        dPoint.addActionListener(e -> ms.setStateSketch(MySketchState.DrawPoint));
+        cNorm.addActionListener(e -> ms.setStateSketch(MySketchState.Normal));
+        cLine.addActionListener(e -> ms.setStateSketch(MySketchState.DrawLine));
+        cCircle.addActionListener(e -> ms.setStateSketch(MySketchState.DrawCircle));
+        cArc.addActionListener(e -> ms.setStateSketch(MySketchState.DrawArc));
+        cPoint.addActionListener(e -> ms.setStateSketch(MySketchState.DrawPoint));
 
         /// -----------------------------------------------------------------
-        dRefresh.addActionListener(new ActionListener() {
+        cRefresh.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ms.refreshContainers();
@@ -431,12 +439,9 @@ public class FrameView extends JFrame {
             }
         });
         /// -----------------------------------------------------------------
-        dCtrl.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ms.setControlGuidelines(!ms.isControlGuidelines());
-                ms.repaintLater();
-            }
+        cCtrl.addActionListener(e -> {
+            ms.setControlGuidelines(!ms.isControlGuidelines());
+            ms.repaintLater();
         });
 
         /// -----------------------------------------------------------------
@@ -453,71 +458,54 @@ public class FrameView extends JFrame {
         ButtonGroup solverType = new ButtonGroup();
         JRadioButton onCPU = new JRadioButton("CPU colt", true);
         JRadioButton onGPU = new JRadioButton("GPU cuSolver", true);
-        onCPU.setActionCommand(COMMAND_CPU);
-        onGPU.setActionCommand(COMMAND_GPU);
+        onCPU.setActionCommand(GeometricSolverType.CPU_SOLVER.name());
+        onGPU.setActionCommand(GeometricSolverType.GPU_SOLVER.name());
         onCPU.setBackground(ON_CPU_COLOR);
         onGPU.setBackground(ON_GPU_COLOR);
         onCPU.setFocusable(false);
         onGPU.setFocusable(false);
         solverType.add(onCPU);
         solverType.add(onGPU);
-        ActionListener solverActionListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final String actionCommand = e.getActionCommand();
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        switch (actionCommand) {
-                            case COMMAND_CPU:
-                                FrameView.this.controller.setSolverType(GeometricSolverType.CPU_SOLVER);
-                                break;
-                            case COMMAND_GPU:
-                                FrameView.this.controller.setSolverType(GeometricSolverType.GPU_SOLVER);
-                                break;
-                            default:
-                                throw new Error("illegal solveAction action" + e.getActionCommand());
-                        }
-                    }
-                });
-            }
-        };
+        ActionListener solverActionListener = e -> controllerEventQueue.submit(() -> {
+            final String actionCommand = e.getActionCommand();
+            controller.setSolverType(GeometricSolverType.valueOf(actionCommand));
+        });
         onCPU.addActionListener(solverActionListener);
         onGPU.addActionListener(solverActionListener);
         /// -----------------------------------------------------------------
 
-        // FIXME - wazne dla setFocusable
-        dLoad.setFocusable(false);
-        dStore.setFocusable(false);
-        dClear.setFocusable(false);
-        dNorm.setFocusable(false);
-        dLine.setFocusable(false);
-        dCircle.setFocusable(false);
-        dArc.setFocusable(false);
-        dPoint.setFocusable(false);
-        dRefresh.setFocusable(false);
-        dSolve.setFocusable(false);
-        dReposition.setFocusable(false);
-        dRelaxe.setFocusable(false);
-        dCtrl.setFocusable(false);
+        /// wazne dla setFocusable
+        cLoad.setFocusable(false);
+        cStore.setFocusable(false);
+        cClear.setFocusable(false);
+        cNorm.setFocusable(false);
+        cLine.setFocusable(false);
+        cCircle.setFocusable(false);
+        cArc.setFocusable(false);
+        cPoint.setFocusable(false);
+        cRefresh.setFocusable(false);
+        cSolve.setFocusable(false);
+        cReposition.setFocusable(false);
+        cRelaxe.setFocusable(false);
+        cCtrl.setFocusable(false);
 
-        jToolBar.add(dLoad);
-        jToolBar.add(dStore);
-        jToolBar.add(dClear);
+        jToolBar.add(cLoad);
+        jToolBar.add(cStore);
+        jToolBar.add(cClear);
         jToolBar.addSeparator(new Dimension(20, 1));
-        jToolBar.add(dNorm);
-        jToolBar.add(dLine);
-        jToolBar.add(dCircle);
-        jToolBar.add(dArc);
-        jToolBar.add(dPoint);
+        jToolBar.add(cNorm);
+        jToolBar.add(cLine);
+        jToolBar.add(cCircle);
+        jToolBar.add(cArc);
+        jToolBar.add(cPoint);
         jToolBar.addSeparator(new Dimension(20, 1));
-        jToolBar.add(dRefresh);
+        jToolBar.add(cRefresh);
         jToolBar.addSeparator(new Dimension(20, 1));
-        jToolBar.add(dSolve);
+        jToolBar.add(cSolve);
         jToolBar.addSeparator(new Dimension(20, 1));
-        jToolBar.add(dReposition);
-        jToolBar.add(dRelaxe);
-        jToolBar.add(dCtrl);
+        jToolBar.add(cReposition);
+        jToolBar.add(cRelaxe);
+        jToolBar.add(cCtrl);
         jToolBar.addSeparator(new Dimension(120, 1));
         jToolBar.add(onCPU);
         jToolBar.addSeparator(new Dimension(20, 1));
@@ -528,38 +516,37 @@ public class FrameView extends JFrame {
     private JToolBar setupConstraintToolBar(Controller controller) {
         JToolBar toolbar = new JToolBar();
         toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.Y_AXIS));
-        JButton consHorizontal = new JButton("H");
-        JButton consVertical = new JButton("V");
-        JButton consPerpendicular = new JButton("L");
-        JButton consPerallel = new JButton("LL");
-        JButton consConnect2Points = new JButton("C2");
-        JButton consTangency = new JButton("TG");
-        JButton consEqualLength = new JButton("Eq");
-        JButton consAngle2Lines = new JButton("A");
-        JButton consCircleTangency = new JButton("OT");
-        JButton consHorizontalPoint = new JButton("hP");
-        JButton consVerticalPoint = new JButton("vP");
-        JButton consFixPoint = new JButton("xP");
+        JButton constraintHorizontal = new JButton("H");
+        JButton constraintVertical = new JButton("V");
+        JButton constraintPerpendicular = new JButton("L");
+        JButton constraintPerallel = new JButton("LL");
+        JButton constraintConnect2Points = new JButton("C2");
+        JButton constraintTangency = new JButton("TG");
+        JButton constraintEqualLength = new JButton("Eq");
+        JButton constraintAngle2Lines = new JButton("A");
+        JButton constraintCircleTangency = new JButton("OT");
+        JButton constraintHorizontalPoint = new JButton("hP");
+        JButton constraintVerticalPoint = new JButton("vP");
+        JButton constraintFixPoint = new JButton("xP");
 
-        consHorizontal.setMinimumSize(new Dimension(30, 30));
-        consVertical.setMinimumSize(new Dimension(30, 30));
+        constraintHorizontal.setMinimumSize(new Dimension(30, 30));
+        constraintVertical.setMinimumSize(new Dimension(30, 30));
 
-        toolbar.add(consHorizontal, Component.CENTER_ALIGNMENT );
-        toolbar.add(consVertical , Component.CENTER_ALIGNMENT);
-        toolbar.add(consPerpendicular);
-        toolbar.add(consPerallel);
-        toolbar.add(consConnect2Points);
-        toolbar.add(consTangency);
-        toolbar.add(consEqualLength);
-        toolbar.add(consAngle2Lines);
-        toolbar.add(consCircleTangency);
-        toolbar.add(consHorizontalPoint);
-        toolbar.add(consVerticalPoint);
-        toolbar.add(consFixPoint);
+        toolbar.add(constraintHorizontal, Component.CENTER_ALIGNMENT);
+        toolbar.add(constraintVertical, Component.CENTER_ALIGNMENT);
+        toolbar.add(constraintPerpendicular);
+        toolbar.add(constraintPerallel);
+        toolbar.add(constraintConnect2Points);
+        toolbar.add(constraintTangency);
+        toolbar.add(constraintEqualLength);
+        toolbar.add(constraintAngle2Lines);
+        toolbar.add(constraintCircleTangency);
+        toolbar.add(constraintHorizontalPoint);
+        toolbar.add(constraintVerticalPoint);
+        toolbar.add(constraintFixPoint);
         toolbar.setOrientation(VERTICAL);
         return toolbar;
     }
-
 
     private void runSolver(Controller controller) {
         controller.solveSystem();
@@ -568,49 +555,57 @@ public class FrameView extends JFrame {
     }
 
     private void clearTextArea() {
-        SwingUtilities.invokeLater(new Runnable() {
+        SwingUtilities.invokeLater(() -> {
+            consoleOutput.setText("");
+            consoleOutput.setCaretPosition(consoleOutput.getDocument().getLength()); /// auto scroll - follow caret position
+        });
+    }
+
+    private static final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>(64);
+    private static final Dispatcher consoleDownstream = Dispatchers.newDispatcher();
+    private static final long AWAIT_BUFFER_TIMEOUT = 300;   // ms
+    public static final int MQ_POLL_TIMEOUT = 100;          // ms
+
+    {
+        consoleDownstream.submit(new Runnable() {
+            @Override
             public void run() {
-                consoleOutput.setText("");
-                consoleOutput.setCaretPosition(consoleOutput.getDocument().getLength()); /// auto scroll - follow caret position
+                long batchStart = 0;
+                String text = null;
+                StringBuffer buffer = new StringBuffer();
+                while (true) {
+                    try {
+                        text = messageQueue.poll(MQ_POLL_TIMEOUT, TimeUnit.MILLISECONDS);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException(e);
+                    }
+                    if (text != null) {
+                        if(buffer.isEmpty()) {
+                            batchStart = Instant.now().toEpochMilli();
+                        }
+                        buffer.append(text);
+                    }
+                    long elapsed = Instant.now().toEpochMilli() - batchStart;
+                    if (elapsed > AWAIT_BUFFER_TIMEOUT) {
+                        final String send = buffer.toString();
+                        buffer = new StringBuffer();
+                        SwingUtilities.invokeLater(() -> {
+                            consoleOutput.append(send);
+                            consoleOutput.setCaretPosition(consoleOutput.getDocument().getLength()); /// auto scroll - follow caret position
+                        });
+                     }
+                }
             }
         });
     }
 
-    private final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>(64);
-
     private void updateTextArea(final String text) {
-
         try {
             messageQueue.put(text);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-
-        if (messageQueue.size() == 0) {
-            return;
-        }
-
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-
-                if (messageQueue.isEmpty())
-                    return;
-
-                String text = null;
-                while (true) {
-                    try {
-                        text = messageQueue.poll(90, TimeUnit.MILLISECONDS);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    if (text == null) {
-                        break;
-                    }
-                    consoleOutput.append(text);
-                }
-                consoleOutput.setCaretPosition(consoleOutput.getDocument().getLength()); /// auto scroll - follow caret position
-            }
-        });
     }
 
     private void redirectStdErrOut() {

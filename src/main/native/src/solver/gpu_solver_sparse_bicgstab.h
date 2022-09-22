@@ -9,6 +9,7 @@ namespace solver {
 
 /// <summary>
 /// Unpreconditioned BiCGSTAB  /// https://en.wikipedia.org/wiki/Biconjugate_gradient_stabilized_method
+///     https://docs.nvidia.com/cuda/incomplete-lu-cholesky/index.html
 /// </summary>
 class GPUSolverSparseBiCGSTAB {
   public:
