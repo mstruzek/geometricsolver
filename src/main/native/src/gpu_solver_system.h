@@ -6,7 +6,7 @@
 /// solver implementations
 #include "solver/gpu_solver_dense_lu.h"
 #include "solver/gpu_solver_sparse_qr.h"
-#include "solver/gpu_solver_sparse_ilu02.h"
+#include "solver/gpu_sparse_precondition_ilu02.h"
 
 #include <memory>
 
@@ -58,8 +58,7 @@ class GPUSolverSystem {
     SolverMode solverMode;
        
     std::unique_ptr<solver::GPUSolverDenseLU> solverDenseLU;
-    std::unique_ptr<solver::GPUSolverSparseQR> solverSparseQR;
-    std::unique_ptr<solver::GPUSolverSparseILU02> solverSparseILU02;
+    std::unique_ptr<solver::GPUSolverSparseQR> solverSparseQR;    
 };
 
 } // namespace solver

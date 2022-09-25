@@ -10,15 +10,19 @@ namespace solver {
 /// <summary>
 /// Solver is configured wiht numerBoost routine so it is possible to change the cut-off for numeric zero value with some tolerance.
 /// --- Preconditioner into BiCGSTAB ---
+/// 
+/// GPUSparsePreconditionILU02 {
+/// 
+/// }
 /// </summary>
-class GPUSolverSparseILU02 {
+class GPUSparsePreconditionILU02 {
 
   public:
     /// <summary>
     /// 
     /// </summary>
     /// <param name="stream"></param>
-    GPUSolverSparseILU02(cudaStream_t stream);
+    GPUSparsePreconditionILU02(cudaStream_t stream);
 
     /// <summary>
     /// 
@@ -73,7 +77,7 @@ class GPUSolverSparseILU02 {
     /// <param name="singularity">[out] - -1 invertible , otherwise j > 0 , index of diagonal element</param>
     void solveSystem(int m, int n, int nnz, int *d_csrRowPtr, int *csrColInd, double *csrVal, double *b, double *x, int *singularity);
 
-    ~GPUSolverSparseILU02();
+    ~GPUSparsePreconditionILU02();
 
   private:
 
@@ -115,18 +119,18 @@ class GPUSolverSparseILU02 {
     utility::dev_vector<double> d_z; 
 
     /// LU tensor descriptors
-    cusparseMatDescr_t descr_M = 0;
-    cusparseMatDescr_t descr_L = 0;
-    cusparseMatDescr_t descr_U = 0;
+    cusparseMatDescr_t descr_M = NULL;
+    cusparseMatDescr_t descr_L = NULL;
+    cusparseMatDescr_t descr_U = NULL;
     
     /// Incomplete-LU factorization ( possibly computed in first iteration )
-    csrilu02Info_t info_M = 0;
+    csrilu02Info_t info_M = NULL;
 
     /// Lower: sparse triangular linear system solver [DEPRECATED]  ( possibly computed in first iteration )
-    csrsv2Info_t info_L = 0;
+    csrsv2Info_t info_L = NULL;
 
     /// Upper: sparse triangular linear system solver [DEPRECATED] ( possibly computed in first iteration )
-    csrsv2Info_t info_U = 0;
+    csrsv2Info_t info_U = NULL;
     
     int pBufferSize_M;
     int pBufferSize_L;

@@ -96,7 +96,7 @@
   <ItemGroup>
     <ClCompile Include="src\solver\gpu_solver_dense_lu.cpp" />
     <ClCompile Include="src\solver\gpu_solver_sparse_bicgstab.cpp" />
-    <ClCompile Include="src\solver\gpu_solver_sparse_ilu02.cpp" />
+    <ClCompile Include="src\solver\gpu_sparse_precondition_ilu02.cpp" />
     <ClCompile Include="src\solver\gpu_solver_sparse_qr.cpp" />
     <ClCompile Include="src\model_config.cpp" />
     <ClInclude Include="src\format_encoder.h" />
@@ -106,7 +106,7 @@
     <ClInclude Include="src\quda.h" />
     <ClInclude Include="src\solver\gpu_solver_dense_lu.h" />
     <ClInclude Include="src\solver\gpu_solver_sparse_bicgstab.h" />
-    <ClInclude Include="src\solver\gpu_solver_sparse_ilu02.h" />
+    <ClInclude Include="src\solver\gpu_sparse_precondition_ilu02.h" />
     <ClInclude Include="src\solver\gpu_solver_sparse_qr.h" />
     <ClInclude Include="src\tensor_layout.cuh" />
     <ClInclude Include="src\tensor_operation.h" />

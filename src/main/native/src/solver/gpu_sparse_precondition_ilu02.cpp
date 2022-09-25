@@ -1,4 +1,4 @@
-#include "gpu_solver_sparse_ilu02.h"
+#include "gpu_sparse_precondition_ilu02.h"
 
 #include "../cuerror.h"
 #include "../gpu_utility.h"
@@ -21,7 +21,7 @@ namespace solver {
 #define CSR(d_csrVal, d_csrRowPtr, d_csrColInd) d_csrVal, d_csrRowPtr, d_csrColInd
 
 #define HANDLE_STATUS status =
-GPUSolverSparseILU02::GPUSolverSparseILU02(cudaStream_t stream) : stream(stream) {
+GPUSparsePreconditionILU02::GPUSparsePreconditionILU02(cudaStream_t stream) : stream(stream) {
     cusparseStatus_t status;
     HANDLE_STATUS cusparseCreate(&handle);
     if (!status) {
@@ -36,11 +36,11 @@ GPUSolverSparseILU02::GPUSolverSparseILU02(cudaStream_t stream) : stream(stream)
     }
 }
 
-void GPUSolverSparseILU02::configure(int parameterId, int valueInt, double valueDouble) {
+void GPUSparsePreconditionILU02::configure(int parameterId, int valueInt, double valueDouble) {
     ///
 }
 
-void GPUSolverSparseILU02::setupSparseMatDescriptors() {
+void GPUSparsePreconditionILU02::setupSparseMatDescriptors() {
     // *************************************************************************** //
     // step 1: create a descriptor which contains
     // - matrix M is base-1
@@ -69,7 +69,7 @@ void GPUSolverSparseILU02::setupSparseMatDescriptors() {
     // *************************************************************************** //
 }
 
-void GPUSolverSparseILU02::setupSolverInfoStructures() {
+void GPUSparsePreconditionILU02::setupSolverInfoStructures() {
     // *************************************************************************** //
     // step 2: create a empty info structure
     // we need one info for csrilu02 and two info's for csrsv2
@@ -81,7 +81,7 @@ void GPUSolverSparseILU02::setupSolverInfoStructures() {
 
 
 
-void GPUSolverSparseILU02::requestEnsurePBufferSize(int m, int n, int nnz, int *d_csrRowPtr, int *d_csrColInd, double *d_csrVal) {
+void GPUSparsePreconditionILU02::requestEnsurePBufferSize(int m, int n, int nnz, int *d_csrRowPtr, int *d_csrColInd, double *d_csrVal) {
 
     cusparseStatus_t status;
     // *************************************************************************** //
@@ -114,7 +114,7 @@ void GPUSolverSparseILU02::requestEnsurePBufferSize(int m, int n, int nnz, int *
     }
 }
 
-void GPUSolverSparseILU02::performAnalysisIncompleteLU(int m, int n, int nnz, int *d_csrRowPtr, int *d_csrColInd, double *d_csrVal, int *singularity) {
+void GPUSparsePreconditionILU02::performAnalysisIncompleteLU(int m, int n, int nnz, int *d_csrRowPtr, int *d_csrColInd, double *d_csrVal, int *singularity) {
 
     cusparseStatus_t status;
     // *************************************************************************** //
@@ -156,7 +156,7 @@ void GPUSolverSparseILU02::performAnalysisIncompleteLU(int m, int n, int nnz, in
     // *************************************************************************** //
 }
 
-void GPUSolverSparseILU02::tensorFactorization(int m, int n, int nnz, int *csrRowPtr, int *csrColInd, double *csrVal, double *b, double *x,
+void GPUSparsePreconditionILU02::tensorFactorization(int m, int n, int nnz, int *csrRowPtr, int *csrColInd, double *csrVal, double *b, double *x,
                                                           int *singularity) {
     cusparseStatus_t status;
     // *************************************************************************** //
@@ -187,8 +187,8 @@ void GPUSolverSparseILU02::tensorFactorization(int m, int n, int nnz, int *csrRo
 
     // *************************************************************************** //
     int enable_boost = 1;
-    double tol = 1e-10;
-    double boost_val = 1e-10;
+    double tol = 1e-10;     // 10-6
+    double boost_val = 1e-10;   // 10-6
 
     checkCusparseStatus(cusparseDcsrilu02_numericBoost(handle, info_M, enable_boost, &tol, &boost_val));
 
@@ -216,7 +216,7 @@ void GPUSolverSparseILU02::tensorFactorization(int m, int n, int nnz, int *csrRo
 }
 
 
-void GPUSolverSparseILU02::solveSystem(int m, int n, int nnz, int *csrRowPtr, int *csrColInd, double *csrVal, double *b, double *x, int *singularity) {
+void GPUSparsePreconditionILU02::solveSystem(int m, int n, int nnz, int *csrRowPtr, int *csrColInd, double *csrVal, double *b, double *x, int *singularity) {
 
     cusparseStatus_t status;
 
@@ -251,7 +251,7 @@ void GPUSolverSparseILU02::solveSystem(int m, int n, int nnz, int *csrRowPtr, in
     // *************************************************************************** //
 }
 
-GPUSolverSparseILU02::~GPUSolverSparseILU02() {
+GPUSparsePreconditionILU02::~GPUSparsePreconditionILU02() {
 
     if (descr_M) {
         checkCusparseStatus(cusparseDestroyCsrilu02Info(info_M));
@@ -271,7 +271,7 @@ GPUSolverSparseILU02::~GPUSolverSparseILU02() {
     }
 }
 
-void GPUSolverSparseILU02::validateStreamState() {
+void GPUSparsePreconditionILU02::validateStreamState() {
     if (settings::DEBUG_CHECK_ARG) {
         /// submitted kernel into  cuda driver
         checkCudaStatus(cudaPeekAtLastError());

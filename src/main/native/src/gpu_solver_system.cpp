@@ -22,10 +22,6 @@ void GPUSolverSystem::setSolverMode(SolverMode solverMode) {
         if (!solverSparseQR)
             solverSparseQR = std::make_unique<solver::GPUSolverSparseQR>(stream);
         break;
-    case SolverMode::SPARSE_ILU:
-        if (!solverSparseILU02)
-            solverSparseILU02 = std::make_unique<solver::GPUSolverSparseILU02>(stream);
-        break;
     }
 }
 
@@ -51,9 +47,6 @@ void GPUSolverSystem::solveSystemSP(int m, int n, int nnz, int *csrRowPtr, int *
     switch (solverMode) {
     case SolverMode::SPARSE_QR:
         solverSparseQR->solveSystem(m, n, nnz, csrRowPtr, csrColInd, csrVal, b, x, singularity);
-        break;
-    case SolverMode::SPARSE_ILU:
-        solverSparseILU02->solveSystem(m, n, nnz, csrRowPtr, csrColInd, csrVal, b, x, singularity);
         break;
     default:
         fprintf(stderr, "[gpu.solver] unrecognized solver mode error !\n");
