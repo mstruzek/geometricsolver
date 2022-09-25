@@ -24,13 +24,13 @@ namespace solver {
 GPUSparsePreconditionILU02::GPUSparsePreconditionILU02(cudaStream_t stream) : stream(stream) {
     cusparseStatus_t status;
     HANDLE_STATUS cusparseCreate(&handle);
-    if (!status) {
+    if (status) {
         fprintf(stderr, "[solver.ilu02] error solver not initialized; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
 
     HANDLE_STATUS cusparseSetStream(handle, stream);
-    if (!status) {
+    if (status) {
         fprintf(stderr, "[solver.ilu02] error stream not associated;  %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
@@ -87,19 +87,19 @@ void GPUSparsePreconditionILU02::requestEnsurePBufferSize(int m, int n, int nnz,
     // *************************************************************************** //
 
     HANDLE_STATUS cusparseDcsrilu02_bufferSize(handle, m, nnz, descr_M, CSR(d_csrVal, d_csrRowPtr, d_csrColInd), info_M, &pBufferSize_M);
-    if (!status) {
+    if (status) {
         fprintf(stderr, "[solver.ilu02] matrix M buffer size request failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
     // *************************************************************************** //
     HANDLE_STATUS cusparseDcsrsv2_bufferSize(handle, trans_L, m, nnz, descr_L, CSR(d_csrVal, d_csrRowPtr, d_csrColInd), info_L, &pBufferSize_L);
-    if (!status) {
+    if (status) {
         fprintf(stderr, "[solver.ilu02] matrix L buffer size request failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
     // *************************************************************************** //
     HANDLE_STATUS cusparseDcsrsv2_bufferSize(handle, trans_U, m, nnz, descr_U, CSR(d_csrVal, d_csrRowPtr, d_csrColInd), info_U, &pBufferSize_U);
-    if (!status) {
+    if (status) {
         fprintf(stderr, "[solver.ilu02] matrix U buffer size request failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
@@ -125,7 +125,7 @@ void GPUSparsePreconditionILU02::performAnalysisIncompleteLU(int m, int n, int n
     // we can do analysis of csrilu0 and csrsv2 simultaneously.
 
     HANDLE_STATUS cusparseDcsrilu02_analysis(handle, m, nnz, descr_M, CSR(d_csrVal, d_csrRowPtr, d_csrColInd), info_M, policy_M, pBuffer);
-    if (!status) {
+    if (status) {
         fprintf(stderr, "[solver.ilu02] matrix M analysis failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
@@ -140,7 +140,7 @@ void GPUSparsePreconditionILU02::performAnalysisIncompleteLU(int m, int n, int n
     // *************************************************************************** //
 
     HANDLE_STATUS cusparseDcsrsv2_analysis(handle, trans_L, m, nnz, descr_L, CSR(d_csrVal, d_csrRowPtr, d_csrColInd), info_L, policy_L, pBuffer);
-    if (!status) {
+    if (status) {
         fprintf(stderr, "[solver.ilu02] matrix L analysis failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
@@ -148,7 +148,7 @@ void GPUSparsePreconditionILU02::performAnalysisIncompleteLU(int m, int n, int n
     // *************************************************************************** //
 
     HANDLE_STATUS cusparseDcsrsv2_analysis(handle, trans_U, m, nnz, descr_U, CSR(d_csrVal, d_csrRowPtr, d_csrColInd), info_U, policy_U, pBuffer);
-    if (!status) {
+    if (status) {
         fprintf(stderr, "[solver.ilu02] matrix U analysis failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
@@ -197,7 +197,7 @@ void GPUSparsePreconditionILU02::tensorFactorization(int m, int n, int nnz, int 
     HANDLE_STATUS cusparseDcsrilu02(handle, m, nnz, descr_M, CSR(csrVal, csrRowPtr, csrColInd), info_M, policy_M, pBuffer);
     validateStream;
 
-    if (!status) {
+    if (status) {
         fprintf(stderr, "[solver.ilu02] Cholesky factorization failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }
@@ -225,7 +225,7 @@ void GPUSparsePreconditionILU02::solveSystem(int m, int n, int nnz, int *csrRowP
     HANDLE_STATUS cusparseDcsrsv2_solve(handle, trans_L, m, nnz, &alpha, descr_L, CSR(csrVal, csrRowPtr, csrColInd), info_L, b, d_z, policy_L, pBuffer);
     validateStream;
 
-    if (!status) {
+    if (status) {
         auto errorname = cusparseGetErrorName(status);
         auto description = cusparseGetErrorString(status);
         fprintf(stderr, "[solver.ilu02] matrix U analysis failure ; %s . %s \n", errorname, description);
@@ -237,7 +237,7 @@ void GPUSparsePreconditionILU02::solveSystem(int m, int n, int nnz, int *csrRowP
     HANDLE_STATUS cusparseDcsrsv2_solve(handle, trans_U, m, nnz, &alpha, descr_U, CSR(csrVal, csrRowPtr, csrColInd), info_U, d_z, x, policy_U, pBuffer);
     validateStream;
 
-    if (!status) {
+    if (status) {
         fprintf(stderr, "[solver.ilu02] matrix U analysis failure ; %s . %s \n", cusparseGetErrorName(status), cusparseGetErrorString(status));
         exit(-1);
     }

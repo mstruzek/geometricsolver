@@ -71,9 +71,9 @@ add_library(${PROJECT_SHARED_LIBRARY} SHARED
         src/gpu_geometric_solver.cpp
         src/gpu_computation_context.cpp	
         src/gpu_solver_system.cpp
-        src/solver/gpu_solver_dense_lu.cpp
-        src/solver/gpu_solver_sparse_ilu02.cpp
+        src/solver/gpu_solver_dense_lu.cpp        
         src/solver/gpu_solver_sparse_qr.cpp
+		src/solver/gpu_sparse_precondition_ilu02.cpp
         src/tensor_operation.cpp		
         src/com_mstruzek_jni_JNISolverGate.cpp
 		)
