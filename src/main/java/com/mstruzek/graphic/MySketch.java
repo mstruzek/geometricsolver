@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.function.Predicate;
 
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
+import static java.lang.System.currentTimeMillis;
 
 
 public class MySketch extends JPanel implements MouseInputListener {
@@ -50,11 +51,9 @@ public class MySketch extends JPanel implements MouseInputListener {
 
     private Point registeredPressed = new Point();
 
-    final int r = 10;
+    private final int r = 10;
 
-    final MyPointContainer mpc = new MyPointContainer(-1, -1, -1, -1);
-
-    private ActiveKey ack = ActiveKey.None;
+    private final MyPointContainer mpc = new MyPointContainer(-1, -1, -1, -1);
 
     private final MyPopup popoup;
 
@@ -366,15 +365,14 @@ public class MySketch extends JPanel implements MouseInputListener {
 
         for (int i = 0; i < pointStore.size(); i++) {
 
-            /*
-            if (pointStore.get(i).isMouseClicked) {
-                g2d.setColor(Color.RED);
+            MyPoint point = pointStore.get(i);
+            if (point.hover()) {
+                g2d.setColor(Color.DARK_GRAY);
             } else {
                 g2d.setColor(Color.BLACK);
             }
-*/
 
-            tx.transform(pointStore.get(i).getLocation(), tp1);
+            tx.transform(point.getLocation(), tp1);
             g2d.fill(new Ellipse2D.Double(tp1.x - r / 2, tp1.y - r / 2, r, r));
         }
 
@@ -431,19 +429,9 @@ public class MySketch extends JPanel implements MouseInputListener {
         for (int i = 0; i < pointStore.size(); i++) {
             MyPoint viewPoint = pointStore.get(i);
             if (viewPoint.contains(tp1.x, tp1.y, 2 * r / tx.getScaleX())) {
-                if (ack == ActiveKey.K) {
-                    ack = ActiveKey.None;
-                    mpc.setPointK(viewPoint.id);
-                } else if (ack == ActiveKey.L) {
-                    ack = ActiveKey.None;
-                    mpc.setPointL(viewPoint.id);
-                } else if (ack == ActiveKey.M) {
-                    ack = ActiveKey.None;
-                    mpc.setPointM(viewPoint.id);
-                } else if (ack == ActiveKey.N) {
-                    ack = ActiveKey.None;
-                    mpc.setPointN(viewPoint.id);
-                } else if (ack == ActiveKey.None && e.isControlDown()) {
+                if (e.isAltDown()) {
+                    mpc.setFreeSlot(viewPoint.id);
+                } else if (e.isControlDown()) {
 
                     int first = viewPoint.id;
 
@@ -655,6 +643,10 @@ public class MySketch extends JPanel implements MouseInputListener {
         repaint();
     }
 
+    private static final long AWAIT_HOVER_TIMEOUT = 100; // [ ms ]
+    private long selectionTime = 0L;
+    private boolean hoverState = false;
+
     @Override
     public void mouseMoved(MouseEvent e) {
         Point tp1 = new Point();
@@ -663,7 +655,27 @@ public class MySketch extends JPanel implements MouseInputListener {
         } catch (NoninvertibleTransformException e1) {
             e1.printStackTrace();
         }
+
         firePropertyChange(Property.CURRENT_POSITION, null, String.format("X : %1$5.3f , Y : %2$5.3f", tp1.getX(), tp1.getY()));
+
+        // Hover Reaction at point position
+        for (MyPoint point : pointStore) { /// mesh reduction #?
+            boolean contains = point.contains(tp1.x, tp1.y, 2 * r / tx.getScaleX());
+            point.setHover(contains);
+            /// first selected
+            if(contains) {
+                hoverState = contains;
+                selectionTime = currentTimeMillis();
+                repaint();
+                break;
+            }
+        }
+
+        if(hoverState && (currentTimeMillis() - selectionTime) > AWAIT_HOVER_TIMEOUT)  {
+            pointStore.forEach(point -> point.setHover(false));
+            hoverState = false;
+            repaint();
+        }
     }
 
     public int getPointK() {
@@ -684,10 +696,6 @@ public class MySketch extends JPanel implements MouseInputListener {
 
     public void clearAll() {
         mpc.clearAll();
-    }
-
-    public void setAck(ActiveKey activeKey) {
-        this.ack = activeKey;
     }
 }
 

@@ -91,6 +91,8 @@ public class MyPointContainer {
         } else if (PointN == -1) {
             PointN = pointId;
         } else {
+            clearAll();
+            PointK = pointId;
         }
     }
 

@@ -8,6 +8,7 @@ import java.awt.geom.Ellipse2D;
 
 public class MyPoint extends Point {
 
+    boolean hover = false;
     boolean dragged = false;
     int id;
 
@@ -27,6 +28,14 @@ public class MyPoint extends Point {
 
     public void setDragged(boolean dragged) {
         this.dragged = dragged;
+    }
+
+    public boolean hover() {
+        return hover;
+    }
+
+    public void setHover(boolean hover) {
+        this.hover = hover;
     }
 
     @Override

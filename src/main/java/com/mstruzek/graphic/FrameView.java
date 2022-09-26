@@ -93,7 +93,9 @@ public class FrameView extends JFrame {
 
     final JScrollPane consoleScrollPane;
 
-    /**  glowny controller */
+    /**
+     * glowny controller
+     */
     final Controller controller;
 
     /// widok na pojemnik K,L,M,N
@@ -123,29 +125,6 @@ public class FrameView extends JFrame {
             public void mouseClicked(MouseEvent e) {
                 FrameView.this.requestFocusInWindow();
                 super.mouseClicked(e);
-            }
-        });
-        addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                switch (e.getKeyChar()) {
-                    case 'k':
-                        ms.setAck(ActiveKey.K);
-                        break;
-                    case 'l':
-                        ms.setAck(ActiveKey.L);
-                        break;
-                    case 'm':
-                        ms.setAck(ActiveKey.M);
-                        break;
-                    case 'n':
-                        ms.setAck(ActiveKey.N);
-                        break;
-                    default:
-                        ms.setAck(ActiveKey.None);
-                        break;
-                }
-                super.keyPressed(e);
             }
         });
 
@@ -203,6 +182,9 @@ public class FrameView extends JFrame {
         myTables.setFocusable(false);
 
         right.add(myTables);
+
+        // additional worker for aggregated log publication on swing thread
+        consoleDownstream.submit(this::consoleObservable);
 
         consoleOutput.setFont(new Font("Courier New", Font.PLAIN, 12));
         consoleScrollPane = new JScrollPane(consoleOutput);
@@ -272,8 +254,8 @@ public class FrameView extends JFrame {
         final JComboBox<ConstraintType> combo = new JComboBox<>(ConstraintType.values());
         combo.setFocusable(false);
         combo.setPreferredSize(new Dimension(240, -1));
-        combo.addActionListener(e -> {
-            JComboBox<ConstraintType> cb = (JComboBox<ConstraintType>) e.getSource();
+        combo.addActionListener(actionEvent -> {
+            JComboBox<ConstraintType> cb = (JComboBox<ConstraintType>) actionEvent.getSource();
             ConstraintType what = (ConstraintType) cb.getSelectedItem();
             consDescr.setText(Objects.requireNonNull(what).getHelp());
             if (consDescr.getParent() != null) {
@@ -285,7 +267,7 @@ public class FrameView extends JFrame {
 
         AbstractAction action = new AbstractAction("Add Constraint", null) {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent actionEvent) {
                 controllerEventQueue.submit(() -> {
                     ConstraintType constraintType = (ConstraintType) combo.getSelectedItem();
 
@@ -335,7 +317,7 @@ public class FrameView extends JFrame {
         // ToolBar
         JToolBar jToolBar = new JToolBar();
         /// -----------------------------------------------------------------
-        final ActionListener loadActionListener = (ActionEvent actionEvent) -> {
+        final ActionListener loadActionListener = actionEvent -> {
             JFileChooser jFileChooser = new JFileChooser();
             jFileChooser.setCurrentDirectory(new File(DEFAULT_LOAD_DIRECTORY));
             jFileChooser.setFileFilter(new FileNameExtensionFilter("Geometric Constraint Model File", FILE_EXTENSION_GCM));
@@ -425,37 +407,37 @@ public class FrameView extends JFrame {
         /// -----------------------------------------------------------------
 
         class ComponentBuilder {
-            public JButton newButton(String title, Integer mnemonic, ActionListener actionListener, Color backgroundColor) {
+            public JButton newButton(String title, Integer mnemonic, Color backgroundColor, ActionListener actionListener) {
                 JButton button = new JButton(title);
                 button.setFocusable(false);
-                if (actionListener != null)
-                    button.addActionListener(actionListener);
                 if (mnemonic != null)
                     button.setMnemonic(mnemonic);
                 if (backgroundColor != null)
                     button.setBackground(backgroundColor);
+                if (actionListener != null)
+                    button.addActionListener(actionListener);
                 return button;
             }
         }
         /// -----------------------------------------------------------------
         ComponentBuilder builder = new ComponentBuilder();
         jToolBar.addSeparator(new Dimension(20, 1));
-        jToolBar.add(builder.newButton(COMMAND_LOAD, KeyEvent.VK_D, loadActionListener, null));
-        jToolBar.add(builder.newButton(COMMAND_STORE, null, storeActionListener, null));
-        jToolBar.add(builder.newButton(COMMAND_CLEAR, null, clearActionListener, null));
+        jToolBar.add(builder.newButton(COMMAND_LOAD, KeyEvent.VK_D, null, loadActionListener));
+        jToolBar.add(builder.newButton(COMMAND_STORE, null, null, storeActionListener));
+        jToolBar.add(builder.newButton(COMMAND_CLEAR, null, null, clearActionListener));
         jToolBar.addSeparator(new Dimension(20, 1));
-        jToolBar.add(builder.newButton(COMMAND_NORMAL1, null, sketchStateNormalListener, null));
-        jToolBar.add(builder.newButton(COMMAND_DRAW_LINE, null, drawLineActionListener, null));
-        jToolBar.add(builder.newButton(COMMAND_DRAW_CIRCLE, null, drawCircleActionListener, null));
-        jToolBar.add(builder.newButton(COMMAND_DRAW_ARC, null, drawArcActionListener, null));
-        jToolBar.add(builder.newButton(COMMAND_DRAW_POINT, null, drawPointActionListener, null));
+        jToolBar.add(builder.newButton(COMMAND_NORMAL1, null, null, sketchStateNormalListener));
+        jToolBar.add(builder.newButton(COMMAND_DRAW_LINE, null, null, drawLineActionListener));
+        jToolBar.add(builder.newButton(COMMAND_DRAW_CIRCLE, null, null, drawCircleActionListener));
+        jToolBar.add(builder.newButton(COMMAND_DRAW_ARC, null, null, drawArcActionListener));
+        jToolBar.add(builder.newButton(COMMAND_DRAW_POINT, null, null, drawPointActionListener));
         jToolBar.addSeparator(new Dimension(20, 1));
-        jToolBar.add(builder.newButton(COMMAND_REFRESH, null, refreshActionListener, null));
-        jToolBar.add(builder.newButton(COMMAND_SOLVE, KeyEvent.VK_S, solveActionListener, Color.GREEN));
+        jToolBar.add(builder.newButton(COMMAND_REFRESH, null, null, refreshActionListener));
+        jToolBar.add(builder.newButton(COMMAND_SOLVE, KeyEvent.VK_S, Color.GREEN, solveActionListener));
         jToolBar.addSeparator(new Dimension(20, 1));
-        jToolBar.add(builder.newButton(COMMAND_REPOZ, KeyEvent.VK_Z, repositionActionListener, null));
-        jToolBar.add(builder.newButton(COMMAND_RELAX, KeyEvent.VK_X, relaxeActionListener, null));
-        jToolBar.add(builder.newButton(COMMAND_CTRL, null, cntrlActionListener, Color.CYAN));
+        jToolBar.add(builder.newButton(COMMAND_REPOZ, KeyEvent.VK_Z, null, repositionActionListener));
+        jToolBar.add(builder.newButton(COMMAND_RELAX, KeyEvent.VK_X, null, relaxeActionListener));
+        jToolBar.add(builder.newButton(COMMAND_CTRL, null, Color.CYAN, cntrlActionListener));
         jToolBar.addSeparator(new Dimension(120, 1));
         jToolBar.add(onCPU);
         jToolBar.addSeparator(new Dimension(20, 1));
@@ -468,7 +450,7 @@ public class FrameView extends JFrame {
         toolbar.setBorder(BorderFactory.createLineBorder(Color.green, 1));
         toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.Y_AXIS));
         toolbar.setAlignmentX(Component.CENTER_ALIGNMENT);
-        ActionListener actionListener = actionEvent -> {
+        ActionListener constraintsActionListener = actionEvent -> {
             ConstraintType constraintType = ConstraintType.valueOf(actionEvent.getActionCommand());
             controllerEventQueue.submit(() -> {
                 controller.addConstraint(constraintType,
@@ -485,12 +467,11 @@ public class FrameView extends JFrame {
         class ComponentBuilder {
             static final int WIDTH = 30;
             static final int HEIGHT = 30;
-
             public JButton newButton(String title, int mnemonic, String actionCommand) {
                 JButton button = new JButton(title);
                 button.setMnemonic(mnemonic);
                 button.setActionCommand(actionCommand);
-                button.addActionListener(actionListener);
+                button.addActionListener(constraintsActionListener);
                 button.setAlignmentX(Component.CENTER_ALIGNMENT);
                 button.setMinimumSize(new Dimension(WIDTH, HEIGHT));
                 button.setSize(new Dimension(WIDTH, HEIGHT));
@@ -515,12 +496,6 @@ public class FrameView extends JFrame {
         return toolbar;
     }
 
-    private void runSolver(Controller controller) {
-        controller.solveSystem();
-        ms.refreshContainers();
-        ms.repaintLater();
-    }
-
     private void clearTextArea() {
         SwingUtilities.invokeLater(() -> {
             consoleOutput.setText("");
@@ -530,48 +505,47 @@ public class FrameView extends JFrame {
 
     private static final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>(64);
     private static final Dispatcher consoleDownstream = Dispatchers.newDispatcher();
-    private static final long AWAIT_BUFFER_TIMEOUT = 300;   // ms
-    public static final int MQ_POLL_TIMEOUT = 100;          // ms
+    private static final long AWAIT_BUFFER_TIMEOUT = 150;   // ms
+    public static final int MQ_POLL_TIMEOUT = 70;          // ms
 
-    {
-        consoleDownstream.submit(new Runnable() {
-            @Override
-            public void run() {
-                long batchStart = 0;
-                String text = null;
-                StringBuffer buffer = new StringBuffer();
-                while (true) {
-                    try {
-                        text = messageQueue.poll(MQ_POLL_TIMEOUT, TimeUnit.MILLISECONDS);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException(e);
-                    }
-                    if (text != null) {
-                        if (buffer.isEmpty()) {
-                            batchStart = Instant.now().toEpochMilli();
-                        }
-                        buffer.append(text);
-                    }
-                    long elapsed = Instant.now().toEpochMilli() - batchStart;
-                    if (elapsed > AWAIT_BUFFER_TIMEOUT) {
-                        final String send = buffer.toString();
-                        buffer = new StringBuffer();
-                        SwingUtilities.invokeLater(() -> {
-                            consoleOutput.append(send);
-                            consoleOutput.setCaretPosition(consoleOutput.getDocument().getLength()); /// auto scroll - follow caret position
-                        });
-                    }
-                }
-            }
-        });
-    }
-
+    /**
+     * Stdout into swing TextArea console view
+     * @param text
+     */
     private void updateTextArea(final String text) {
         try {
             messageQueue.put(text);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void consoleObservable() {
+        long batchStart = 0;
+        String text = null;
+        StringBuffer buffer = new StringBuffer();
+        while (true) {
+            try {
+                text = messageQueue.poll(MQ_POLL_TIMEOUT, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+            if (text != null) {
+                if (buffer.isEmpty()) {
+                    batchStart = Instant.now().toEpochMilli();
+                }
+                buffer.append(text);
+            }
+            long elapsed = Instant.now().toEpochMilli() - batchStart;
+            if (elapsed > AWAIT_BUFFER_TIMEOUT) {
+                final String send = buffer.toString();
+                buffer = new StringBuffer();
+                SwingUtilities.invokeLater(() -> {
+                    consoleOutput.append(send);
+                    consoleOutput.setCaretPosition(consoleOutput.getDocument().getLength()); /// auto scroll - follow caret position
+                });
+            }
         }
     }
 
