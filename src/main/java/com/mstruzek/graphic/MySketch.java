@@ -363,15 +363,12 @@ public class MySketch extends JPanel implements MouseInputListener {
             }
         }
 
-        for (int i = 0; i < pointStore.size(); i++) {
-
-            MyPoint point = pointStore.get(i);
+        for (MyPoint point : pointStore) {
             if (point.hover()) {
                 g2d.setColor(Color.DARK_GRAY);
             } else {
                 g2d.setColor(Color.BLACK);
             }
-
             tx.transform(point.getLocation(), tp1);
             g2d.fill(new Ellipse2D.Double(tp1.x - r / 2, tp1.y - r / 2, r, r));
         }

@@ -185,7 +185,7 @@ KERNEL_EXECUTOR void CopyFromStateVector(cudaStream_t stream, graph::Point *poin
     constexpr const unsigned int SHARED_MEMORY = 0;
     KERNEL_EXECUTION_INFO("__CopyFromStateVector__", GRID_DIM, BLOCK_DIM, 0);
 
-    __CopyFromStateVector__<<<GRID_DIM, BLOCK_DIM, 0, stream>>>(points, SV, size);
+    __CopyFromStateVector__<<<GRID_DIM, BLOCK_DIM, SHARED_MEMORY, stream>>>(points, SV, size);
 }
 
 /// ----------------------------------------------------------------------------------------

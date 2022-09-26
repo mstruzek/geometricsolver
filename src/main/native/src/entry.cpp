@@ -1121,7 +1121,7 @@ int model_6x10(JNIEnv &env, jclass &eclass) {
     return err;
 }
 
-int main(int argc, char* args[]) 
+int main__(int argc, char* args[]) 
 {
     int err;
 

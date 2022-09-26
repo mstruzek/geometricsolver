@@ -132,7 +132,7 @@ void GPUSparsePreconditionILU02::performAnalysisIncompleteLU(int m, int n, int n
 
     HANDLE_STATUS cusparseXcsrilu02_zeroPivot(handle, info_M, &structural_zero);
     if (status == CUSPARSE_STATUS_ZERO_PIVOT) {
-        fprintf(stderr, "A(%d,%d) is missing\n", structural_zero, structural_zero); /// Structural Zero - means no elements in CSR on diagonal !
+        fprintf(stderr, "A(%d,%d) is missing \n", structural_zero, structural_zero); /// Structural Zero - means no elements in CSR on diagonal !
         *singularity = structural_zero;
         return;
     }
@@ -188,7 +188,7 @@ void GPUSparsePreconditionILU02::tensorFactorization(int m, int n, int nnz, int 
     // *************************************************************************** //
     int enable_boost = 1;
     double tol = 1e-10;     // 10-6
-    double boost_val = 1e-10;   // 10-6
+    double boost_val = 1e-10; // 10-6
 
     checkCusparseStatus(cusparseDcsrilu02_numericBoost(handle, info_M, enable_boost, &tol, &boost_val));
 
@@ -245,7 +245,7 @@ void GPUSparsePreconditionILU02::solveSystem(int m, int n, int nnz, int *csrRowP
     // *************************************************************************** //
     *singularity = -1;
     if (settings::DEBUG) {
-        fprintf(stderr, "[solver.ILU02] solver routine completed !");
+        fprintf(stderr, "[solver.ILU02] solver routine completed !\n");
     }
 
     // *************************************************************************** //

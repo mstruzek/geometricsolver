@@ -826,7 +826,7 @@ void GPUComputation::solveSystem(SolverStat *stat, cudaError_t *error) {
             break;
 
         case SolverMode::SPARSE_QR:
-        case SolverMode::SPARSE_ILU:
+        case SolverMode::SPARSE_BiCG_STAB:
             /// ---------------------------------------------------------------------------------------- ///
             ///                             Sparse - Solver                                              ///
             /// ---------------------------------------------------------------------------------------- ///

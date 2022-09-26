@@ -89,10 +89,10 @@ enum class SolverMode {
     /// 
     SPARSE_QR = 2,
 
+    ///
+    /// Iterative mehtod - Biconjugate gradient stabilized method , with  Incomplete LU precondition.
     /// 
-    /// Incomplete LU factorization solver for sparse matrix
-    /// 
-    SPARSE_ILU = 3,
+    SPARSE_BiCG_STAB = 3,
 };
 
 

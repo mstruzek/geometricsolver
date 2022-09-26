@@ -1,12 +1,15 @@
 #ifndef _SOLVER_SYSTEM_H_
 #define _SOLVER_SYSTEM_H_
 
-#include "cuda_runtime_api.h" /// Cuda Runtime API
+/// Cuda Runtime API
+#include "cuda_runtime_api.h"   
 
 /// solver implementations
 #include "solver/gpu_solver_dense_lu.h"
 #include "solver/gpu_solver_sparse_qr.h"
-#include "solver/gpu_sparse_precondition_ilu02.h"
+#include "solver/gpu_solver_sparse_bicgstab.h"
+
+#include "model_config.h"
 
 #include <memory>
 
@@ -27,7 +30,6 @@ class GPUSolverSystem {
     /// </summary>
     /// <param name="solverMode"></param>
     void setSolverMode(SolverMode solverMode);
-
 
     /// <summary>
     /// Solve Danse Matrix A system of linear equations.
@@ -51,6 +53,11 @@ class GPUSolverSystem {
     ~GPUSolverSystem() = default;
 
   private:
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="solverMode"></param>
+    void setupSolver(SolverMode solverMode);
 
   private:
     cudaStream_t stream;
@@ -59,6 +66,7 @@ class GPUSolverSystem {
        
     std::unique_ptr<solver::GPUSolverDenseLU> solverDenseLU;
     std::unique_ptr<solver::GPUSolverSparseQR> solverSparseQR;    
+    std::unique_ptr<solver::GPUSolverSparseBiCGSTAB> solverSparseBiCGStab;    
 };
 
 } // namespace solver

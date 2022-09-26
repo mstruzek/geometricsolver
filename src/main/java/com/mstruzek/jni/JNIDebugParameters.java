@@ -132,9 +132,9 @@ public enum JNIDebugParameters {
         public static final int QR_SPARSE = 2;
 
         /**
-         *  Incomplete LU factorization solver for sparse matrix - cusparseDcsrilu02 - Precondition
+         *  Bi-Conjugate Gradient stabilized method with Incomplete LU precondition
         */
-        public static final int ILU_SPARSE = 3;
+        public static final int ILU_BiCG_STAB = 3;
     }
 
     JNIDebugParameters(int code) {

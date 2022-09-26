@@ -103,7 +103,7 @@ SolverMode getSolverMode(int solverModeId) {
     case 2:
         return SolverMode::SPARSE_QR;
     case 3:
-        return SolverMode::SPARSE_ILU;
+        return SolverMode::SPARSE_BiCG_STAB;
     default:
         printf("unknown solver mode id !\n");
         exit(-1);

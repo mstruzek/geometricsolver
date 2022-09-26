@@ -16,7 +16,7 @@ endif()
 
 project(gsketcherjni VERSION 0.0.1
         DESCRIPTION "jni interface into GPU Cuda API"
-        LANGUAGES CXX CUDA)
+        LANGUAGES CXX C CUDA)
 
 
 
@@ -73,8 +73,9 @@ add_library(${PROJECT_SHARED_LIBRARY} SHARED
         src/gpu_solver_system.cpp
         src/solver/gpu_solver_dense_lu.cpp        
         src/solver/gpu_solver_sparse_qr.cpp
+		src/solver/gpu_solver_sparse_bicgstab.cpp
 		src/solver/gpu_sparse_precondition_ilu02.cpp
-        src/tensor_operation.cpp		
+        src/tensor_operation.cpp				
         src/com_mstruzek_jni_JNISolverGate.cpp
 		)
 
@@ -103,7 +104,7 @@ target_include_directories(${PROJECT_SHARED_LIBRARY} PRIVATE PUBLIC
 
 if(TEST_EXECUTABLE)
 
-add_executable(${PROJECT_TEST_EXECUTABLE} src/entry.cpp 
+add_executable(${PROJECT_TEST_EXECUTABLE} src/entry.cpp 	# main()
 		src/solver_kernel.cu
 		src/format_encoder.cu
 		src/model.cu
@@ -116,9 +117,13 @@ add_executable(${PROJECT_TEST_EXECUTABLE} src/entry.cpp
         src/gpu_geometric_solver.cpp
         src/gpu_computation_context.cpp	
         src/gpu_solver_system.cpp
-        src/solver/gpu_solver_dense_lu.cpp
-        src/solver/gpu_solver_sparse_ilu02.cpp
+        src/solver/gpu_solver_dense_lu.cpp        
         src/solver/gpu_solver_sparse_qr.cpp
+		src/solver/gpu_solver_sparse_bicgstab.cpp
+		src/solver/gpu_sparse_precondition_ilu02.cpp		
+		src/mmio/mmio.c
+		src/mmio/mmio_wrapper.cpp										
+		src/solver/test_gpu_solver_biccgstab.cpp		# main()
         src/tensor_operation.cpp		
         src/com_mstruzek_jni_JNISolverGate.cpp	
 		)
