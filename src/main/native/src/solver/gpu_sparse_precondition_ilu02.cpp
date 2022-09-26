@@ -187,8 +187,8 @@ void GPUSparsePreconditionILU02::tensorFactorization(int m, int n, int nnz, int 
 
     // *************************************************************************** //
     int enable_boost = 1;
-    double tol = 1e-10;     // 10-6
-    double boost_val = 1e-10; // 10-6
+    double tol = 1e-15;     // 10-6
+    double boost_val = 1e-15; // 10-6
 
     checkCusparseStatus(cusparseDcsrilu02_numericBoost(handle, info_M, enable_boost, &tol, &boost_val));
 

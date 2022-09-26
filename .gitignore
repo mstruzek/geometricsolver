@@ -9,5 +9,6 @@ src/main/native/bin/
 src/main/native/.vs/
 src/main/native/x64/
 .vs/
+.data/
 bin/
 _tmp/
