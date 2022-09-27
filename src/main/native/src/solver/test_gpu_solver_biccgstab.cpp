@@ -394,7 +394,7 @@ void stdoutTensorCsr(int m, int n, int nnz, double *aVal, int *aRowInd, int *aCo
 /// <param name="argc"></param>
 /// <param name="argv"></param>
 /// <returns></returns>
-CMD_FUNCTION(int) main(int argc, char *argv[]) {
+CMD_FUNCTION(int) main_MMIO(int argc, char *argv[]) {
     int err;
     // ILU boost - UNSYMETRIC
      char *filename = "data\\fidap027.mtx";/// real non-symetric general

@@ -266,11 +266,11 @@ template <typename Layout> __device__ void setStiffnessMatrix_Arc(int rc, graph:
  * @param ec
  * @return __global__
  */
-template <typename Layout> __device__ void ComputeStiffnessMatrix_Impl(int tID, ComputationState *ecdata, graph::Tensor<Layout> &tensor, size_t N) {
+template <typename Layout> __device__ void ComputeStiffnessMatrix_Impl(int tId, ComputationState *ecdata, graph::Tensor<Layout> &tensor, size_t N) {
     ComputationState *ec = static_cast<ComputationState *>(ecdata);
-    if (tID < N) {
-        const size_t rc = ec->accGeometricSize[tID]; /// row-column row
-        const graph::Geometric *geometric = ec->getGeometricObject(tID);
+    if (tId < N) {
+        const size_t rc = ec->accGeometricSize[tId]; /// row-column row
+        const graph::Geometric *geometric = ec->getGeometricObject(tId);
         switch (geometric->geometricTypeId) {
         case GEOMETRIC_TYPE_ID_FREE_POINT:
             setStiffnessMatrix_FreePoint(rc, tensor);
@@ -572,12 +572,9 @@ __global__ void __EvaluateForceIntensity__(ComputationState *ecdata, size_t N) {
     graph::Tensor<graph::DenseLayout> mt = graph::tensorDevMem(layout, 0, 0, intention);
 
     if (tId < N) {
-        const graph::Geometric *geometric = ec->getGeometricObject(tId);
-
         const size_t row = ec->accGeometricSize[tId];
-
+        const graph::Geometric *geometric = ec->getGeometricObject(tId);
         switch (geometric->geometricTypeId) {
-
         case GEOMETRIC_TYPE_ID_FREE_POINT:
             setForceIntensity_FreePoint(row, geometric, ec, mt);
             break;
@@ -893,9 +890,7 @@ __global__ void __EvaluateConstraintValue__(ComputationState *ecdata, size_t N) 
 
     if (tId < N) {
         const graph::Constraint *constraint = ec->getConstraint(tId);
-
         const int row = ec->accConstraintSize[tId];
-
         switch (constraint->constraintTypeId) {
         case CONSTRAINT_TYPE_ID_FIX_POINT:
             setValueConstraintFixPoint(row, constraint, ec, mt);

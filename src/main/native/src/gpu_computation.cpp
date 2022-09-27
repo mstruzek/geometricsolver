@@ -71,16 +71,14 @@ GPUComputation::GPUComputation(long computationId, cudaStream_t stream, std::sha
     preInitializeData();
         
     /// computation snapshot
-    printf("init computationId %d \n", computationId);
+    fprintf(stdout, "# computationId %d \n", computationId);
 
     /// prepera allocation and transfer structures onto device
     memcpyComputationToDevice();
 
-    printf("[solver] model stage consistent !\n");
-
+    fprintf(stdout, "[solver] model stage consistent !\n");
     stdoutModelInformation();
-
-    requestMemoryInformation();
+    // requestMemoryInformation();
 }
 
 void GPUComputation::preInitializeData() {
@@ -325,7 +323,7 @@ void GPUComputation::PreInitializeComputationState(ComputationState *ev, int itr
     ev->geometrics = NVector<graph::Geometric>(d_geometrics, geometrics.size());
     ev->constraints = NVector<graph::Constraint>(d_constraints, constraints.size());
     ev->parameters = NVector<graph::Parameter>(d_parameters, parameters.size());
-
+       
     ev->pointOffset = d_pointOffset;
     ev->geometricOffset = d_geometricOffset;
     ev->constraintOffset = d_constraintOffset;

@@ -1121,7 +1121,7 @@ int model_6x10(JNIEnv &env, jclass &eclass) {
     return err;
 }
 
-int main__(int argc, char* args[]) 
+int main(int argc, char* args[]) 
 {
     int err;
 
@@ -1170,7 +1170,7 @@ int main__(int argc, char* args[])
 
     model_circle_line_tangetn_perpendicular(env, eclass);
 
-    //model_6x10(env, eclass);
+    // model_6x10(env, eclass); // zaburzyc wejsciowy wektor !!
       
 
     /// ----------------------------------------------------------------------------------------------------- //

@@ -24,8 +24,8 @@ struct ComputationState {
         return *vector;
     }
 
-    __GPU_DEV_INL__ double getLagrangeMultiplier(int constraintId) {
-        int multiOffset = accConstraintSize[constraintId];
+    __GPU_DEV_INL__ double getLagrangeMultiplier(int threadId) {
+        int multiOffset = accConstraintSize[threadId];
         return SV[size + multiOffset];
     }
 
@@ -34,14 +34,12 @@ struct ComputationState {
         return points[offset];
     }
 
-    __GPU_DEV_INL__ graph::Geometric *getGeometricObject(int geometricId) const {
-        const size_t offset = geometricOffset[geometricId];
-        return &geometrics[offset];
+    __GPU_DEV_INL__ graph::Geometric *getGeometricObject(int threadId) const {
+        return &geometrics[threadId];
     }
 
-    __host__ __GPU_DEV_INL__ graph::Constraint *getConstraint(int constraintId) const {
-        const size_t offset = constraintOffset[constraintId];
-        return &constraints[offset];
+    __host__ __GPU_DEV_INL__ graph::Constraint *getConstraint(int threadId) const {
+        return &constraints[threadId];
     }
 
     __GPU_DEV_INL__ graph::Parameter *getParameter(int parameterId) const {
@@ -91,10 +89,10 @@ struct ComputationState {
     // NVector direct map
     const int *__restrict__ pointOffset;
 
-    // NVector direct map
+    // NVector direct map -- not-used
     const int *__restrict__ geometricOffset;
 
-    // NVector direct map
+    // NVector direct map -- not-used
     const int *__restrict__ constraintOffset;
 
     /// paramater offs from given ID

@@ -1,6 +1,5 @@
 package com.mstruzek.graphic;
 
-import com.mstruzek.controller.ActiveKey;
 import com.mstruzek.controller.Controller;
 import com.mstruzek.msketch.Consts;
 import com.mstruzek.msketch.GeometricObject;
@@ -18,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
+import static com.mstruzek.graphic.Property.KLMN_POINTS;
 import static com.mstruzek.msketch.ModelRegistry.dbPoint;
 import static java.lang.System.currentTimeMillis;
 
@@ -469,12 +469,16 @@ public class MySketch extends JPanel implements MouseInputListener {
                 break;
             }
         }
-        if (!found && e.isShiftDown()) {
+
+
+        if (!found && e.getButton() == MouseEvent.BUTTON3) { // right mouse button
             mpc.clearAll();
             firePropertyChange(Property.KLMN_POINTS, null, mpc.toString());
         }
         repaint();
     }
+
+
 
     @Override
     public void mouseEntered(MouseEvent e) {
@@ -693,6 +697,7 @@ public class MySketch extends JPanel implements MouseInputListener {
 
     public void clearAll() {
         mpc.clearAll();
+        firePropertyChange(KLMN_POINTS, null, mpc.toString());
     }
 }
 
