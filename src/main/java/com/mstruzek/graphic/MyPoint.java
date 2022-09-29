@@ -22,14 +22,6 @@ public class MyPoint extends Point {
         return circle.contains(ix, iy);
     }
 
-    public boolean isDragged() {
-        return dragged;
-    }
-
-    public void setDragged(boolean dragged) {
-        this.dragged = dragged;
-    }
-
     public boolean hover() {
         return hover;
     }
@@ -64,6 +56,7 @@ public class MyPoint extends Point {
     }
 
     public java.awt.Point getLocation() {
-        return new java.awt.Point((int) getX(), (int) getY());
+        com.mstruzek.msketch.Point point = ModelRegistry.dbPoint.get(this.id);
+        return new java.awt.Point((int) point.getX(), (int) point.getY());
     }
 }

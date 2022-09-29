@@ -1,6 +1,5 @@
 package com.mstruzek.graphic;
 
-import com.mstruzek.controller.ActiveKey;
 import com.mstruzek.controller.Controller;
 import com.mstruzek.controller.EventType;
 import com.mstruzek.controller.Events;
@@ -200,7 +199,7 @@ public class FrameView extends JFrame {
 
         /// -----------------------------------------------------------------
         Events.addListener(EventType.REFRESH_N_REPAINT, (eventType, arguments) -> {
-            ms.refreshContainers();
+            ms.rebuildViewModel();
             ms.repaintLater();
         });
 
@@ -329,14 +328,14 @@ public class FrameView extends JFrame {
         /// -----------------------------------------------------------------
         final ActionListener solveActionListener = actionEvent -> controllerEventQueue.submit(() -> {
             controller.solveSystem();
-            ms.refreshContainers();
+            ms.rebuildViewModel();
             ms.repaintLater();
         });
 
         /// -----------------------------------------------------------------
         final ActionListener repositionActionListener = actionEvent -> controllerEventQueue.submit(() -> {
             controller.evaluateGuidePoints();
-            ms.refreshContainers();
+            ms.rebuildViewModel();
             ms.repaintLater();
         });
 
@@ -344,7 +343,7 @@ public class FrameView extends JFrame {
         final ActionListener relaxeActionListener = actionEvent -> controllerEventQueue.submit(() -> {
             controller.relaxControlPoints();
             controller.evaluateGuidePoints();
-            ms.refreshContainers();
+            ms.rebuildViewModel();
             ms.repaintLater();
         });
 
@@ -362,7 +361,7 @@ public class FrameView extends JFrame {
         /// -----------------------------------------------------------------
         final ActionListener clearActionListener = actionEvent -> controllerEventQueue.submit(() -> {
             ModelRegistry.removeObjectsFromModel();
-            ms.refreshContainers();
+            ms.rebuildViewModel();
             ms.repaintLater();
             clearTextArea();
             Events.send(EventType.REBUILD_TABLES, null);
@@ -370,7 +369,7 @@ public class FrameView extends JFrame {
 
         /// -----------------------------------------------------------------
         final ActionListener refreshActionListener = actionEvent -> {
-            ms.refreshContainers();
+            ms.rebuildViewModel();
             ms.repaintLater();
         };
         final ActionListener cntrlActionListener = actionEvent -> {
@@ -378,11 +377,11 @@ public class FrameView extends JFrame {
             ms.repaintLater();
         };
         /// -----------------------------------------------------------------
-        final ActionListener sketchStateNormalListener = event -> ms.setStateSketch(MySketchState.Normal);
-        final ActionListener drawLineActionListener = event -> ms.setStateSketch(MySketchState.DrawLine);
-        final ActionListener drawCircleActionListener = event -> ms.setStateSketch(MySketchState.DrawCircle);
-        final ActionListener drawArcActionListener = event -> ms.setStateSketch(MySketchState.DrawArc);
-        final ActionListener drawPointActionListener = event -> ms.setStateSketch(MySketchState.DrawPoint);
+        final ActionListener sketchStateNormalListener = event -> ms.setState(MySketchState.Normal);
+        final ActionListener drawLineActionListener = event -> ms.setState(MySketchState.DrawLine);
+        final ActionListener drawCircleActionListener = event -> ms.setState(MySketchState.DrawCircle);
+        final ActionListener drawArcActionListener = event -> ms.setState(MySketchState.DrawArc);
+        final ActionListener drawPointActionListener = event -> ms.setState(MySketchState.DrawPoint);
 
         /// -----------------------------------------------------------------
         final ActionListener solverActionListener = actionEvent -> controllerEventQueue.submit(() -> {
