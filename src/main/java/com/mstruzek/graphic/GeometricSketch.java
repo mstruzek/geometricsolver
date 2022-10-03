@@ -26,11 +26,12 @@ public class GeometricSketch extends JPanel implements MouseInputListener, Mouse
     public static final String TITLE_SZKICOWNIK = "Szkicownik";
 
     ///tu skladujemy oddzielnie kategorie obiektow do odrysowania
-    private final ArrayList<DrawLine> lineContainer = new ArrayList<>();
-    private final ArrayList<DrawCircle> circleContainer = new ArrayList<>();
-    private final ArrayList<DrawFreePoint> freePointContainer = new ArrayList<>();
-    private final ArrayList<DrawArc> arcContainer = new ArrayList<>();
-    private final HashMap<Integer, DrawPoint> pointContainer = new HashMap<>();
+    private final Object drawMutex = new Object();
+    private ArrayList<DrawLine> lineContainer = new ArrayList<>();
+    private ArrayList<DrawCircle> circleContainer = new ArrayList<>();
+    private ArrayList<DrawFreePoint> freePointContainer = new ArrayList<>();
+    private ArrayList<DrawArc> arcContainer = new ArrayList<>();
+    private HashMap<Integer, DrawPoint> pointContainer = new HashMap<>();
 
     /// aktualny stan podczas klikania myszka
     private volatile ApplicationState state = ApplicationState.Normal;
@@ -120,7 +121,9 @@ public class GeometricSketch extends JPanel implements MouseInputListener, Mouse
             geometricSoAIndex.addGeometricPoint(point.id, p.x, p.y);
 
         }
-        this.geometricSoAIndex = geometricSoAIndex;
+        synchronized (drawMutex) {
+            this.geometricSoAIndex = geometricSoAIndex;
+        }
     }
 
     public void rebuildViewModel() {
@@ -135,11 +138,12 @@ public class GeometricSketch extends JPanel implements MouseInputListener, Mouse
         ///  temporary objects
         Point loc1, loc2, loc3;
 
-        lineContainer.clear();
-        circleContainer.clear();
-        freePointContainer.clear();
-        arcContainer.clear();
-        pointContainer.clear();
+        final ArrayList<DrawLine> lineContainer = new ArrayList<>();
+        final ArrayList<DrawCircle> circleContainer = new ArrayList<>();
+        final ArrayList<DrawFreePoint> freePointContainer = new ArrayList<>();
+        final ArrayList<DrawArc> arcContainer = new ArrayList<>();
+        final HashMap<Integer, DrawPoint> pointContainer = new HashMap<>();
+
         ArrayList<GeometricObject> primitives = new ArrayList<>(ModelRegistry.dbPrimitives.values());
 
         for (int i = 0; i < primitives.size(); i++) {
@@ -152,32 +156,32 @@ public class GeometricSketch extends JPanel implements MouseInputListener, Mouse
                     loc2 = p2.getLocation();
                     geometricSoAIndex.addGeometricPoint(p1.id, loc1.x, loc1.y);
                     geometricSoAIndex.addGeometricPoint(p2.id, loc2.x, loc2.y);
-                    add(p1);
-                    add(p2);
+                    pointContainer.put(p1.id, p1);
+                    pointContainer.put(p2.id, p2);
                     ml = new DrawLine(p1, p2);
                     ml.setGeometricId(gm.getPrimitiveId());
-                    add(ml);
+                    lineContainer.add(ml);
                     break;
                 case Circle:
                     p1 = new DrawPoint(gm.getP1());
                     p2 = new DrawPoint(gm.getP2());
-                    add(p1);
-                    add(p2);
+                    pointContainer.put(p1.id, p1);
+                    pointContainer.put(p2.id, p2);
                     loc1 = p1.getLocation();
                     loc2 = p2.getLocation();
                     geometricSoAIndex.addGeometricPoint(p1.id, loc1.x, loc1.y);
                     geometricSoAIndex.addGeometricPoint(p2.id, loc2.x, loc2.y);
                     mc = new DrawCircle(p1, p2);
                     mc.setGeometricId(gm.getPrimitiveId());
-                    add(mc);
+                    circleContainer.add(mc);
                     break;
                 case Arc:
                     p1 = new DrawPoint(gm.getP1());
                     p2 = new DrawPoint(gm.getP2());
                     p3 = new DrawPoint(gm.getP3());
-                    add(p1);
-                    add(p2);
-                    add(p3);
+                    pointContainer.put(p1.id, p1);
+                    pointContainer.put(p2.id, p2);
+                    pointContainer.put(p3.id, p3);
                     loc1 = p1.getLocation();
                     loc2 = p2.getLocation();
                     loc3 = p3.getLocation();
@@ -186,41 +190,28 @@ public class GeometricSketch extends JPanel implements MouseInputListener, Mouse
                     geometricSoAIndex.addGeometricPoint(p3.id, loc3.x, loc3.y);
                     ma = new DrawArc(p1, p2, p3);
                     ma.setGeometricId(gm.getPrimitiveId());
-                    add(ma);
+                    arcContainer.add(ma);
                     break;
                 case FreePoint:
                     p1 = new DrawPoint(gm.getP1());
-                    add(p1);
+                    pointContainer.put(p1.id, p1);
                     loc1 = p1.getLocation();
                     geometricSoAIndex.addGeometricPoint(p1.id, loc1.x, loc1.y);
                     fp = new DrawFreePoint(p1);
                     fp.setGeometricId(gm.getPrimitiveId());
-                    add(fp);
+                    freePointContainer.add(fp);
                     break;
             }
         }
 
-        this.geometricSoAIndex = geometricSoAIndex;
-    }
-
-    private void add(DrawLine ml) {
-        lineContainer.add(ml);
-    }
-
-    private void add(DrawCircle ml) {
-        circleContainer.add(ml);
-    }
-
-    private void add(DrawFreePoint fp) {
-        freePointContainer.add(fp);
-    }
-
-    private void add(DrawArc arc) {
-        arcContainer.add(arc);
-    }
-
-    private void add(DrawPoint p) {
-        pointContainer.put(p.id, p);
+        synchronized (drawMutex) {
+            this.lineContainer = lineContainer;
+            this.circleContainer = circleContainer;
+            this.freePointContainer = freePointContainer;
+            this.arcContainer = arcContainer;
+            this.pointContainer = pointContainer;
+            this.geometricSoAIndex = geometricSoAIndex;
+        }
     }
 
     void repaintLater() {
@@ -237,6 +228,21 @@ public class GeometricSketch extends JPanel implements MouseInputListener, Mouse
         Graphics2D g2d = (Graphics2D) g;
         /// first title and border
         super.paint(g2d);
+
+        ArrayList<DrawLine> lineContainer;
+        ArrayList<DrawCircle> circleContainer;
+        ArrayList<DrawFreePoint> freePointContainer;
+        ArrayList<DrawArc> arcContainer;
+        HashMap<Integer, DrawPoint> pointContainer;
+
+        synchronized (drawMutex) {
+            lineContainer = this.lineContainer ;
+            circleContainer = this.circleContainer ;
+            freePointContainer = this.freePointContainer ;
+            arcContainer = this.arcContainer ;
+            pointContainer = this.pointContainer ;
+        }
+
 
 /// transformation
         AffineTransform tx = (AffineTransform) (G.clone());
