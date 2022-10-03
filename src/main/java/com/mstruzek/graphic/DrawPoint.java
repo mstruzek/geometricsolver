@@ -3,23 +3,14 @@ package com.mstruzek.graphic;
 import com.mstruzek.msketch.ModelRegistry;
 
 import java.awt.*;
-import java.awt.geom.Ellipse2D;
 
+public class DrawPoint extends Point {
 
-public class MyPoint extends Point {
-
-    boolean hover = false;
-    boolean dragged = false;
     int id;
+    boolean hover = false;
 
-    public MyPoint(int p) {
+    public DrawPoint(int p) {
         id = p;
-    }
-
-    public boolean contains(int ix, int iy, double d) {
-        com.mstruzek.msketch.Point p = ModelRegistry.dbPoint.get(this.id);
-        Ellipse2D.Double circle = new Ellipse2D.Double(p.getX() - d / 2, p.getY() - d / 2, d, d);
-        return circle.contains(ix, iy);
     }
 
     public boolean hover() {
@@ -28,16 +19,6 @@ public class MyPoint extends Point {
 
     public void setHover(boolean hover) {
         this.hover = hover;
-    }
-
-    @Override
-    public double getX() {
-        return ModelRegistry.dbPoint.get(this.id).getX();
-    }
-
-    @Override
-    public double getY() {
-        return ModelRegistry.dbPoint.get(this.id).getY();
     }
 
     @Override
@@ -55,6 +36,7 @@ public class MyPoint extends Point {
         p.setY(ps.getY());
     }
 
+    @Override
     public java.awt.Point getLocation() {
         com.mstruzek.msketch.Point point = ModelRegistry.dbPoint.get(this.id);
         return new java.awt.Point((int) point.getX(), (int) point.getY());

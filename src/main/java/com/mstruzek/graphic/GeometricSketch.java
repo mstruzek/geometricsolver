@@ -20,20 +20,20 @@ import static com.mstruzek.graphic.Property.KLMN_POINTS;
 import static java.lang.System.currentTimeMillis;
 
 
-public class MySketch extends JPanel implements MouseInputListener, MouseWheelListener {
+public class GeometricSketch extends JPanel implements MouseInputListener, MouseWheelListener {
     private static final int S_WIDTH = 1120;
     private static final int S_HEIGHT = 900;
     public static final String TITLE_SZKICOWNIK = "Szkicownik";
 
     ///tu skladujemy oddzielnie kategorie obiektow do odrysowania
-    private final ArrayList<MyLine> lineContainer = new ArrayList<>();
-    private final ArrayList<MyCircle> circleContainer = new ArrayList<>();
-    private final ArrayList<MyFreePoint> freePointContainer = new ArrayList<>();
-    private final ArrayList<MyArc> arcContainer = new ArrayList<>();
-    private final HashMap<Integer, MyPoint> pointContainer = new HashMap<>();
+    private final ArrayList<DrawLine> lineContainer = new ArrayList<>();
+    private final ArrayList<DrawCircle> circleContainer = new ArrayList<>();
+    private final ArrayList<DrawFreePoint> freePointContainer = new ArrayList<>();
+    private final ArrayList<DrawArc> arcContainer = new ArrayList<>();
+    private final HashMap<Integer, DrawPoint> pointContainer = new HashMap<>();
 
     /// aktualny stan podczas klikania myszka
-    private volatile MySketchState state = MySketchState.Normal;
+    private volatile ApplicationState state = ApplicationState.Normal;
     private final AffineTransform G = new AffineTransform();
 
     private volatile GeometricSOAIndex geometricSoAIndex = new GeometricSOAIndex();
@@ -53,8 +53,8 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
     /// hold last point id selected for drag operation
     private volatile Integer pressedId = null;
 
-    private final MyPointContainer mpc = new MyPointContainer(-1, -1, -1, -1);
-    private final MyPopup popoup;
+    private final PointContainer mpc = new PointContainer(-1, -1, -1, -1);
+    private final PointSelectorPopup popoup;
 
     ///  main model controller
     private final Controller controller;
@@ -76,7 +76,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
 
     private boolean controlGuidelines = false;
 
-    public MySketch(Controller controller) {
+    public GeometricSketch(Controller controller) {
         super();
         this.controller = controller;
         setLayout(null);
@@ -92,7 +92,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
         addMouseMotionListener(this);
         addMouseWheelListener(this);
 
-        this.popoup = new MyPopup(-1, mpc);
+        this.popoup = new PointSelectorPopup(-1, mpc);
         this.popoup.addPropertyChangeListener(evt ->
             firePropertyChange(evt.getPropertyName(), evt.getOldValue(), evt.getNewValue()));
     }
@@ -107,7 +107,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
         this.controlGuidelines = guideLines;
     }
 
-    public void setState(MySketchState state) {
+    public void setState(ApplicationState state) {
         this.state = state;
     }
 
@@ -115,7 +115,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
     /// Internally used after location changed
     private void updateGeometricSOAIndex() {
         GeometricSOAIndex geometricSoAIndex = new GeometricSOAIndex();
-        for (MyPoint point : pointContainer.values()) {
+        for (DrawPoint point : pointContainer.values()) {
             Point p = point.getLocation();
             geometricSoAIndex.addGeometricPoint(point.id, p.x, p.y);
 
@@ -126,11 +126,11 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
     public void rebuildViewModel() {
         final GeometricSOAIndex geometricSoAIndex = new GeometricSOAIndex();
         /// temporary evaluation objects
-        MyPoint p1, p2, p3;
-        MyLine ml;
-        MyArc ma;
-        MyCircle mc;
-        MyFreePoint fp;
+        DrawPoint p1, p2, p3;
+        DrawLine ml;
+        DrawArc ma;
+        DrawCircle mc;
+        DrawFreePoint fp;
 
         ///  temporary objects
         Point loc1, loc2, loc3;
@@ -146,35 +146,35 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
             GeometricObject gm = primitives.get(i);
             switch (gm.getType()) {
                 case Line:
-                    p1 = new MyPoint(gm.getP1());
-                    p2 = new MyPoint(gm.getP2());
+                    p1 = new DrawPoint(gm.getP1());
+                    p2 = new DrawPoint(gm.getP2());
                     loc1 = p1.getLocation();
                     loc2 = p2.getLocation();
                     geometricSoAIndex.addGeometricPoint(p1.id, loc1.x, loc1.y);
                     geometricSoAIndex.addGeometricPoint(p2.id, loc2.x, loc2.y);
                     add(p1);
                     add(p2);
-                    ml = new MyLine(p1, p2);
-                    ml.setPrimitiveId(gm.getPrimitiveId());
+                    ml = new DrawLine(p1, p2);
+                    ml.setGeometricId(gm.getPrimitiveId());
                     add(ml);
                     break;
                 case Circle:
-                    p1 = new MyPoint(gm.getP1());
-                    p2 = new MyPoint(gm.getP2());
+                    p1 = new DrawPoint(gm.getP1());
+                    p2 = new DrawPoint(gm.getP2());
                     add(p1);
                     add(p2);
                     loc1 = p1.getLocation();
                     loc2 = p2.getLocation();
                     geometricSoAIndex.addGeometricPoint(p1.id, loc1.x, loc1.y);
                     geometricSoAIndex.addGeometricPoint(p2.id, loc2.x, loc2.y);
-                    mc = new MyCircle(p1, p2);
-                    mc.setPrimitiveId(gm.getPrimitiveId());
+                    mc = new DrawCircle(p1, p2);
+                    mc.setGeometricId(gm.getPrimitiveId());
                     add(mc);
                     break;
                 case Arc:
-                    p1 = new MyPoint(gm.getP1());
-                    p2 = new MyPoint(gm.getP2());
-                    p3 = new MyPoint(gm.getP3());
+                    p1 = new DrawPoint(gm.getP1());
+                    p2 = new DrawPoint(gm.getP2());
+                    p3 = new DrawPoint(gm.getP3());
                     add(p1);
                     add(p2);
                     add(p3);
@@ -184,17 +184,17 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
                     geometricSoAIndex.addGeometricPoint(p1.id, loc1.x, loc1.y);
                     geometricSoAIndex.addGeometricPoint(p2.id, loc2.x, loc2.y);
                     geometricSoAIndex.addGeometricPoint(p3.id, loc3.x, loc3.y);
-                    ma = new MyArc(p1, p2, p3);
-                    ma.setPrimitiveId(gm.getPrimitiveId());
+                    ma = new DrawArc(p1, p2, p3);
+                    ma.setGeometricId(gm.getPrimitiveId());
                     add(ma);
                     break;
                 case FreePoint:
-                    p1 = new MyPoint(gm.getP1());
+                    p1 = new DrawPoint(gm.getP1());
                     add(p1);
                     loc1 = p1.getLocation();
                     geometricSoAIndex.addGeometricPoint(p1.id, loc1.x, loc1.y);
-                    fp = new MyFreePoint(p1);
-                    fp.setPrimitiveId(gm.getPrimitiveId());
+                    fp = new DrawFreePoint(p1);
+                    fp.setGeometricId(gm.getPrimitiveId());
                     add(fp);
                     break;
             }
@@ -203,23 +203,23 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
         this.geometricSoAIndex = geometricSoAIndex;
     }
 
-    private void add(MyLine ml) {
+    private void add(DrawLine ml) {
         lineContainer.add(ml);
     }
 
-    private void add(MyCircle ml) {
+    private void add(DrawCircle ml) {
         circleContainer.add(ml);
     }
 
-    private void add(MyFreePoint fp) {
+    private void add(DrawFreePoint fp) {
         freePointContainer.add(fp);
     }
 
-    private void add(MyArc arc) {
+    private void add(DrawArc arc) {
         arcContainer.add(arc);
     }
 
-    private void add(MyPoint p) {
+    private void add(DrawPoint p) {
         pointContainer.put(p.id, p);
     }
 
@@ -242,7 +242,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
         AffineTransform tx = (AffineTransform) (G.clone());
         g2d.transform(tx);
 
-        for (MyLine ml : lineContainer) {
+        for (DrawLine ml : lineContainer) {
             /// stdout into g2d context
             Point tp2 = ml.p2.getLocation();
             Point tp1 = ml.p1.getLocation();
@@ -252,8 +252,8 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
             if (controlGuidelines) {
                 g2d.setColor(CONTROL_GUIDES_COLOR);
 
-                int pA = ModelRegistry.dbPrimitives.get(ml.getPrimitiveId()).getA();
-                int pB = ModelRegistry.dbPrimitives.get(ml.getPrimitiveId()).getB();
+                int pA = ModelRegistry.dbPrimitives.get(ml.getGeometricId()).getA();
+                int pB = ModelRegistry.dbPrimitives.get(ml.getGeometricId()).getB();
                 //A - p1
                 Point tp3 = asPointLocation(pA);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp3.x, tp3.y));
@@ -266,7 +266,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
             }
         }
 
-        for (MyCircle cl : circleContainer) {
+        for (DrawCircle cl : circleContainer) {
             /// stdout into g2d context
             Point tp2 = cl.p2.getLocation();
             Point tp1 = cl.p1.getLocation();
@@ -277,8 +277,8 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
             if (controlGuidelines) {
                 g2d.setColor(CONTROL_GUIDES_COLOR);
 
-                int pA = ModelRegistry.dbPrimitives.get(cl.getPrimitiveId()).getA();
-                int pB = ModelRegistry.dbPrimitives.get(cl.getPrimitiveId()).getB();
+                int pA = ModelRegistry.dbPrimitives.get(cl.getGeometricId()).getA();
+                int pB = ModelRegistry.dbPrimitives.get(cl.getGeometricId()).getB();
                 //A - p1
                 Point tp3 = asPointLocation(pA);
                 g2d.draw(new Line2D.Double(tp1.x, tp1.y, tp3.x, tp3.y));
@@ -291,7 +291,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
             }
         }
 
-        for (MyArc cl : arcContainer) {
+        for (DrawArc cl : arcContainer) {
             /// stdout into g2d context
             //System.out.println(cl.p1.getLocation());
             Point tp1 = cl.p1.getLocation();
@@ -325,10 +325,10 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
             if (controlGuidelines) {
                 g2d.setColor(CONTROL_GUIDES_COLOR);
 
-                int pA = ModelRegistry.dbPrimitives.get(cl.getPrimitiveId()).getA();
-                int pB = ModelRegistry.dbPrimitives.get(cl.getPrimitiveId()).getB();
-                int pC = ModelRegistry.dbPrimitives.get(cl.getPrimitiveId()).getC();
-                int pD = ModelRegistry.dbPrimitives.get(cl.getPrimitiveId()).getD();
+                int pA = ModelRegistry.dbPrimitives.get(cl.getGeometricId()).getA();
+                int pB = ModelRegistry.dbPrimitives.get(cl.getGeometricId()).getB();
+                int pC = ModelRegistry.dbPrimitives.get(cl.getGeometricId()).getC();
+                int pD = ModelRegistry.dbPrimitives.get(cl.getGeometricId()).getD();
                 //A - p1
                 tp1 = cl.p1.getLocation();
                 tp2 = asPointLocation(pA);
@@ -352,12 +352,12 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
             }
         }
 
-        for (MyFreePoint mfp : freePointContainer) {
+        for (DrawFreePoint mfp : freePointContainer) {
             if (controlGuidelines) {
                 g2d.setColor(CONTROL_GUIDES_COLOR);
 
-                int pA = ModelRegistry.dbPrimitives.get(mfp.getPrimitiveId()).getA();
-                int pB = ModelRegistry.dbPrimitives.get(mfp.getPrimitiveId()).getB();
+                int pA = ModelRegistry.dbPrimitives.get(mfp.getGeometricId()).getA();
+                int pB = ModelRegistry.dbPrimitives.get(mfp.getGeometricId()).getB();
                 //A - p1
                 Point tp1 = mfp.p1.getLocation();
                 Point tp2 = asPointLocation(pA);
@@ -371,7 +371,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
             }
         }
 
-        for (MyPoint point : pointContainer.values()) {
+        for (DrawPoint point : pointContainer.values()) {
             if (point.hover()) {
                 g2d.setColor(Color.DARK_GRAY);
             } else {
@@ -494,7 +494,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
                 Point p1 = picked[0];
                 controller.addPoint(new Vector(p1.x, p1.y));
                 rebuildViewModel();
-                state = MySketchState.Normal;
+                state = ApplicationState.Normal;
                 pId = 0;
                 picked[0] = null;
                 repaint();
@@ -513,7 +513,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
                 Point p3 = picked[2];
                 controller.addArc(new Vector(p1.x, p1.y), new Vector(p2.x, p2.y), new Vector(p3.x, p3.y));
                 rebuildViewModel();
-                state = MySketchState.Normal;
+                state = ApplicationState.Normal;
                 pId = 0;
                 picked[0] = null;
                 picked[1] = null;
@@ -533,7 +533,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
                 Point p2 = picked[1];
                 controller.addCircle(new Vector(p1.x, p1.y), new Vector(p2.x, p2.y));
                 rebuildViewModel();
-                state = MySketchState.Normal;
+                state = ApplicationState.Normal;
                 pId = 0;
                 picked[0] = null;
                 picked[1] = null;
@@ -552,7 +552,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
                 Point p2 = picked[1];
                 controller.addLine(new Vector(p1.x, p1.y), new Vector(p2.x, p2.y));
                 rebuildViewModel();
-                state = MySketchState.Normal;
+                state = ApplicationState.Normal;
                 pId = 0;
                 picked[0] = null;
                 picked[1] = null;
@@ -602,7 +602,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if(state == MySketchState.Normal) {
+        if(state == ApplicationState.Normal) {
 
             /// Drag selected point
             if (pressedId == null) {

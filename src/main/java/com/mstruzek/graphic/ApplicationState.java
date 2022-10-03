@@ -8,7 +8,7 @@ package com.mstruzek.graphic;
  *
  * @author root
  */
-public enum MySketchState {
+public enum ApplicationState {
 
     /**
      * tryb w kotrym mozezemy zmieniac polozenie punktow, oraza nadawac wiezy
@@ -42,7 +42,7 @@ public enum MySketchState {
     /**
      * Powrot do poczatkowego stanu
      */
-    public MySketchState exitState() {
+    public ApplicationState exitState() {
         return Normal;
     }
 }

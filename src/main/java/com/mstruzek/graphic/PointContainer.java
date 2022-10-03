@@ -6,14 +6,14 @@ package com.mstruzek.graphic;
  *
  * @author root
  */
-public class MyPointContainer {
+public class PointContainer {
 
     int PointK = -1;
     int PointL = -1;
     int PointM = -1;
     int PointN = -1;
 
-    public MyPointContainer(int pointK, int pointL, int pointM, int pointN) {
+    public PointContainer(int pointK, int pointL, int pointM, int pointN) {
         super();
         PointK = pointK;
         PointL = pointL;

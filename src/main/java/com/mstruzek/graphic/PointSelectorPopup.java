@@ -6,7 +6,7 @@ import java.awt.event.ActionListener;
 
 import static com.mstruzek.graphic.Property.KLMN_POINTS;
 
-public class MyPopup extends JPopupMenu implements ActionListener {
+public class PointSelectorPopup extends JPopupMenu implements ActionListener {
 
     /**
      * id aktualnie wskazanego punktu
@@ -15,9 +15,9 @@ public class MyPopup extends JPopupMenu implements ActionListener {
     /**
      * kontener na przechwoywane punkty
      */
-    final MyPointContainer mpc;
+    final PointContainer mpc;
 
-    public MyPopup(int pointId, MyPointContainer mpc) {
+    public PointSelectorPopup(int pointId, PointContainer mpc) {
         super();
         this.pointId = pointId;
         this.mpc = mpc;

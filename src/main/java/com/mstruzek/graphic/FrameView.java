@@ -83,7 +83,7 @@ public class FrameView extends JFrame {
     /**
      * tabelki z wiezami,figurami i parametrami
      */
-    final MyTables myTables;
+    final GeometricModelTables geometricModelTables;
 
     /**
      * wypisujemy tutaj wszystko co idzie na System.out.println();
@@ -105,7 +105,7 @@ public class FrameView extends JFrame {
     /// wyswietla aktualna pozycje kursora
     final JLabel currentPosition = new JLabel("Currrent Position:");
 
-    final MySketch ms;
+    final GeometricSketch ms;
 
     /// Single ordered executor
     final Dispatcher controllerEventQueue = Dispatchers.newDispatcher();
@@ -148,7 +148,7 @@ public class FrameView extends JFrame {
 
         /// -----------------------------------------------------------------
         // SZKICOWNIK
-        ms = new MySketch(this.controller);
+        ms = new GeometricSketch(this.controller);
         ms.setControlGuidelines(false);
         ms.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
@@ -177,10 +177,10 @@ public class FrameView extends JFrame {
 
         /// -----------------------------------------------------------------
         // Tabelki
-        myTables = new MyTables();
-        myTables.setFocusable(false);
+        geometricModelTables = new GeometricModelTables();
+        geometricModelTables.setFocusable(false);
 
-        right.add(myTables);
+        right.add(geometricModelTables);
 
         // additional worker for aggregated log publication on swing thread
         consoleDownstream.submit(this::consoleObservable);
@@ -377,11 +377,11 @@ public class FrameView extends JFrame {
             ms.repaintLater();
         };
         /// -----------------------------------------------------------------
-        final ActionListener sketchStateNormalListener = event -> ms.setState(MySketchState.Normal);
-        final ActionListener drawLineActionListener = event -> ms.setState(MySketchState.DrawLine);
-        final ActionListener drawCircleActionListener = event -> ms.setState(MySketchState.DrawCircle);
-        final ActionListener drawArcActionListener = event -> ms.setState(MySketchState.DrawArc);
-        final ActionListener drawPointActionListener = event -> ms.setState(MySketchState.DrawPoint);
+        final ActionListener sketchStateNormalListener = event -> ms.setState(ApplicationState.Normal);
+        final ActionListener drawLineActionListener = event -> ms.setState(ApplicationState.DrawLine);
+        final ActionListener drawCircleActionListener = event -> ms.setState(ApplicationState.DrawCircle);
+        final ActionListener drawArcActionListener = event -> ms.setState(ApplicationState.DrawArc);
+        final ActionListener drawPointActionListener = event -> ms.setState(ApplicationState.DrawPoint);
 
         /// -----------------------------------------------------------------
         final ActionListener solverActionListener = actionEvent -> controllerEventQueue.submit(() -> {

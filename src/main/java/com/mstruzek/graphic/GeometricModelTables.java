@@ -20,7 +20,7 @@ import static com.mstruzek.controller.EventType.PARAMETER_TABLE_INSERT;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
-public class MyTables extends JPanel {
+public class GeometricModelTables extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -43,7 +43,7 @@ public class MyTables extends JPanel {
     final ContextActionSelector constraintActionSelector = new ContextActionSelector();
     final ContextActionSelector geometricActionSelector = new ContextActionSelector();
 
-    public MyTables() {
+    public GeometricModelTables() {
         super();
 
         setPreferredSize(new Dimension(D_WIDTH, D_HEIGHT));
