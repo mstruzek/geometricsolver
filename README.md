@@ -92,3 +92,13 @@ where x evaluates into ^q - delta-q - generalized coordinates.
  
 #### 2009-2022 mstru7ek
 
+
+## Project State - 3.10.2022
+
+CPU implementation: 
+- TangencyConstraint, DistancePointLineConstraint (with Hessian tensor) unstable !
+
+GPU implementation:
+- dense/sparse module (with Hessian tensor) unstable , Sparse solver unstable.
+- if symmetric system - Cholesky factorization provided ! 
+
