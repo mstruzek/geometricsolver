@@ -29,13 +29,13 @@ public class SolverStatPanel extends JPanel {
     private JLabel l_size = new JLabel("Size: ");
     private JLabel l_coefficientArity = new JLabel("Coefficient Size: ");
     private JLabel l_dimension = new JLabel("Dimension: ");
-    private JLabel l_accEvaluationTime = new JLabel("Time AccEvaluation [ns]: ");
-    private JLabel l_accSolverTime = new JLabel("Time AccSolver [ns]: ");
+    private JLabel l_accEvaluationTime = new JLabel("Time AccEvaluation [ms]: ");
+    private JLabel l_accSolverTime = new JLabel("Time AccSolver [ms]: ");
     private JLabel l_convergence = new JLabel("Convergence: ");
     private JLabel l_delta = new JLabel("Error: ");
     private JLabel l_constraintDelta = new JLabel("ConstraintDelta: ");
     private JLabel l_iterations = new JLabel("iter-n: ");
-    private JLabel l_accTime = new JLabel("Acc Time [ns]: ");
+    private JLabel l_accTime = new JLabel("Acc Time [ms]: ");
 
     private static final String FORMAT_DECIMAL = "  %d ";
     private static final String FORMAT_STR = "  %s ";

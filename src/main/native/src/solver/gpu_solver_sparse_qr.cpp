@@ -22,6 +22,7 @@ GPUSolverSparseQR::GPUSolverSparseQR(cudaStream_t stream) : stream(stream) {
         fprintf(stderr, "[cusolver/error] handler failure; %s \n", cusolverGetErrorName(status));
         exit(-1);
     }
+
     HANDLE_STATUS cusolverSpSetStream(handle, stream);
     if (status) {
         fprintf(stderr, "[cusolver/error] set stream failure;  %s  \n", cusolverGetErrorName(status));

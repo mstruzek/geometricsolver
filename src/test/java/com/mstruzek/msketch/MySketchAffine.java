@@ -31,13 +31,8 @@ public class MySketchAffine extends JPanel implements MouseInputListener, MouseW
     public static final int BOUNDS = 200;
 
 
-    /// random gitter for NaN translation lower bound
-    private static final Random jitterSource = new Random();
-    public static final double JITTER_MAX = 1e-5;
-    public static final double JITTER_MIN = 1e-4;
-
     /// Zoom-In / Zoom-Out with left Ctrl button
-    public static final double CTRL_SCALE_FAST = 16.0;
+    public static final double CTRL_SCALE_FAST = 24.0;
     public static final double CTRL_SCALE_SLOW = 8.0;
     public static final double SCALE_BASE = 100.0;
 
@@ -227,9 +222,34 @@ public class MySketchAffine extends JPanel implements MouseInputListener, MouseW
     }
 
 
+    static class PointUtils {
+
+        static public Point newPoint(double x , double y) {
+            return new Point((int) x, (int) y);
+        }
+
+        static public Point scale(Point p , double scale) {
+            return new Point((int) (p.x* scale), (int) (p.y * scale));
+        }
+
+        static public double length(Point point) {
+            double product = product(point, point);
+            return Math.sqrt(product);
+        }
+
+        static public double product(Point p1, Point p2) {
+            return p1.x * p1.x + p2.y * p2.y;
+        }
+
+
+
+    }
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
+
+        // +1.0 -1.0
+        int direction = e.getWheelRotation();
 
         /// Zoom-In / Zoom-Out at position
         Point point = e.getPoint(); /// new camera point
@@ -237,19 +257,20 @@ public class MySketchAffine extends JPanel implements MouseInputListener, MouseW
 
         double ctrlScale = (e.isControlDown()) ? CTRL_SCALE_FAST : CTRL_SCALE_SLOW;
 
-        double len = Math.sqrt(point.x * point.x + point.y * point.y) / (10);
-
         // scale in the same direction as mouse wheel rotation
         double scale = (SCALE_BASE + ctrlScale * e.getWheelRotation()) / SCALE_BASE;
-        int direction = e.getWheelRotation();
-        double tx = direction * -point.x * scale * Math.abs(G.getScaleX()) / len;
-        double ty = direction * -point.y * scale * Math.abs(G.getScaleX()) / len;
 
-        if (Double.isNaN(tx)) tx = jitterSource.nextDouble(JITTER_MAX, JITTER_MIN);
-        if (Double.isNaN(ty)) ty = jitterSource.nextDouble(JITTER_MAX, JITTER_MIN);
+        // towards center point cx, cy of sketch panel
+        int x = (int) (Math.signum(G.getScaleX()) * getWidth() / 2 - e.getPoint().x);
+        int y = (int) (Math.signum(G.getScaleY()) * (getHeight() / 2 - e.getPoint().y));
+        var vector = new Point(x,y);
+        double length = PointUtils.length(vector);
+
+        double factor = length * 0.00005 * ctrlScale;
+        var translateToSr = PointUtils.scale(vector, factor * direction );
 
         /// Zoom-In / Zoom-Out
-        G.concatenate(AffineTransform.getTranslateInstance(tx, ty));
+        G.concatenate(AffineTransform.getTranslateInstance(translateToSr.x, translateToSr.y));
         G.concatenate(AffineTransform.getScaleInstance(scale, scale));
 
         repaint();

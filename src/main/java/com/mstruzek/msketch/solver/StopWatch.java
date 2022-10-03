@@ -3,7 +3,7 @@ package com.mstruzek.msketch.solver;
 import java.util.function.LongSupplier;
 
 public class StopWatch {
-    private static final LongSupplier nanoClock = System::nanoTime;
+    private static final LongSupplier nanoClock = System::currentTimeMillis;
     long startTick;
     long stopTick;
     long accTime;
