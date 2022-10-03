@@ -44,8 +44,8 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
     private static final double JITTER_MIN = 1e-4;
 
     /// Zoom-In / Zoom-Out with left Ctrl button
-    private static final double CTRL_SCALE_FAST = 16.0;
-    private static final double CTRL_SCALE_SLOW = 8.0;
+    private static final double CTRL_SCALE_SPD2 = 16.0;
+    private static final double CTRL_SCALE_SPD1 = 8.0;
     private static final double SCALE_BASE = 100.0;
 
     // structure use for transformation of coordinate system
@@ -580,7 +580,7 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
         Point point = inverseTransform(G, e.getPoint()); /// new camera point
 
 
-        double ctrlScale = (e.isControlDown()) ? CTRL_SCALE_FAST : CTRL_SCALE_SLOW;
+        double ctrlScale = (e.isControlDown()) ? CTRL_SCALE_SPD2 : CTRL_SCALE_SPD1;
 
         double len = Math.sqrt(point.x * point.x + point.y * point.y) / (10);
 
@@ -602,33 +602,36 @@ public class MySketch extends JPanel implements MouseInputListener, MouseWheelLi
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        /// Drag selected point
-        if (pressedId == null) {
-            Point ep = inverseTransform(G, e.getPoint());
-            Set<Integer> withInBoundingBox = geometricSoAIndex.findWithInBoundingBox(ep.getX(), ep.getY(), pRadius);
-            if (!withInBoundingBox.isEmpty()) {
-                withInBoundingBox.stream().findFirst().ifPresent(pointId -> pressedId = pointId);
+        if(state == MySketchState.Normal) {
+
+            /// Drag selected point
+            if (pressedId == null) {
+                Point ep = inverseTransform(G, e.getPoint());
+                Set<Integer> withInBoundingBox = geometricSoAIndex.findWithInBoundingBox(ep.getX(), ep.getY(), pRadius);
+                if (!withInBoundingBox.isEmpty()) {
+                    withInBoundingBox.stream().findFirst().ifPresent(pointId -> pressedId = pointId);
+                }
             }
-        }
 
-        /// Update location of selected point
-        if (pressedId != null) {
-            Point ep = inverseTransform(G, e.getPoint());
-            Point point = pointContainer.get(pressedId);
-            point.setLocation(ep);
-            updateGeometricSOAIndex();
-            repaint();
-            return;
-        }
+            /// Update location of selected point
+            if (pressedId != null) {
+                Point ep = inverseTransform(G, e.getPoint());
+                Point point = pointContainer.get(pressedId);
+                point.setLocation(ep);
+                updateGeometricSOAIndex();
+                repaint();
+                return;
+            }
 
-        /// Move coordinate view  ( `pan ),  Cx, Cy ,
-        if (lastPressed != null) {
-            Point sp1 = e.getPoint();
-            Point dvec = new Point(sp1.x - lastPressed.x, sp1.y - lastPressed.y);
-            // R0.1 * R1.2 * R2.3 ....
-            G.concatenate(AffineTransform.getTranslateInstance(dvec.getX() / G.getScaleX(), dvec.getY() / G.getScaleY()));
-            lastPressed = e.getPoint();
-            repaint();
+            /// Move coordinate view  ( `pan ),  Cx, Cy ,
+            if (lastPressed != null ) {
+                Point sp1 = e.getPoint();
+                Point dvec = new Point(sp1.x - lastPressed.x, sp1.y - lastPressed.y);
+                // R0.1 * R1.2 * R2.3 ....
+                G.concatenate(AffineTransform.getTranslateInstance(dvec.getX() / G.getScaleX(), dvec.getY() / G.getScaleY()));
+                lastPressed = e.getPoint();
+                repaint();
+            }
         }
     }
 

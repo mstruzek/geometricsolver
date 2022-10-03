@@ -446,7 +446,7 @@ public class FrameView extends JFrame {
 
     private JToolBar setupConstraintToolBar(Controller controller) {
         JToolBar toolbar = new JToolBar();
-        toolbar.setBorder(BorderFactory.createLineBorder(Color.green, 1));
+        //toolbar.setBorder(BorderFactory.createLineBorder(Color.green, 1));
         toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.Y_AXIS));
         toolbar.setAlignmentX(Component.CENTER_ALIGNMENT);
         ActionListener constraintsActionListener = actionEvent -> {
@@ -470,6 +470,7 @@ public class FrameView extends JFrame {
                 JButton button = new JButton(title);
                 button.setMnemonic(mnemonic);
                 button.setActionCommand(actionCommand);
+                button.setToolTipText(actionCommand);
                 button.addActionListener(constraintsActionListener);
                 button.setAlignmentX(Component.CENTER_ALIGNMENT);
                 button.setMinimumSize(new Dimension(WIDTH, HEIGHT));
