@@ -3,7 +3,7 @@ package com.mstruzek.jni;
 
 import com.mstruzek.msketch.solver.SolverStat;
 
-public class JNISolverGate {
+public class SolverHandle {
 
     public static final int JNI_SUCCESS = 0;
     public static final int JNI_ERROR = 1;

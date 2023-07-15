@@ -13,7 +13,7 @@
 
 #ifdef __NVCC__
 #include "tensor_layout.cuh"
-#endif __NVCC__
+#endif // __NVCC__
 
 
 #include "version.cuh"

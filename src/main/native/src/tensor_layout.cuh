@@ -418,11 +418,11 @@ template <typename LLayout = BlockLayout> class Tensor {
     __GPU_DEV_INLF__ void setVector(int row, int col, graph::Vector const &value) {
         /// vertical
         if (intention) { // tensor "B"
-            u.set(offset_row + row + 0, offset_col + col, getVectorX(value));
-            u.set(offset_row + row + 1, offset_col + col, getVectorY(value));
+            u.set(offset_row + row + 0, offset_col + col, value.x);
+            u.set(offset_row + row + 1, offset_col + col, value.y);
         } else { // tensor "Jacobian"
-            u.set(offset_row + row, offset_col + col + 0, getVectorX(value));
-            u.set(offset_row + row, offset_col + col + 1, getVectorY(value));
+            u.set(offset_row + row, offset_col + col + 0, value.x);
+            u.set(offset_row + row, offset_col + col + 1, value.y);
         }
     };
 
@@ -574,8 +574,8 @@ template <typename LLayout> class AdapterTensor : public Tensor<LLayout> {
         : Tensor<LLayout>(layout, intention, offset_row, offset_col) {}
 
     __GPU_DEV_INLF__ void setVector(int row, int col, Vector const &value) {
-        Tensor<LLayout>::setValue(col + 0, row, getVectorX(value));
-        Tensor<LLayout>::setValue(col + 1, row, getVectorY(value));
+        Tensor<LLayout>::setValue(col + 0, row, value.x);
+        Tensor<LLayout>::setValue(col + 1, row, value.y);
     }
 
     __GPU_DEV_INLF__ void setValue(int row, int col, double const &value) {

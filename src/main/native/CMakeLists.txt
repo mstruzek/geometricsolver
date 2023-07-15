@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.20)
 
 
 if(UNIX) 
-	set(CMAKE_CUDA_COMPILER /usr/local/cuda-11.7/bin/nvcc)	
+	set(CMAKE_CUDA_COMPILER /usr/local/cuda-12.2/bin/nvcc)
 elseif(WIN32)
 	set(CMAKE_CUDA_COMPILER "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.7\\bin\\nvcc.exe")
 endif()
@@ -48,15 +48,15 @@ set(TEST_EXECUTABLE OFF)
 
 ###########################################     \\\library  runtime image
 
-if(UNIX) 
-	set(JAVA_HOME /usr/lib/jvm/java-17-openjdk-17.0.3.0.5-0.1.ea.el8.x86_64)	
+if(UNIX)
+	set(JAVA_HOME /usr/lib/jvm/java-17-openjdk-17.0.6.0.10-3.el9.x86_64)
 elseif(WIN32)
 	#set(JAVA_HOME "C:\\Program Files\\Java\\jdk-17.0.2\\")
 endif()
 
 find_package(JNI)     #  in this cmake-3.20 settings JNI module is not setting the target JNI::JNI (cmake-3.24)
 
-find_package(CUDAToolkit 11.7)
+find_package(CUDAToolkit 12.2)
 
 add_library(${PROJECT_SHARED_LIBRARY} SHARED
 		src/solver_kernel.cu
@@ -76,7 +76,7 @@ add_library(${PROJECT_SHARED_LIBRARY} SHARED
 		src/solver/gpu_solver_sparse_bicgstab.cpp
 		src/solver/gpu_sparse_precondition_ilu02.cpp
         src/tensor_operation.cpp				
-        src/com_mstruzek_jni_JNISolverGate.cpp
+        src/com_mstruzek_jni_SolverHandle.cpp
 		)
 
 
@@ -125,7 +125,7 @@ add_executable(${PROJECT_TEST_EXECUTABLE} src/entry.cpp 	# main()
 		src/mmio/mmio_wrapper.cpp										
 		src/solver/test_gpu_solver_biccgstab.cpp		# main()
         src/tensor_operation.cpp		
-        src/com_mstruzek_jni_JNISolverGate.cpp	
+        src/com_mstruzek_jni_SolverHandle.cpp
 		)
 
 

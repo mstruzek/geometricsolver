@@ -1,6 +1,6 @@
 package com.mstruzek.jni;
 
-public enum JNIDebugParameters {
+public enum DebugParameters {
 
     /**
      * stdout computed Tensor A = false
@@ -86,15 +86,15 @@ public enum JNIDebugParameters {
     public final int code;
 
     public void setBooleanProperty(boolean value) {
-        JNISolverGate.setBooleanProperty(this.code, value);
+        SolverHandle.setBooleanProperty(this.code, value);
     }
 
     public void setDoubleProperty(double value) {
-        JNISolverGate.setDoubleProperty(this.code, value);
+        SolverHandle.setDoubleProperty(this.code, value);
     }
 
     public void setLongProperty(long value) {
-        JNISolverGate.setLongProperty(this.code, value);
+        SolverHandle.setLongProperty(this.code, value);
     }
 
     public static class ComputationMode {
@@ -137,7 +137,7 @@ public enum JNIDebugParameters {
         public static final int ILU_BiCG_STAB = 3;
     }
 
-    JNIDebugParameters(int code) {
+    DebugParameters(int code) {
         this.code = code;
     }
 

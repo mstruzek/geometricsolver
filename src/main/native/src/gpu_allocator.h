@@ -6,6 +6,24 @@
 
 #include <memory>
 
+/// MSV COMPILER DEFINES
+#ifndef _CONSTEXPR20
+#define _CONSTEXPR20
+#endif
+
+#ifndef _NODISCARD
+#define _NODISCARD
+#endif
+
+#ifndef _CRT_GUARDOVERFLOW
+#define _CRT_GUARDOVERFLOW
+#endif
+
+#ifndef allocator
+#define allocator
+#endif
+
+#define __declspec(x)
 
 /// <summary>
 /// cuda efficient Pinned Memory allocator as required by std::vector
@@ -40,7 +58,7 @@ template <class _Ty> class gpu_allocator {
             fprintf(stderr, "[cuda/pinned] deallocation failed !\n");
             const char *error_name = cudaGetErrorName(status);
             const char *error_str = cudaGetErrorString(status);
-            fprintf(stderr, " cuda deallocation of pinned memory failed ; ( %s )  %s \n", error_name, error_str);
+            fprintf(stderr, " cuda de-allocation of pinned memory failed ; ( %s )  %s \n", error_name, error_str);
         }
     }
 

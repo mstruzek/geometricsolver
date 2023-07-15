@@ -1,8 +1,8 @@
 package com.mstruzek.msketch.solver.jni;
 
-import com.mstruzek.jni.JNIDebugParameters;
-import com.mstruzek.jni.JNIDebugParameters.SolverMode;
-import com.mstruzek.jni.JNISolverGate;
+import com.mstruzek.jni.DebugParameters;
+import com.mstruzek.jni.DebugParameters.SolverMode;
+import com.mstruzek.jni.SolverHandle;
 import com.mstruzek.msketch.*;
 import com.mstruzek.msketch.solver.GeometricSolver;
 import com.mstruzek.msketch.solver.GeometricSolverType;
@@ -12,8 +12,8 @@ import com.mstruzek.msketch.solver.StateReporter;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.mstruzek.jni.JNIDebugParameters.ComputationMode.*;
-import static com.mstruzek.jni.JNISolverGate.JNI_SUCCESS;
+import static com.mstruzek.jni.DebugParameters.ComputationMode.*;
+import static com.mstruzek.jni.SolverHandle.JNI_SUCCESS;
 import static java.util.stream.Collectors.toCollection;
 
 public class GpuGeometricSolverImpl implements GeometricSolver {
@@ -54,25 +54,25 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
      */
     @Override
     public void setup() {
-        JNIDebugParameters.DEBUG.setBooleanProperty(false);
+        DebugParameters.DEBUG.setBooleanProperty(false);
 
-        JNIDebugParameters.STREAM_CAPTURING.setBooleanProperty(false);
-        JNIDebugParameters.DEBUG_CSR_FORMAT.setBooleanProperty(false);
+        DebugParameters.STREAM_CAPTURING.setBooleanProperty(false);
+        DebugParameters.DEBUG_CSR_FORMAT.setBooleanProperty(false);
         /// OK :
-        JNIDebugParameters.COMPUTATION_MODE.setLongProperty(COMPACT_MODE);
+        DebugParameters.COMPUTATION_MODE.setLongProperty(COMPACT_MODE);
         // JNIDebugParameters.COMPUTATION_MODE.setLongProperty(DIRECT_MODE);
 
-        JNIDebugParameters.SOLVER_MODE.setLongProperty(SolverMode.QR_SPARSE);
+        DebugParameters.SOLVER_MODE.setLongProperty(SolverMode.QR_SPARSE);
 
 //        JNIDebugParameters.SOLVER_MODE.setLongProperty(SolverMode.ILU_BiCG_STAB);
 //        JNIDebugParameters.COMPUTATION_MODE.setLongProperty(SPARSE_LAYOUT);
 //        JNIDebugParameters.COMPUTATION_MODE.setLongProperty(DIRECT_LAYOUT);
 
-        JNIDebugParameters.SOLVER_EPSILON.setDoubleProperty(1e-5);
+        DebugParameters.SOLVER_EPSILON.setDoubleProperty(1e-5);
         /// synchronize cuda stream
-        JNIDebugParameters.DEBUG_CHECK_ARG.setBooleanProperty(false);
-        JNIDebugParameters.SOLVER_INC_HESSIAN.setBooleanProperty(true);
-        JNIDebugParameters.DEBUG_TENSOR_SV.setBooleanProperty(false);
+        DebugParameters.DEBUG_CHECK_ARG.setBooleanProperty(false);
+        DebugParameters.SOLVER_INC_HESSIAN.setBooleanProperty(true);
+        DebugParameters.DEBUG_TENSOR_SV.setBooleanProperty(false);
 
 
 //        JNIDebugParameters.GRID_SIZE.setLongProperty(4); // NOT_USED
@@ -317,72 +317,72 @@ public class GpuGeometricSolverImpl implements GeometricSolver {
     }
 
     private int initDriver(int deviceId) {
-        return JNISolverGate.initDriver(deviceId);
+        return SolverHandle.initDriver(deviceId);
     }
 
 
     private String lastError() {
-        return JNISolverGate.getLastError();
+        return SolverHandle.getLastError();
     }
 
     private int initComputationContext() {
-        return JNISolverGate.initComputationContext();
+        return SolverHandle.initComputationContext();
     }
 
     private SolverStat getSolverStatistics() {
-        return JNISolverGate.getSolverStatistics();
+        return SolverHandle.getSolverStatistics();
     }
 
     private int solveSystemExecute() {
-        return JNISolverGate.solveSystem();
+        return SolverHandle.solveSystem();
     }
 
     private int initComputation() {
-        return JNISolverGate.initComputation();
+        return SolverHandle.initComputation();
     }
 
     private int destroyComputation() {
-        return JNISolverGate.destroyComputation();
+        return SolverHandle.destroyComputation();
     }
 
     private double[] fetchStateVector() {
-        return JNISolverGate.fetchStateVector();
+        return SolverHandle.fetchStateVector();
     }
 
     private int registerPointType(int id, double px, double py) {
-        return JNISolverGate.registerPointType(id, px, py);
+        return SolverHandle.registerPointType(id, px, py);
     }
 
     private int registerConstraintType(int constraintId, int constraintTypeId, int k, int l, int m, int n, int paramId, double vecX, double vecY) {
-        return JNISolverGate.registerConstraintType(constraintId, constraintTypeId, k, l, m, n, paramId, vecX, vecY);
+        return SolverHandle.registerConstraintType(constraintId, constraintTypeId, k, l, m, n, paramId, vecX, vecY);
     }
 
     private int registerGeometricType(int primitiveId, int geometricType, int p1, int p2, int p3, int a, int b, int c, int d) {
-        return JNISolverGate.registerGeometricType(primitiveId, geometricType, p1, p2, p3, a, b, c, d);
+        return SolverHandle.registerGeometricType(primitiveId, geometricType, p1, p2, p3, a, b, c, d);
     }
 
     private int registerParameterType(int parameterId, double value) {
-        return JNISolverGate.registerParameterType(parameterId, value);
+        return SolverHandle.registerParameterType(parameterId, value);
     }
 
     private void updateConstrainState(int size, int[] constraintId, double[] vecX, double[] vecY) {
-        JNISolverGate.updateConstraintState(constraintId, vecX, vecY, size);
+        SolverHandle.updateConstraintState(constraintId, vecX, vecY, size);
     }
 
     private void updateStateVector(double[] stateVector) {
-        JNISolverGate.updateStateVector(stateVector);
+        SolverHandle.updateStateVector(stateVector);
     }
 
     private int closeDriver() {
-        return JNISolverGate.closeDriver();
+        return SolverHandle.closeDriver();
     }
 
     private int destroyComputationContext() {
-        return JNISolverGate.destroyComputationContext();
+        return SolverHandle.destroyComputationContext();
     }
 
     private void updateParametersValues(int size, double[] value, int[] parameterId) {
-        JNISolverGate.updateParametersValues(parameterId, value, size);
+        SolverHandle.updateParametersValues(parameterId, value, size);
     }
 
 }
