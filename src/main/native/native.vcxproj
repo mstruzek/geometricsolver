@@ -14,6 +14,7 @@
     <ProjectGuid>{897113D4-F59F-4AD0-8FCF-6E1C47B57518}</ProjectGuid>
     <RootNamespace>native</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <CudaToolkitCustomDir>c:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7\</CudaToolkitCustomDir>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -115,9 +116,6 @@
     <ClInclude Include="src\tensor_layout.cuh" />
     <ClInclude Include="src\tensor_operation.h" />
     <ClInclude Include="src\version.cuh" />
-    <CudaCompile Include="kernel.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </CudaCompile>
     <ClCompile Include="src\gpu_utility.cpp" />
     <CudaCompile Include="src\format_encoder.cu" />
     <CudaCompile Include="src\model.cu">
@@ -138,11 +136,11 @@
     <CudaCompile Include="src\tensor_operation.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\com_mstruzek_jni_JNISolverGate.cpp" />
+    <ClCompile Include="src\com_mstruzek_jni_SolverHandle.cpp" />
     <ClCompile Include="src\entry.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\com_mstruzek_jni_JNISolverGate.h" />
+    <ClInclude Include="src\com_mstruzek_jni_SolverHandle.h" />
     <ClInclude Include="src\gpu_computation.h" />
     <ClInclude Include="src\gpu_computation_context.h" />
     <ClInclude Include="src\settings.h" />

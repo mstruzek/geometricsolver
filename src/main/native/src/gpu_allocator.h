@@ -6,25 +6,6 @@
 
 #include <memory>
 
-/// MSV COMPILER DEFINES
-#ifndef _CONSTEXPR20
-#define _CONSTEXPR20
-#endif
-
-#ifndef _NODISCARD
-#define _NODISCARD
-#endif
-
-#ifndef _CRT_GUARDOVERFLOW
-#define _CRT_GUARDOVERFLOW
-#endif
-
-#ifndef allocator
-#define allocator
-#endif
-
-#define __declspec(x)
-
 /// <summary>
 /// cuda efficient Pinned Memory allocator as required by std::vector
 /// </summary>

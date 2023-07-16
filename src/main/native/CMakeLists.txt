@@ -4,11 +4,16 @@ cmake_minimum_required(VERSION 3.20)
 # cuda compiler tooling
 
 
+set(CMAKE_CUDA_COMPILER_VERSION 11.7)
+
 if(UNIX) 
-	set(CMAKE_CUDA_COMPILER /usr/local/cuda-12.2/bin/nvcc)
+	set(CMAKE_CUDA_COMPILER /usr/local/cuda-11.7/bin/nvcc)
 elseif(WIN32)
 	set(CMAKE_CUDA_COMPILER "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.7\\bin\\nvcc.exe")
 endif()
+
+
+
 
 
 
@@ -56,7 +61,7 @@ endif()
 
 find_package(JNI)     #  in this cmake-3.20 settings JNI module is not setting the target JNI::JNI (cmake-3.24)
 
-find_package(CUDAToolkit 12.2)
+find_package(CUDAToolkit 11.7 EXACT)
 
 add_library(${PROJECT_SHARED_LIBRARY} SHARED
 		src/solver_kernel.cu

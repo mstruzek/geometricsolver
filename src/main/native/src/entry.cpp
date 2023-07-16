@@ -8,27 +8,27 @@
 
 #include "model_config.h"
 
-#include "com_mstruzek_jni_JNISolverGate.h"
+#include "com_mstruzek_jni_SolverHandle.h"
 
 
-#define jni_initDriver                 Java_com_mstruzek_jni_JNISolverGate_initDriver
-#define jni_setBooleanProperty         Java_com_mstruzek_jni_JNISolverGate_setBooleanProperty
-#define jni_setLongProperty            Java_com_mstruzek_jni_JNISolverGate_setLongProperty
-#define jni_getLastError               Java_com_mstruzek_jni_JNISolverGate_getLastError
-#define jni_closeDriver                Java_com_mstruzek_jni_JNISolverGate_closeDriver
-#define jni_initComputationContext     Java_com_mstruzek_jni_JNISolverGate_initComputationContext
-#define jni_initComputation            Java_com_mstruzek_jni_JNISolverGate_initComputation
-#define jni_solveSystem                Java_com_mstruzek_jni_JNISolverGate_solveSystem
-#define jni_registerPointType          Java_com_mstruzek_jni_JNISolverGate_registerPointType
-#define jni_registerGeometricType      Java_com_mstruzek_jni_JNISolverGate_registerGeometricType
-#define jni_registerParameterType      Java_com_mstruzek_jni_JNISolverGate_registerParameterType
-#define jni_registerConstraintType     Java_com_mstruzek_jni_JNISolverGate_registerConstraintType
-#define jni_getPointPXCoordinate       Java_com_mstruzek_jni_JNISolverGate_getPointPXCoordinate
-#define jni_getPointPYCoordinate       Java_com_mstruzek_jni_JNISolverGate_getPointPYCoordinate
+#define jni_initDriver                 Java_com_mstruzek_jni_SolverHandle_initDriver
+#define jni_setBooleanProperty         Java_com_mstruzek_jni_SolverHandle_setBooleanProperty
+#define jni_setLongProperty            Java_com_mstruzek_jni_SolverHandle_setLongProperty
+#define jni_getLastError               Java_com_mstruzek_jni_SolverHandle_getLastError
+#define jni_closeDriver                Java_com_mstruzek_jni_SolverHandle_closeDriver
+#define jni_initComputationContext     Java_com_mstruzek_jni_SolverHandle_initComputationContext
+#define jni_initComputation            Java_com_mstruzek_jni_SolverHandle_initComputation
+#define jni_solveSystem                Java_com_mstruzek_jni_SolverHandle_solveSystem
+#define jni_registerPointType          Java_com_mstruzek_jni_SolverHandle_registerPointType
+#define jni_registerGeometricType      Java_com_mstruzek_jni_SolverHandle_registerGeometricType
+#define jni_registerParameterType      Java_com_mstruzek_jni_SolverHandle_registerParameterType
+#define jni_registerConstraintType     Java_com_mstruzek_jni_SolverHandle_registerConstraintType
+#define jni_getPointPXCoordinate       Java_com_mstruzek_jni_SolverHandle_getPointPXCoordinate
+#define jni_getPointPYCoordinate       Java_com_mstruzek_jni_SolverHandle_getPointPYCoordinate
 
-#define jni_destroyComputation         Java_com_mstruzek_jni_JNISolverGate_destroyComputation
-#define jni_destroyComputationContext  Java_com_mstruzek_jni_JNISolverGate_destroyComputationContext
-#define jni__closeDriver               Java_com_mstruzek_jni_JNISolverGate_closeDriver
+#define jni_destroyComputation         Java_com_mstruzek_jni_SolverHandle_destroyComputation
+#define jni_destroyComputationContext  Java_com_mstruzek_jni_SolverHandle_destroyComputationContext
+#define jni__closeDriver               Java_com_mstruzek_jni_SolverHandle_closeDriver
 
 
 

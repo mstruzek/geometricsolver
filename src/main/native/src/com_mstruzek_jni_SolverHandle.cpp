@@ -1,4 +1,4 @@
-#include "com_mstruzek_jni_JNISolverGate.h"
+#include "com_mstruzek_jni_SolverHandle.h"
 
 #define JNI_SUCCESS com_mstruzek_jni_SolverHandle_JNI_SUCCESS
 #define JNI_ERROR com_mstruzek_jni_SolverHandle_JNI_ERROR
