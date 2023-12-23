@@ -5,9 +5,7 @@ Geometric Constraint Solver
 
 YouTube Presentation:
 
-v1-2009: http://www.youtube.com/watch?v=e1DlGjwGlkQ
-
-v2-2022: https://www.youtube.com/watch?v=QnullTdmdx8
+2009: http://www.youtube.com/watch?v=e1DlGjwGlkQ
 
 =============================================
 
