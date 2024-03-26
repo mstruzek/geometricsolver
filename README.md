@@ -88,7 +88,7 @@ Above primary equations are rewritten into liner system equations applicable for
 where x evaluates into ^q - delta-q - generalized coordinates. 
 
  
-#### 2009-2022 mstru7ek
+#### 2009-2022 mstruzek
 
 
 ## Project State - 3.10.2022
